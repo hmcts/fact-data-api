@@ -7,6 +7,7 @@ module "storage_account" {
   account_kind                  = "BlobStorage"
   account_replication_type      = "ZRS"
   public_network_access_enabled = true
+  common_tags                   = var.common_tags
   containers = [
     {
       name        = "photos",
