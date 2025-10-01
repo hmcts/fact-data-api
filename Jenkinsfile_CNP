@@ -1,0 +1,9 @@
+#!groovy
+
+@Library("Infrastructure")
+
+def type = "java"
+def product = "fact"
+def component = "data-api"
+
+withPipeline(type, product, component) {}

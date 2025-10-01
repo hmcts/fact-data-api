@@ -1,16 +1,13 @@
-version: '2.1'
-
 services:
-  spring-boot-template:
+  fact-data-api:
     build:
       context: .
       args:
         - http_proxy
         - https_proxy
         - no_proxy
-    image: hmctspublic.azurecr.io/spring-boot/template
+    image: hmctspublic.azurecr.io/fact/data-api:latest
     environment:
-      # these environment variables are used by java-logging library
       - ROOT_APPENDER
       - JSON_CONSOLE_PRETTY_PRINT
       - ROOT_LOGGING_LEVEL
@@ -23,4 +20,4 @@ services:
       - LOGBACK_REQUIRE_ALERT_LEVEL=false
       - LOGBACK_REQUIRE_ERROR_CODE=false
     ports:
-      - $SERVER_PORT:$SERVER_PORT
+      - "8989:8989"
