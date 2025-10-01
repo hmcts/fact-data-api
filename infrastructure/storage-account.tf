@@ -4,7 +4,7 @@ module "storage_account" {
   storage_account_name          = "${var.product}sa${var.env}"
   resource_group_name           = data.azurerm_resource_group.fact_rg.name
   location                      = var.location
-  account_kind                  = "BlobStorage"
+  account_kind                  = "StorageV2"
   account_replication_type      = "ZRS"
   public_network_access_enabled = true
   common_tags                   = var.common_tags
