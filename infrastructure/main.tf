@@ -36,9 +36,10 @@ module "postgresql" {
       name : "fact"
     }
   ]
-  common_tags   = var.common_tags
-  business_area = "cft"
-  pgsql_version = "16"
+  common_tags          = var.common_tags
+  business_area        = "cft"
+  pgsql_version        = "16"
+  admin_user_object_id = var.jenkins_AAD_objectId
 }
 
 # Store postgres secrets
