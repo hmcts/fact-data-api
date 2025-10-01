@@ -1,12 +1,17 @@
-# FaCT resource group
-data "azurerm_resource_group" "fact_rg" {
-  name = "${var.product}-${var.env}"
+# MI resource group
+data "azurerm_resource_group" "mi_resource_group" {
+  name = "managed-identities-${var.env}-rg"
 }
 
 # FaCT managed identity
 data "azurerm_user_assigned_identity" "fact_mi" {
   name                = "${var.product}-${var.env}-mi"
   resource_group_name = data.azurerm_resource_group.mi_resource_group.name
+}
+
+# FaCT resource group
+data "azurerm_resource_group" "fact_rg" {
+  name = "${var.product}-${var.env}"
 }
 
 # Key vault data source
