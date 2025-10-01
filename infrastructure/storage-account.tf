@@ -20,7 +20,7 @@ module "storage_account" {
   ]
 }
 
-resource "azurerm_key_vault_secret" "flexible_secret" {
+resource "azurerm_key_vault_secret" "storage_account_connection_string_secret" {
   name         = "storage-account-connection-string"
   key_vault_id = data.azurerm_key_vault.fact_key_vault.id
   value        = module.storage_account.storageaccount_primary_blob_connection_string
