@@ -23,7 +23,7 @@ module "storage_account" {
 
 resource "azurerm_key_vault_secret" "storage_account_connection_string_secret" {
   name         = "storage-account-connection-string"
-  key_vault_id = data.azurerm_key_vault.fact_key_vault.id
+  key_vault_id = data.azurerm_key_vault.fact_kv.id
   value        = module.storage_account.storageaccount_primary_blob_connection_string
   tags = merge(var.common_tags, {
     "source" : "${var.component} Storage account"
