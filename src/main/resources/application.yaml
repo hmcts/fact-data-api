@@ -1,5 +1,5 @@
 server:
-  port: 4550
+  port: 8989
   shutdown: "graceful"
 
 # If you use a database then uncomment the `group:, readiness: and include: "db"` lines in the health probes and uncomment the datasource section
@@ -17,14 +17,14 @@ management:
         include: health, info, prometheus
 
 springdoc:
-  packagesToScan: uk.gov.hmcts.reform.demo.controllers
+  packagesToScan: uk.gov.hmcts.reform.fact.data.api.controllers
   writer-with-order-by-keys: true
 
 spring:
   config:
-    import: "optional:configtree:/mnt/secrets/rpe/"
+    import: "optional:configtree:/mnt/secrets/fact/"
   application:
-    name: Spring Boot Template
+    name: FaCT Data API
 #  datasource:
 #    driver-class-name: org.postgresql.Driver
 #    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}${DB_OPTIONS:}
@@ -46,7 +46,3 @@ spring:
 #          lob:
 #            # silence the 'wall-of-text' - unnecessary exception throw about blob types
 #            non_contextual_creation: true
-
-azure:
-  application-insights:
-    instrumentation-key: ${rpe.AppInsightsInstrumentationKey:00000000-0000-0000-0000-000000000000}
