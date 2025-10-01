@@ -1,13 +1,15 @@
 module "storage_account" {
-  source                        = "git@github.com:hmcts/cnp-module-storage-account?ref=4.x"
-  env                           = var.env
-  storage_account_name          = "${var.product}sa${var.env}"
-  resource_group_name           = data.azurerm_resource_group.fact_rg.name
-  location                      = var.location
-  account_kind                  = "StorageV2"
-  account_replication_type      = "ZRS"
-  public_network_access_enabled = true
-  common_tags                   = var.common_tags
+  source                          = "git@github.com:hmcts/cnp-module-storage-account?ref=4.x"
+  env                             = var.env
+  storage_account_name            = "${var.product}sa${var.env}"
+  resource_group_name             = data.azurerm_resource_group.fact_rg.name
+  location                        = var.location
+  account_kind                    = "StorageV2"
+  account_replication_type        = "ZRS"
+  default_action                  = "Allow"
+  allow_nested_items_to_be_public = "true"
+  public_network_access_enabled   = true
+  common_tags                     = var.common_tags
   containers = [
     {
       name        = "photos",
