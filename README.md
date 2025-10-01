@@ -1,4 +1,4 @@
-# fact-data-api
+# FaCT Data API
 
 ## Building and deploying the application
 
