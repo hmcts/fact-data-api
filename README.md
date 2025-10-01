@@ -21,9 +21,6 @@ Create the image of the application by executing the following command:
   ./gradlew assemble
 ```
 
-Note: Docker Compose V2 is highly recommended for building and running the application.
-In the Compose V2 old `docker-compose` command is replaced with `docker compose`.
-
 Create docker image:
 
 ```bash
