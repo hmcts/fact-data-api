@@ -1,8 +1,7 @@
 #!groovy
+import uk.gov.hmcts.contino.GradleBuilder
 
 @Library("Infrastructure")
-
-import uk.gov.hmcts.contino.GradleBuilder
 
 GradleBuilder builder = new GradleBuilder(this, product)
 
