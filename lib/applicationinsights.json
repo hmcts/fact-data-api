@@ -1,5 +1,5 @@
 {
-  "connectionString": "${file:/mnt/secrets/fact/app-insights-connection-string}",
+  "connectionString": "${file:/mnt/secrets/fact-kv/app-insights-connection-string}",
   "role": {
     "name": "fact-data-api"
   },
