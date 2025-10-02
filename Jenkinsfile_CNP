@@ -3,11 +3,11 @@ import uk.gov.hmcts.contino.GradleBuilder
 
 @Library("Infrastructure")
 
-GradleBuilder builder = new GradleBuilder(this, product)
-
 def type = "java"
 def product = "fact"
 def component = "data-api"
+
+GradleBuilder builder = new GradleBuilder(this, product)
 
 withPipeline(type, product, component) {
     disableLegacyDeployment()
