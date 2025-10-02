@@ -9,3 +9,7 @@ def component = "data-api"
 withPipeline(type, product, component) {
     syncBranchesWithMaster(['demo', 'perftest', 'ithc'])
 }
+
+afterAlways('test') {
+    builder.gradle('integration')
+}
