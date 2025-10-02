@@ -2,12 +2,15 @@
 
 @Library("Infrastructure")
 
+import uk.gov.hmcts.contino.GradleBuilder
+
+GradleBuilder builder = new GradleBuilder(this, product)
+
 def type = "java"
 def product = "fact"
 def component = "data-api"
 
 withPipeline(type, product, component) {
-    disableLegacyDeployment()
     syncBranchesWithMaster(['demo', 'perftest', 'ithc'])
 
     afterAlways('test') {
