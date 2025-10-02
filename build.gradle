@@ -100,6 +100,7 @@ sonarqube {
     property "sonar.projectName", "fact-data-api"
     property "sonar.projectKey", "uk.gov.hmcts.reform:fact-data-api"
     property "sonar.coverage.jacoco.xmlReportPaths", "$buildDir/reports/jacoco/jacoco.xml"
+    property "sonar.verbose", "true"
   }
 }
 
