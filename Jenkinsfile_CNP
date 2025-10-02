@@ -11,6 +11,8 @@ GradleBuilder builder = new GradleBuilder(this, product)
 
 withPipeline(type, product, component) {
     syncBranchesWithMaster(['demo', 'perftest', 'ithc'])
+    enableAksStagingDeployment()
+    disableLegacyDeployment()
 
     afterSuccess('test') {
         builder.gradle('integration')
