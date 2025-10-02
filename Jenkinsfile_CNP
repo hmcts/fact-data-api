@@ -1,7 +1,7 @@
 #!groovy
-import uk.gov.hmcts.contino.GradleBuilder
-
 @Library("Infrastructure")
+
+import uk.gov.hmcts.contino.GradleBuilder
 
 def type = "java"
 def product = "fact"
@@ -12,7 +12,7 @@ GradleBuilder builder = new GradleBuilder(this, product)
 withPipeline(type, product, component) {
     syncBranchesWithMaster(['demo', 'perftest', 'ithc'])
 
-    afterAlways('test') {
+    afterSuccess('test') {
         builder.gradle('integration')
     }
 }
