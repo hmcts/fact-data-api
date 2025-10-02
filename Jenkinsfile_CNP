@@ -10,7 +10,6 @@ def component = "data-api"
 GradleBuilder builder = new GradleBuilder(this, product)
 
 withPipeline(type, product, component) {
-    disableLegacyDeployment()
     syncBranchesWithMaster(['demo', 'perftest', 'ithc'])
 
     afterAlways('test') {
