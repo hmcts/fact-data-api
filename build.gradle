@@ -84,6 +84,10 @@ tasks.register('smoke', Test) {
   classpath = sourceSets.smokeTest.runtimeClasspath
 }
 
+jacoco {
+  toolVersion = "0.8.13"
+}
+
 jacocoTestReport {
   executionData(test, integration)
   reports {
