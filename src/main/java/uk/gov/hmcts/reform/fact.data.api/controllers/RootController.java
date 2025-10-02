@@ -27,4 +27,10 @@ public class RootController {
     public ResponseEntity<String> welcome() {
         return ok("Welcome to fact-data-api");
     }
+
+    @GetMapping("/test")
+    @Operation(summary = "The default root for the application")
+    public ResponseEntity<String> test() {
+        return ok("This is a test remove me");
+    }
 }
