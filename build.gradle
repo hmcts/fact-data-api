@@ -100,8 +100,6 @@ sonarqube {
     property "sonar.projectName", "fact-data-api"
     property "sonar.projectKey", "uk.gov.hmcts.reform:fact-data-api"
     property "sonar.coverage.jacoco.xmlReportPaths", jacocoTestReport.reports.xml.outputLocation.get().asFile.absolutePath
-    property "sonar.log.level", "TRACE"
-    property "sonar.verbose", "true"
   }
 }
 

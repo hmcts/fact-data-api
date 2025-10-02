@@ -7,11 +7,10 @@ def product = "fact"
 def component = "data-api"
 
 withPipeline(type, product, component) {
+    disableLegacyDeployment()
     syncBranchesWithMaster(['demo', 'perftest', 'ithc'])
 }
 
 afterAlways('test') {
     builder.gradle('integration')
-    builder.gradle('jacocoTestReport')
-    steps.archiveArtifacts allowEmptyArchive: true, artifacts: '**/reports/jacoco/**/*'
 }
