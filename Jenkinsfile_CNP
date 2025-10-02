@@ -9,8 +9,8 @@ def component = "data-api"
 withPipeline(type, product, component) {
     disableLegacyDeployment()
     syncBranchesWithMaster(['demo', 'perftest', 'ithc'])
-}
 
-afterAlways('test') {
-    builder.gradle('integration')
+    afterAlways('test') {
+        builder.gradle('integration')
+    }
 }
