@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +23,7 @@ public class RootController {
      * @return Welcome message from the service.
      */
     @GetMapping("/")
+    @Operation(summary = "The default root for the application")
     public ResponseEntity<String> welcome() {
         return ok("Welcome to fact-data-api");
     }
