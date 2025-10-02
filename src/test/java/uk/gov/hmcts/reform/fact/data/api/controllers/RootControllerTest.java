@@ -21,4 +21,11 @@ class RootControllerTest {
             .andExpect(status().isOk())
             .andExpect(content().string("Welcome to fact-data-api"));
     }
+
+    @Test
+    void shouldReturnTest() throws Exception {
+        mockMvc.perform(get("/test"))
+            .andExpect(status().isOk())
+            .andExpect(content().string("This is a test remove me"));
+    }
 }
