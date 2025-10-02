@@ -14,7 +14,7 @@ public class OpenAPIConfiguration {
     public OpenAPI openAPI() {
         return new OpenAPI()
             .info(new Info().title("Fact Data API")
-                      .description("API for all operations relating to the FACT")
+                      .description("API for all operations relating to the Find a Court or Tribunal Service")
                       .version("v0.0.1")
                       .license(new License().name("MIT").url("https://opensource.org/licenses/MIT")))
             .externalDocs(new ExternalDocumentation()
