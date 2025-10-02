@@ -87,8 +87,8 @@ tasks.register('smoke', Test) {
 jacocoTestReport {
   executionData(test, integration)
   reports {
-    xml.required = true
-    csv.required = false
+    xml.required.set(true)
+    csv.required.set(false)
     xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/test/jacocoTestReport.xml"))
   }
 }
