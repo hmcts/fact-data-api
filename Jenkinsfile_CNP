@@ -14,9 +14,6 @@ withPipeline(type, product, component) {
 
     afterSuccess('test') {
         builder.gradle('integration')
-    }
-
-    afterSuccess('sonarscan') {
         publishHTML target: [
                 allowMissing         : true,
                 alwaysLinkToLastBuild: true,
