@@ -13,7 +13,7 @@ import static io.restassured.RestAssured.given;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 class SampleSmokeTest {
-    @Value("${TEST_URL:http://localhost:4550}")
+    @Value("${TEST_URL:http://localhost:8989}")
     private String testUrl;
 
     @BeforeEach
