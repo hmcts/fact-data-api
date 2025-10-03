@@ -49,3 +49,6 @@ spring:
     database: POSTGRESQL
     hibernate:
       ddl-auto: none
+
+dbMigration:
+  runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
