@@ -1,85 +1,34 @@
 # FaCT Data API
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=uk.gov.hmcts.reform%3Afact-data-api&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=uk.gov.hmcts.reform%3Afact-data-api)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=uk.gov.hmcts.reform%3Afact-data-api&metric=coverage)](https://sonarcloud.io/summary/new_code?id=uk.gov.hmcts.reform%3Afact-data-api)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=uk.gov.hmcts.reform%3Afact-data-api&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=uk.gov.hmcts.reform%3Afact-data-api)
 
-## Building and deploying the application
+This is a Java springboot API used in the Find a Court or Tribunal service.
 
-### Building the application
+## Deploying the application locally
 
-The project uses [Gradle](https://gradle.org) as a build tool. It already contains
-`./gradlew` wrapper script, so there's no need to install gradle.
+There are two supported ways to deploy the application locally
 
-To build the project execute the following command:
+### Using IntelliJ
 
-```bash
-  ./gradlew build
-```
+1. Ensure you have Java 21 installed on your machine.
+2. Clone the repository to your local machine.
+3. Open the project in IntelliJ.
+4. Start the local database with `docker-compose up fact-database -d` from the terminal in the project root directory. Postgres will be exposed on port `5999`
+5. Run the `Application` class in [Application.java](src/main/java/uk/gov/hmcts/reform/fact/data/api/Application.java).
+6. You may need environment variables set up for the application to run correctly. You can set these in Intellij by going to `Run > Edit Configurations > Environment Variables`.
+7. The application should now be running and accessible at `http://localhost:8989`.
 
-### Running the application
-
-Create the image of the application by executing the following command:
-
-```bash
-  ./gradlew assemble
-```
-
-Create docker image:
-
-```bash
-  docker compose build
-```
-
-Run the distribution (created in `build/install/fact-data-api` directory)
-by executing the following command:
-
-```bash
-  docker compose up
-```
-
-This will start the API container exposing the application's port
-(set to `8989` in this template app).
-
-In order to test if the application is up, you can call its health endpoint:
-
-```bash
-  curl http://localhost:8989/health
-```
-
-You should get a response similar to this:
-
-```
-  {"status":"UP","diskSpace":{"status":"UP","total":249644974080,"free":137188298752,"threshold":10485760}}
-```
-
-### Alternative script to run application
-
-To skip all the setting up and building, just execute the following command:
-
-```bash
-./bin/run-in-docker.sh
-```
-
-For more information:
-
-```bash
-./bin/run-in-docker.sh -h
-```
-
-Script includes bare minimum environment variables necessary to start api instance. Whenever any variable is changed or any other script regarding docker image/container build, the suggested way to ensure all is cleaned up properly is by this command:
-
-```bash
-docker compose rm
-```
-
-It clears stopped containers correctly. Might consider removing clutter of images too, especially the ones fiddled with:
-
-```bash
-docker images
-
-docker image rm <image-id>
-```
-
-There is no need to remove postgres and java or similar core images.
+### Using Docker
+1. Ensure you have Docker installed and running on your machine.
+2. Clone the repository to your local machine.
+3. Navigate to the project directory in your terminal.
+4. Run the following command to build the local code into a Docker image and deploy the database
+   ```bash
+   ./deploy_local_docker.sh
+   ```
+5. The application should now be running and accessible at `http://localhost:8989`.
 
 ## License
-
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 

@@ -10,9 +10,11 @@ def component = "data-api"
 GradleBuilder builder = new GradleBuilder(this, product)
 
 withPipeline(type, product, component) {
-    syncBranchesWithMaster(['demo', 'perftest', 'ithc'])
+    enableDbMigration('fact-kv')
 
     afterSuccess('test') {
         builder.gradle('integration')
     }
+
+  syncBranchesWithMaster(['demo', 'perftest', 'ithc'])
 }
