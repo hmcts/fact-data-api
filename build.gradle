@@ -87,14 +87,13 @@ tasks.register('smoke', Test) {
 jacocoTestReport {
   executionData(test, integration)
   reports {
-    xml.getRequired().set(true)
-    csv.getRequired().set(false)
-    html.getRequired().set(true)
+    xml.required.set(true)
+    csv.required.set(false)
+    xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/test/jacocoTestReport.xml"))
   }
 }
 
-tasks.sonarqube.dependsOn(jacocoTestReport)
-tasks.check.dependsOn(integration)
+project.tasks['sonarqube'].dependsOn jacocoTestReport
 
 sonarqube {
   properties {
