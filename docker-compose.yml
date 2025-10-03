@@ -1,3 +1,4 @@
+# Note to security: This is not used in any environment, only locally for development purposes.
 services:
   fact-data-api:
     build: .
