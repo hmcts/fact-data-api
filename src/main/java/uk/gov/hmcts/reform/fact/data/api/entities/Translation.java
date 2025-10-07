@@ -13,8 +13,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PostLoad;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,7 +39,8 @@ public class Translation {
     private UUID id;
 
     @Schema(description = "The associated Court", accessMode = Schema.AccessMode.READ_ONLY)
-    // TODO: ideally this would be tagged with @NotNull, but that breaks the JPA validation process
+    // ideally this would be tagged with @NotNull, but that breaks the JPA validation process
+    // for one of the two use cases for this entity
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "court_id")
     private Court court;
@@ -53,12 +56,22 @@ public class Translation {
     // DTO+DAO specific handling
 
     @Schema(description = "The ID of the associated Court", requiredMode = Schema.RequiredMode.REQUIRED)
-    // TODO: ideally this would be tagged with @NotNull, but that breaks the JPA validation process
+    // ideally this would be tagged with @NotNull, but that breaks the JPA validation process
+    // for one of the two use cases for this entity
     @Transient // column only used by DTO
     private UUID courtId;
 
     @PostLoad
     public void postLoad() {
         this.courtId = Optional.ofNullable(this.getCourt()).map(Court::getId).orElse(null);
+    }
+
+    // provides custom validation for joined elements that we want to
+    // leave blank when the entity is wearing its DTO hat.
+    @PrePersist
+    public void prePersist() {
+        if (this.court == null) {
+            throw new ValidationException("Court is a required field");
+        }
     }
 }
