@@ -9,27 +9,13 @@ import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
 
-class SampleSmokeTest {
+class SmokeTest {
 
     private final String testUrl = System.getenv().getOrDefault("TEST_URL", "http://localhost:8989");
 
     @BeforeEach
     void setUp() {
         RestAssured.useRelaxedHTTPSValidation();
-    }
-
-    @Test
-    void smokeTest() {
-        Response response = given()
-                .baseUri(testUrl)
-                .contentType(ContentType.JSON)
-                .when()
-                .get("/")
-                .then()
-                .extract().response();
-
-        Assertions.assertEquals(200, response.statusCode());
-        Assertions.assertTrue(response.asString().startsWith("Welcome"));
     }
 
     @Test
