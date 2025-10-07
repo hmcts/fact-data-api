@@ -3,14 +3,15 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.Translation;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.TranslationRepository;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.services.RegionService;
+import uk.gov.hmcts.reform.fact.data.api.services.TranslationService;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
+import jakarta.validation.Valid;
 import lombok.Generated;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -39,22 +40,18 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @Generated
 public class DevTestController {
 
-    private final CourtRepository courtRepository;
-    private final RegionRepository regionRepository;
-    private final TranslationRepository translationRepository;
+    private final CourtService courtService;
+    private final RegionService regionService;
+    private final TranslationService translationService;
 
     // ------------------------------------------------------------------------
     // Court
     // ------------------------------------------------------------------------
 
     @PostMapping(value = "/court/", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UUID> createCourt(@RequestBody Court court) {
-        // NOTE: this is required because the dto wants to just use the id and
-        // the entity dao likes to have the related record
-        regionRepository.findById(court.getRegionId()).ifPresent(court::setRegion);
-
+    public ResponseEntity<UUID> createCourt(@Valid @RequestBody Court court) throws NotFoundException {
         // save it and return the location
-        var result = courtRepository.save(court);
+        var result = courtService.create(court);
         var location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
             .buildAndExpand(result).toUri();
         return ResponseEntity.created(location).body(result.getId());
@@ -62,13 +59,12 @@ public class DevTestController {
 
     @GetMapping("/court/")
     public ResponseEntity<List<Court>> getAllCourts() {
-        return ResponseEntity.ok().body(courtRepository.findAll());
+        return ResponseEntity.ok().body(courtService.retrieveAll());
     }
 
     @GetMapping("/court/{id}")
-    public ResponseEntity<Court> getCourtById(@PathVariable UUID id) {
-        Optional<Court> court = courtRepository.findById(id);
-        return court.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<Court> getCourtById(@PathVariable UUID id) throws NotFoundException {
+        return ResponseEntity.ok().body(courtService.retrieve(id));
     }
 
     // ------------------------------------------------------------------------
@@ -76,9 +72,9 @@ public class DevTestController {
     // ------------------------------------------------------------------------
 
     @PostMapping(value = "/region/", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UUID> createRegion(@RequestBody Region region) {
+    public ResponseEntity<UUID> createRegion(@Valid @RequestBody Region region) {
         // save it and return location
-        var result = regionRepository.save(region);
+        var result = regionService.create(region);
         var location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
             .buildAndExpand(result).toUri();
         return ResponseEntity.created(location).body(result.getId());
@@ -86,13 +82,12 @@ public class DevTestController {
 
     @GetMapping("/region/")
     public ResponseEntity<List<Region>> getAllRegions() {
-        return ResponseEntity.ok().body(regionRepository.findAll());
+        return ResponseEntity.ok().body(regionService.retrieveAll());
     }
 
     @GetMapping("/region/{id}")
-    public ResponseEntity<Region> getRegionById(@PathVariable UUID id) {
-        Optional<Region> region = regionRepository.findById(id);
-        return region.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<Region> getRegionById(@PathVariable UUID id) throws NotFoundException {
+        return ResponseEntity.ok().body(regionService.retrieve(id));
     }
 
     // ------------------------------------------------------------------------
@@ -100,11 +95,10 @@ public class DevTestController {
     // ------------------------------------------------------------------------
 
     @PostMapping(value = "/translation/", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UUID> createTranslation(@RequestBody Translation translation) {
-        // required due o DTO/DAO differences
-        courtRepository.findById(translation.getCourtId()).ifPresent(translation::setCourt);
+    public ResponseEntity<UUID> createTranslation(@Valid @RequestBody Translation translation)
+        throws NotFoundException {
         // save and return the location
-        var result = translationRepository.save(translation);
+        var result = translationService.create(translation);
         var location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
             .buildAndExpand(result).toUri();
         return ResponseEntity.created(location).body(result.getId());
@@ -112,13 +106,12 @@ public class DevTestController {
 
     @GetMapping("/translation/")
     public ResponseEntity<List<Translation>> getAllTranslations() {
-        return ResponseEntity.ok().body(translationRepository.findAll());
+        return ResponseEntity.ok().body(translationService.retrieveAll());
     }
 
     @GetMapping("/translation/{id}")
-    public ResponseEntity<Translation> getTranslationById(@PathVariable UUID id) {
-        Optional<Translation> translation = translationRepository.findById(id);
-        return translation.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<Translation> getTranslationById(@PathVariable UUID id) throws NotFoundException {
+        return ResponseEntity.ok().body(translationService.retrieve(id));
     }
 
 }
