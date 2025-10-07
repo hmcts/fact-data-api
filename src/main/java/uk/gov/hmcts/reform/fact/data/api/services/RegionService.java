@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RegionService {
 
-    RegionRepository regionRepository;
+    private final RegionRepository regionRepository;
 
     public Region create(@NonNull Region region) {
         return regionRepository.save(region);
