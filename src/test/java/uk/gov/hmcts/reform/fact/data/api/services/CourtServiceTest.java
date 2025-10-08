@@ -64,6 +64,14 @@ class CourtServiceTest {
     }
 
     @Test
+    void checkNpesForNullFields() {
+        assertThrows(NullPointerException.class, () -> courtService.create(null));
+        assertThrows(NullPointerException.class, () -> courtService.update(null));
+        assertThrows(NullPointerException.class, () -> courtService.retrieve(null));
+        assertThrows(NullPointerException.class, () -> courtService.delete(null));
+    }
+
+    @Test
     void update() throws NotFoundException {
         when(courtRepository.existsById(court.getId())).thenReturn(true);
         when(courtRepository.save(any(Court.class))).thenReturn(court);

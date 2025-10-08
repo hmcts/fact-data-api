@@ -53,13 +53,18 @@ class TranslationServiceTest {
 
     @Test
     void create() {
-
         when(translationRepository.save(any(Translation.class))).thenReturn(translation);
-
         var result = translationService.create(translation);
-
         assertNotNull(result);
         verify(translationRepository).save(translation);
+    }
+
+    @Test
+    void checkNpesForNullFields() {
+        assertThrows(NullPointerException.class, () -> translationService.create(null));
+        assertThrows(NullPointerException.class, () -> translationService.update(null));
+        assertThrows(NullPointerException.class, () -> translationService.retrieve(null));
+        assertThrows(NullPointerException.class, () -> translationService.delete(null));
     }
 
     @Test
