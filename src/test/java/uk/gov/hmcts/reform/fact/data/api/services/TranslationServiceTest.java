@@ -52,22 +52,19 @@ class TranslationServiceTest {
     }
 
     @Test
-    void create() throws Exception {
-
-        when(courtRepository.findById(court.getId())).thenReturn(Optional.of(court));
+    void create() {
         when(translationRepository.save(any(Translation.class))).thenReturn(translation);
-
         var result = translationService.create(translation);
-
         assertNotNull(result);
-        verify(courtRepository).findById(court.getId());
         verify(translationRepository).save(translation);
     }
 
     @Test
-    void createFailsWithNotFoundExceptionForMissingCourt() {
-        when(courtRepository.findById(court.getId())).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> translationService.create(translation));
+    void checkNpesForNullFields() {
+        assertThrows(NullPointerException.class, () -> translationService.create(null));
+        assertThrows(NullPointerException.class, () -> translationService.update(null));
+        assertThrows(NullPointerException.class, () -> translationService.retrieve(null));
+        assertThrows(NullPointerException.class, () -> translationService.delete(null));
     }
 
     @Test

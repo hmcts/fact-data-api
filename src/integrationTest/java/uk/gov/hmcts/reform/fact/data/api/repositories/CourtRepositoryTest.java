@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.repositories;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
@@ -28,6 +29,8 @@ public class CourtRepositoryTest {
     @Test
     public void shouldSaveAndLoadCourtEntity() {
 
+        final var nowish = ZonedDateTime.now().minusSeconds(1);
+
         // Create and save a Region
         Region region = new Region();
         region.setName("Test Region");
@@ -39,9 +42,7 @@ public class CourtRepositoryTest {
         court.setSlug("test-court");
         court.setOpen(true);
         court.setTemporaryUrgentNotice("Urgent notice");
-        court.setCreatedAt(ZonedDateTime.now());
-        court.setLastUpdatedAt(ZonedDateTime.now());
-        court.setRegion(region);
+        court.setRegionId(region.getId());
         court.setIsServiceCentre(false);
         court.setOpenOnCath(true);
         court.setMrdId("MRD123");
@@ -53,9 +54,10 @@ public class CourtRepositoryTest {
         assertNotNull(foundCourt);
         assertEquals("Test Court", foundCourt.getName());
         assertNotNull(foundCourt.getRegion());
-        assertEquals("Test Region", foundCourt.getRegion().getName());
-
-        // tests that @PostLoad is working
         assertEquals(region.getId(), foundCourt.getRegionId());
+        assertNotNull(foundCourt.getCreatedAt());
+        assertTrue(nowish.isBefore(foundCourt.getCreatedAt()));
+        assertNotNull(foundCourt.getLastUpdatedAt());
+        assertTrue(nowish.isBefore(foundCourt.getLastUpdatedAt()));
     }
 }
