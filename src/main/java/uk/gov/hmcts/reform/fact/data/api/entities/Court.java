@@ -21,8 +21,10 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Data
 @NoArgsConstructor
@@ -45,7 +47,7 @@ public class Court {
 
     @Schema(description = "The Court 'slug'")
     @Size(min = 5, max = 200, message = "Court slug should be between 5 and 200 chars")
-    @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Slug must match the regex '^[a-zA-Z0-9_-]+$'")
+    @Pattern(regexp = "^[a-z]+[a-z-]*[a-z]+$", message = "Slug must match the regex '^[a-zA-Z0-9_-]+$'")
     private String slug;
 
     @Schema(description = "The open status of the Court")
@@ -54,14 +56,14 @@ public class Court {
     @Schema(description = "Any temporary/urgent notices attached to the Court")
     private String temporaryUrgentNotice;
 
-    @Schema(description = "The created date/time of the Court record")
-    @NotNull
+    @Schema(description = "The created date/time of the Court record", accessMode = Schema.AccessMode.READ_ONLY)
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)
+    @CreationTimestamp
     private ZonedDateTime createdAt;
 
-    @Schema(description = "The last updated date/time of the Court record")
-    @NotNull
+    @Schema(description = "The last updated date/time of the Court record", accessMode = Schema.AccessMode.READ_ONLY)
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)
+    @UpdateTimestamp
     private ZonedDateTime lastUpdatedAt;
 
     @Schema(description = "The ID of the associated Region", requiredMode = Schema.RequiredMode.REQUIRED)
