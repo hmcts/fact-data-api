@@ -53,6 +53,15 @@ class RegionServiceTest {
     }
 
     @Test
+    void checkNpesForNullFields() {
+        assertThrows(NullPointerException.class, () -> regionService.create(null));
+        assertThrows(NullPointerException.class, () -> regionService.update(null));
+        assertThrows(NullPointerException.class, () -> regionService.retrieve(null));
+        assertThrows(NullPointerException.class, () -> regionService.delete(null));
+    }
+
+
+    @Test
     void update() throws NotFoundException {
         when(regionRepository.existsById(region.getId())).thenReturn(true);
         when(regionRepository.save(any(Region.class))).thenReturn(region);

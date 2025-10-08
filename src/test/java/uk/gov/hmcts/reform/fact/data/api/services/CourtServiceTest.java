@@ -53,22 +53,22 @@ class CourtServiceTest {
     }
 
     @Test
-    void create() throws Exception {
+    void create() {
 
-        when(regionRepository.findById(region.getId())).thenReturn(Optional.of(region));
         when(courtRepository.save(any(Court.class))).thenReturn(court);
 
         var result = courtService.create(court);
 
         assertNotNull(result);
-        verify(regionRepository).findById(region.getId());
         verify(courtRepository).save(court);
     }
 
     @Test
-    void createFailsWithNotFoundExceptionForMissingRegion() {
-        when(regionRepository.findById(region.getId())).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> courtService.create(court));
+    void checkNpesForNullFields() {
+        assertThrows(NullPointerException.class, () -> courtService.create(null));
+        assertThrows(NullPointerException.class, () -> courtService.update(null));
+        assertThrows(NullPointerException.class, () -> courtService.retrieve(null));
+        assertThrows(NullPointerException.class, () -> courtService.delete(null));
     }
 
     @Test

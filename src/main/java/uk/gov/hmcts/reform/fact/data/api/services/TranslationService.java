@@ -20,12 +20,7 @@ public class TranslationService {
     private final CourtRepository courtRepository;
 
 
-    public Translation create(@NonNull Translation translation) throws NotFoundException {
-        // NOTE: this is required because the dto wants to just use the id and
-        // the entity dao likes to have the related record
-        var court = courtRepository.findById(translation.getCourtId()).orElseThrow(() -> new NotFoundException(
-            "No Court found for id " + translation.getCourtId()));
-        translation.setCourt(court);
+    public Translation create(@NonNull Translation translation) {
         return translationRepository.save(translation);
     }
 
