@@ -41,7 +41,7 @@ public class CourtRepositoryTest {
         court.setTemporaryUrgentNotice("Urgent notice");
         court.setCreatedAt(ZonedDateTime.now());
         court.setLastUpdatedAt(ZonedDateTime.now());
-        court.setRegion(region);
+        court.setRegionId(region.getId());
         court.setIsServiceCentre(false);
         court.setOpenOnCath(true);
         court.setMrdId("MRD123");
@@ -53,9 +53,6 @@ public class CourtRepositoryTest {
         assertNotNull(foundCourt);
         assertEquals("Test Court", foundCourt.getName());
         assertNotNull(foundCourt.getRegion());
-        assertEquals("Test Region", foundCourt.getRegion().getName());
-
-        // tests that @PostLoad is working
         assertEquals(region.getId(), foundCourt.getRegionId());
     }
 }

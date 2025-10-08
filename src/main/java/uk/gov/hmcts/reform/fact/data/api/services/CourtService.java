@@ -19,12 +19,7 @@ public class CourtService {
     private final CourtRepository courtRepository;
     private final RegionRepository regionRepository;
 
-    public Court create(@NonNull Court court) throws NotFoundException {
-        // NOTE: this is required because the dto wants to just use the id and
-        // the entity dao likes to have the related record
-        var region = regionRepository.findById(court.getRegionId()).orElseThrow(() -> new NotFoundException(
-            "No Region found for id " + court.getRegionId()));
-        court.setRegion(region);
+    public Court create(@NonNull Court court) {
         return courtRepository.save(court);
     }
 
