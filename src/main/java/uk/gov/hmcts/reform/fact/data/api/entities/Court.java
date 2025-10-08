@@ -45,7 +45,7 @@ public class Court {
 
     @Schema(description = "The Court 'slug'")
     @Size(min = 5, max = 200, message = "Court slug should be between 5 and 200 chars")
-    @Pattern(regexp = Constants.SLUG_REGEX, message = Constants.SLUG_REGEX_MESSAGE)
+    @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Slug must match the regex '^[a-zA-Z0-9_-]+$'")
     private String slug;
 
     @Schema(description = "The open status of the Court")
