@@ -47,7 +47,9 @@ public class Court {
 
     @Schema(description = "The Court 'slug'")
     @Size(min = 5, max = 200, message = "Court slug should be between 5 and 200 chars")
-    @Pattern(regexp = "^[a-z]+[a-z-]*[a-z]+$", message = "Slug must match the regex '^[a-zA-Z0-9_-]+$'")
+    // ideally we'd use a regex that requires a single alpha character at the start and end,
+    // but we need to be careful about backtracking attacks (sonar will flag)
+    @Pattern(regexp = "^[a-z-]+$", message = "Slug must match the regex '^[a-z-]+$'")
     private String slug;
 
     @Schema(description = "The open status of the Court")
