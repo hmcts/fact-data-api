@@ -7,8 +7,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.Translation;
 
-import java.time.ZonedDateTime;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,8 +41,6 @@ public class TranslationRepositoryTest {
         court.setSlug("test-court");
         court.setOpen(true);
         court.setTemporaryUrgentNotice("Urgent notice");
-        court.setCreatedAt(ZonedDateTime.now());
-        court.setLastUpdatedAt(ZonedDateTime.now());
         court.setRegionId(region.getId());
         court.setIsServiceCentre(false);
         court.setOpenOnCath(true);

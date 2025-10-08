@@ -18,9 +18,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
@@ -61,11 +63,13 @@ public class Court {
     @Schema(description = "The created date/time of the Court record", accessMode = Schema.AccessMode.READ_ONLY)
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)
     @CreationTimestamp
+    @Setter(AccessLevel.NONE)
     private ZonedDateTime createdAt;
 
     @Schema(description = "The last updated date/time of the Court record", accessMode = Schema.AccessMode.READ_ONLY)
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)
     @UpdateTimestamp
+    @Setter(AccessLevel.NONE)
     private ZonedDateTime lastUpdatedAt;
 
     @Schema(description = "The ID of the associated Region", requiredMode = Schema.RequiredMode.REQUIRED)
