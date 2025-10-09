@@ -315,15 +315,13 @@ VALUES
 -- Bulk seed opening_hour_types from admin_openingtype
 INSERT INTO opening_hour_types (id, name, name_cy)
 VALUES (gen_random_uuid(), 'Telephone enquiries answered', 'Oriau ateb ymholiadau dros y ffôn'),
- (gen_random_uuid(), 'Bailiff office open', 'Oriau agor swyddfa''r Beiliaid'),
- (gen_random_uuid(), 'Counter open', 'Oriau agor y cownter'),
- (gen_random_uuid(), 'Counter service by appointment only', 'Gwasaneth cownter drwy apwyntiad yn unig'),
  (gen_random_uuid(), 'Court open', 'Oriau agor y Llys'),
  (gen_random_uuid(), 'Tribunal open', 'Oriau agor y tribiwnlys'),
  (gen_random_uuid(), 'Telephone payments accepted', 'Derbynnir taliadau ffôn'),
  (gen_random_uuid(), 'Magistrates'' Court open', 'Llys Ynadon ar agor'),
  (gen_random_uuid(), 'Crown Court open', 'Llys y Goron ar agor'),
  (gen_random_uuid(), 'Family Court open', 'Llys Teulu ar agor'),
+ (gen_random_uuid(), 'No counter service available', 'CHANGE ME / NEED WELSH'),
  (gen_random_uuid(), 'County Court open', 'Llys Sirol ar agor');
 
 -- Bulk seed region from search_region
