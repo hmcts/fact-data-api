@@ -1,8 +1,6 @@
 -- ------------------------------------------
 -- ------   Type data required for FaCT  ----
 -- ------------------------------------------
--- Generated: 2025-10-09T12:32:00.143057Z
-
 -- Ensure that pgcrypto is available for gen_random_uuid(). It is or should be
 -- on Azure Flexible Server and our local too, but more so for safety.
 CREATE
@@ -414,7 +412,6 @@ VALUES (gen_random_uuid(), 'Magistrates'' Court'),
        (gen_random_uuid(), 'Crown Court');
 
 -- Seed `service` from search_service
--- Note that the service_areas array column will need to be set in the future
 INSERT INTO service (id, name, name_cy, description, description_cy)
 VALUES (gen_random_uuid(), 'Money', 'Arian',
         'Money claims, rent or mortgage disputes, bankruptcy, job disputes related to pay, appealing a tax or benefits decision.',
