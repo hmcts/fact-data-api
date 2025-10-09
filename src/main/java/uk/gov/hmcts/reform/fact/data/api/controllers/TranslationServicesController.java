@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -63,6 +64,8 @@ public class TranslationServicesController {
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Translation object to create or update", required = true)
         @Valid @RequestBody Translation translation) {
-        return ResponseEntity.ok(translationService.setTranslation(UUID.fromString(courtId), translation));
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(translationService.setTranslation(UUID.fromString(courtId), translation));
     }
 }
