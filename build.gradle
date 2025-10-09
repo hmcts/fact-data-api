@@ -156,6 +156,7 @@ repositories {
 ext {
   log4JVersion = "2.25.2"
   logbackVersion = "1.5.19"
+  restAssuredVersion = "5.5.6"
 }
 
 ext['snakeyaml.version'] = '2.0'
@@ -188,8 +189,12 @@ dependencies {
 
   integrationTestImplementation group: 'org.testcontainers', name: 'postgresql', version: '1.21.3'
 
-  smokeTestImplementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.6'
-}
+  smokeTestImplementation group: 'io.rest-assured', name: 'rest-assured', version: restAssuredVersion
+
+  functionalTestImplementation group: 'io.rest-assured', name: 'rest-assured', version: restAssuredVersion
+  functionalTestImplementation group: 'org.assertj', name: 'assertj-core', version: '3.26.0'
+  functionalTestImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.17.1'
+  functionalTestImplementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '9.31'}
 
 bootJar {
   archiveFileName = "fact-data-api.jar"
