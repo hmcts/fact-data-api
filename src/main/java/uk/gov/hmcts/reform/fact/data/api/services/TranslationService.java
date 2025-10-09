@@ -29,9 +29,9 @@ public class TranslationService {
      */
     public Translation getTranslationByCourtId(UUID courtId) {
         return translationRepository.findByCourtId(courtService.getCourtById(courtId).getId())
-            .orElseThrow(() -> new
-                TranslationNotFoundException("No translation services found for court id: " + courtId)
-            );
+                .orElseThrow(() -> new
+                        TranslationNotFoundException("No translation services found for court id: " + courtId)
+                );
     }
 
     /**

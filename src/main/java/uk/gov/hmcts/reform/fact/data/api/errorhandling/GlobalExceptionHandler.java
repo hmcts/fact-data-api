@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -11,6 +12,8 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNot
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -43,6 +46,19 @@ public class GlobalExceptionHandler {
             .orElse("Invalid input");
 
         return generateExceptionResponse(message);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handle(MethodArgumentNotValidException ex) {
+        log.error("400, error while validating request body. Details: {}", ex.getMessage());
+
+        return ex.getBindingResult().getFieldErrors().stream()
+            .collect(Collectors.toMap(
+                fieldError -> fieldError.getField(),
+                fieldError -> fieldError.getDefaultMessage(),
+                (existing, replacement) -> existing
+            ));
     }
 
     private ExceptionResponse generateExceptionResponse(String message) {

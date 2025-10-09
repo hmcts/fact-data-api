@@ -13,7 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -36,7 +36,6 @@ public class Translation {
     private UUID id;
 
     @Schema(description = "The ID of the associated Court", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull
     @Column(name = "court_id")
     private UUID courtId;
 
@@ -47,9 +46,16 @@ public class Translation {
 
     @Schema(description = "The email address for Translation services")
     @Size(max = 254, message = "Email address should be no more than 254 characters")
+    @Pattern(
+        regexp = "^(|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$",
+        message = "Invalid email address format"
+    )
     private String email;
 
     @Schema(description = "The phone number for Translation services")
-    @Size(max = 20, message = "Phone number should be no more than 20 characters")
+    @Pattern(
+        regexp = "^(|[0-9]{10,20})$",
+        message = "Phone number must be 10-20 digits"
+    )
     private String phoneNumber;
 }
