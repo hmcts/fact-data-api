@@ -2,7 +2,7 @@
 -- ------   Type data required for FaCT  ----
 -- ------------------------------------------
 -- Ensure that pgcrypto is available for gen_random_uuid(). It is or should be
--- on Azure Flexible Server and our local too, but more so for safety.
+-- on Azure Flexible Server and our local too, but more so for safety
 CREATE
 EXTENSION IF NOT EXISTS pgcrypto;
 
