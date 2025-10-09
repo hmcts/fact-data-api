@@ -41,7 +41,6 @@ public class CourtTranslation {
     private UUID id;
 
     @Schema(description = "The ID of the associated Court", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull
     @Column(name = "court_id")
     private UUID courtId;
 
