@@ -12,7 +12,6 @@ import static org.springframework.http.HttpStatus.OK;
 public final class HealthFunctionalTest {
 
     private static final String HEALTH_ENDPOINT = "/health";
-
     private static HttpClient http;
 
     @BeforeAll
