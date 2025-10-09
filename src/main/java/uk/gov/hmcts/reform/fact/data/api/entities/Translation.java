@@ -54,8 +54,8 @@ public class Translation {
 
     @Schema(description = "The phone number for Translation services")
     @Pattern(
-        regexp = "^(|[0-9]{10,20})$",
-        message = "Phone number must be 10-20 digits"
+        regexp = "^(|[0-9 ]{10,20})$",
+        message = "Phone number must be 10-20 digits and may include spaces"
     )
     private String phoneNumber;
 }

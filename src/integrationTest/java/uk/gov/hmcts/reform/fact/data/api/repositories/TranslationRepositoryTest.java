@@ -51,7 +51,7 @@ public class TranslationRepositoryTest {
         var translation = new Translation();
         translation.setCourtId(court.getId());
         translation.setEmail("me@here.com");
-        translation.setPhoneNumber("01234567890");
+        translation.setPhoneNumber("01234 567 890");
 
         var savedTranslation = translationRepository.save(translation);
 
@@ -59,7 +59,7 @@ public class TranslationRepositoryTest {
 
         assertNotNull(foundTranslation);
         assertEquals("me@here.com", foundTranslation.getEmail());
-        assertEquals("01234567890", foundTranslation.getPhoneNumber());
+        assertEquals("01234 567 890", foundTranslation.getPhoneNumber());
         assertEquals(court.getId(), foundTranslation.getCourtId());
 
     }
