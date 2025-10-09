@@ -1,9 +1,6 @@
 -- ------------------------------------------
 -- ------   Type data required for FaCT  ----
 -- ------------------------------------------
--- Ensure that pgcrypto is available for gen_random_uuid(). It is or should be
--- on Azure Flexible Server and our local too, but more so for safety
-BEGIN;
 -- Bulk seed local_authority_types from search_localauthority
 INSERT INTO local_authority_types (id, name)
 VALUES (gen_random_uuid(), 'Bolton Borough Council'),
@@ -322,7 +319,6 @@ VALUES (gen_random_uuid(), 'Telephone enquiries answered', 'Oriau ateb ymholiada
  (gen_random_uuid(), 'Counter open', 'Oriau agor y cownter'),
  (gen_random_uuid(), 'Counter service by appointment only', 'Gwasaneth cownter drwy apwyntiad yn unig'),
  (gen_random_uuid(), 'Court open', 'Oriau agor y Llys'),
- (gen_random_uuid(), 'No counter service available', 'Dim gwasanaeth cownter ar gael'),
  (gen_random_uuid(), 'Tribunal open', 'Oriau agor y tribiwnlys'),
  (gen_random_uuid(), 'Telephone payments accepted', 'Derbynnir taliadau ffôn'),
  (gen_random_uuid(), 'Magistrates'' Court open', 'Llys Ynadon ar agor'),
@@ -512,5 +508,3 @@ VALUES (gen_random_uuid(), 'Money', 'Arian',
  (gen_random_uuid(), 'High Court district registries', 'Cofrestrfeydd dosbarth yr Uchel Lys',
   'Courts that deal with the most serious and high profile cases in criminal and civil law.',
   'Llysoedd sy''n delio â''r achosion mwyaf difrifol a phroffil uchel mewn cyfraith droseddol a chyfraith sifil.');
-
-COMMIT;

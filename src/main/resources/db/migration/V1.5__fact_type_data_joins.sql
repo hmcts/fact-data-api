@@ -1,4 +1,3 @@
-BEGIN;
 -- Cater for the scenario where the data is inserted
 -- but the area_of_law_id is missing from the service_area table.
 -- This saves a tiny bit of performance compared to running each separately per above insert
@@ -73,5 +72,3 @@ WITH mapping(service_name, area_name) AS (VALUES ('Childcare and parenting', 'Ad
 UPDATE service s
 SET service_areas = COALESCE(agg.ids, ARRAY[]::uuid[]) FROM agg
 WHERE lower (s.name) = lower (agg.service_name);
-
-COMMIT;
