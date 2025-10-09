@@ -1,10 +1,11 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
-
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,15 +44,25 @@ public class TranslationServicesController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    public ResponseEntity<Translation> getTranslationServicesByCourtId(@ValidUUID @PathVariable String courtId) {
+    public ResponseEntity<Translation> getTranslationServicesByCourtId(
+        @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
         return ResponseEntity.ok(translationService.getTranslationByCourtId(UUID.fromString(courtId)));
     }
 
     @PostMapping("/v1/translation-services")
-    public ResponseEntity<Translation> createTranslationServices(
-        @ValidUUID @PathVariable UUID courtId,
-        @RequestBody Translation translation
-    ) {
-        return ResponseEntity.ok(translationService.createTranslation(courtId, translation));
+    @Operation(
+        summary = "Create or update translation services for a court",
+        description = "Creates a new translation service for a court or updates the existing one."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Successfully created/updated translation service"),
+        @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or invalid request body"),
+        @ApiResponse(responseCode = "404", description = "Court not found")
+    })
+    public ResponseEntity<Translation> setTranslationServices(
+        @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
+        @Parameter(description = "Translation object to create or update", required = true)
+        @Valid @RequestBody Translation translation) {
+        return ResponseEntity.ok(translationService.setTranslation(UUID.fromString(courtId), translation));
     }
 }
