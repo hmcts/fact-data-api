@@ -3,9 +3,6 @@
 -- ------------------------------------------
 -- Ensure that pgcrypto is available for gen_random_uuid(). It is or should be
 -- on Azure Flexible Server and our local too, but more so for safety
-CREATE
-EXTENSION IF NOT EXISTS pgcrypto;
-
 BEGIN;
 -- Bulk seed local_authority_types from search_localauthority
 INSERT INTO local_authority_types (id, name)
