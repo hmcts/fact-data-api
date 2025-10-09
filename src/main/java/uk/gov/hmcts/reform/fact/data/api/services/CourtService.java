@@ -16,8 +16,16 @@ public class CourtService {
         this.courtRepository = courtRepository;
     }
 
+    /**
+     * Get a court by id.
+     *
+     * @param courtId The ID of the court to get.
+     * @return The court entity.
+     * @throws NotFoundException if the court is not found.
+     */
     public Court getCourtById(UUID courtId) {
-        return courtRepository.findById(courtId).orElseThrow(() -> new NotFoundException(
-            "Court not found, ID: " + courtId));
+        return courtRepository.findById(courtId).orElseThrow(
+            () -> new NotFoundException("Court not found, ID: " + courtId)
+        );
     }
 }
