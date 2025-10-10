@@ -9,7 +9,13 @@ import static io.restassured.RestAssured.given;
 /**
  * Simple HTTP wrapper for functional tests.
  */
-public record HttpClient(TestConfig config) {
+public final class HttpClient {
+
+    private final TestConfig config;
+
+    public HttpClient(final TestConfig config) {
+        this.config = config;
+    }
 
     public Response doGet(final String path) {
         return given()
