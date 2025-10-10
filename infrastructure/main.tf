@@ -43,6 +43,9 @@ module "postgresql" {
   pgsql_server_configuration = [{
      name  = "azure.extensions"
      value = "pgcrypto"
+  }, {
+    "name" : "backslash_quote",
+    "value" : "on"
   }]
 }
 
