@@ -40,6 +40,13 @@ module "postgresql" {
   business_area        = "cft"
   pgsql_version        = "16"
   admin_user_object_id = var.jenkins_AAD_objectId
+  pgsql_server_configuration = [{
+     name  = "azure.extensions"
+     value = "pgcrypto"
+  }, {
+    "name" : "backslash_quote",
+    "value" : "on"
+  }]
 }
 
 # Store postgres secrets
