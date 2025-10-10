@@ -13,7 +13,7 @@ services:
       - DB_USER=fact
       - DB_PASSWORD=fact
   fact-database:
-    image: hmctspublic.azurecr.io/imported/postgres:16-alpine
+    image: hmctspublic.azurecr.io/imported/postgres:17-alpine
     environment:
       POSTGRES_DB: fact
       POSTGRES_USER: fact
