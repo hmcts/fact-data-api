@@ -1,0 +1,57 @@
+package uk.gov.hmcts.reform.fact.data.api.entities;
+
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import io.hypersistence.utils.hibernate.type.array.ListArrayType;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import org.hibernate.annotations.TimeZoneStorage;
+import org.hibernate.annotations.TimeZoneStorageType;
+import org.hibernate.annotations.Type;
+
+@Data
+@Entity
+@Table(name = "users")
+public class User {
+
+    @Schema(
+        description = "The internal ID - assigned by the server during creation",
+        accessMode = Schema.AccessMode.READ_ONLY
+    )
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @Schema(description = "The User's email address", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull
+    @Size(max = ValidationConstants.EMAIL_MAX_LENGTH, message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE)
+    @Pattern(regexp = ValidationConstants.EMAIL_REGEX, message = ValidationConstants.EMAIL_REGEX_MESSAGE)
+    private String email;
+
+    @Schema(description = "The User's SSO ID", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull
+    private UUID ssoId;
+
+    @Schema(description = "The User's favourite Courts")
+    @Type(ListArrayType.class)
+    @Column(columnDefinition = "uuid[]")
+    private List<UUID> favouriteCourts;
+
+    @Schema(description = "The User's last login date/time")
+    @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)
+    private ZonedDateTime lastLogin;
+
+}

@@ -9,13 +9,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "region")
-public class Region {
+@Table(name = "contact_description_types")
+public class ContactDescriptionType {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
@@ -25,13 +24,12 @@ public class Region {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Schema(description = "The name of the Region")
-    @NotBlank(message = "The name of the Region must be specified")
-    @Size(min = 5, max = 250, message = "Name should be less than 255 chars")
+    @Schema(description = "The name of the Contact Description Type")
+    @NotBlank(message = "Contact Description Type name must be specified")
     private String name;
 
-    @Schema(description = "The Region's country")
-    @Size(min = 5, max = 250, message = "Country should be less than 255 chars")
-    private String country;
+    @Schema(description = "The Welsh name of the Contact Description Type")
+    @NotBlank(message = "Contact Description Type Welsh name must be specified")
+    private String nameCy;
 
 }

@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
-import uk.gov.hmcts.reform.fact.data.api.entities.Translation;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,13 +16,13 @@ import org.springframework.test.context.ActiveProfiles;
 // or jakarta.validation handling
 @SpringBootTest
 @ActiveProfiles("test")
-public class TranslationRepositoryTest {
+public class CourtCourtTranslationRepositoryTest {
 
     @Autowired
     private CourtRepository courtRepository;
 
     @Autowired
-    private TranslationRepository translationRepository;
+    private CourtTranslationRepository courtTranslationRepository;
 
     @Autowired
     private RegionRepository regionRepository;
@@ -48,18 +48,18 @@ public class TranslationRepositoryTest {
 
         court = courtRepository.save(court);
 
-        var translation = new Translation();
+        var translation = new CourtTranslation();
         translation.setCourtId(court.getId());
         translation.setEmail("me@here.com");
-        translation.setPhoneNumber("+44 01234 433222");
+        translation.setPhoneNumber("01234 433222");
 
-        var savedTranslation = translationRepository.save(translation);
+        var savedTranslation = courtTranslationRepository.save(translation);
 
-        var foundTranslation = translationRepository.findById(savedTranslation.getId()).orElse(null);
+        var foundTranslation = courtTranslationRepository.findById(savedTranslation.getId()).orElse(null);
 
         assertNotNull(foundTranslation);
         assertEquals("me@here.com", foundTranslation.getEmail());
-        assertEquals("+44 01234 433222", foundTranslation.getPhoneNumber());
+        assertEquals("01234 433222", foundTranslation.getPhoneNumber());
         assertEquals(court.getId(), foundTranslation.getCourtId());
 
     }

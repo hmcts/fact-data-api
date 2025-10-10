@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
+
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -11,45 +13,39 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
-@Table(name = "court_translation")
-public class Translation {
+@Table(name = "court_postcodes")
+public class CourtPostcode {
 
     @Schema(
-        description = "The internal ID - assigned during creation",
+        description = "The internal ID - assigned by the server during creation",
         accessMode = Schema.AccessMode.READ_ONLY
     )
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(unique = true, nullable = false, insertable = false, updatable = false)
     private UUID id;
 
-    @Schema(description = "The ID of the associated Court", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "The ID of the associated Court")
     @NotNull
     @Column(name = "court_id")
     private UUID courtId;
 
     @JsonIgnore
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
     private Court court;
 
-    @Schema(description = "The email address for Translation services")
-    @Size(max = 254, message = "Email address should be no more than 254 characters")
-    private String email;
+    @Schema(description = "The postcode")
+    @Size(max = ValidationConstants.POSTCODE_MAX_LENGTH, message = ValidationConstants.POSTCODE_MAX_LENGTH_MESSAGE)
+    @Pattern(regexp = ValidationConstants.POSTCODE_REGEX, message = ValidationConstants.POSTCODE_REGEX_MESSAGE)
+    private String postcode;
 
-    @Schema(description = "The phone number for Translation services")
-    @Size(max = 20, message = "Phone number should be no more than 20 characters")
-    private String phoneNumber;
 }
