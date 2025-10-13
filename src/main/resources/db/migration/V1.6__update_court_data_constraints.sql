@@ -5,6 +5,10 @@ ALTER TABLE court_photo
       REFERENCES users (id)
       ON DELETE SET NULL;
 
--- Add NOT NULL constraint to file_link column
+-- Add NOT NULL constraint to file_link column in court_photo table
 ALTER TABLE court_photo
   ALTER COLUMN file_link SET NOT NULL;
+
+-- Add NOT NULL constraint to postcode column court_postcodes tableØ
+ALTER TABLE court_postcodes
+  ALTER COLUMN postcode SET NOT NULL;
