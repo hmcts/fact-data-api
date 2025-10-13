@@ -1,10 +1,10 @@
 package uk.gov.hmcts.reform.fact.data.api.repositories;
 
-import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningTime;
 
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CourtOpeningTimeRepository extends JpaRepository<OpeningHourType, UUID> {
+public interface CourtOpeningTimeRepository extends JpaRepository<CourtOpeningTime, UUID> {
 }
