@@ -49,10 +49,9 @@ spring:
     database: POSTGRESQL
     hibernate:
       ddl-auto: none
-  # sets the default property inclusion to include all fields,
-  # regardless of their null/empty state
+  # sets the default property inclusion to omit blank or null values from serialised objects
   jackson:
-    default-property-inclusion: always
+    default-property-inclusion: non_empty
 
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
