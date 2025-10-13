@@ -19,21 +19,21 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
 import org.hibernate.annotations.UpdateTimestamp;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Entity
 @Table(name = "court")
-public class Court {
+public class Court extends BaseEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
@@ -72,7 +72,7 @@ public class Court {
     @Setter(AccessLevel.NONE)
     private ZonedDateTime lastUpdatedAt;
 
-    @Schema(description = "The ID of the associated Region", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "The ID of the associated Region")
     @NotNull
     @Column(name = "region_id")
     private UUID regionId;
@@ -90,4 +90,5 @@ public class Court {
 
     @Schema(description = "The Court's Master Reference Data ID")
     private String mrdId;
+
 }

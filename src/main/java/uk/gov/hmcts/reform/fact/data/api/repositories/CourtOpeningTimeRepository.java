@@ -1,6 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.repositories;
 
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningTime;
 
 import java.util.UUID;
 
@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface CourtRepository extends JpaRepository<Court, UUID> {
+public interface CourtOpeningTimeRepository extends JpaRepository<CourtOpeningTime, UUID> {
 }
