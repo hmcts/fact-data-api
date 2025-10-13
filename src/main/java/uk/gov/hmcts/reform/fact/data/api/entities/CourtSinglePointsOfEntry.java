@@ -18,7 +18,7 @@ import org.hibernate.annotations.Type;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_single_points_of_entry")
-public class CourtSinglePointsOfEntry extends IdBasedEntityWithCourt {
+public class CourtSinglePointsOfEntry extends BaseCourtEntity {
 
     @Schema(description = "The Area of Law Type IDs")
     @Type(ListArrayType.class)

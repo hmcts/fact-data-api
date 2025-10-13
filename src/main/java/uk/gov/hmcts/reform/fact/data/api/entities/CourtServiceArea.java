@@ -20,7 +20,7 @@ import org.hibernate.annotations.Type;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_service_areas", schema = "public")
-public class CourtServiceArea extends IdBasedEntityWithCourt {
+public class CourtServiceArea extends BaseCourtEntity {
 
     @Schema(description = "The Service Area IDs")
     @Type(ListArrayType.class)

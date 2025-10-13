@@ -33,7 +33,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court")
-public class Court extends IdBasedEntity {
+public class Court extends BaseEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",

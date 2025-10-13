@@ -27,7 +27,7 @@ import org.hibernate.annotations.Type;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "users")
-public class User extends IdBasedEntity {
+public class User extends BaseEntity {
 
     @Schema(description = "The User's email address", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 1)
     @NotBlank(message = "The User's email address must be specified")

@@ -15,7 +15,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_professional_information")
-public class CourtProfessionalInformation extends IdBasedEntityWithCourt {
+public class CourtProfessionalInformation extends BaseCourtEntity {
 
     @Schema(description = "Interview room availability status")
     @NotNull

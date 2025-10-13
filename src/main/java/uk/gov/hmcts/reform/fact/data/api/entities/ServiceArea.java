@@ -13,6 +13,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,7 +24,15 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "service_area", schema = "public")
-public class ServiceArea extends IdBasedEntityWithName {
+public class ServiceArea extends BaseEntity {
+
+    @Schema(description = "The name")
+    @NotBlank(message = "The name must be specified")
+    private String name;
+
+    @Schema(description = "The Welsh language name")
+    @NotBlank(message = "The Welsh language name must be specified")
+    private String nameCy;
 
     @Schema(description = "The description")
     private String description;

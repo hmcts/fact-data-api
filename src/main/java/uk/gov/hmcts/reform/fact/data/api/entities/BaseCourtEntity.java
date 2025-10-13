@@ -18,7 +18,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @MappedSuperclass
-public class IdBasedEntityWithCourt extends IdBasedEntity {
+public class BaseCourtEntity extends BaseEntity {
 
     @Schema(description = "The ID of the associated Court", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull

@@ -13,7 +13,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "local_authority_types")
-public class LocalAuthorityType extends IdBasedEntity {
+public class LocalAuthorityType extends BaseEntity {
 
     @Schema(description = "The name of the Local Authority Type")
     @NotBlank(message = "Local Authority Type name must be specified")

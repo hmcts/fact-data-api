@@ -22,7 +22,7 @@ import org.hibernate.annotations.Type;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_local_authorities")
-public class CourtLocalAuthority extends IdBasedEntityWithCourt {
+public class CourtLocalAuthority extends BaseCourtEntity {
 
     @Schema(description = "The ID of the associated Area of Law")
     @Column(name = "area_of_law_id")

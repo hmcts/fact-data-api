@@ -14,7 +14,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "region")
-public class Region extends IdBasedEntity {
+public class Region extends BaseEntity {
 
     @Schema(description = "The name of the Region")
     @NotBlank(message = "The name of the Region must be specified")

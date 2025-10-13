@@ -23,7 +23,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_contact_details")
-public class CourtContactDetail extends IdBasedEntityWithCourt {
+public class CourtContactDetail extends BaseCourtEntity {
 
     @Schema(description = "The ID of the associated Contact Description Type")
     @Column(name = "court_contact_description_id")

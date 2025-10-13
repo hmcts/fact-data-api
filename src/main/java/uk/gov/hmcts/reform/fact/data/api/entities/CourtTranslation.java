@@ -16,7 +16,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_translation")
-public class CourtTranslation extends IdBasedEntityWithCourt {
+public class CourtTranslation extends BaseCourtEntity {
 
     @Schema(description = "The email address for Translation services")
     @Size(max = ValidationConstants.EMAIL_MAX_LENGTH, message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE)

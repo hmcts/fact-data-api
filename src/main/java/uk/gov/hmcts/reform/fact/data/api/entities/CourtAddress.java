@@ -27,7 +27,7 @@ import org.hibernate.annotations.Type;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_address")
-public class CourtAddress extends IdBasedEntityWithCourt {
+public class CourtAddress extends BaseCourtEntity {
 
     @Schema(description = "The first address line")
     @Size(max = 255, message = "Address line should be 255 characters or less")

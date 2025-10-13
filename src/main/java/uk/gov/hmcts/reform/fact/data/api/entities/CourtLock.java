@@ -27,7 +27,7 @@ import org.hibernate.annotations.TimeZoneStorageType;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_lock")
-public class CourtLock extends IdBasedEntityWithCourt {
+public class CourtLock extends BaseCourtEntity {
 
     @Schema(description = "The ID of the associated User")
     @NotNull

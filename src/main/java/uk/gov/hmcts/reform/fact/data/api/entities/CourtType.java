@@ -13,7 +13,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_types", schema = "public")
-public class CourtType extends IdBasedEntity {
+public class CourtType extends BaseEntity {
 
     @Schema(description = "The name of the Court Type")
     @NotBlank(message = "Court Type name must be specified")

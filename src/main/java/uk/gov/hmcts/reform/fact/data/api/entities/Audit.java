@@ -30,7 +30,7 @@ import org.hibernate.type.SqlTypes;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "audit")
-public class Audit extends IdBasedEntityWithCourt {
+public class Audit extends BaseCourtEntity {
 
     @Schema(description = "The ID of the associated User")
     @NotNull

@@ -23,7 +23,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_opening_times")
-public class CourtOpeningTime extends IdBasedEntityWithCourt {
+public class CourtOpeningTime extends BaseCourtEntity {
 
     @Schema(description = "The ID of the associated Opening Hour Type")
     @NotNull

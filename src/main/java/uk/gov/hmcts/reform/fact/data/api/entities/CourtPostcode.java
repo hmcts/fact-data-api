@@ -17,7 +17,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_postcodes")
-public class CourtPostcode extends IdBasedEntityWithCourt {
+public class CourtPostcode extends BaseCourtEntity {
 
     @Schema(description = "The postcode", minLength = 1)
     @NotBlank(message = "The postcode must be specified")

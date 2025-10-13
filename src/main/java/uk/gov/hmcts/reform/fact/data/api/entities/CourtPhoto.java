@@ -27,7 +27,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_photo")
-public class CourtPhoto extends IdBasedEntityWithCourt {
+public class CourtPhoto extends BaseCourtEntity {
 
     @Schema(description = "Link to the image file")
     @NotBlank(message = "Link to the image file must be specified")

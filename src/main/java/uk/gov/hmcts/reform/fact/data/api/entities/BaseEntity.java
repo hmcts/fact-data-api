@@ -11,7 +11,7 @@ import lombok.Data;
 
 @Data
 @MappedSuperclass
-public class IdBasedEntity {
+public class BaseEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",

@@ -18,7 +18,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_fax")
-public class CourtFax extends IdBasedEntityWithCourt {
+public class CourtFax extends BaseCourtEntity {
 
     @Schema(description = "Contact fax number", minLength = 1)
     @NotBlank(message = "The contact fax number must be specified")

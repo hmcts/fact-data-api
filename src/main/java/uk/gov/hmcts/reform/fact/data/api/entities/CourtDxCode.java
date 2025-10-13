@@ -12,7 +12,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "court_dxcodes")
-public class CourtDxCode extends IdBasedEntityWithCourt {
+public class CourtDxCode extends BaseCourtEntity {
 
     @Schema(description = "The DX Code")
     private Integer dxCode;
