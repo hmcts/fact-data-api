@@ -1,29 +1,20 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
-import java.util.UUID;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Entity
 @Table(name = "region")
-public class Region {
-
-    @Schema(
-        description = "The internal ID - assigned by the server during creation",
-        accessMode = Schema.AccessMode.READ_ONLY
-    )
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+public class Region extends IdBasedEntity {
 
     @Schema(description = "The name of the Region")
     @NotBlank(message = "The name of the Region must be specified")

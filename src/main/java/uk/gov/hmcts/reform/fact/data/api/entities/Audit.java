@@ -9,16 +9,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.TimeZoneStorage;
@@ -27,17 +26,11 @@ import org.hibernate.annotations.Type;
 import org.hibernate.type.SqlTypes;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Entity
 @Table(name = "audit")
-public class Audit {
-
-    @Schema(
-        description = "The internal ID - assigned by the server during creation",
-        accessMode = Schema.AccessMode.READ_ONLY
-    )
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+public class Audit extends IdBasedEntityWithCourt {
 
     @Schema(description = "The ID of the associated User")
     @NotNull
@@ -69,15 +62,5 @@ public class Audit {
     @CreationTimestamp
     @Setter(AccessLevel.NONE)
     private ZonedDateTime createdAt;
-
-    @Schema(description = "The ID of the associated Court")
-    @NotNull
-    @Column(name = "court_id")
-    private UUID courtId;
-
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "court_id", insertable = false, updatable = false)
-    private Court court;
 
 }

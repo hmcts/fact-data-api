@@ -10,36 +10,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Entity
 @Table(name = "service_area", schema = "public")
-public class ServiceArea {
-
-    @Schema(
-        description = "The internal ID - assigned by the server during creation",
-        accessMode = Schema.AccessMode.READ_ONLY
-    )
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
-
-    @Schema(description = "The name of the Service Area")
-    @NotBlank(message = "The name of the Service Area must be specified")
-    private String name;
-
-    @Schema(description = "The Welsh language name of the Service Area")
-    @NotBlank(message = "The Welsh language name of the Service Area must be specified")
-    private String nameCy;
+public class ServiceArea extends IdBasedEntityWithName {
 
     @Schema(description = "The description")
     private String description;
