@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -43,7 +44,8 @@ public class CourtPostcode {
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
     private Court court;
 
-    @Schema(description = "The postcode")
+    @Schema(description = "The postcode", minLength = 1)
+    @NotBlank(message = "The postcode must be specified")
     @Size(max = ValidationConstants.POSTCODE_MAX_LENGTH, message = ValidationConstants.POSTCODE_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.POSTCODE_REGEX, message = ValidationConstants.POSTCODE_REGEX_MESSAGE)
     private String postcode;
