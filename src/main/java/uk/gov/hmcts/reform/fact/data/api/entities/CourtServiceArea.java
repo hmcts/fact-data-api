@@ -10,8 +10,6 @@ import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -52,7 +50,7 @@ public class CourtServiceArea {
     private List<UUID> serviceAreaId;
 
     @Schema(description = "The catchment type")
-    @Enumerated(EnumType.STRING)
+    // conversion is handled by a custom Converter implementation
     private CatchmentType catchmentType;
 
 }

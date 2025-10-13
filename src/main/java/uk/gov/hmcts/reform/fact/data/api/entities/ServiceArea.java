@@ -9,8 +9,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -65,13 +63,13 @@ public class ServiceArea {
     private String textCy;
 
     @Schema(description = "The catchment method")
-    @Enumerated(EnumType.STRING)
+    // conversion is handled by a custom Converter implementation
     private CatchmentMethod catchmentMethod;
 
     @Schema(description = "The ID of the associated Area of Law")
     @NotNull
     @Column(name = "area_of_law_id")
-    private UUID courtId;
+    private UUID areaOfLawId;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
@@ -79,10 +77,9 @@ public class ServiceArea {
     private AreaOfLawType areaOfLaw;
 
     @Schema(description = "The service area type")
-    @Enumerated(EnumType.STRING)
+    // conversion is handled by a custom Converter implementation
     private ServiceAreaType type;
 
     @Schema(description = "Sort order priority")
     private Integer sortOrder;
-
 }
