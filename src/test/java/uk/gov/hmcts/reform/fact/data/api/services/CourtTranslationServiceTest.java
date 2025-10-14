@@ -7,10 +7,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.Translation;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.repositories.TranslationRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -25,17 +25,17 @@ import static org.mockito.Mockito.when;
 class CourtTranslationServiceTest {
 
     @Mock
-    private TranslationRepository translationRepository;
+    private CourtTranslationRepository courtTranslationRepository;
 
     @Mock
     private CourtService courtService;
 
     @InjectMocks
-    private TranslationService translationService;
+    private CourtTranslationService courtTranslationService;
 
     private UUID courtId;
     private Court court;
-    private Translation translation;
+    private CourtTranslation translation;
 
     @BeforeEach
     void setup() {
@@ -44,7 +44,7 @@ class CourtTranslationServiceTest {
         court.setId(courtId);
         court.setName("Test Court");
 
-        translation = new Translation();
+        translation = new CourtTranslation();
         translation.setEmail("test@example.com");
         translation.setPhoneNumber("1234567890");
     }
@@ -52,9 +52,9 @@ class CourtTranslationServiceTest {
     @Test
     void getTranslationByCourtIdReturnsTranslationWhenFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(translationRepository.findByCourtId(courtId)).thenReturn(Optional.of(translation));
+        when(courtTranslationRepository.findByCourtId(courtId)).thenReturn(Optional.of(translation));
 
-        Translation result = translationService.getTranslationByCourtId(courtId);
+        CourtTranslation result = courtTranslationService.getTranslationByCourtId(courtId);
 
         assertThat(result).isEqualTo(translation);
     }
@@ -62,10 +62,10 @@ class CourtTranslationServiceTest {
     @Test
     void getTranslationByCourtIdThrowsTranslationNotFoundWhenNotFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(translationRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
+        when(courtTranslationRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
 
         TranslationNotFoundException exception = assertThrows(TranslationNotFoundException.class, () ->
-            translationService.getTranslationByCourtId(courtId)
+            courtTranslationService.getTranslationByCourtId(courtId)
         );
 
         assertThat(exception.getMessage()).contains(courtId.toString());
@@ -76,33 +76,33 @@ class CourtTranslationServiceTest {
         when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException("Court not found"));
 
         assertThrows(NotFoundException.class, () ->
-            translationService.getTranslationByCourtId(courtId)
+            courtTranslationService.getTranslationByCourtId(courtId)
         );
     }
 
     @Test
     void setTranslationCreatesNewTranslationWhenNoneExists() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(translationRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
-        when(translationRepository.save(translation)).thenReturn(translation);
+        when(courtTranslationRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
+        when(courtTranslationRepository.save(translation)).thenReturn(translation);
 
-        Translation result = translationService.setTranslation(courtId, translation);
+        CourtTranslation result = courtTranslationService.setTranslation(courtId, translation);
 
         assertThat(result.getCourtId()).isEqualTo(courtId);
-        verify(translationRepository).save(translation);
+        verify(courtTranslationRepository).save(translation);
     }
 
     @Test
     void setTranslationUpdatesExistingTranslation() {
-        Translation existing = new Translation();
+        CourtTranslation existing = new CourtTranslation();
         existing.setId(UUID.randomUUID());
         existing.setCourtId(courtId);
 
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(translationRepository.findByCourtId(courtId)).thenReturn(Optional.of(existing));
-        when(translationRepository.save(any())).thenReturn(translation);
+        when(courtTranslationRepository.findByCourtId(courtId)).thenReturn(Optional.of(existing));
+        when(courtTranslationRepository.save(any())).thenReturn(translation);
 
-        Translation result = translationService.setTranslation(courtId, translation);
+        CourtTranslation result = courtTranslationService.setTranslation(courtId, translation);
 
         assertThat(result).isEqualTo(translation);
         assertThat(result.getId()).isEqualTo(existing.getId());
@@ -114,7 +114,7 @@ class CourtTranslationServiceTest {
         when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException("Court not found"));
 
         assertThrows(NotFoundException.class, () ->
-            translationService.setTranslation(courtId, translation)
+            courtTranslationService.setTranslation(courtId, translation)
         );
     }
 }

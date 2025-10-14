@@ -15,22 +15,22 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.reform.fact.data.api.entities.Translation;
-import uk.gov.hmcts.reform.fact.data.api.services.TranslationService;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtTranslationService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.UUID;
 
-@Tag(name = "Translation Services", description = "Operations related to translation services available for courts")
+@Tag(name = "Court Translation", description = "Operations related to translation services available for courts")
 @RestController
 @Validated
 @RequestMapping("/courts/{courtId}")
-public class TranslationServicesController {
+public class CourtTranslationController {
 
-    private final TranslationService translationService;
+    private final CourtTranslationService courtTranslationService;
 
-    public TranslationServicesController(TranslationService translationService) {
-        this.translationService = translationService;
+    public CourtTranslationController(CourtTranslationService courtTranslationService) {
+        this.courtTranslationService = courtTranslationService;
     }
 
     @GetMapping("/v1/translation-services")
@@ -45,9 +45,9 @@ public class TranslationServicesController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    public ResponseEntity<Translation> getTranslationServicesByCourtId(
+    public ResponseEntity<CourtTranslation> getTranslationServicesByCourtId(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
-        return ResponseEntity.ok(translationService.getTranslationByCourtId(UUID.fromString(courtId)));
+        return ResponseEntity.ok(courtTranslationService.getTranslationByCourtId(UUID.fromString(courtId)));
     }
 
     @PostMapping("/v1/translation-services")
@@ -60,12 +60,12 @@ public class TranslationServicesController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    public ResponseEntity<Translation> setTranslationServices(
+    public ResponseEntity<CourtTranslation> setTranslationServices(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Translation object to create or update", required = true)
-        @Valid @RequestBody Translation translation) {
+        @Valid @RequestBody CourtTranslation courtTranslation) {
         return ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(translationService.setTranslation(UUID.fromString(courtId), translation));
+            .body(courtTranslationService.setTranslation(UUID.fromString(courtId), courtTranslation));
     }
 }
