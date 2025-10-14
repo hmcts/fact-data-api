@@ -125,6 +125,9 @@ sonarqube {
   properties {
     property "sonar.projectName", "fact-data-api"
     property "sonar.projectKey", "uk.gov.hmcts.reform:fact-data-api"
+    // entities are atomic in the repo and necessarily have some duplication that
+    // we need to ignore.
+    property "sonar.cpd.exclusions", "**/entities/*.java"
   }
 }
 
@@ -177,6 +180,7 @@ dependencies {
   //TODO: This can be removed when we implement auth as it will be bundled with spring/azure starter.
   implementation group: 'com.azure', name: 'azure-identity', version: '1.18.0'
 
+  implementation group: 'io.hypersistence', name: 'hypersistence-utils-hibernate-63', version: '3.10.3'
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '6.1.9'
   //TODO: This may not be needed
@@ -220,5 +224,5 @@ rootProject.tasks.named("processFunctionalTestResources") {
 }
 
 wrapper {
-    distributionType = Wrapper.DistributionType.ALL
+  distributionType = Wrapper.DistributionType.ALL
 }

@@ -20,6 +20,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,8 +30,9 @@ import org.hibernate.annotations.TimeZoneStorageType;
 import org.hibernate.annotations.UpdateTimestamp;
 
 @Data
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
-@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "court")
 public class Court {
@@ -72,7 +74,7 @@ public class Court {
     @Setter(AccessLevel.NONE)
     private ZonedDateTime lastUpdatedAt;
 
-    @Schema(description = "The ID of the associated Region", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "The ID of the associated Region")
     @NotNull
     @Column(name = "region_id")
     private UUID regionId;
@@ -90,4 +92,5 @@ public class Court {
 
     @Schema(description = "The Court's Master Reference Data ID")
     private String mrdId;
+
 }
