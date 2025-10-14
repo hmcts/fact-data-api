@@ -175,10 +175,7 @@ dependencies {
   implementation group: 'org.flywaydb', name: 'flyway-core', version: '11.13.2'
   implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '11.13.2'
 
-  implementation group: 'com.azure', name: 'azure-storage-blob', version: '12.31.3'
-
-  //TODO: This can be removed when we implement auth as it will be bundled with spring/azure starter.
-  implementation group: 'com.azure', name: 'azure-identity', version: '1.18.0'
+  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '6.0.0'
 
   implementation group: 'io.hypersistence', name: 'hypersistence-utils-hibernate-63', version: '3.10.3'
 
