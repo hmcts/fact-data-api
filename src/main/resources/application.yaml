@@ -55,3 +55,12 @@ spring:
 
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
+
+azure:
+  blob:
+    tenant-id: ${TENANT_ID}
+    connection-string: ${CONNECTION_STRING}
+    storage-account-name: ${STORAGE_ACCOUNT_NAME}
+    container-name: photos
+  managed-identity:
+    client-id: ${MANAGED_IDENTITY_CLIENT_ID}

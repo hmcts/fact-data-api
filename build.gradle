@@ -172,6 +172,11 @@ dependencies {
   implementation group: 'org.flywaydb', name: 'flyway-core', version: '11.13.2'
   implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '11.13.2'
 
+  implementation group: 'com.azure', name: 'azure-storage-blob', version: '12.31.3'
+
+  //TODO: This can be removed when we implement auth as it will be bundled with spring/azure starter.
+  implementation group: 'com.azure', name: 'azure-identity', version: '1.18.0'
+
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '6.1.9'
   //TODO: This may not be needed
