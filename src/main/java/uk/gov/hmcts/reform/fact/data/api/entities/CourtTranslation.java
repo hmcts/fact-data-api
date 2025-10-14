@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import jakarta.validation.constraints.NotNull;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 import java.util.UUID;
@@ -40,6 +41,7 @@ public class CourtTranslation {
     private UUID id;
 
     @Schema(description = "The ID of the associated Court", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull
     @Column(name = "court_id")
     private UUID courtId;
 
