@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository;
@@ -43,7 +44,8 @@ public class CourtTranslationService {
      */
     public CourtTranslation setTranslation(UUID courtId, CourtTranslation courtTranslation) {
         log.info("Setting translation for court id: {}", courtId);
-        courtService.getCourtById(courtId);
+        Court foundCourt = courtService.getCourtById(courtId);
+        courtTranslation.setCourt(foundCourt);
         courtTranslation.setCourtId(courtId);
         courtTranslationRepository.findByCourtId(courtId).ifPresent(
                 existing -> courtTranslation.setId(existing.getId())
