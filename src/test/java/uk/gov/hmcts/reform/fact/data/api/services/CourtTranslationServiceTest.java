@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class TranslationServiceTest {
+class CourtTranslationServiceTest {
 
     @Mock
     private TranslationRepository translationRepository;
