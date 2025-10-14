@@ -127,7 +127,7 @@ sonarqube {
     property "sonar.projectKey", "uk.gov.hmcts.reform:fact-data-api"
     // entities are atomic in the repo and necessarily have some duplication that
     // we need to ignore.
-    property "sonar.cpd.exclusions", "**/entity/*.java"
+    property "sonar.cpd.exclusions", "**/entities/*.java"
   }
 }
 
