@@ -8,6 +8,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 
 import java.time.ZonedDateTime;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,15 +38,15 @@ public class CourtRepositoryTest {
         region = regionRepository.save(region);
 
         // Create and save a Court
-        Court court = new Court();
-        court.setName("Test Court");
-        court.setSlug("test-court");
-        court.setOpen(true);
-        court.setTemporaryUrgentNotice("Urgent notice");
-        court.setRegionId(region.getId());
-        court.setIsServiceCentre(false);
-        court.setOpenOnCath(true);
-        court.setMrdId("MRD123");
+        var court = Court.builder()
+            .name("Test Court")
+            .slug("test-court")
+            .open(true).temporaryUrgentNotice("Urgent notice")
+            .regionId(region.getId())
+            .isServiceCentre(true)
+            .openOnCath(true)
+            .mrdId(UUID.randomUUID().toString())
+            .build();
 
         var savedCourt = courtRepository.save(court);
 

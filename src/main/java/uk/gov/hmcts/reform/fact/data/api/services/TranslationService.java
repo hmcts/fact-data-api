@@ -1,9 +1,9 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
-import uk.gov.hmcts.reform.fact.data.api.entities.Translation;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.TranslationRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,32 +16,32 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TranslationService {
 
-    private final TranslationRepository translationRepository;
+    private final CourtTranslationRepository courtTranslationRepository;
     private final CourtRepository courtRepository;
 
 
-    public Translation create(@NonNull Translation translation) {
-        return translationRepository.save(translation);
+    public CourtTranslation create(@NonNull CourtTranslation courtTranslation) {
+        return courtTranslationRepository.save(courtTranslation);
     }
 
-    public Translation update(@NonNull Translation translation) throws NotFoundException {
-        if (!translationRepository.existsById(translation.getId())) {
-            throw new NotFoundException("No Translation found with id " + translation.getId());
+    public CourtTranslation update(@NonNull CourtTranslation courtTranslation) throws NotFoundException {
+        if (!courtTranslationRepository.existsById(courtTranslation.getId())) {
+            throw new NotFoundException("No Translation found with id " + courtTranslation.getId());
         }
-        return translationRepository.save(translation);
+        return courtTranslationRepository.save(courtTranslation);
     }
 
-    public Translation retrieve(@NonNull UUID id) throws NotFoundException {
-        return translationRepository.findById(id).orElseThrow(
+    public CourtTranslation retrieve(@NonNull UUID id) throws NotFoundException {
+        return courtTranslationRepository.findById(id).orElseThrow(
             () -> new NotFoundException("No Translation found for id " + id));
     }
 
-    public List<Translation> retrieveAll() {
-        return translationRepository.findAll();
+    public List<CourtTranslation> retrieveAll() {
+        return courtTranslationRepository.findAll();
     }
 
     public void delete(@NonNull UUID id) {
-        translationRepository.deleteById(id);
+        courtTranslationRepository.deleteById(id);
     }
 
 }

@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
-import uk.gov.hmcts.reform.fact.data.api.entities.Translation;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,19 +16,20 @@ import org.springframework.test.context.ActiveProfiles;
 // or jakarta.validation handling
 @SpringBootTest
 @ActiveProfiles("test")
-public class TranslationRepositoryTest {
+public class CourtTranslationRepositoryTest {
 
     @Autowired
     private CourtRepository courtRepository;
 
     @Autowired
-    private TranslationRepository translationRepository;
+    private CourtTranslationRepository courtTranslationRepository;
 
     @Autowired
     private RegionRepository regionRepository;
 
     @Test
-    public void shouldSaveAndLoadTranslationEntity() {
+    public void shouldSaveAndLoadCourtTranslationEntity() {
+
 
         // Create and save a Region
         Region region = new Region();
@@ -48,20 +49,39 @@ public class TranslationRepositoryTest {
 
         court = courtRepository.save(court);
 
-        var translation = new Translation();
+        // create and save a translation
+        var translation = new CourtTranslation();
         translation.setCourtId(court.getId());
         translation.setEmail("me@here.com");
-        translation.setPhoneNumber("+44 01234 433222");
+        translation.setPhoneNumber("01234 433222");
 
-        var savedTranslation = translationRepository.save(translation);
+        var savedTranslation = courtTranslationRepository.save(translation);
 
-        var foundTranslation = translationRepository.findById(savedTranslation.getId()).orElse(null);
+        // create a translation for comparison
+        var translation1 = CourtTranslation.builder()
+            .id(savedTranslation.getId())
+            .courtId(court.getId())
+            .court(null) // gets lazy loaded
+            .email(translation.getEmail())
+            .phoneNumber(translation.getPhoneNumber())
+            .build();
+
+        // should equal what got saved and the court shouldn't be loaded yet
+        assertEquals(translation1, savedTranslation);
+
+        // lazy load the court
+        translation1.setCourt(savedTranslation.getCourt());
+
+        // make sure it still marries up now that we've added pulled the court
+        assertEquals(translation1, savedTranslation);
+
+        var foundTranslation = courtTranslationRepository.findById(savedTranslation.getId()).orElse(null);
 
         assertNotNull(foundTranslation);
         assertEquals("me@here.com", foundTranslation.getEmail());
-        assertEquals("+44 01234 433222", foundTranslation.getPhoneNumber());
+        assertEquals("01234 433222", foundTranslation.getPhoneNumber());
         assertEquals(court.getId(), foundTranslation.getCourtId());
 
     }
-
 }
+

@@ -125,6 +125,9 @@ sonarqube {
   properties {
     property "sonar.projectName", "fact-data-api"
     property "sonar.projectKey", "uk.gov.hmcts.reform:fact-data-api"
+    // entities are atomic in the repo and necessarily have some duplication that
+    // we need to ignore.
+    property "sonar.cpd.exclusions", "**/entities/*.java"
   }
 }
 
@@ -172,6 +175,7 @@ dependencies {
   implementation group: 'org.flywaydb', name: 'flyway-core', version: '11.13.2'
   implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '11.13.2'
 
+  implementation group: 'io.hypersistence', name: 'hypersistence-utils-hibernate-63', version: '3.10.3'
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '6.1.9'
   //TODO: This may not be needed
@@ -215,5 +219,5 @@ rootProject.tasks.named("processFunctionalTestResources") {
 }
 
 wrapper {
-    distributionType = Wrapper.DistributionType.ALL
+  distributionType = Wrapper.DistributionType.ALL
 }
