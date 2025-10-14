@@ -16,7 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 // or jakarta.validation handling
 @SpringBootTest
 @ActiveProfiles("test")
-public class CourtCourtTranslationRepositoryTest {
+public class CourtTranslationRepositoryTest {
 
     @Autowired
     private CourtRepository courtRepository;

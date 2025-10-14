@@ -1,19 +1,32 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import java.util.UUID;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.NoArgsConstructor;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "area_of_law_types")
-public class AreaOfLawType extends BaseEntity {
+public class AreaOfLawType {
+
+    @Schema(
+        description = "The internal ID - assigned by the server during creation",
+        accessMode = Schema.AccessMode.READ_ONLY
+    )
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @Schema(description = "The name")
     @NotBlank(message = "The name must be specified")
