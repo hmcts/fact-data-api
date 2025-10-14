@@ -125,6 +125,9 @@ sonarqube {
   properties {
     property "sonar.projectName", "fact-data-api"
     property "sonar.projectKey", "uk.gov.hmcts.reform:fact-data-api"
+    // entities are atomic in the repo and necessarily have some duplication that
+    // we need to ignore.
+    property "sonar.cpd.exclusions", "**/entity/*.java"
   }
 }
 
@@ -216,5 +219,5 @@ rootProject.tasks.named("processFunctionalTestResources") {
 }
 
 wrapper {
-    distributionType = Wrapper.DistributionType.ALL
+  distributionType = Wrapper.DistributionType.ALL
 }
