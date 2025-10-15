@@ -5,9 +5,9 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class ValidationConstants {
 
-    public static final String EMAIL_REGEX = "^(|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$";
+    public static final String EMAIL_REGEX = "^(|[A-Za-z0-9._+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$";
     public static final String EMAIL_REGEX_MESSAGE =
-        "Email address must match the regex '^(|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$'";
+        "Email address must match the regex '^(|[A-Za-z0-9._+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$'";
 
     public static final int EMAIL_MAX_LENGTH = 254;
     public static final String EMAIL_MAX_LENGTH_MESSAGE = "Email address should be no more than {max} characters";

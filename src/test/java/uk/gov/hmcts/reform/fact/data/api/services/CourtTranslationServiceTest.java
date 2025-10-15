@@ -1,116 +1,121 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CourtTranslationServiceTest {
 
     @Mock
     private CourtTranslationRepository courtTranslationRepository;
+
     @Mock
-    private CourtRepository courtRepository;
+    private CourtService courtService;
 
     @InjectMocks
-    private TranslationService translationService;
+    private CourtTranslationService courtTranslationService;
 
-    private CourtTranslation courtTranslation;
+    private UUID courtId;
     private Court court;
+    private CourtTranslation translation;
 
     @BeforeEach
-    void setUp() {
-
-        UUID courtId = UUID.randomUUID();
+    void setup() {
+        courtId = UUID.randomUUID();
         court = new Court();
         court.setId(courtId);
+        court.setName("Test Court");
 
-        UUID translationId = UUID.randomUUID();
-        courtTranslation = new CourtTranslation();
-        courtTranslation.setId(translationId);
-        courtTranslation.setCourtId(courtId);
+        translation = new CourtTranslation();
+        translation.setEmail("test@example.com");
+        translation.setPhoneNumber("1234567890");
     }
 
     @Test
-    void create() {
-        when(courtTranslationRepository.save(any(CourtTranslation.class))).thenReturn(courtTranslation);
-        var result = translationService.create(courtTranslation);
-        assertNotNull(result);
-        verify(courtTranslationRepository).save(courtTranslation);
+    void getTranslationByCourtIdReturnsTranslationWhenFound() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtTranslationRepository.findByCourtId(courtId)).thenReturn(Optional.of(translation));
+
+        CourtTranslation result = courtTranslationService.getTranslationByCourtId(courtId);
+
+        assertThat(result).isEqualTo(translation);
     }
 
     @Test
-    void checkNpesForNullFields() {
-        assertThrows(NullPointerException.class, () -> translationService.create(null));
-        assertThrows(NullPointerException.class, () -> translationService.update(null));
-        assertThrows(NullPointerException.class, () -> translationService.retrieve(null));
-        assertThrows(NullPointerException.class, () -> translationService.delete(null));
+    void getTranslationByCourtIdThrowsTranslationNotFoundWhenNotFound() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtTranslationRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
+
+        TranslationNotFoundException exception = assertThrows(TranslationNotFoundException.class, () ->
+            courtTranslationService.getTranslationByCourtId(courtId)
+        );
+
+        assertThat(exception.getMessage()).contains(courtId.toString());
     }
 
     @Test
-    void update() throws NotFoundException {
-        when(courtTranslationRepository.existsById(courtTranslation.getId())).thenReturn(true);
-        when(courtTranslationRepository.save(any(CourtTranslation.class))).thenReturn(courtTranslation);
-        var result = translationService.update(courtTranslation);
+    void getTranslationByCourtIdThrowsNotFoundExceptionWhenCourtNotFound() {
+        when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException("Court not found"));
 
-        assertNotNull(result);
-        verify(courtTranslationRepository).existsById(courtTranslation.getId());
-        verify(courtTranslationRepository).save(courtTranslation);
+        assertThrows(NotFoundException.class, () ->
+            courtTranslationService.getTranslationByCourtId(courtId)
+        );
     }
 
     @Test
-    void updateFailsWithNotFoundExceptionForMissingTranslation() {
-        when(courtTranslationRepository.existsById(courtTranslation.getId())).thenReturn(false);
-        assertThrows(NotFoundException.class, () -> translationService.update(courtTranslation));
+    void setTranslationCreatesNewTranslationWhenNoneExists() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtTranslationRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
+        when(courtTranslationRepository.save(translation)).thenReturn(translation);
+
+        CourtTranslation result = courtTranslationService.setTranslation(courtId, translation);
+
+        assertThat(result.getCourtId()).isEqualTo(courtId);
+        verify(courtTranslationRepository).save(translation);
     }
 
     @Test
-    void find() throws NotFoundException {
-        when(courtTranslationRepository.findById(courtTranslation.getId())).thenReturn(Optional.of(courtTranslation));
-        var result = translationService.retrieve(courtTranslation.getId());
-        assertNotNull(result);
-        verify(courtTranslationRepository).findById(courtTranslation.getId());
+    void setTranslationUpdatesExistingTranslation() {
+        CourtTranslation existing = new CourtTranslation();
+        existing.setId(UUID.randomUUID());
+        existing.setCourtId(courtId);
+
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtTranslationRepository.findByCourtId(courtId)).thenReturn(Optional.of(existing));
+        when(courtTranslationRepository.save(any())).thenReturn(translation);
+
+        CourtTranslation result = courtTranslationService.setTranslation(courtId, translation);
+
+        assertThat(result).isEqualTo(translation);
+        assertThat(result.getId()).isEqualTo(existing.getId());
+        assertThat(result.getCourtId()).isEqualTo(courtId);
     }
 
     @Test
-    void findThrowsNotFoundExceptionForMissingTranslation() {
-        when(courtTranslationRepository.findById(courtTranslation.getId())).thenReturn(Optional.empty());
-        assertThrows(NotFoundException.class, () -> translationService.retrieve(courtTranslation.getId()));
-        verify(courtTranslationRepository).findById(courtTranslation.getId());
-    }
+    void setTranslationThrowsNotFoundExceptionWhenCourtDoesNotExist() {
+        when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException("Court not found"));
 
-    @Test
-    void findAll() {
-        when(courtTranslationRepository.findAll()).thenReturn(List.of(courtTranslation));
-        var result = translationService.retrieveAll();
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(courtTranslationRepository).findAll();
-    }
-
-    @Test
-    void delete() {
-        translationService.delete(courtTranslation.getId());
-        verify(courtTranslationRepository).deleteById(courtTranslation.getId());
+        assertThrows(NotFoundException.class, () ->
+            courtTranslationService.setTranslation(courtId, translation)
+        );
     }
 }
+
