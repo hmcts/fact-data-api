@@ -64,7 +64,7 @@ spring:
         account-name: ${AZURE_STORAGE_ACCOUNT_NAME}
         blob:
           container-name: photos
-          connection-string: ${AZURE_STORAGE_CONNECTION_STRING}
+          connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
 
 
 dbMigration:
