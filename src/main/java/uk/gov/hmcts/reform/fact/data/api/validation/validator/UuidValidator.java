@@ -6,7 +6,7 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.UUID;
 
-public class UUIDValidator implements ConstraintValidator<ValidUUID, String> {
+public class UuidValidator implements ConstraintValidator<ValidUUID, String> {
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
