@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Entity
 @Table(name = "court_accessibility_options")
-public class CourtAccessibilityOption {
+public class CourtAccessibilityOptions {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",

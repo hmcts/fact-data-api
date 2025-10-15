@@ -4,21 +4,22 @@ import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOption;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOptions;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtCode;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtContactDetail;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtCodes;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDxCode;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacility;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFax;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthority;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningTime;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPostcode;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtSinglePointsOfEntry;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
@@ -30,22 +31,23 @@ import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAccessibilityOptionRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAccessibilityOptionsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtContactDetailRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtContactDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCounterServiceOpeningHoursRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFacilityRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthorityRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLockRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtOpeningTimeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPostcodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreaRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
@@ -112,21 +114,22 @@ public class DevTestController {
             "Audit",
             "ContactDescriptionType",
             "Court",
-            "CourtAccessibilityOption",
+            "CourtAccessibilityOptions",
             "CourtAddress",
-            "CourtCode",
-            "CourtContactDetail",
+            "CourtAreasOfLaw",
+            "CourtCodes",
+            "CourtContactDetails",
             "CourtCounterServiceOpeningHours",
             "CourtDxCode",
             "CourtFacility",
             "CourtFax",
-            "CourtLocalAuthority",
+            "CourtLocalAuthorities",
             "CourtLock",
             "CourtOpeningTime",
             "CourtPhoto",
             "CourtPostcode",
             "CourtProfessionalInformation",
-            "CourtServiceArea",
+            "CourtServiceAreas",
             "CourtSinglePointsOfEntry",
             "CourtTranslation",
             "CourtType",
@@ -224,20 +227,20 @@ public class DevTestController {
 
 
     // ------------------------------------------------------------------------
-    // CourtAccessibilityOption
+    // CourtAccessibilityOptions
     // ------------------------------------------------------------------------
 
-    private final CourtAccessibilityOptionRepository courtAccessibilityOptionRepository;
+    private final CourtAccessibilityOptionsRepository courtAccessibilityOptionsRepository;
 
-    @PostMapping(value = "/courtaccessibilityoption/", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CourtAccessibilityOption> createCourtAccessibilityOption(
-        @Valid @RequestBody CourtAccessibilityOption courtAccessibilityOption) {
-        return ResponseEntity.ok(courtAccessibilityOptionRepository.save(courtAccessibilityOption));
+    @PostMapping(value = "/courtaccessibilityoptions/", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CourtAccessibilityOptions> createCourtAccessibilityOptions(
+        @Valid @RequestBody CourtAccessibilityOptions courtAccessibilityOptions) {
+        return ResponseEntity.ok(courtAccessibilityOptionsRepository.save(courtAccessibilityOptions));
     }
 
-    @GetMapping("/courtaccessibilityoption/")
-    public ResponseEntity<List<CourtAccessibilityOption>> getAllCourtAccessibilityOption() {
-        return ResponseEntity.ok().body(courtAccessibilityOptionRepository.findAll());
+    @GetMapping("/courtaccessibilityoptions/")
+    public ResponseEntity<List<CourtAccessibilityOptions>> getAllCourtAccessibilityOptions() {
+        return ResponseEntity.ok().body(courtAccessibilityOptionsRepository.findAll());
     }
 
 
@@ -259,37 +262,54 @@ public class DevTestController {
 
 
     // ------------------------------------------------------------------------
-    // CourtCode
+    // CourtAreasOfLaw
     // ------------------------------------------------------------------------
 
-    private final CourtCodeRepository courtCodeRepository;
+    private final CourtAreasOfLawRepository courtAreasOfLawRepository;
 
-    @PostMapping(value = "/courtcode/", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CourtCode> createCourtCode(@Valid @RequestBody CourtCode courtCode) {
-        return ResponseEntity.ok(courtCodeRepository.save(courtCode));
+    @PostMapping(value = "/courtareasoflaw/", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CourtAreasOfLaw> createCourtAreasOfLaw(@Valid @RequestBody CourtAreasOfLaw courtAreasOfLaw) {
+        return ResponseEntity.ok(courtAreasOfLawRepository.save(courtAreasOfLaw));
     }
 
-    @GetMapping("/courtcode/")
-    public ResponseEntity<List<CourtCode>> getAllCourtCode() {
-        return ResponseEntity.ok().body(courtCodeRepository.findAll());
+    @GetMapping("/courtareasoflaw/")
+    public ResponseEntity<List<CourtAreasOfLaw>> getAllCourtAreasOfLaw() {
+        return ResponseEntity.ok().body(courtAreasOfLawRepository.findAll());
     }
 
 
     // ------------------------------------------------------------------------
-    // CourtContactDetail
+    // CourtCodes
     // ------------------------------------------------------------------------
 
-    private final CourtContactDetailRepository courtContactDetailRepository;
+    private final CourtCodesRepository courtCodesRepository;
 
-    @PostMapping(value = "/courtcontactdetail/", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CourtContactDetail> createCourtContactDetail(
-        @Valid @RequestBody CourtContactDetail courtContactDetail) {
-        return ResponseEntity.ok(courtContactDetailRepository.save(courtContactDetail));
+    @PostMapping(value = "/courtcodes/", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CourtCodes> createCourtCodes(@Valid @RequestBody CourtCodes courtCodes) {
+        return ResponseEntity.ok(courtCodesRepository.save(courtCodes));
     }
 
-    @GetMapping("/courtcontactdetail/")
-    public ResponseEntity<List<CourtContactDetail>> getAllCourtContactDetail() {
-        return ResponseEntity.ok().body(courtContactDetailRepository.findAll());
+    @GetMapping("/courtcodes/")
+    public ResponseEntity<List<CourtCodes>> getAllCourtCodes() {
+        return ResponseEntity.ok().body(courtCodesRepository.findAll());
+    }
+
+
+    // ------------------------------------------------------------------------
+    // CourtContactDetails
+    // ------------------------------------------------------------------------
+
+    private final CourtContactDetailsRepository courtContactDetailsRepository;
+
+    @PostMapping(value = "/courtcontactdetails/", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CourtContactDetails> createCourtContactDetails(
+        @Valid @RequestBody CourtContactDetails courtContactDetails) {
+        return ResponseEntity.ok(courtContactDetailsRepository.save(courtContactDetails));
+    }
+
+    @GetMapping("/courtcontactdetails/")
+    public ResponseEntity<List<CourtContactDetails>> getAllCourtContactDetails() {
+        return ResponseEntity.ok().body(courtContactDetailsRepository.findAll());
     }
 
 
@@ -363,20 +383,20 @@ public class DevTestController {
 
 
     // ------------------------------------------------------------------------
-    // CourtLocalAuthority
+    // CourtLocalAuthorities
     // ------------------------------------------------------------------------
 
-    private final CourtLocalAuthorityRepository courtLocalAuthorityRepository;
+    private final CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
 
-    @PostMapping(value = "/courtlocalauthority/", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CourtLocalAuthority> createCourtLocalAuthority(
-        @Valid @RequestBody CourtLocalAuthority courtLocalAuthority) {
-        return ResponseEntity.ok(courtLocalAuthorityRepository.save(courtLocalAuthority));
+    @PostMapping(value = "/courtlocalauthorities/", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CourtLocalAuthorities> createCourtLocalAuthorities(
+        @Valid @RequestBody CourtLocalAuthorities courtLocalAuthorities) {
+        return ResponseEntity.ok(courtLocalAuthoritiesRepository.save(courtLocalAuthorities));
     }
 
-    @GetMapping("/courtlocalauthority/")
-    public ResponseEntity<List<CourtLocalAuthority>> getAllCourtLocalAuthority() {
-        return ResponseEntity.ok().body(courtLocalAuthorityRepository.findAll());
+    @GetMapping("/courtlocalauthorities/")
+    public ResponseEntity<List<CourtLocalAuthorities>> getAllCourtLocalAuthorities() {
+        return ResponseEntity.ok().body(courtLocalAuthoritiesRepository.findAll());
     }
 
 
@@ -468,20 +488,20 @@ public class DevTestController {
 
 
     // ------------------------------------------------------------------------
-    // CourtServiceArea
+    // CourtServiceAreas
     // ------------------------------------------------------------------------
 
-    private final CourtServiceAreaRepository courtServiceAreaRepository;
+    private final CourtServiceAreasRepository courtServiceAreasRepository;
 
-    @PostMapping(value = "/courtservicearea/", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CourtServiceArea> createCourtServiceArea(
-        @Valid @RequestBody CourtServiceArea courtServiceArea) {
-        return ResponseEntity.ok(courtServiceAreaRepository.save(courtServiceArea));
+    @PostMapping(value = "/courtserviceareas/", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CourtServiceAreas> createCourtServiceAreas(
+        @Valid @RequestBody CourtServiceAreas courtServiceAreas) {
+        return ResponseEntity.ok(courtServiceAreasRepository.save(courtServiceAreas));
     }
 
-    @GetMapping("/courtservicearea/")
-    public ResponseEntity<List<CourtServiceArea>> getAllCourtServiceArea() {
-        return ResponseEntity.ok().body(courtServiceAreaRepository.findAll());
+    @GetMapping("/courtserviceareas/")
+    public ResponseEntity<List<CourtServiceAreas>> getAllCourtServiceAreas() {
+        return ResponseEntity.ok().body(courtServiceAreasRepository.findAll());
     }
 
 
