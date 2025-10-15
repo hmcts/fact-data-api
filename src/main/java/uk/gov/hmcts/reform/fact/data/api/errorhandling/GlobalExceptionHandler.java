@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -59,6 +60,16 @@ public class GlobalExceptionHandler {
                 fieldError -> fieldError.getDefaultMessage(),
                 (existing, replacement) -> existing
             ));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(HttpMessageNotReadableException ex) {
+        log.error("400, could not parse request body. Details: {}", ex.getMessage());
+
+        String message = "Invalid request body: " + ex.getMessage();
+
+        return generateExceptionResponse(message);
     }
 
     private ExceptionResponse generateExceptionResponse(String message) {
