@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository;
 
 import java.util.UUID;
@@ -26,12 +26,12 @@ public class CourtTranslationService {
      *
      * @param courtId The court id to find the translation for.
      * @return A translation  record or null if one doesn't exist for the court.
-     * @throws TranslationNotFoundException if no translation record exists for the court.
+     * @throws CourtResourceNotFoundException if no translation record exists for the court.
      */
     public CourtTranslation getTranslationByCourtId(UUID courtId) {
         return courtTranslationRepository.findByCourtId(courtService.getCourtById(courtId).getId())
                 .orElseThrow(() -> new
-                        TranslationNotFoundException("No translation found for court id: " + courtId)
+                    CourtResourceNotFoundException("No translation found for court id: " + courtId)
                 );
     }
 
