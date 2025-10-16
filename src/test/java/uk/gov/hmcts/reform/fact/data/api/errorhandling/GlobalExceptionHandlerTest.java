@@ -10,7 +10,7 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 
 import java.util.Collections;
 import java.util.Map;
@@ -40,8 +40,8 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void testHandleTranslationNotFoundException() {
-        TranslationNotFoundException ex = new TranslationNotFoundException(TEST_MESSAGE);
+    void testHandleCourtResourceNotFoundException() {
+        CourtResourceNotFoundException ex = new CourtResourceNotFoundException(TEST_MESSAGE);
         ExceptionResponse response = handler.handle(ex);
 
         assertThat(response).isNotNull();
