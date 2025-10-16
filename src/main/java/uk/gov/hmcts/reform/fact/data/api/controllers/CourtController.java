@@ -1,0 +1,93 @@
+package uk.gov.hmcts.reform.fact.data.api.controllers;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtPhotoService;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
+
+import java.util.UUID;
+
+@Tag(name = "Court", description = "Operations related to courts")
+@RestController
+@Validated
+@RequestMapping("/courts")
+public class CourtController {
+
+    private final CourtService courtService;
+
+    public CourtController(CourtService courtService) {
+        this.courtService = courtService;
+    }
+
+    @GetMapping("/v1")
+    public ResponseEntity<Court> getPaginatedCourts() {
+        // Implementation for fetching paginated list of courts
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/v1/all")
+    public ResponseEntity<Page<Court>> getAllCourts() {
+        // Implementation for fetching paginated list of courts
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{courtId}/v1")
+    public ResponseEntity<Court> getFullCourtDataById(@PathVariable String courtId) {
+        // Implementation for fetching paginated list of courts
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/v1")
+    public ResponseEntity<Court> createCourt() {
+        // Implementation for creating a new court
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PutMapping("/{courtId}/v1")
+    public ResponseEntity<Court> updateCourt(@PathVariable String courtId) {
+        // Implementation for updating an existing court
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{courtId}/v1/service-areas")
+    public ResponseEntity<Court> addServiceAreaToCourt(@PathVariable String courtId) {
+        // Implementation for adding a service area to a court
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+
+
+//    @GetMapping("/v1/photo")
+//    @Operation(
+//        summary = "Get court photo by court ID",
+//        description = "Fetch photo information for a given court."
+//    )
+//    @ApiResponses(value = {
+//        @ApiResponse(responseCode = "200", description = "Successfully retrieved court photo"),
+//        @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
+//        @ApiResponse(responseCode = "404", description = "Court or court photo not found")
+//    })
+//    public ResponseEntity<CourtPhoto> getCourtPhotoByCourtId(@Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
+//        return ResponseEntity.ok(courtPhotoService.getCourtPhotoByCourtId(UUID.fromString(courtId)));
+//    }
+
+}

@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -70,6 +71,14 @@ public class GlobalExceptionHandler {
         String message = "Invalid request body: " + ex.getMessage();
 
         return generateExceptionResponse(message);
+    }
+
+    @ExceptionHandler(InvalidFileException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidFileException ex) {
+        log.error("400, file failed validation. Details: {}", ex.getMessage());
+
+        return generateExceptionResponse(ex.getMessage());
     }
 
     private ExceptionResponse generateExceptionResponse(String message) {

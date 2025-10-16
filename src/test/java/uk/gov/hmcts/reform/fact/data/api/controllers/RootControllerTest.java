@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import uk.gov.hmcts.reform.fact.data.api.services.BlobStorageService;
+import uk.gov.hmcts.reform.fact.data.api.services.AzureBlobService;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -19,7 +19,7 @@ class RootControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private BlobStorageService blobStorageService;
+    private AzureBlobService blobStorageService;
 
     @Test
     void shouldReturnWelcomeMessage() throws Exception {

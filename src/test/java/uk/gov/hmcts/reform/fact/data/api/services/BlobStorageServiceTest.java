@@ -18,7 +18,7 @@ class BlobStorageServiceTest {
     private BlobContainerClient mockContainerClient;
     private BlobClient mockBlobClient;
     private BlobProperties mockProperties;
-    private BlobStorageService blobStorageService;
+    private AzureBlobService blobStorageService;
 
     private final String containerName = "test-container";
     private final String fileName = "test-file.txt";
@@ -32,7 +32,7 @@ class BlobStorageServiceTest {
         when(mockContainerClient.getBlobContainerName()).thenReturn(containerName);
         when(mockContainerClient.getBlobClient(fileName)).thenReturn(mockBlobClient);
 
-        blobStorageService = new BlobStorageService(mockContainerClient);
+        blobStorageService = new AzureBlobService(mockContainerClient);
     }
 
     @Test

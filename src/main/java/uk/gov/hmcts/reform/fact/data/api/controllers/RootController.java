@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.reform.fact.data.api.services.BlobStorageService;
 
 import static org.springframework.http.ResponseEntity.ok;
 
@@ -13,12 +12,6 @@ import static org.springframework.http.ResponseEntity.ok;
  */
 @RestController
 public class RootController {
-
-    private final BlobStorageService blobStorageService;
-
-    public RootController(BlobStorageService blobStorageService) {
-        this.blobStorageService = blobStorageService;
-    }
 
     /**
      * Root GET endpoint.
@@ -33,11 +26,5 @@ public class RootController {
     @Operation(summary = "The default root for the application")
     public ResponseEntity<String> welcome() {
         return ok("Welcome to fact-data-api");
-    }
-
-    @GetMapping("/test")
-    public ResponseEntity<String> test() {
-        blobStorageService.logBlobInfo("test_1.png");
-        return ok("Test endpoint is working");
     }
 }
