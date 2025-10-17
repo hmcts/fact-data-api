@@ -28,8 +28,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "court_opening_times")
-public class CourtOpeningTime {
+@Table(name = "court_opening_hours")
+public class CourtOpeningHours {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",

@@ -19,7 +19,7 @@ import org.springframework.context.annotation.Configuration;
 @AutoConfigureBefore(FlywayAutoConfiguration.class)
 @Configuration
 @ConditionalOnClass(Flyway.class)
-@ConditionalOnProperty(prefix = "dbMigration", name = "runOnStartup", havingValue = "false")
+@ConditionalOnProperty(prefix = "dbMigration", name = "runOnStartup", havingValue = "true")
 public class FlywayConfiguration {
 
     @Bean

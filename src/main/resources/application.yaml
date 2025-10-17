@@ -26,9 +26,9 @@ spring:
     name: FaCT Data API
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://localhost:5999/fact
+    username: fact
+    password: fact
     properties:
       charSet: UTF-8
     hikari:
