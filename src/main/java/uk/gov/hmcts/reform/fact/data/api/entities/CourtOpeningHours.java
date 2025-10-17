@@ -7,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,22 +16,21 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "court_opening_times")
-public class CourtOpeningTime {
+@Table(name = "court_opening_hours")
+public class CourtOpeningHours {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
@@ -59,11 +60,10 @@ public class CourtOpeningTime {
     @JoinColumn(name = "opening_hour_type", insertable = false, updatable = false)
     private OpeningHourType openingHourType;
 
-    @Schema(description = "Day of week (0-6)")
+    @Schema(description = "Day of the week or every day.")
     @NotNull
-    @Max(value = 6)
-    @Min(value = 0)
-    private Integer dayOfWeek;
+    @Enumerated(EnumType.STRING)
+    private DayOfTheWeek dayOfWeek;
 
     @Schema(description = "Opening hour")
     @NotNull
@@ -72,5 +72,4 @@ public class CourtOpeningTime {
     @Schema(description = "Closing hour")
     @NotNull
     private LocalTime closingHour;
-
 }
