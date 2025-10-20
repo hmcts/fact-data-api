@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
@@ -79,6 +80,14 @@ public class GlobalExceptionHandler {
         log.error("400, file failed validation. Details: {}", ex.getMessage());
 
         return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
+    public ExceptionResponse handle(MaxUploadSizeExceededException ex) {
+        log.error("413, uploaded file size exceeds limit. Details: {}", ex.getMessage());
+
+        return generateExceptionResponse("Uploaded file size exceeds the maximum allowed limit of 2MB.");
     }
 
     private ExceptionResponse generateExceptionResponse(String message) {

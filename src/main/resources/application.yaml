@@ -65,7 +65,10 @@ spring:
         blob:
           container-name: photos
           connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
-
+  servlet:
+    multipart:
+      max-file-size: 2MB
 
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
+

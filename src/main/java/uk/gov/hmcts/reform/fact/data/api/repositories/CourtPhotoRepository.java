@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.repositories;
 
-import jakarta.validation.constraints.NotNull;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 
 import java.util.Optional;

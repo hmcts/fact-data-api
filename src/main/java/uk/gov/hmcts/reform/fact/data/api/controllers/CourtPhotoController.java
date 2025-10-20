@@ -11,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,15 +45,21 @@ public class CourtPhotoController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court or court photo not found")
     })
-    public ResponseEntity<CourtPhoto> getCourtPhotoByCourtId(@Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
+    public ResponseEntity<CourtPhoto> getCourtPhotoByCourtId(
+        @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
         return ResponseEntity.ok(courtPhotoService.getCourtPhotoByCourtId(UUID.fromString(courtId)));
     }
 
-    @PutMapping("/v1/photo")
+    @PostMapping("/v1/photo")
     @Operation(
-        summary = "Set or update court photo for a court",
-        description = "Creates a new court photo for a court or updates the existing one."
+        summary = "Creates the photo for a court (and replaces any existing photo)",
+        description = "Creates photo for a court."
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Successfully created court photo"),
+        @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or invalid file"),
+        @ApiResponse(responseCode = "404", description = "Court not found")
+    })
     public ResponseEntity<CourtPhoto> setCourtPhotoByCourtId(
         @Parameter(description = "UUID of the court", required = true)
         @ValidUUID @PathVariable String courtId, @ValidImage @RequestPart("file") MultipartFile file) {
@@ -71,7 +77,8 @@ public class CourtPhotoController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court or court photo not found")
     })
-    public ResponseEntity<Void> deleteCourtPhotoByCourtId(@Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
+    public ResponseEntity<Void> deleteCourtPhotoByCourtId(
+        @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
         courtPhotoService.deleteCourtPhotoByCourtId(UUID.fromString(courtId));
         return ResponseEntity.noContent().build();
     }

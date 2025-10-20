@@ -42,8 +42,8 @@ public class CourtPhotoService {
      * Set or update a court photo.
      *
      * @param courtId The id of the court.
-     * @param courtPhoto The court photo entity to save.
-     * @return The saved court photo.
+     * @param file The court photo to save.
+     * @return The saved court photo entity.
      */
     public CourtPhoto setCourtPhoto(UUID courtId, MultipartFile file) {
         courtService.getCourtById(courtId);
@@ -53,14 +53,9 @@ public class CourtPhotoService {
 
         courtPhoto.setCourtId(courtId);
 
-        // Set file name / link
+        courtPhoto.setFileLink(azureBlobService.uploadFile(courtId.toString(), file));
 
-
-        //TODO: Set real user ID when implemented.
-        courtPhoto.setUpdatedByUserId(UUID.randomUUID());
-
-
-
+        //TODO: Set user ID when implemented
 
         return courtPhotoRepository.save(courtPhoto);
     }
@@ -72,11 +67,12 @@ public class CourtPhotoService {
      * @throws NotFoundException if no court found with the given id or no photo found for the court.
      */
     public void deleteCourtPhotoByCourtId(UUID courtId) {
-        log.info("Deleting court photo for court ID: {}", courtId);
         courtService.getCourtById(courtId);
+
+        log.info("Deleting court photo for court ID: {}", courtId);
         CourtPhoto courtPhoto = getCourtPhotoByCourtId(courtId);
 
-        azureBlobService.deleteBlob(courtPhoto.getFileLink());
+        azureBlobService.deleteBlob(courtPhoto.getCourtId().toString());
         courtPhotoRepository.deleteById(courtPhoto.getId());
     }
 }

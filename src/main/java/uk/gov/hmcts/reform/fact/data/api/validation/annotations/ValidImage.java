@@ -4,7 +4,11 @@ import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import uk.gov.hmcts.reform.fact.data.api.validation.validator.ImageValidator;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 @Documented
 @Constraint(validatedBy = ImageValidator.class)
@@ -16,6 +20,5 @@ public @interface ValidImage {
     Class<? extends Payload>[] payload() default {};
 
     String[] allowedTypes() default {"image/jpeg", "image/jpg", "image/png"};
-    long maxSize() default 2 * 1024 * 1024; // 2 MB
 }
 
