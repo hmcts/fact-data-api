@@ -114,7 +114,7 @@ public class CourtService {
         String baseSlug = name.toLowerCase()
             .replaceAll("[^a-z\\s-]", "")
             .replaceAll("[\\s-]+", "-")
-            .replaceAll("^-|-$", "");
+            .replaceAll("(^-)|(-$)", "");
 
         String slug = baseSlug;
         int counter = 1;
