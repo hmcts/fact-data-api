@@ -110,7 +110,7 @@ public class CourtService {
      * @param name The court name.
      * @return A unique slug.
      */
-    public String toUniqueSlug(String name) {
+    private String toUniqueSlug(String name) {
         String baseSlug = name.toLowerCase()
             .replaceAll("[^a-z\\s-]", "")
             .replaceAll("[\\s-]+", "-")
