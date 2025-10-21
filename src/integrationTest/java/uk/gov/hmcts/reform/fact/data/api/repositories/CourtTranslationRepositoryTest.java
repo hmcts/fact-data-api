@@ -43,7 +43,7 @@ public class CourtTranslationRepositoryTest {
         court.setName("Test Court");
         court.setSlug("test-court");
         court.setOpen(true);
-        court.setTemporaryUrgentNotice("Urgent notice");
+        court.setWarningNotice("Urgent notice");
         court.setRegionId(region.getId());
         court.setIsServiceCentre(false);
         court.setOpenOnCath(true);

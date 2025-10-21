@@ -43,7 +43,7 @@ public class CourtRepositoryTest {
         var court = Court.builder()
             .name("Test Court")
             .slug("test-court")
-            .open(true).temporaryUrgentNotice("Urgent notice")
+            .open(true).warningNotice("Urgent notice")
             .regionId(region.getId())
             .isServiceCentre(true)
             .openOnCath(true)

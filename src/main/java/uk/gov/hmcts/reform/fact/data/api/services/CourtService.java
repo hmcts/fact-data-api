@@ -1,19 +1,25 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class CourtService {
 
     private final CourtRepository courtRepository;
+    private final RegionService regionService;
 
-    public CourtService(CourtRepository courtRepository) {
+    public CourtService(CourtRepository courtRepository, RegionService regionService) {
         this.courtRepository = courtRepository;
+        this.regionService = regionService;
     }
 
     /**
@@ -30,22 +36,45 @@ public class CourtService {
     }
 
     /**
+     * Get a paginated list of courts with optional filters.
+     *
+     * @param pageable The pagination information.
+     * @param includeClosed Whether to include closed courts.
+     * @param regionId The region ID to filter by.
+     * @param partialCourtName A partial court name to filter by.
+     * @return A paginated list of courts.
+     */
+    public Page<Court> getFilteredAndPaginatedCourts(Pageable pageable, Boolean includeClosed,
+                                                     String regionId, String partialCourtName) {
+
+        String nameFilter = partialCourtName != null ? partialCourtName : "";
+
+        List<UUID> regionIds = (regionId != null && !regionId.isBlank())
+            ? List.of(regionService.getRegionById(UUID.fromString(regionId)).getId())
+            : regionService.getAllRegions().stream()
+            .map(Region::getId)
+            .toList();
+
+        return (includeClosed != null && includeClosed)
+            ? courtRepository.findByRegionIdInAndNameContainingIgnoreCase(regionIds, nameFilter, pageable)
+            : courtRepository.findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(regionIds, nameFilter, pageable);
+    }
+
+    /**
      * Creates a new court or service centre.
      *
-     * @param court
-     * @return
+     * @param court The court to create.
+     * @return The created court.
+     * @throws NotFoundException if the region is not found.
      */
     public Court createCourt(Court court) {
-        // Check and set region also.
+        Region foundRegion = regionService.getRegionById(court.getRegionId());
+        court.setRegion(foundRegion);
+        court.setSlug(toUniqueSlug(court.getName()));
 
-
-
-        court.setSlug(toSlug(court.getName()));
-        // A court is closed on creation by default until an address is added.
+        // A court is closed on creation until an address is added.
         court.setOpen(false);
 
-        // A court cannot be marked open on CaTH from the API, this is handled by the CaTH sync process.
-        // An MRD can be set??
         return courtRepository.save(court);
     }
 
@@ -59,33 +88,41 @@ public class CourtService {
      */
     public Court updateCourt(UUID courtId, Court court) {
         Court existingCourt = getCourtById(courtId);
+        Region foundRegion = regionService.getRegionById(court.getRegionId());
 
-        existingCourt.setName(court.getName());
-        existingCourt.setSlug(toSlug(court.getName()));
+        if (!existingCourt.getName().equalsIgnoreCase(court.getName())) {
+            existingCourt.setName(court.getName());
+            existingCourt.setSlug(toUniqueSlug(court.getName()));
+        }
+
         existingCourt.setOpen(court.getOpen());
-        existingCourt.setTemporaryUrgentNotice(court.getTemporaryUrgentNotice());
+        existingCourt.setRegion(foundRegion);
+        existingCourt.setRegionId(foundRegion.getId());
+        existingCourt.setWarningNotice(court.getWarningNotice());
 
         return courtRepository.save(existingCourt);
     }
 
-    /**
-     * GET	/courts	Params: includeClosed, region, court name (partial search). Returns paginated list of courts for the admin search page
-     * GET	/courts/all	Returns all court data - used only by the fact-cron-trigger for spreadsheet creation on data.gov.uk
-     * GET	/courts/{courtId}	Get all the data that is displayed on the FaCT public court page (single court)
-     * PUT	/courts/{courtId}	Updates the court name and if the court is open/closed, and a temporary urgent notice
-     */
-
-
-         // * POST	/courts/{courtId}/service-areas	Adds service areas for a service centre for a new court
-
 
     /**
-     * Converts a court name to a slug.
+     * Converts a court name to a unique slug.
+     *
+     * @param name The court name.
+     * @return A unique slug.
      */
-    private static String toSlug(String name) {
-        return name.toLowerCase()
+    public String toUniqueSlug(String name) {
+        String baseSlug = name.toLowerCase()
             .replaceAll("[^a-z\\s-]", "")
             .replaceAll("[\\s-]+", "-")
             .replaceAll("^-|-$", "");
+
+        String slug = baseSlug;
+        int counter = 1;
+
+        while (courtRepository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + counter++;
+        }
+
+        return slug;
     }
 }
