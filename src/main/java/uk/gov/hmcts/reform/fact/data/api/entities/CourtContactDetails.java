@@ -1,10 +1,10 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
-import java.util.List;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
+
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,20 +16,21 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Type;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "court_local_authorities")
-public class CourtLocalAuthority {
+@Table(name = "court_contact_details")
+public class CourtContactDetails {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
@@ -49,18 +50,29 @@ public class CourtLocalAuthority {
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
     private Court court;
 
-    @Schema(description = "The ID of the associated Area of Law")
-    @Column(name = "area_of_law_id")
-    private UUID areaOfLawId;
+    @Schema(description = "The ID of the associated Contact Description Type")
+    @Column(name = "court_contact_description_id")
+    private UUID courtContactDescriptionId;
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "area_of_law_id", insertable = false, updatable = false)
-    private AreaOfLawType areaOfLaw;
+    @JoinColumn(name = "court_contact_description_id", insertable = false, updatable = false)
+    private ContactDescriptionType courtContactDescription;
 
-    @Schema(description = "The Local Authority IDs for associated with this Court Local Authority")
-    @Type(ListArrayType.class)
-    @Column(columnDefinition = "uuid[]")
-    private List<UUID> localAuthorityIds;
+    @Schema(description = "The explanation")
+    private String explanation;
+
+    @Schema(description = "The Welsh language explanation")
+    private String explanationCy;
+
+    @Schema(description = "The associated email address")
+    @Size(max = ValidationConstants.EMAIL_MAX_LENGTH, message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE)
+    @Pattern(regexp = ValidationConstants.EMAIL_REGEX, message = ValidationConstants.EMAIL_REGEX_MESSAGE)
+    private String email;
+
+    @Schema(description = "The associated phone number")
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
+    private String phoneNumber;
 
 }
