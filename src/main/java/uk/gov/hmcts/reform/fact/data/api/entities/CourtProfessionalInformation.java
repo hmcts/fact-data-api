@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
+
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -15,6 +17,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -52,10 +56,13 @@ public class CourtProfessionalInformation {
     private Boolean interviewRooms;
 
     @Schema(description = "Number of available interview rooms")
+    @NotNull
     @Min(1)
     private Integer interviewRoomCount;
 
     @Column(name = "interview_phone_number", length = Integer.MAX_VALUE)
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
     private String interviewPhoneNumber;
 
     @Schema(description = "Video hearing capability status")

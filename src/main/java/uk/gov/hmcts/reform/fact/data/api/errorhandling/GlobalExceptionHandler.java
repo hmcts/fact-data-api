@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.ProfessionalInformationNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -31,6 +32,13 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ExceptionResponse handle(TranslationNotFoundException ex) {
         log.trace("204, no translation services for a court. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(ProfessionalInformationNotFoundException.class)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ExceptionResponse handle(ProfessionalInformationNotFoundException ex) {
+        log.trace("204, no professional information for a court. Details: {}", ex.getMessage());
         return generateExceptionResponse(ex.getMessage());
     }
 
@@ -79,4 +87,3 @@ public class GlobalExceptionHandler {
         return response;
     }
 }
-
