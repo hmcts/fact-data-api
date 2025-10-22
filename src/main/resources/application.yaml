@@ -68,6 +68,10 @@ spring:
   servlet:
     multipart:
       max-file-size: 2MB
+  data:
+    web:
+      pageable:
+        serialization-mode: via_dto
 
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}

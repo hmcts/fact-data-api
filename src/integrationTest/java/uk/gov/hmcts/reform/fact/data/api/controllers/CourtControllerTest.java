@@ -168,6 +168,66 @@ class CourtControllerTest {
             .andExpect(status().isBadRequest());
     }
 
+    @Test
+    @DisplayName("GET /courts/v1 returns 400 for invalid partial court name")
+    void getFilteredCourtsReturnsBadRequestForInvalidPartialName() throws Exception {
+        mockMvc.perform(get("/courts/v1")
+                            .param("partialCourtName", "Invalid@Name"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /courts/v1 returns 400 for invalid region UUID")
+    void getFilteredCourtsReturnsBadRequestForInvalidRegionId() throws Exception {
+        mockMvc.perform(get("/courts/v1")
+                            .param("regionId", "not-a-uuid"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /courts/v1 returns 400 when partial court name exceeds max length")
+    void getFilteredCourtsReturnsBadRequestForPartialNameTooLong() throws Exception {
+        mockMvc.perform(get("/courts/v1")
+                            .param("partialCourtName", "A".repeat(251)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1 returns 400 for invalid name pattern")
+    void createCourtReturnsBadRequestForInvalidName() throws Exception {
+        Court invalidCourt = buildCourt(null);
+        invalidCourt.setName("Name@");
+
+        mockMvc.perform(post("/courts/v1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidCourt)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1 returns 400 for invalid slug pattern")
+    void createCourtReturnsBadRequestForInvalidSlug() throws Exception {
+        Court invalidCourt = buildCourt(null);
+        invalidCourt.setSlug("INVALID SLUG");
+
+        mockMvc.perform(post("/courts/v1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidCourt)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PUT /courts/{courtId}/v1 returns 400 for invalid request body")
+    void updateCourtReturnsBadRequestForInvalidBody() throws Exception {
+        Court invalidCourt = buildCourt(null);
+        invalidCourt.setName("Invalid@Name");
+
+        mockMvc.perform(put("/courts/{courtId}/v1", COURT_ID)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidCourt)))
+            .andExpect(status().isBadRequest());
+    }
+
     private Court buildCourt(UUID id) {
         return Court.builder()
             .id(id)
