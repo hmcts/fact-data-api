@@ -53,6 +53,25 @@ spring:
   # regardless of their null/empty state
   jackson:
     default-property-inclusion: always
+  # required for the poc - this will be in master soon, but
+  # it's easier for now to not worry about integrating
+  cloud:
+    azure:
+      profile:
+        tenant-id: ${AZURE_TENANT_ID}
+      credential:
+        managed-identity-enabled: ${AZURE_MANAGED_IDENTITY_ENABLED:false}
+        client-id: ${AZURE_CLIENT_ID}
+      # required for security flows
+      active-directory:
+        enabled: true
+        profile:
+          tenant-id: ${AZURE_TENANT_ID}
+        # required as this will be what's in the "aud" claim for Jwt tokens
+        # received by the controllers - the actual audience will be valid
+        # if it's the value below, or the raw AZURE_CLIENT_ID value from
+        # above - Jwt's created by azure's oath return the app uri.
+        app-id-uri: 'api://${AZURE_APP_ID}'
 
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
