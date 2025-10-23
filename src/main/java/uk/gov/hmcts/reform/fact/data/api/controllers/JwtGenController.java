@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class JwtGenController {
 
     public enum Scope {
-        USER_SERVER_APP_ID_AS_SCOPE,
+        USE_SERVER_APP_ID_AS_SCOPE,
         USE_CLIENT_APP_ID_AS_SCOPE
     }
 
@@ -95,7 +95,7 @@ public class JwtGenController {
         tokenRequestContext.addScopes(String.format(
             "api://%s/.default", switch (scope) {
                 // This is the one that should work
-                case USER_SERVER_APP_ID_AS_SCOPE -> pocServiceAppId;
+                case USE_SERVER_APP_ID_AS_SCOPE -> pocServiceAppId;
                 // this will be the app id of the calling app - almost certainly won't work as aud will be duff
                 case USE_CLIENT_APP_ID_AS_SCOPE -> azureClientId;
             }
