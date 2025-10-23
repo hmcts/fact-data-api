@@ -121,6 +121,14 @@ jacocoTestReport {
 
 project.tasks['sonarqube'].dependsOn jacocoTestReport
 
+
+// JUST FOR POC
+def sonarExclusions = [
+  "src/main/java/uk/gov/hmcts/reform/fact/data/api/config/SpringSecurityConfig.java",
+  "src/main/java/uk/gov/hmcts/reform/fact/data/api/controllers/JwtGenController.java",
+  "src/main/java/uk/gov/hmcts/reform/fact/data/api/controllers/SecureController.java"
+]
+
 sonarqube {
   properties {
     property "sonar.projectName", "fact-data-api"
@@ -128,6 +136,7 @@ sonarqube {
     // entities are atomic in the repo and necessarily have some duplication that
     // we need to ignore.
     property "sonar.cpd.exclusions", "**/entities/*.java"
+    property "sonar.exclusions", sonarExclusions.join(', ')
   }
 }
 
