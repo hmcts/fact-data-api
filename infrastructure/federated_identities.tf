@@ -11,20 +11,20 @@ resource "azuread_application_federated_identity_credential" "fact_admin_fronten
   count = var.env == "prod" ? 0 : 1
 
   application_id = data.azuread_application.fact_admin_frontend_app.id
-  display_name          = data.azurerm_user_assigned_identity.fact_mi.name
-  audiences             = ["api://AzureADTokenExchange"]
-  issuer                = "https://login.microsoftonline.com/${data.azurerm_user_assigned_identity.fact_mi.tenant_id}/v2.0"
-  subject               = "userAssignedIdentity:${data.azurerm_user_assigned_identity.fact_mi.principal_id}"
-  description           = "${data.azurerm_user_assigned_identity.fact_mi.name} used by FaCT for S2S Auth"
+  display_name   = data.azurerm_user_assigned_identity.fact_mi.name
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://login.microsoftonline.com/${data.azurerm_user_assigned_identity.fact_mi.tenant_id}/v2.0"
+  subject        = data.azurerm_user_assigned_identity.fact_mi.principal_id
+  description    = "${data.azurerm_user_assigned_identity.fact_mi.name} used by FaCT for S2S Auth"
 }
 
 resource "azuread_application_federated_identity_credential" "fact_data_api" {
   count = var.env == "prod" ? 0 : 1
 
   application_id = data.azuread_application.fact_data_api_app.id
-  display_name          = data.azurerm_user_assigned_identity.fact_mi.name
-  audiences             = ["api://AzureADTokenExchange"]
-  issuer                = "https://login.microsoftonline.com/${data.azurerm_user_assigned_identity.fact_mi.tenant_id}/v2.0"
-  subject               = "userAssignedIdentity:${data.azurerm_user_assigned_identity.fact_mi.principal_id}"
-  description           = "${data.azurerm_user_assigned_identity.fact_mi.name} used by FaCT for S2S Auth"
+  display_name   = data.azurerm_user_assigned_identity.fact_mi.name
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://login.microsoftonline.com/${data.azurerm_user_assigned_identity.fact_mi.tenant_id}/v2.0"
+  subject        = data.azurerm_user_assigned_identity.fact_mi.principal_id
+  description    = "${data.azurerm_user_assigned_identity.fact_mi.name} used by FaCT for S2S Auth"
 }
