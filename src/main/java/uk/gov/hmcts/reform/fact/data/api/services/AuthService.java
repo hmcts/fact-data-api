@@ -28,12 +28,12 @@ public class AuthService {
 
     private String findUserRole(Authentication authentication) {
         return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
-            .filter((PREFIX+ROLE_ADMIN)::equals).filter((PREFIX+ROLE_USER)::equals)
+            .filter((PREFIX + ROLE_ADMIN)::equals).filter((PREFIX + ROLE_USER)::equals)
             .findFirst().orElse(null);
     }
 
     private String findAdminRole(Authentication authentication) {
         return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
-            .filter((PREFIX+ROLE_ADMIN)::equals).findFirst().orElse(null);
+            .filter((PREFIX + ROLE_ADMIN)::equals).findFirst().orElse(null);
     }
 }
