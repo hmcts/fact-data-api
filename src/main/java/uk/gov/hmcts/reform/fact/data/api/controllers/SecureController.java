@@ -27,7 +27,7 @@ public class SecureController {
     }
 
     @GetMapping("/user")
-    @PreAuthorize("@authService.isØUser()")
+    @PreAuthorize("@authService.isUser()")
     @SecurityRequirement(name = OpenAPIConfiguration.BEARER_AUTH_SECURITY_SCHEME)
     public ResponseEntity<String> testUser() {
         return ok("user test");
