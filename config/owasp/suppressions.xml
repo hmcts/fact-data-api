@@ -8,5 +8,14 @@
     <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
     <cve>CVE-2023-35116</cve>
   </suppress>
+  <suppress>
+    <notes>No later versions of Azure identity available</notes>
+    <cve>CVE-2023-36415</cve>
+    <cve>CVE-2024-35255</cve>
+  </suppress>
+  <suppress>
+    <notes>No later versions of msal4j available</notes>
+    <cve>CVE-2024-35255</cve>
+  </suppress>
   <!--End of false positives section -->
 </suppressions>
