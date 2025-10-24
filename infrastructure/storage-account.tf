@@ -9,6 +9,8 @@ module "storage_account" {
   default_action                  = "Allow"
   allow_nested_items_to_be_public = "true"
   public_network_access_enabled   = true
+  enable_data_protection          = true
+  retention_period                = 14
   common_tags                     = var.common_tags
   containers = [
     {
