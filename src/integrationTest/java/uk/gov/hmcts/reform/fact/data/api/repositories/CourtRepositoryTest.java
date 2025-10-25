@@ -17,7 +17,9 @@ import org.springframework.test.context.ActiveProfiles;
 
 // using @SpringBootTest as @DataJpaTest doesn't enable @PostLoad
 // or jakarta.validation handling
-@SpringBootTest
+@SpringBootTest(
+    properties = "spring.config.name=application-test"
+)
 @ActiveProfiles("test")
 public class CourtRepositoryTest {
 
@@ -41,7 +43,7 @@ public class CourtRepositoryTest {
         var court = Court.builder()
             .name("Test Court")
             .slug("test-court")
-            .open(true).temporaryUrgentNotice("Urgent notice")
+            .open(true).warningNotice("Urgent notice")
             .regionId(region.getId())
             .isServiceCentre(true)
             .openOnCath(true)

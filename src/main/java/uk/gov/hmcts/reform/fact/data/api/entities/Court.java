@@ -47,20 +47,31 @@ public class Court {
 
     @Schema(description = "The name of the Court")
     @NotBlank(message = "Court name must be specified")
+    @Size(min = 5, max = 200, message = "Court name should be between 5 and 200 chars")
+    @Pattern(
+        regexp = "^[A-Za-z&'()\\- ]+$",
+        message = "Court name may only contain letters, spaces, apostrophes, hyphens, ampersands, and parentheses"
+    )
     private String name;
 
     @Schema(description = "The Court 'slug'")
-    @Size(min = 5, max = 200, message = "Court slug should be between 5 and 200 chars")
-    // ideally we'd use a regex that requires a single alpha character at the start and end,
-    // but we need to be careful about backtracking attacks (sonar will flag)
-    @Pattern(regexp = "^[a-z-]+$", message = "Slug must match the regex '^[a-z-]+$'")
+    @Size(min = 5, max = 250, message = "Court slug should be between 5 and 200 chars")
+    @Pattern(
+        regexp = "^[a-z0-9-]+$",
+        message = "Slug must match the regex '^[a-z0-9-]+$'"
+    )
     private String slug;
 
     @Schema(description = "The open status of the Court")
     private Boolean open;
 
-    @Schema(description = "Any temporary/urgent notices attached to the Court")
-    private String temporaryUrgentNotice;
+    @Schema(description = "Any warning notices attached to the Court")
+    @Size(max = 500, message = "Warning notice must be less than 500 characters")
+    @Pattern(
+        regexp = "^[A-Za-z0-9.,!?:;'\"()\\-/&@+\\s]+$",
+        message = "Warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)"
+    )
+    private String warningNotice;
 
     @Schema(description = "The created date/time of the Court record", accessMode = Schema.AccessMode.READ_ONLY)
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)
@@ -85,6 +96,7 @@ public class Court {
     private Region region;
 
     @Schema(description = "Indicates that this Court is Service Centre")
+    @NotNull
     private Boolean isServiceCentre;
 
     @Schema(description = "Indicates that this Court is declared open in the Court and Tribunal Hearing service")

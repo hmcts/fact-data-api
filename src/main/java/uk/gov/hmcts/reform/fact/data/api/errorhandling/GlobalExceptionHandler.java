@@ -8,6 +8,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -68,6 +71,40 @@ public class GlobalExceptionHandler {
         log.error("400, could not parse request body. Details: {}", ex.getMessage());
 
         String message = "Invalid request body: " + ex.getMessage();
+
+        return generateExceptionResponse(message);
+    }
+
+    @ExceptionHandler(InvalidFileException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidFileException ex) {
+        log.error("400, file failed validation. Details: {}", ex.getMessage());
+
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
+    public ExceptionResponse handle(MaxUploadSizeExceededException ex) {
+        log.error("413, uploaded file size exceeds limit. Details: {}", ex.getMessage());
+
+        return generateExceptionResponse("Uploaded file size exceeds the maximum allowed limit of 2MB.");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(MethodArgumentTypeMismatchException ex) {
+        log.error("400, invalid parameter type. Parameter: {}, Value: {}, Expected type: {}",
+                  ex.getName(), ex.getValue(), ex.getRequiredType()
+                      != null ? ex.getRequiredType().getSimpleName() : "unknown");
+
+        String expectedType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
+        String message = String.format(
+            "Invalid value for parameter '%s': '%s'. Expected type: %s.",
+            ex.getName(),
+            ex.getValue(),
+            expectedType
+        );
 
         return generateExceptionResponse(message);
     }
