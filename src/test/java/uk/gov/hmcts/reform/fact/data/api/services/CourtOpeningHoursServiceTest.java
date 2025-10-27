@@ -18,6 +18,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtOpeningHoursRepositor
 
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -103,7 +104,7 @@ class CourtOpeningHoursServiceTest {
     @Test
     void getOpeningHoursByCourtIdReturnsOpeningHoursWhenFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtOpeningHoursRepository.findByCourtId(courtId)).thenReturn(openingHours);
+        when(courtOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.of(openingHours));
 
         List<CourtOpeningHours> result = courtOpeningHoursService.getOpeningHoursByCourtId(courtId);
 
@@ -113,7 +114,7 @@ class CourtOpeningHoursServiceTest {
     @Test
     void getOpeningHoursByCourtIdThrowsExceptionWhenNotFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtOpeningHoursRepository.findByCourtId(courtId)).thenReturn(List.of());
+        when(courtOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
 
         assertThrows(
             CourtResourceNotFoundException.class,
@@ -135,7 +136,7 @@ class CourtOpeningHoursServiceTest {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(openingHoursTypeService.getOpeningHourTypeById(openingHourType.getId())).thenReturn(openingHourType);
         when(courtOpeningHoursRepository.findByCourtIdAndOpeningHourTypeId(courtId, openingHourType.getId()))
-            .thenReturn(openingHours);
+            .thenReturn(Optional.of(openingHours));
 
         List<CourtOpeningHours> result = courtOpeningHoursService
             .getOpeningHoursByTypeId(courtId, openingHourType.getId());
@@ -148,7 +149,7 @@ class CourtOpeningHoursServiceTest {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(openingHoursTypeService.getOpeningHourTypeById(openingHourType.getId())).thenReturn(openingHourType);
         when(courtOpeningHoursRepository.findByCourtIdAndOpeningHourTypeId(courtId, openingHourType.getId()))
-            .thenReturn(List.of());
+            .thenReturn(Optional.empty());
 
         assertThrows(
             CourtResourceNotFoundException.class,
@@ -182,7 +183,7 @@ class CourtOpeningHoursServiceTest {
     void getCounterServiceOpeningHoursByCourtIdReturnsOpeningHoursWhenFound() {
         List<CourtCounterServiceOpeningHours> counterHours = List.of(new CourtCounterServiceOpeningHours());
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)).thenReturn(counterHours);
+        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.of(counterHours));
 
         List<CourtCounterServiceOpeningHours> result =
             courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(courtId);
@@ -193,7 +194,7 @@ class CourtOpeningHoursServiceTest {
     @Test
     void getCounterServiceOpeningHoursByCourtIdThrowsExceptionWhenNotFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)).thenReturn(List.of());
+        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
 
         assertThrows(
             CourtResourceNotFoundException.class,
