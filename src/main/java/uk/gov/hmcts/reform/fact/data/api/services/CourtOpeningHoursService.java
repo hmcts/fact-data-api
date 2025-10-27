@@ -40,15 +40,12 @@ public class CourtOpeningHoursService {
      * Get a list of opening hours by court ID.
      *
      * @param courtId The court ID to find the opening hours for.
-     * @return The list of opening hours record or 204 if the court has no opening hours.
+     * @return The list of opening hours record or an empty list if the court has no opening hours.
      * @throws CourtResourceNotFoundException  if no opening hours record exists for the court.
      */
     public List<CourtOpeningHours> getOpeningHoursByCourtId(UUID courtId) {
-        var openingHours = courtOpeningHoursRepository.findByCourtId(courtService.getCourtById(courtId).getId());
-        if (openingHours.isEmpty()) {
-            throw new CourtResourceNotFoundException("No opening hours found for court ID: " + courtId);
-        }
-        return openingHours;
+        return courtOpeningHoursRepository.findByCourtId(courtService.getCourtById(courtId).getId())
+            .orElseThrow(() -> new CourtResourceNotFoundException("No opening hours found for court ID: " + courtId));
     }
 
     /**
@@ -56,21 +53,17 @@ public class CourtOpeningHoursService {
      *
      * @param courtId The court ID to find the opening hours type for.
      * @param openingHourTypeId The type ID for the opening hours type to find.
-     * @return The opening hours record or null if one doesn't exist for the court.
+     * @return The opening hours record or an empty list if none exist for the court.
      * @throws CourtResourceNotFoundException if no opening hours record of this type exists for the court.
      */
     public List<CourtOpeningHours> getOpeningHoursByTypeId(UUID courtId, UUID openingHourTypeId) {
-        UUID validatedCourtId = courtService.getCourtById(courtId).getId();
-        UUID validatedOpeningHourTypeId = openingHoursTypeService.getOpeningHourTypeById(openingHourTypeId).getId();
-
-        var openingHours = courtOpeningHoursRepository
-            .findByCourtIdAndOpeningHourTypeId(validatedCourtId, validatedOpeningHourTypeId);
-
-        if (openingHours.isEmpty()) {
-            throw new CourtResourceNotFoundException(
-                "No opening hour found for court ID: " + courtId + " with type ID: " + openingHourTypeId);
-        }
-        return openingHours;
+        return courtOpeningHoursRepository
+            .findByCourtIdAndOpeningHourTypeId(
+                courtService.getCourtById(courtId).getId(),
+                openingHoursTypeService.getOpeningHourTypeById(openingHourTypeId).getId())
+            .orElseThrow(
+                () -> new CourtResourceNotFoundException(
+                "No opening hour found for court ID: " + courtId + " with type ID: " + openingHourTypeId));
     }
 
     /**
@@ -78,18 +71,15 @@ public class CourtOpeningHoursService {
      * A court will only ever have zero or one counter-service opening hours record.
      *
      * @param courtId The court ID to find the counter-service opening hours for.
-     * @return The counter-service opening hours record or null if one doesn't exist for the court.
+     * @return The counter-service opening hours record or an empty list if none exist for the court.
      * @throws CourtResourceNotFoundException if no counter-service opening hours record exists for the court.
      */
     public List<CourtCounterServiceOpeningHours> getCounterServiceOpeningHoursByCourtId(UUID courtId) {
-        var openingHours = courtCounterServiceOpeningHoursRepository
-            .findByCourtId(courtService.getCourtById(courtId).getId());
-
-        if (openingHours.isEmpty()) {
-            throw new CourtResourceNotFoundException("No counter service opening hours found for court ID: " + courtId);
-        }
-
-        return openingHours;
+        return courtCounterServiceOpeningHoursRepository
+            .findByCourtId(courtService.getCourtById(courtId).getId())
+            .orElseThrow(
+                () -> new CourtResourceNotFoundException(
+                    "No counter service opening hours found for court ID: " + courtId));
     }
 
     /**
