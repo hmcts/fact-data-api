@@ -179,7 +179,8 @@ public class CourtProfessionalInformationService {
      */
     private CourtCodes replaceCourtCodes(UUID courtId, Court court, CourtCodesDto codes) {
         if (codes == null) {
-            courtCodesRepository.findByCourtId(courtId).ifPresent(courtCodesRepository::delete);
+            // No codes provided; remove any existing record for this court.
+            courtCodesRepository.deleteByCourtId(courtId);
             return null;
         }
 

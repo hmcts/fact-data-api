@@ -318,7 +318,6 @@ class CourtProfessionalInformationServiceTest {
             .thenReturn(Optional.of(professionalInformation));
         when(courtProfessionalInformationRepository.save(any(CourtProfessionalInformation.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
-        when(courtCodesRepository.findByCourtId(courtId)).thenReturn(Optional.of(courtCodes));
 
         CourtProfessionalInformationDetailsDto request = CourtProfessionalInformationDetailsDto.builder()
             .professionalInformation(professionalInformationDto)
@@ -329,7 +328,7 @@ class CourtProfessionalInformationServiceTest {
         CourtProfessionalInformationDetailsDto result =
             courtProfessionalInformationService.setProfessionalInformation(courtId, request);
 
-        verify(courtCodesRepository).delete(courtCodes);
+        verify(courtCodesRepository).deleteByCourtId(courtId);
         verify(courtDxCodeRepository).deleteAllByCourtId(courtId);
         verify(courtFaxRepository).deleteAllByCourtId(courtId);
         verify(courtDxCodeRepository, never()).saveAll(any());

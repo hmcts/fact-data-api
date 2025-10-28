@@ -12,4 +12,6 @@ import org.springframework.stereotype.Repository;
 public interface CourtCodesRepository extends JpaRepository<CourtCodes, UUID> {
 
     Optional<CourtCodes> findByCourtId(UUID courtId);
+
+    void deleteByCourtId(UUID courtId);
 }
