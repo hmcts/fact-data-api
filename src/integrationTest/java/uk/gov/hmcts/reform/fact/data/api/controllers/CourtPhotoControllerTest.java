@@ -6,14 +6,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtPhotoService;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.UUID;
+import javax.imageio.ImageIO;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -78,7 +81,7 @@ class CourtPhotoControllerTest {
         courtPhoto.setCourtId(COURT_ID);
         courtPhoto.setFileLink("https://example.com/photo.jpg");
 
-        when(courtPhotoService.setCourtPhoto(eq(COURT_ID), any(MultipartFile.class))).thenReturn(courtPhoto);
+        when(courtPhotoService.setCourtPhoto(eq(COURT_ID), any())).thenReturn(courtPhoto);
 
         mockMvc.perform(multipart("/courts/{courtId}/v1/photo", COURT_ID)
                             .file(buildMultipartFile())
@@ -90,7 +93,7 @@ class CourtPhotoControllerTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/photo returns 404 when court missing")
     void setCourtPhotoReturnsNotFound() throws Exception {
-        when(courtPhotoService.setCourtPhoto(eq(UNKNOWN_COURT_ID), any(MultipartFile.class)))
+        when(courtPhotoService.setCourtPhoto(eq(UNKNOWN_COURT_ID), any()))
             .thenThrow(new NotFoundException("Court not found"));
 
         mockMvc.perform(multipart("/courts/{courtId}/v1/photo", UNKNOWN_COURT_ID)
@@ -133,11 +136,19 @@ class CourtPhotoControllerTest {
     }
 
     private MockMultipartFile buildMultipartFile() {
-        return new MockMultipartFile(
-            "file",
-            "photo.jpg",
-            "image/jpeg",
-            "binary-content".getBytes()
-        );
+        return new MockMultipartFile("file", "photo.jpg", "image/jpeg", createImageBytes());
+    }
+
+    private byte[] createImageBytes() {
+        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+        image.setRGB(0, 0, 0xFFFFFF);
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            ImageIO.write(image, "jpg", outputStream);
+            return outputStream.toByteArray();
+        } catch (IOException exception) {
+            throw new RuntimeException("Failed to create test image content", exception);
+        }
     }
 }
+

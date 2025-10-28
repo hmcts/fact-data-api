@@ -18,7 +18,4 @@ public @interface ValidImage {
     String message() default "Invalid image file";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
-
-    String[] allowedTypes() default {"image/jpeg", "image/jpg", "image/png"};
 }
-
