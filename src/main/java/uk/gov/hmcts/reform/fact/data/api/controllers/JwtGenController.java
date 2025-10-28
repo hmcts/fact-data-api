@@ -2,10 +2,14 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
+import com.azure.identity.ClientAssertionCredentialBuilder;
 import com.azure.identity.ClientSecretCredentialBuilder;
-import com.azure.identity.ManagedIdentityCredentialBuilder;
 import com.azure.identity.OnBehalfOfCredentialBuilder;
+import com.microsoft.aad.msal4j.ManagedIdentityApplication;
+import com.microsoft.aad.msal4j.ManagedIdentityId;
+import com.microsoft.aad.msal4j.ManagedIdentityParameters;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/jwt/")
 @RequiredArgsConstructor
+@Slf4j
 public class JwtGenController {
 
     public enum Scope {
@@ -36,17 +41,57 @@ public class JwtGenController {
     @Value("#{environment.POC_SERVICE_APP_ID}")
     String pocServiceAppId;
 
-    @GetMapping("/mi/{scope}")
-    public ResponseEntity<String> genMIJwt(@PathVariable Scope scope) {
+    @GetMapping("/mi")
+    public ResponseEntity<String> genMIJwt() {
 
-        var credential = new ManagedIdentityCredentialBuilder()
-            .clientId(azureClientId) // our client id is assumed to be the MI in this case
-            .build();
+        try {
+            var mia = ManagedIdentityApplication.builder(ManagedIdentityId.userAssignedClientId(
+                azureClientId)).build();
 
-        var jwt = requestJwt(scope, credential);
+            var caTokenResult = mia.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(
+                "api://AzureADTokenExchange").build());
+            var caToken = caTokenResult.get();
 
-        return ResponseEntity.ok(jwt);
+            var assertionCredential = new ClientAssertionCredentialBuilder().clientId(pocClientAppId).authorityHost(
+                "https://login.microsoftonline.com/" + azureTenantId).clientAssertion(caToken::accessToken).build();
+
+            var tokenRequestContext = new TokenRequestContext();
+            tokenRequestContext.addScopes(String.format("api://%s/.default", pocServiceAppId));
+
+            var token = assertionCredential.getTokenSync(tokenRequestContext);
+            return ResponseEntity.ok(token.getToken());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+
+        return ResponseEntity.internalServerError().build();
     }
+
+    @GetMapping("/mi-ca")
+    public ResponseEntity<String> genMIClientAssertionJwt() {
+
+        try {
+            var mia = ManagedIdentityApplication.builder(ManagedIdentityId.userAssignedClientId(
+                azureClientId)).build();
+
+            var caTokenResult = mia.acquireTokenForManagedIdentity(ManagedIdentityParameters.builder(
+                "api://AzureADTokenExchange").build());
+            var caToken = caTokenResult.get();
+
+            return ResponseEntity.ok(caToken.accessToken());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return ResponseEntity.internalServerError().build();
+        }
+
+        return ResponseEntity.internalServerError().build();
+    }
+
 
     @GetMapping("/cs/{scope}")
     public ResponseEntity<String> genCSJwt(@PathVariable Scope scope) {
@@ -75,11 +120,7 @@ public class JwtGenController {
             .build();
 
         var tokenRequestContext = new TokenRequestContext();
-        // scope is "api://<serviceId>/.default" where service id is the id of
-        // the service that we are connecting to. This is the bit I don't like
-        // we shouldn't need this bit
-        tokenRequestContext.addScopes(
-            "api://AzureADTokenExchange");
+        tokenRequestContext.addScopes(String.format("api://%s/.default", pocServiceAppId));
 
         var accessToken = credential.getTokenSync(tokenRequestContext);
         var oboJwt = accessToken.getToken();
@@ -102,7 +143,6 @@ public class JwtGenController {
         ));
 
         var accessToken = credential.getTokenSync(tokenRequestContext);
-        var jwt = accessToken.getToken();
-        return jwt;
+        return accessToken.getToken();
     }
 }
