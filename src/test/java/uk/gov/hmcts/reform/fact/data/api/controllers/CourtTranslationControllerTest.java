@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -41,7 +42,8 @@ class CourtTranslationControllerTest {
 
         when(courtTranslationService.getTranslationByCourtId(COURT_ID)).thenReturn(translation);
 
-        var response = courtTranslationController.getTranslationServicesByCourtId(COURT_ID.toString());
+        ResponseEntity<CourtTranslation> response =
+            courtTranslationController.getTranslationServicesByCourtId(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(translation);
@@ -82,7 +84,8 @@ class CourtTranslationControllerTest {
 
         when(courtTranslationService.setTranslation(COURT_ID, translation)).thenReturn(translation);
 
-        var response = courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
+        ResponseEntity<CourtTranslation> response =
+            courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(translation);
@@ -96,7 +99,8 @@ class CourtTranslationControllerTest {
 
         when(courtTranslationService.setTranslation(COURT_ID, translation)).thenReturn(translation);
 
-        var response = courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
+        ResponseEntity<CourtTranslation> response =
+            courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(translation);

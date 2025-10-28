@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtCodesDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtDxCodeDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtFaxDto;
@@ -78,7 +79,8 @@ class CourtProfessionalInformationControllerTest {
         when(courtProfessionalInformationService.getProfessionalInformationByCourtId(COURT_ID))
             .thenReturn(professionalInformation);
 
-        var response = courtProfessionalInformationController.getProfessionalInformationByCourtId(COURT_ID.toString());
+        ResponseEntity<CourtProfessionalInformationDetailsDto> response =
+            courtProfessionalInformationController.getProfessionalInformationByCourtId(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(professionalInformation);
@@ -118,10 +120,11 @@ class CourtProfessionalInformationControllerTest {
         when(courtProfessionalInformationService.setProfessionalInformation(COURT_ID, professionalInformation))
             .thenReturn(professionalInformation);
 
-        var response = courtProfessionalInformationController.setProfessionalInformation(
-            COURT_ID.toString(),
-            professionalInformation
-        );
+        ResponseEntity<CourtProfessionalInformationDetailsDto> response =
+            courtProfessionalInformationController.setProfessionalInformation(
+                COURT_ID.toString(),
+                professionalInformation
+            );
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(professionalInformation);

@@ -25,8 +25,8 @@ public class RegionRepositoryTest {
         region.setName("Test Region");
         region.setCountry("Test Country");
 
-        var savedRegion = regionRepository.save(region);
-        var foundRegion = regionRepository.findById(savedRegion.getId()).orElse(null);
+        Region savedRegion = regionRepository.save(region);
+        Region foundRegion = regionRepository.findById(savedRegion.getId()).orElse(null);
         assertNotNull(foundRegion);
         assertNotNull(foundRegion.getId());
         assertEquals("Test Region", foundRegion.getName());

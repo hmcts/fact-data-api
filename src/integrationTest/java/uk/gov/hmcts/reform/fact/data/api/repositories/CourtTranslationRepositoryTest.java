@@ -50,15 +50,15 @@ public class CourtTranslationRepositoryTest {
         court = courtRepository.save(court);
 
         // create and save a translation
-        var translation = new CourtTranslation();
+        CourtTranslation translation = new CourtTranslation();
         translation.setCourtId(court.getId());
         translation.setEmail("me@here.com");
         translation.setPhoneNumber("01234 433222");
 
-        var savedTranslation = courtTranslationRepository.save(translation);
+        CourtTranslation savedTranslation = courtTranslationRepository.save(translation);
 
         // create a translation for comparison
-        var translation1 = CourtTranslation.builder()
+        CourtTranslation translation1 = CourtTranslation.builder()
             .id(savedTranslation.getId())
             .courtId(court.getId())
             .court(null) // gets lazy loaded
@@ -75,7 +75,7 @@ public class CourtTranslationRepositoryTest {
         // make sure it still marries up now that we've added pulled the court
         assertEquals(translation1, savedTranslation);
 
-        var foundTranslation = courtTranslationRepository.findById(savedTranslation.getId()).orElse(null);
+        CourtTranslation foundTranslation = courtTranslationRepository.findById(savedTranslation.getId()).orElse(null);
 
         assertNotNull(foundTranslation);
         assertEquals("me@here.com", foundTranslation.getEmail());
@@ -84,4 +84,3 @@ public class CourtTranslationRepositoryTest {
 
     }
 }
-
