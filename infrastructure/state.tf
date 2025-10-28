@@ -6,10 +6,6 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "4.46.0"
     }
-    azuread = {
-      source  = "hashicorp/azuread"
-      version = "3.6.0"
-    }
   }
 }
 
@@ -22,5 +18,3 @@ provider "azurerm" {
   alias           = "postgres_network"
   subscription_id = var.aks_subscription_id
 }
-
-provider "azuread" {}
