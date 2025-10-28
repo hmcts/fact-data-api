@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtCodes;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -40,4 +41,18 @@ public class CourtCodesDto {
     @Size(max = 10, message = "GBS code must be {max} characters or fewer")
     @Pattern(regexp = "^[A-Za-z0-9 ]*$", message = "GBS code contains invalid characters")
     private String gbs;
+
+    public static CourtCodesDto fromEntity(CourtCodes entity) {
+        if (entity == null) {
+            return null;
+        }
+        return CourtCodesDto.builder()
+            .magistrateCourtCode(entity.getMagistrateCourtCode())
+            .familyCourtCode(entity.getFamilyCourtCode())
+            .tribunalCode(entity.getTribunalCode())
+            .countyCourtCode(entity.getCountyCourtCode())
+            .crownCourtCode(entity.getCrownCourtCode())
+            .gbs(entity.getGbs())
+            .build();
+    }
 }

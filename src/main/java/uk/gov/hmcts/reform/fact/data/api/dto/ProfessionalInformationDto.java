@@ -2,8 +2,6 @@ package uk.gov.hmcts.reform.fact.data.api.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -12,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 @Data
@@ -28,8 +27,6 @@ public class ProfessionalInformationDto {
     private Boolean interviewRooms;
 
     @Schema(description = "Number of available interview rooms")
-    @Min(0)
-    @Max(150)
     private Integer interviewRoomCount;
 
     @Schema(description = "The phone number for interview room enquiries")
@@ -55,5 +52,16 @@ public class ProfessionalInformationDto {
             return interviewRoomCount != null && interviewRoomCount > 0 && interviewRoomCount <= 150;
         }
         return interviewRoomCount == null || interviewRoomCount == 0;
+    }
+
+    public static ProfessionalInformationDto fromEntity(CourtProfessionalInformation entity) {
+        return ProfessionalInformationDto.builder()
+            .interviewRooms(entity.getInterviewRooms())
+            .interviewRoomCount(entity.getInterviewRoomCount())
+            .interviewPhoneNumber(entity.getInterviewPhoneNumber())
+            .videoHearings(entity.getVideoHearings())
+            .commonPlatform(entity.getCommonPlatform())
+            .accessScheme(entity.getAccessScheme())
+            .build();
     }
 }

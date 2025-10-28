@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtFax;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 @Data
@@ -28,4 +29,11 @@ public class CourtFaxDto {
     @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
         message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
     private String description;
+
+    public static CourtFaxDto fromEntity(CourtFax entity) {
+        return CourtFaxDto.builder()
+            .faxNumber(entity.getFaxNumber())
+            .description(entity.getDescription())
+            .build();
+    }
 }

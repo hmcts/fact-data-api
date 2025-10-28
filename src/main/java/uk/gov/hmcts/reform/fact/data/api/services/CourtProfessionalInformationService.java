@@ -1,12 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtCodesDto;
@@ -24,6 +19,13 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -85,76 +87,102 @@ public class CourtProfessionalInformationService {
     ) {
         log.info("Setting professional information for court id: {}", courtId);
         Court court = courtService.getCourtById(courtId);
-        ProfessionalInformationDto professionalInformationDto =
-            professionalInformationDetails.getProfessionalInformation();
-        CourtProfessionalInformation professionalInformation =
-            toProfessionalInformationEntity(courtId, court, professionalInformationDto);
-        courtProfessionalInformationRepository.findByCourtId(courtId).ifPresent(existing ->
-            professionalInformation.setId(existing.getId())
-        );
-        CourtProfessionalInformation savedProfessionalInformation =
-            courtProfessionalInformationRepository.save(professionalInformation);
 
-        CourtCodes savedCodes = upsertCourtCodes(courtId, court, professionalInformationDetails.getCodes());
-        List<CourtDxCode> savedDxCodes =
-            replaceCourtDxCodes(courtId, court, professionalInformationDetails.getDxCodes());
-        List<CourtFax> savedFaxNumbers =
-            replaceCourtFaxNumbers(courtId, court, professionalInformationDetails.getFaxNumbers());
+        CourtProfessionalInformation savedProfessionalInformation = saveProfessionalInformation(
+            courtId,
+            court,
+            professionalInformationDetails.getProfessionalInformation()
+        );
+
+        CourtCodes savedCodes = replaceCourtCodes(courtId, court, professionalInformationDetails.getCodes());
+        List<CourtDxCode> savedDxCodes = replaceCourtDxCodes(
+            courtId,
+            court,
+            professionalInformationDetails.getDxCodes()
+        );
+
+        List<CourtFax> savedFaxNumbers = replaceCourtFaxNumbers(
+            courtId,
+            court,
+            professionalInformationDetails.getFaxNumbers()
+        );
 
         return buildDetailsDto(savedProfessionalInformation, savedCodes, savedDxCodes, savedFaxNumbers);
     }
 
+
+    /**
+     * Assemble a DTO response from the persisted professional information and related entities.
+     *
+     * @param professionalInformation The professional information entity.
+     * @param codes The court codes entity.
+     * @param dxCodes The list of DX code entities.
+     * @param faxNumbers The list of fax number entities.
+     * @return The assembled DTO.
+     */
     private CourtProfessionalInformationDetailsDto buildDetailsDto(
         CourtProfessionalInformation professionalInformation,
         CourtCodes codes,
         List<CourtDxCode> dxCodes,
         List<CourtFax> faxNumbers
     ) {
-        List<CourtDxCode> safeDxCodes = dxCodes == null ? Collections.emptyList() : dxCodes;
-        List<CourtFax> safeFaxNumbers = faxNumbers == null ? Collections.emptyList() : faxNumbers;
+        List<CourtDxCode> safeDxCodes = Optional.ofNullable(dxCodes).orElseGet(Collections::emptyList);
+        List<CourtFax> safeFaxNumbers = Optional.ofNullable(faxNumbers).orElseGet(Collections::emptyList);
 
         return CourtProfessionalInformationDetailsDto.builder()
-            .professionalInformation(toProfessionalInformationDto(professionalInformation))
-            .codes(toCodesDto(codes))
-            .dxCodes(safeDxCodes.stream().map(this::toDxCodeDto).collect(Collectors.toList()))
-            .faxNumbers(safeFaxNumbers.stream().map(this::toFaxDto).collect(Collectors.toList()))
+            .professionalInformation(ProfessionalInformationDto.fromEntity(professionalInformation))
+            .codes(CourtCodesDto.fromEntity(codes))
+            .dxCodes(safeDxCodes.stream().map(CourtDxCodeDto::fromEntity).collect(Collectors.toList()))
+            .faxNumbers(safeFaxNumbers.stream().map(CourtFaxDto::fromEntity).collect(Collectors.toList()))
             .build();
     }
 
-    private CourtProfessionalInformation toProfessionalInformationEntity(
+    /**
+     * Create or update the core professional information entity for a court.
+     *
+     * @param courtId The court id.
+     * @param court The court.
+     * @param professionalInformationDto The professional information data.
+     * @return The saved professional information entity.
+     */
+    private CourtProfessionalInformation saveProfessionalInformation(
         UUID courtId,
         Court court,
-        ProfessionalInformationDto dto
+        ProfessionalInformationDto professionalInformationDto
     ) {
         CourtProfessionalInformation entity = CourtProfessionalInformation.builder()
-            .interviewRooms(dto.getInterviewRooms())
-            .interviewRoomCount(dto.getInterviewRoomCount())
-            .interviewPhoneNumber(dto.getInterviewPhoneNumber())
-            .videoHearings(dto.getVideoHearings())
-            .commonPlatform(dto.getCommonPlatform())
-            .accessScheme(dto.getAccessScheme())
+            .interviewRooms(professionalInformationDto.getInterviewRooms())
+            .interviewRoomCount(professionalInformationDto.getInterviewRoomCount())
+            .interviewPhoneNumber(professionalInformationDto.getInterviewPhoneNumber())
+            .videoHearings(professionalInformationDto.getVideoHearings())
+            .commonPlatform(professionalInformationDto.getCommonPlatform())
+            .accessScheme(professionalInformationDto.getAccessScheme())
             .courtId(courtId)
             .build();
+
         entity.setCourt(court);
-        return entity;
+
+        courtProfessionalInformationRepository.findByCourtId(courtId).ifPresent(existing ->
+            entity.setId(existing.getId())
+        );
+
+        return courtProfessionalInformationRepository.save(entity);
     }
 
-    private ProfessionalInformationDto toProfessionalInformationDto(CourtProfessionalInformation entity) {
-        return ProfessionalInformationDto.builder()
-            .interviewRooms(entity.getInterviewRooms())
-            .interviewRoomCount(entity.getInterviewRoomCount())
-            .interviewPhoneNumber(entity.getInterviewPhoneNumber())
-            .videoHearings(entity.getVideoHearings())
-            .commonPlatform(entity.getCommonPlatform())
-            .accessScheme(entity.getAccessScheme())
-            .build();
-    }
-
-    private CourtCodes upsertCourtCodes(UUID courtId, Court court, CourtCodesDto codes) {
+    /**
+     * Replace existing CourtCodes for the court with the provided values.
+     *
+     * @param courtId The id of the court.
+     * @param court The court.
+     * @param codes The court codes to set.
+     * @return The saved court codes.
+     */
+    private CourtCodes replaceCourtCodes(UUID courtId, Court court, CourtCodesDto codes) {
         if (codes == null) {
             courtCodesRepository.findByCourtId(courtId).ifPresent(courtCodesRepository::delete);
             return null;
         }
+
         CourtCodes entity = CourtCodes.builder()
             .courtId(courtId)
             .magistrateCourtCode(codes.getMagistrateCourtCode())
@@ -162,94 +190,87 @@ public class CourtProfessionalInformationService {
             .tribunalCode(codes.getTribunalCode())
             .countyCourtCode(codes.getCountyCourtCode())
             .crownCourtCode(codes.getCrownCourtCode())
-            .gbs(trimToNull(codes.getGbs()))
+            .gbs(StringUtils.trimToNull(codes.getGbs()))
             .build();
+
         entity.setCourt(court);
+
         courtCodesRepository.findByCourtId(courtId).ifPresent(existing ->
             entity.setId(existing.getId())
         );
+
         return courtCodesRepository.save(entity);
     }
 
+    /**
+     * Replace existing DX code entries for the court with the provided list.
+     *
+     * @param courtId The id of the court.
+     * @param court The court.
+     * @param dxCodes The DX codes to set.
+     * @return The saved DX codes.
+     */
     private List<CourtDxCode> replaceCourtDxCodes(UUID courtId, Court court, List<CourtDxCodeDto> dxCodes) {
         courtDxCodeRepository.deleteAllByCourtId(courtId);
-        if (dxCodes == null || dxCodes.isEmpty()) {
+
+        List<CourtDxCodeDto> safeDxCodes = Optional.ofNullable(dxCodes).orElse(Collections.emptyList());
+        if (safeDxCodes.isEmpty()) {
             return Collections.emptyList();
         }
-        List<CourtDxCode> toPersist = dxCodes.stream()
+
+        List<CourtDxCode> toPersist = safeDxCodes.stream()
             .filter(Objects::nonNull)
             .map(code -> {
                 CourtDxCode courtDxCode = CourtDxCode.builder()
-                    .dxCode(trimToNull(code.getDxCode()))
-                    .explanation(trimToNull(code.getExplanation()))
+                    .dxCode(StringUtils.trimToNull(code.getDxCode()))
+                    .explanation(StringUtils.trimToNull(code.getExplanation()))
                     .courtId(courtId)
                     .build();
                 courtDxCode.setCourt(court);
                 return courtDxCode;
             })
             .collect(Collectors.toList());
+
         if (toPersist.isEmpty()) {
             return Collections.emptyList();
         }
+
         return courtDxCodeRepository.saveAll(toPersist);
     }
 
+    /**
+     * Replace existing fax entries for the court with the provided list.
+     *
+     * @param courtId The id of the court.
+     * @param court The court.
+     * @param faxNumbers The fax numbers to set.
+     * @return The saved fax numbers.
+     */
     private List<CourtFax> replaceCourtFaxNumbers(UUID courtId, Court court, List<CourtFaxDto> faxNumbers) {
         courtFaxRepository.deleteAllByCourtId(courtId);
-        if (faxNumbers == null || faxNumbers.isEmpty()) {
+
+        List<CourtFaxDto> safeFaxNumbers = Optional.ofNullable(faxNumbers).orElse(Collections.emptyList());
+        if (safeFaxNumbers.isEmpty()) {
             return Collections.emptyList();
         }
-        List<CourtFax> toPersist = faxNumbers.stream()
+
+        List<CourtFax> toPersist = safeFaxNumbers.stream()
             .filter(Objects::nonNull)
             .map(fax -> {
                 CourtFax courtFax = CourtFax.builder()
                     .faxNumber(fax.getFaxNumber())
-                    .description(trimToNull(fax.getDescription()))
+                    .description(StringUtils.trimToNull(fax.getDescription()))
                     .courtId(courtId)
                     .build();
                 courtFax.setCourt(court);
                 return courtFax;
             })
             .collect(Collectors.toList());
+
         if (toPersist.isEmpty()) {
             return Collections.emptyList();
         }
+
         return courtFaxRepository.saveAll(toPersist);
-    }
-
-    private CourtCodesDto toCodesDto(CourtCodes codes) {
-        if (codes == null) {
-            return null;
-        }
-        return CourtCodesDto.builder()
-            .magistrateCourtCode(codes.getMagistrateCourtCode())
-            .familyCourtCode(codes.getFamilyCourtCode())
-            .tribunalCode(codes.getTribunalCode())
-            .countyCourtCode(codes.getCountyCourtCode())
-            .crownCourtCode(codes.getCrownCourtCode())
-            .gbs(codes.getGbs())
-            .build();
-    }
-
-    private CourtDxCodeDto toDxCodeDto(CourtDxCode dxCode) {
-        return CourtDxCodeDto.builder()
-            .dxCode(dxCode.getDxCode())
-            .explanation(dxCode.getExplanation())
-            .build();
-    }
-
-    private CourtFaxDto toFaxDto(CourtFax fax) {
-        return CourtFaxDto.builder()
-            .faxNumber(fax.getFaxNumber())
-            .description(fax.getDescription())
-            .build();
-    }
-
-    private String trimToNull(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
     }
 }

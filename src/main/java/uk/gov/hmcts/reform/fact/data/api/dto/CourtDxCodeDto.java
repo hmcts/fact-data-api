@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtDxCode;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 @Data
@@ -29,4 +30,11 @@ public class CourtDxCodeDto {
     @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
         message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
     private String explanation;
+
+    public static CourtDxCodeDto fromEntity(CourtDxCode entity) {
+        return CourtDxCodeDto.builder()
+            .dxCode(entity.getDxCode())
+            .explanation(entity.getExplanation())
+            .build();
+    }
 }
