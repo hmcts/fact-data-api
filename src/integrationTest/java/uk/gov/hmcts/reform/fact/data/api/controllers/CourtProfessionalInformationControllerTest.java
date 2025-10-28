@@ -250,7 +250,7 @@ class CourtProfessionalInformationControllerTest {
                                 wrapProfessionalInformation(invalidProfessionalInformation)
                             )))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$['professionalInformation.interviewRoomCount']").exists());
+            .andExpect(jsonPath("$['professionalInformation.interviewRoomCountConsistent']").exists());
     }
 
     @Test
