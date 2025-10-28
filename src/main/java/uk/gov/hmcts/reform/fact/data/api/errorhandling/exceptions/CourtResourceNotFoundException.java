@@ -3,5 +3,5 @@ package uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions;
 import lombok.experimental.StandardException;
 
 @StandardException
-public class TranslationNotFoundException extends RuntimeException {
+public class CourtResourceNotFoundException extends RuntimeException {
 }

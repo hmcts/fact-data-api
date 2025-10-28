@@ -7,8 +7,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtTranslationService;
 
 import java.util.UUID;
@@ -48,11 +48,11 @@ class CourtTranslationControllerTest {
     }
 
     @Test
-    void getTranslationServicesThrowsTranslationNotFound() {
+    void getTranslationServicesThrowsCourtResourceNotFound() {
         when(courtTranslationService.getTranslationByCourtId(UNKNOWN_COURT_ID))
-            .thenThrow(new TranslationNotFoundException("No translation services found"));
+            .thenThrow(new CourtResourceNotFoundException("No translation services found"));
 
-        assertThrows(TranslationNotFoundException.class, () ->
+        assertThrows(CourtResourceNotFoundException.class, () ->
             courtTranslationController.getTranslationServicesByCourtId(UNKNOWN_COURT_ID.toString())
         );
     }
