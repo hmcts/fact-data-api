@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
@@ -41,7 +42,7 @@ class TypesControllerTest {
 
         when(typesService.getAreaOfLawTypes()).thenReturn(areasOfLawTypes);
 
-        var response = typesController.getAreasOfLawTypes();
+        ResponseEntity<List<AreaOfLawType>> response = typesController.getAreasOfLawTypes();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(areasOfLawTypes);
@@ -52,7 +53,7 @@ class TypesControllerTest {
         List<AreaOfLawType> emptyList = List.of();
         when(typesService.getAreaOfLawTypes()).thenReturn(emptyList);
 
-        var response = typesController.getAreasOfLawTypes();
+        ResponseEntity<List<AreaOfLawType>> response = typesController.getAreasOfLawTypes();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEmpty();
@@ -66,7 +67,7 @@ class TypesControllerTest {
 
         when(typesService.getCourtTypes()).thenReturn(courtTypes);
 
-        var response = typesController.getCourtTypes();
+        ResponseEntity<List<CourtType>> response = typesController.getCourtTypes();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(courtTypes);
@@ -77,7 +78,7 @@ class TypesControllerTest {
         List<CourtType> emptyList = List.of();
         when(typesService.getCourtTypes()).thenReturn(emptyList);
 
-        var response = typesController.getCourtTypes();
+        ResponseEntity<List<CourtType>> response = typesController.getCourtTypes();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEmpty();
@@ -90,7 +91,7 @@ class TypesControllerTest {
 
         when(typesService.getOpeningHoursTypes()).thenReturn(openingHourTypes);
 
-        var response = typesController.getOpeningHoursTypes();
+        ResponseEntity<List<OpeningHourType>> response = typesController.getOpeningHoursTypes();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(openingHourTypes);
@@ -101,7 +102,7 @@ class TypesControllerTest {
         List<OpeningHourType> emptyList = List.of();
         when(typesService.getOpeningHoursTypes()).thenReturn(emptyList);
 
-        var response = typesController.getOpeningHoursTypes();
+        ResponseEntity<List<OpeningHourType>> response = typesController.getOpeningHoursTypes();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEmpty();
@@ -114,7 +115,7 @@ class TypesControllerTest {
 
         when(typesService.getContactDescriptionTypes()).thenReturn(contactDescriptionTypes);
 
-        var response = typesController.getContactDescriptionTypes();
+        ResponseEntity<List<ContactDescriptionType>> response = typesController.getContactDescriptionTypes();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(contactDescriptionTypes);
@@ -125,7 +126,7 @@ class TypesControllerTest {
         List<ContactDescriptionType> emptyList = List.of();
         when(typesService.getContactDescriptionTypes()).thenReturn(emptyList);
 
-        var response = typesController.getContactDescriptionTypes();
+        ResponseEntity<List<ContactDescriptionType>> response = typesController.getContactDescriptionTypes();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEmpty();
@@ -138,7 +139,7 @@ class TypesControllerTest {
 
         when(typesService.getRegions()).thenReturn(regions);
 
-        var response = typesController.getRegions();
+        ResponseEntity<List<Region>> response = typesController.getRegions();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(regions);
@@ -149,7 +150,7 @@ class TypesControllerTest {
         List<Region> emptyList = List.of();
         when(typesService.getRegions()).thenReturn(emptyList);
 
-        var response = typesController.getRegions();
+        ResponseEntity<List<Region>> response = typesController.getRegions();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEmpty();
@@ -162,7 +163,7 @@ class TypesControllerTest {
 
         when(typesService.getServiceAreas()).thenReturn(serviceAreas);
 
-        var response = typesController.getServiceAreas();
+        ResponseEntity<List<ServiceArea>> response = typesController.getServiceAreas();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(serviceAreas);
@@ -173,7 +174,7 @@ class TypesControllerTest {
         List<ServiceArea> emptyList = List.of();
         when(typesService.getServiceAreas()).thenReturn(emptyList);
 
-        var response = typesController.getServiceAreas();
+        ResponseEntity<List<ServiceArea>> response = typesController.getServiceAreas();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEmpty();
