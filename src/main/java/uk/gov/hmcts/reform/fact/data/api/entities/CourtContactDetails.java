@@ -1,9 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
-import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
-
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -23,6 +19,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
+
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -60,9 +59,17 @@ public class CourtContactDetails {
     private ContactDescriptionType courtContactDescription;
 
     @Schema(description = "The explanation")
+    @Column(name = "explanation", length = 250)
+    @Size(max = 250, message = "Explanation should be no more than {max} characters")
+    @Pattern(regexp = "^[A-Za-z0-9 \\-()&+]*$",
+        message = "Explanation contains invalid characters. Allowed: letters, numbers, spaces, - ( ) & +")
     private String explanation;
 
     @Schema(description = "The Welsh language explanation")
+    @Column(name = "explanation_cy", length = 250)
+    @Size(max = 250, message = "Explanation should be no more than {max} characters")
+    @Pattern(regexp = "^[A-Za-z0-9 \\-()&+]*$",
+        message = "Explanation contains invalid characters. Allowed: letters, numbers, spaces, - ( ) & +")
     private String explanationCy;
 
     @Schema(description = "The associated email address")
