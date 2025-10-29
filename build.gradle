@@ -121,6 +121,15 @@ jacocoTestReport {
 
 project.tasks['sonarqube'].dependsOn jacocoTestReport
 
+
+// JUST FOR POC
+def sonarExclusions = [
+  "src/main/java/uk/gov/hmcts/reform/fact/data/api/config/SpringSecurityConfig.java",
+  "src/main/java/uk/gov/hmcts/reform/fact/data/api/controllers/JwtGenController.java",
+  "src/main/java/uk/gov/hmcts/reform/fact/data/api/controllers/SecureController.java",
+  "src/main/java/uk/gov/hmcts/reform/fact/data/api/services/AuthService.java"
+]
+
 sonarqube {
   properties {
     property "sonar.projectName", "fact-data-api"
@@ -128,6 +137,7 @@ sonarqube {
     // entities are atomic in the repo and necessarily have some duplication that
     // we need to ignore.
     property "sonar.cpd.exclusions", "**/entities/*.java"
+    property "sonar.exclusions", sonarExclusions.join(', ')
   }
 }
 
@@ -167,6 +177,13 @@ dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
+
+  // poc updates
+  implementation 'org.springframework.boot:spring-boot-starter-security'
+  implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+  implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter', version: '6.0.0'
+  // end of poc updates
 
   implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.8.13'
 
