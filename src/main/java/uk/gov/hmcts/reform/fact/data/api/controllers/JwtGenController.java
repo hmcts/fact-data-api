@@ -60,6 +60,8 @@ public class JwtGenController {
             tokenRequestContext.addScopes("api://AzureADTokenExchange");
             var caToken = mic.getTokenSync(tokenRequestContext);
 
+            log.info("ca token: {}", caToken.getToken());
+
             var builder = ConfidentialClientApplication.builder(
                 pocClientAppId,
                 ClientCredentialFactory.createFromClientAssertion(caToken.getToken())

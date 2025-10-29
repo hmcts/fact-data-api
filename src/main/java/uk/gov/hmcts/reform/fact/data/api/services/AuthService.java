@@ -26,6 +26,12 @@ public class AuthService {
             .isPresent();
     }
 
+    public boolean isAuthenticated() {
+        return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+            .isPresent();
+    }
+
+
     private String findUserRole(Authentication authentication) {
         return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
             .filter((PREFIX + ROLE_ADMIN)::equals).filter((PREFIX + ROLE_USER)::equals)

@@ -32,4 +32,11 @@ public class SecureController {
     public ResponseEntity<String> testUser() {
         return ok("user test");
     }
+
+    @GetMapping("/authenticated")
+    @PreAuthorize("@authService.isAuthenticated()")
+    @SecurityRequirement(name = OpenAPIConfiguration.BEARER_AUTH_SECURITY_SCHEME)
+    public ResponseEntity<String> testAuthenticated() {
+        return ok("authenticated test");
+    }
 }
