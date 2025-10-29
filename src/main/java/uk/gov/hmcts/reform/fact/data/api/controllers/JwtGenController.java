@@ -1,10 +1,20 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import java.net.MalformedURLException;
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
 import com.azure.identity.ClientAssertionCredentialBuilder;
 import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.identity.ManagedIdentityCredential;
+import com.azure.identity.ManagedIdentityCredentialBuilder;
 import com.azure.identity.OnBehalfOfCredentialBuilder;
+import com.microsoft.aad.msal4j.ClientCredentialFactory;
+import com.microsoft.aad.msal4j.ClientCredentialParameters;
+import com.microsoft.aad.msal4j.ConfidentialClientApplication;
+import com.microsoft.aad.msal4j.IAuthenticationResult;
 import com.microsoft.aad.msal4j.ManagedIdentityApplication;
 import com.microsoft.aad.msal4j.ManagedIdentityId;
 import com.microsoft.aad.msal4j.ManagedIdentityParameters;
@@ -40,6 +50,37 @@ public class JwtGenController {
     String pocClientSecret;
     @Value("#{environment.POC_SERVICE_APP_ID}")
     String pocServiceAppId;
+
+    @GetMapping("/miv2")
+    public ResponseEntity<String> genMIJwtAlt(
+        @RequestParam(value = "set_authority", defaultValue = "true") boolean setAuthority) {
+        try {
+            ManagedIdentityCredential mic = new ManagedIdentityCredentialBuilder().clientId(azureClientId).build();
+            var tokenRequestContext = new TokenRequestContext();
+            tokenRequestContext.addScopes("api://AzureADTokenExchange");
+            var caToken = mic.getTokenSync(tokenRequestContext);
+
+            var builder = ConfidentialClientApplication.builder(
+                pocClientAppId,
+                ClientCredentialFactory.createFromClientAssertion(caToken.getToken())
+            );
+            if (setAuthority) {
+                builder.authority("https://login.microsoftonline.com/" + azureTenantId);
+            }
+            var cca = builder.build();
+
+            ClientCredentialParameters parameters = ClientCredentialParameters.builder(
+                    Collections.singleton(String.format("api://%s/.default", pocServiceAppId)))
+                .build();
+
+            CompletableFuture<IAuthenticationResult> future = cca.acquireToken(parameters);
+            IAuthenticationResult result = future.join();
+            return ResponseEntity.ok(result.accessToken());
+        } catch (MalformedURLException e) {
+            log.error("Malformed URL", e);
+        }
+        return ResponseEntity.internalServerError().build();
+    }
 
     @GetMapping("/mi")
     public ResponseEntity<String> genMIJwt() {
