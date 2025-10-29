@@ -193,6 +193,14 @@ class CourtControllerTest {
     }
 
     @Test
+    @DisplayName("GET /courts/v1 returns 400 for negative page number")
+    void getFilteredCourtsReturnsBadRequestForNegativePageNumber() throws Exception {
+        mockMvc.perform(get("/courts/v1")
+                            .param("pageNumber", "-1"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("POST /courts/v1 returns 400 for invalid name pattern")
     void createCourtReturnsBadRequestForInvalidName() throws Exception {
         Court invalidCourt = buildCourt(null);

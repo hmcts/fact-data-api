@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -65,8 +67,10 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid request parameters supplied")
     })
     public ResponseEntity<Page<Court>> getFilteredAndPaginatedCourts(
-        @RequestParam(name = "pageNumber", defaultValue = "0") int pageNumber,
-        @RequestParam(name = "pageSize", defaultValue = "25") int pageSize,
+        @RequestParam(name = "pageNumber", defaultValue = "0")
+        @PositiveOrZero(message = "pageNumber must be greater than or equal to 0") int pageNumber,
+        @RequestParam(name = "pageSize", defaultValue = "25")
+        @Positive(message = "pageSize must be greater than 0") int pageSize,
         @RequestParam(name = "includeClosed", required = false) Boolean includeClosed,
         @RequestParam(name = "regionId", required = false) @ValidUUID(allowNull = true) String regionId,
         @RequestParam(name = "partialCourtName", required = false)
