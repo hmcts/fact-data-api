@@ -9,8 +9,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtTranslationService;
 
 import java.util.UUID;
@@ -70,7 +70,7 @@ class CourtTranslationControllerTest {
     @DisplayName("GET /courts/{courtId}/v1/translation-services returns 204 if translation does not exist")
     void getTranslationNonExistentCourtReturnsNoContent() throws Exception {
         when(courtTranslationService.getTranslationByCourtId(courtId))
-            .thenThrow(new TranslationNotFoundException("Translation not found"));
+            .thenThrow(new CourtResourceNotFoundException("Translation not found"));
 
         mockMvc.perform(get("/courts/{courtId}/v1/translation-services", courtId))
             .andExpect(status().isNoContent());
