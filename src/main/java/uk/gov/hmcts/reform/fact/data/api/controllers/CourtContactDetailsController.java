@@ -27,7 +27,7 @@ import java.util.UUID;
 @Tag(name = "Court Contact Details", description = "Operations related to contact details available for courts")
 @RestController
 @Validated
-@RequestMapping("/courts/{courtId}/contact-details")
+@RequestMapping("/courts/{courtId}")
 public class CourtContactDetailsController {
 
     private final CourtContactDetailsService courtContactDetailsService;
@@ -36,7 +36,7 @@ public class CourtContactDetailsController {
         this.courtContactDetailsService = courtContactDetailsService;
     }
 
-    @GetMapping
+    @GetMapping("/v1/contact-details")
     @Operation(
         summary = "Get contact details for a court",
         description = "Fetch all contact details associated with the supplied court ID."
@@ -54,7 +54,7 @@ public class CourtContactDetailsController {
         );
     }
 
-    @GetMapping("/{contactId}")
+    @GetMapping("/v1/contact-details/{contactId}")
     @Operation(
         summary = "Get a specific contact detail for a court",
         description = "Fetch a single contact detail by court and contact identifier."
@@ -76,7 +76,7 @@ public class CourtContactDetailsController {
         );
     }
 
-    @PostMapping
+    @PostMapping("/v1/contact-details")
     @Operation(
         summary = "Create contact details for a court",
         description = "Create a new contact detail entry for the supplied court."
@@ -96,7 +96,7 @@ public class CourtContactDetailsController {
             .body(courtContactDetailsService.createContactDetail(UUID.fromString(courtId), courtContactDetails));
     }
 
-    @PutMapping("/{contactId}")
+    @PutMapping("/v1/contact-details/{contactId}")
     @Operation(
         summary = "Update contact details for a court",
         description = "Update an existing contact detail entry for the supplied court."
@@ -122,7 +122,7 @@ public class CourtContactDetailsController {
         );
     }
 
-    @DeleteMapping("/{contactId}")
+    @DeleteMapping("/v1/contact-details/{contactId}")
     @Operation(
         summary = "Delete contact details for a court",
         description = "Remove an existing contact detail entry for the supplied court."

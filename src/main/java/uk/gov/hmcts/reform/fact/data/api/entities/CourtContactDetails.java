@@ -61,15 +61,20 @@ public class CourtContactDetails {
     @Schema(description = "The explanation")
     @Column(name = "explanation", length = 250)
     @Size(max = 250, message = "Explanation should be no more than {max} characters")
-    @Pattern(regexp = "^[A-Za-z0-9 \\-()&+]*$",
-        message = "Explanation contains invalid characters. Allowed: letters, numbers, spaces, - ( ) & +")
+    @Pattern(
+        regexp = "^[A-Za-z0-9 '\\-()&+]*$",
+        message = "Explanation contains invalid characters. Allowed: letters, numbers, spaces, apostrophes, - ( ) & +"
+    )
     private String explanation;
 
     @Schema(description = "The Welsh language explanation")
     @Column(name = "explanation_cy", length = 250)
     @Size(max = 250, message = "Explanation should be no more than {max} characters")
-    @Pattern(regexp = "^[A-Za-z0-9 \\-()&+]*$",
-        message = "Explanation contains invalid characters. Allowed: letters, numbers, spaces, - ( ) & +")
+    @Pattern(
+        regexp = "^[\\p{L}0-9 '\\-()&+]*$",
+        message = "Welsh explanation contains invalid characters. Allowed: letters (with accents), numbers, spaces, "
+            + "apostrophes, - ( ) & +"
+    )
     private String explanationCy;
 
     @Schema(description = "The associated email address")

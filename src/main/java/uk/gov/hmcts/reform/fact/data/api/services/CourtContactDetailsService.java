@@ -34,6 +34,7 @@ public class CourtContactDetailsService {
      *
      * @param courtId The court identifier.
      * @return List of contact detail records for the court.
+     * @throws NotFoundException if the court does not exist.
      */
     public List<CourtContactDetails> getContactDetails(UUID courtId) {
         courtService.getCourtById(courtId);
@@ -46,6 +47,7 @@ public class CourtContactDetailsService {
      * @param courtId   The court identifier.
      * @param contactId The contact identifier.
      * @return Matching contact detail.
+     * @throws NotFoundException if the court or contact detail does not exist.
      */
     public CourtContactDetails getContactDetail(UUID courtId, UUID contactId) {
         courtService.getCourtById(courtId);
@@ -62,11 +64,13 @@ public class CourtContactDetailsService {
      * @param courtId The court identifier.
      * @param request The contact detail to create.
      * @return Created contact detail.
+     * @throws NotFoundException if the court or supplied description type does not exist.
      */
     @Transactional
     public CourtContactDetails createContactDetail(UUID courtId, CourtContactDetails request) {
         Court court = courtService.getCourtById(courtId);
-        ContactDescriptionType description = getValidatedContactDescription(request.getCourtContactDescriptionId());
+        ContactDescriptionType description =
+            getValidatedContactDescription(request.getCourtContactDescriptionId());
 
         request.setId(null);
         request.setCourtId(courtId);
@@ -84,11 +88,13 @@ public class CourtContactDetailsService {
      * @param contactId The contact identifier.
      * @param request   Updated contact detail values.
      * @return Updated contact detail.
+     * @throws NotFoundException if the court, contact detail, or supplied description type does not exist.
      */
     @Transactional
     public CourtContactDetails updateContactDetail(UUID courtId, UUID contactId, CourtContactDetails request) {
         CourtContactDetails existing = getContactDetail(courtId, contactId);
-        ContactDescriptionType description = getValidatedContactDescription(request.getCourtContactDescriptionId());
+        ContactDescriptionType description =
+            getValidatedContactDescription(request.getCourtContactDescriptionId());
 
         existing.setCourtContactDescriptionId(request.getCourtContactDescriptionId());
         existing.setCourtContactDescription(description);
@@ -106,6 +112,7 @@ public class CourtContactDetailsService {
      *
      * @param courtId   The court identifier.
      * @param contactId The contact identifier.
+     * @throws NotFoundException if the court or contact detail does not exist.
      */
     @Transactional
     public void deleteContactDetail(UUID courtId, UUID contactId) {

@@ -38,6 +38,9 @@ class CourtContactDetailsControllerTest {
     @MockitoBean
     private CourtContactDetailsService courtContactDetailsService;
 
+    private static final String CONTACT_DETAILS_V1_PATH = "/courts/{courtId}/v1/contact-details";
+    private static final String CONTACT_DETAIL_V1_PATH = "/courts/{courtId}/v1/contact-details/{contactId}";
+
     private final UUID courtId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
     private final UUID contactId = UUID.fromString("223e4567-e89b-12d3-a456-426614174111");
 
@@ -54,65 +57,65 @@ class CourtContactDetailsControllerTest {
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/contact-details returns contacts successfully")
+    @DisplayName("GET /courts/{courtId}/v1/contact-details returns contacts successfully")
     void getContactDetailsReturnsSuccessfully() throws Exception {
         when(courtContactDetailsService.getContactDetails(courtId))
             .thenReturn(List.of(buildContactDetail()));
 
-        mockMvc.perform(get("/courts/{courtId}/contact-details", courtId))
+        mockMvc.perform(get(CONTACT_DETAILS_V1_PATH, courtId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].id").value(contactId.toString()))
             .andExpect(jsonPath("$[0].email").value("info@test.com"));
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/contact-details returns 404 when court not found")
+    @DisplayName("GET /courts/{courtId}/v1/contact-details returns 404 when court not found")
     void getContactDetailsReturnsNotFoundForUnknownCourt() throws Exception {
         when(courtContactDetailsService.getContactDetails(courtId))
             .thenThrow(new NotFoundException("Court not found"));
 
-        mockMvc.perform(get("/courts/{courtId}/contact-details", courtId))
+        mockMvc.perform(get(CONTACT_DETAILS_V1_PATH, courtId))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/contact-details returns 400 for invalid court ID")
+    @DisplayName("GET /courts/{courtId}/v1/contact-details returns 400 for invalid court ID")
     void getContactDetailsInvalidUUID() throws Exception {
-        mockMvc.perform(get("/courts/{courtId}/contact-details", "invalid"))
+        mockMvc.perform(get(CONTACT_DETAILS_V1_PATH, "invalid"))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/contact-details/{contactId} returns contact successfully")
+    @DisplayName("GET /courts/{courtId}/v1/contact-details/{contactId} returns contact successfully")
     void getContactDetailReturnsSuccessfully() throws Exception {
         when(courtContactDetailsService.getContactDetail(courtId, contactId))
             .thenReturn(buildContactDetail());
 
-        mockMvc.perform(get("/courts/{courtId}/contact-details/{contactId}", courtId, contactId))
+        mockMvc.perform(get(CONTACT_DETAIL_V1_PATH, courtId, contactId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(contactId.toString()))
             .andExpect(jsonPath("$.explanation").value("General enquiries"));
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/contact-details/{contactId} returns 404 when not found")
+    @DisplayName("GET /courts/{courtId}/v1/contact-details/{contactId} returns 404 when not found")
     void getContactDetailReturnsNotFound() throws Exception {
         when(courtContactDetailsService.getContactDetail(courtId, contactId))
             .thenThrow(new NotFoundException("Contact not found"));
 
-        mockMvc.perform(get("/courts/{courtId}/contact-details/{contactId}", courtId, contactId))
+        mockMvc.perform(get(CONTACT_DETAIL_V1_PATH, courtId, contactId))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/contact-details/{contactId} returns 400 for invalid ID")
+    @DisplayName("GET /courts/{courtId}/v1/contact-details/{contactId} returns 400 for invalid ID")
     void getContactDetailInvalidUUID() throws Exception {
-        mockMvc.perform(get("/courts/{courtId}/contact-details/{contactId}", "invalid", contactId))
+        mockMvc.perform(get(CONTACT_DETAIL_V1_PATH, "invalid", contactId))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/contact-details creates contact successfully")
+    @DisplayName("POST /courts/{courtId}/v1/contact-details creates contact successfully")
     void createContactDetailReturnsCreated() throws Exception {
         CourtContactDetails request = buildContactDetail();
         request.setId(null);
@@ -120,7 +123,7 @@ class CourtContactDetailsControllerTest {
         when(courtContactDetailsService.createContactDetail(any(UUID.class), any(CourtContactDetails.class)))
             .thenReturn(buildContactDetail());
 
-        mockMvc.perform(post("/courts/{courtId}/contact-details", courtId)
+        mockMvc.perform(post(CONTACT_DETAILS_V1_PATH, courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
@@ -128,7 +131,7 @@ class CourtContactDetailsControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/contact-details returns 404 when court not found")
+    @DisplayName("POST /courts/{courtId}/v1/contact-details returns 404 when court not found")
     void createContactDetailReturnsNotFound() throws Exception {
         CourtContactDetails request = buildContactDetail();
         request.setId(null);
@@ -136,53 +139,98 @@ class CourtContactDetailsControllerTest {
         when(courtContactDetailsService.createContactDetail(any(UUID.class), any(CourtContactDetails.class)))
             .thenThrow(new NotFoundException("Court not found"));
 
-        mockMvc.perform(post("/courts/{courtId}/contact-details", courtId)
+        mockMvc.perform(post(CONTACT_DETAILS_V1_PATH, courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/contact-details returns 400 for invalid email")
+    @DisplayName("POST /courts/{courtId}/v1/contact-details returns 400 for invalid email")
     void createContactDetailInvalidEmail() throws Exception {
         CourtContactDetails request = buildContactDetail();
         request.setId(null);
         request.setEmail("invalid-email");
 
-        mockMvc.perform(post("/courts/{courtId}/contact-details", courtId)
+        mockMvc.perform(post(CONTACT_DETAILS_V1_PATH, courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/contact-details returns 400 when explanation too long")
+    @DisplayName("POST /courts/{courtId}/v1/contact-details returns 400 when explanation too long")
     void createContactDetailExplanationTooLong() throws Exception {
         CourtContactDetails request = buildContactDetail();
         request.setId(null);
         request.setExplanation("a".repeat(251));
 
-        mockMvc.perform(post("/courts/{courtId}/contact-details", courtId)
+        mockMvc.perform(post(CONTACT_DETAILS_V1_PATH, courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/contact-details returns 400 when explanation contains invalid characters")
+    @DisplayName("POST /courts/{courtId}/v1/contact-details returns 400 when explanation contains invalid characters")
     void createContactDetailExplanationInvalidCharacters() throws Exception {
         CourtContactDetails request = buildContactDetail();
         request.setId(null);
         request.setExplanation("Invalid explanation!");
 
-        mockMvc.perform(post("/courts/{courtId}/contact-details", courtId)
+        mockMvc.perform(post(CONTACT_DETAILS_V1_PATH, courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/contact-details/{contactId} updates contact successfully")
+    @DisplayName("POST /courts/{courtId}/v1/contact-details accepts explanations with apostrophes")
+    void createContactDetailExplanationAllowsApostrophes() throws Exception {
+        CourtContactDetails request = buildContactDetail();
+        request.setId(null);
+        request.setExplanation("Children's cases");
+
+        when(courtContactDetailsService.createContactDetail(any(UUID.class), any(CourtContactDetails.class)))
+            .thenReturn(buildContactDetail());
+
+        mockMvc.perform(post(CONTACT_DETAILS_V1_PATH, courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/contact-details accepts Welsh explanations with accented characters")
+    void createContactDetailWelshExplanationAllowsAccentedCharacters() throws Exception {
+        CourtContactDetails request = buildContactDetail();
+        request.setId(null);
+        request.setExplanationCy("Cysylltwch â ni am gymorth â llys");
+
+        when(courtContactDetailsService.createContactDetail(any(UUID.class), any(CourtContactDetails.class)))
+            .thenReturn(buildContactDetail());
+
+        mockMvc.perform(post(CONTACT_DETAILS_V1_PATH, courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/contact-details rejects Welsh explanations with invalid symbols")
+    void createContactDetailWelshExplanationInvalidCharacters() throws Exception {
+        CourtContactDetails request = buildContactDetail();
+        request.setId(null);
+        request.setExplanationCy("Cymorth!");
+
+        mockMvc.perform(post(CONTACT_DETAILS_V1_PATH, courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PUT /courts/{courtId}/v1/contact-details/{contactId} updates contact successfully")
     void updateContactDetailReturnsOk() throws Exception {
         CourtContactDetails request = buildContactDetail();
         request.setExplanation("Updated explanation");
@@ -193,7 +241,7 @@ class CourtContactDetailsControllerTest {
             any(CourtContactDetails.class)
         )).thenReturn(request);
 
-        mockMvc.perform(put("/courts/{courtId}/contact-details/{contactId}", courtId, contactId)
+        mockMvc.perform(put(CONTACT_DETAIL_V1_PATH, courtId, contactId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
@@ -201,7 +249,7 @@ class CourtContactDetailsControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/contact-details/{contactId} returns 404 when contact not found")
+    @DisplayName("PUT /courts/{courtId}/v1/contact-details/{contactId} returns 404 when contact not found")
     void updateContactDetailReturnsNotFound() throws Exception {
         CourtContactDetails request = buildContactDetail();
 
@@ -211,47 +259,47 @@ class CourtContactDetailsControllerTest {
             any(CourtContactDetails.class)
         )).thenThrow(new NotFoundException("Contact not found"));
 
-        mockMvc.perform(put("/courts/{courtId}/contact-details/{contactId}", courtId, contactId)
+        mockMvc.perform(put(CONTACT_DETAIL_V1_PATH, courtId, contactId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/contact-details/{contactId} returns 400 for invalid phone number")
+    @DisplayName("PUT /courts/{courtId}/v1/contact-details/{contactId} returns 400 for invalid phone number")
     void updateContactDetailInvalidPhone() throws Exception {
         CourtContactDetails request = buildContactDetail();
         request.setPhoneNumber("123");
 
-        mockMvc.perform(put("/courts/{courtId}/contact-details/{contactId}", courtId, contactId)
+        mockMvc.perform(put(CONTACT_DETAIL_V1_PATH, courtId, contactId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("DELETE /courts/{courtId}/contact-details/{contactId} deletes contact successfully")
+    @DisplayName("DELETE /courts/{courtId}/v1/contact-details/{contactId} deletes contact successfully")
     void deleteContactDetailReturnsNoContent() throws Exception {
         doNothing().when(courtContactDetailsService).deleteContactDetail(courtId, contactId);
 
-        mockMvc.perform(delete("/courts/{courtId}/contact-details/{contactId}", courtId, contactId))
+        mockMvc.perform(delete(CONTACT_DETAIL_V1_PATH, courtId, contactId))
             .andExpect(status().isNoContent());
     }
 
     @Test
-    @DisplayName("DELETE /courts/{courtId}/contact-details/{contactId} returns 404 when contact not found")
+    @DisplayName("DELETE /courts/{courtId}/v1/contact-details/{contactId} returns 404 when contact not found")
     void deleteContactDetailReturnsNotFound() throws Exception {
         doThrow(new NotFoundException("Contact not found"))
             .when(courtContactDetailsService).deleteContactDetail(courtId, contactId);
 
-        mockMvc.perform(delete("/courts/{courtId}/contact-details/{contactId}", courtId, contactId))
+        mockMvc.perform(delete(CONTACT_DETAIL_V1_PATH, courtId, contactId))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("DELETE /courts/{courtId}/contact-details/{contactId} returns 400 for invalid UUID")
+    @DisplayName("DELETE /courts/{courtId}/v1/contact-details/{contactId} returns 400 for invalid UUID")
     void deleteContactDetailInvalidUUID() throws Exception {
-        mockMvc.perform(delete("/courts/{courtId}/contact-details/{contactId}", "invalid", contactId))
+        mockMvc.perform(delete(CONTACT_DETAIL_V1_PATH, "invalid", contactId))
             .andExpect(status().isBadRequest());
     }
 }
