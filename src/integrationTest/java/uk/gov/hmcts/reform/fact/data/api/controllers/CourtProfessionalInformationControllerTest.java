@@ -113,14 +113,14 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/professional-information returns professional information successfully")
+    @DisplayName("GET /courts/{courtId}/v1/professional-information returns professional information successfully")
     void getProfessionalInformationReturnsSuccessfully() throws Exception {
         CourtProfessionalInformationDetailsDto professionalInformation = sampleProfessionalInformationDetails();
 
         when(courtProfessionalInformationService.getProfessionalInformationByCourtId(courtId))
             .thenReturn(professionalInformation);
 
-        mockMvc.perform(get("/courts/{courtId}/professional-information", courtId))
+        mockMvc.perform(get("/courts/{courtId}/v1/professional-information", courtId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.professionalInformation.interviewRoomCount").value(3))
             .andExpect(jsonPath("$.professionalInformation.videoHearings").value(true))
@@ -130,34 +130,34 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/professional-information returns 404 if court does not exist")
+    @DisplayName("GET /courts/{courtId}/v1/professional-information returns 404 if court does not exist")
     void getProfessionalInformationNonExistentCourtReturnsNotFound() throws Exception {
         when(courtProfessionalInformationService.getProfessionalInformationByCourtId(nonExistentCourtId))
             .thenThrow(new NotFoundException("Court not found"));
 
-        mockMvc.perform(get("/courts/{courtId}/professional-information", nonExistentCourtId))
+        mockMvc.perform(get("/courts/{courtId}/v1/professional-information", nonExistentCourtId))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/professional-information returns 204 if information does not exist")
+    @DisplayName("GET /courts/{courtId}/v1/professional-information returns 204 if information does not exist")
     void getProfessionalInformationReturnsNoContentWhenAbsent() throws Exception {
         when(courtProfessionalInformationService.getProfessionalInformationByCourtId(courtId))
             .thenThrow(new CourtResourceNotFoundException("Not found"));
 
-        mockMvc.perform(get("/courts/{courtId}/professional-information", courtId))
+        mockMvc.perform(get("/courts/{courtId}/v1/professional-information", courtId))
             .andExpect(status().isNoContent());
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/professional-information returns 400 for invalid UUID")
+    @DisplayName("GET /courts/{courtId}/v1/professional-information returns 400 for invalid UUID")
     void getProfessionalInformationInvalidUuid() throws Exception {
-        mockMvc.perform(get("/courts/{courtId}/professional-information", "invalid-uuid"))
+        mockMvc.perform(get("/courts/{courtId}/v1/professional-information", "invalid-uuid"))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information creates information successfully")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information creates information successfully")
     void postProfessionalInformationCreatesSuccessfully() throws Exception {
         CourtProfessionalInformationDetailsDto professionalInformation = sampleProfessionalInformationDetails();
 
@@ -166,7 +166,7 @@ class CourtProfessionalInformationControllerTest {
             any(CourtProfessionalInformationDetailsDto.class)
         )).thenReturn(professionalInformation);
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(professionalInformation)))
             .andExpect(status().isCreated())
@@ -177,7 +177,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 404 if court does not exist")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 404 if court does not exist")
     void postProfessionalInformationNonExistentCourtReturnsNotFound() throws Exception {
         CourtProfessionalInformationDetailsDto professionalInformation = sampleProfessionalInformationDetails();
 
@@ -186,14 +186,14 @@ class CourtProfessionalInformationControllerTest {
             any(CourtProfessionalInformationDetailsDto.class)
         )).thenThrow(new NotFoundException("Court not found"));
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", nonExistentCourtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", nonExistentCourtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(professionalInformation)))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 for invalid phone number")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for invalid phone number")
     void postProfessionalInformationInvalidPhoneReturnsBadRequest() throws Exception {
         ProfessionalInformationDto invalidProfessionalInformation = ProfessionalInformationDto.builder()
             .interviewRooms(true)
@@ -204,7 +204,7 @@ class CourtProfessionalInformationControllerTest {
             .accessScheme(true)
             .build();
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(
                                 wrapProfessionalInformation(invalidProfessionalInformation)
@@ -213,7 +213,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 for invalid interview room count")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for invalid interview room count")
     void postProfessionalInformationInvalidInterviewRoomCountReturnsBadRequest() throws Exception {
         ProfessionalInformationDto invalidProfessionalInformation = ProfessionalInformationDto.builder()
             .interviewRooms(true)
@@ -224,7 +224,7 @@ class CourtProfessionalInformationControllerTest {
             .accessScheme(true)
             .build();
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(
                                 wrapProfessionalInformation(invalidProfessionalInformation)
@@ -233,7 +233,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 when interview room count exceeds 150")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 when interview room count exceeds 150")
     void postProfessionalInformationInterviewRoomCountTooHighReturnsBadRequest() throws Exception {
         ProfessionalInformationDto invalidProfessionalInformation = ProfessionalInformationDto.builder()
             .interviewRooms(true)
@@ -244,7 +244,7 @@ class CourtProfessionalInformationControllerTest {
             .accessScheme(true)
             .build();
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(
                                 wrapProfessionalInformation(invalidProfessionalInformation)
@@ -254,7 +254,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 if rooms false and count set")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 if rooms false and count set")
     void postProfessionalInformationInvalidInterviewRoomsCombinationReturnsBadRequest() throws Exception {
         ProfessionalInformationDto invalidProfessionalInformation = ProfessionalInformationDto.builder()
             .interviewRooms(false)
@@ -265,7 +265,7 @@ class CourtProfessionalInformationControllerTest {
             .accessScheme(true)
             .build();
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(
                                 wrapProfessionalInformation(invalidProfessionalInformation)
@@ -274,7 +274,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 for invalid DX code characters")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for invalid DX code characters")
     void postProfessionalInformationInvalidDxCodeCharactersReturnsBadRequest() throws Exception {
         CourtProfessionalInformationDetailsDto invalid = buildDetails(
             ProfessionalInformationDto.builder()
@@ -296,7 +296,7 @@ class CourtProfessionalInformationControllerTest {
                 .build())
         );
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalid)))
             .andExpect(status().isBadRequest())
@@ -304,7 +304,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 for DX code too long")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for DX code too long")
     void postProfessionalInformationInvalidDxCodeTooLongReturnsBadRequest() throws Exception {
         String longCode = ("DX" + "0123456789".repeat(21));
         CourtProfessionalInformationDetailsDto invalid = buildDetails(
@@ -327,7 +327,7 @@ class CourtProfessionalInformationControllerTest {
                 .build())
         );
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalid)))
             .andExpect(status().isBadRequest())
@@ -335,7 +335,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 for DX explanation too long")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for DX explanation too long")
     void postProfessionalInformationInvalidDxExplanationTooLongReturnsBadRequest() throws Exception {
         String longExplanation = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ".repeat(6);
         CourtProfessionalInformationDetailsDto invalid = buildDetails(
@@ -358,7 +358,7 @@ class CourtProfessionalInformationControllerTest {
                 .build())
         );
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalid)))
             .andExpect(status().isBadRequest())
@@ -366,7 +366,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 for invalid GBS code")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for invalid GBS code")
     void postProfessionalInformationInvalidGbsReturnsBadRequest() throws Exception {
         CourtProfessionalInformationDetailsDto invalid = buildDetails(
             ProfessionalInformationDto.builder()
@@ -391,7 +391,7 @@ class CourtProfessionalInformationControllerTest {
                 .build())
         );
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalid)))
             .andExpect(status().isBadRequest())
@@ -399,7 +399,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 for invalid fax description")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for invalid fax description")
     void postProfessionalInformationInvalidFaxDescriptionReturnsBadRequest() throws Exception {
         CourtProfessionalInformationDetailsDto invalid = buildDetails(
             ProfessionalInformationDto.builder()
@@ -421,7 +421,7 @@ class CourtProfessionalInformationControllerTest {
                 .build())
         );
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalid)))
             .andExpect(status().isBadRequest())
@@ -429,7 +429,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 for invalid fax number")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for invalid fax number")
     void postProfessionalInformationInvalidFaxNumberReturnsBadRequest() throws Exception {
         CourtProfessionalInformationDetailsDto invalid = buildDetails(
             ProfessionalInformationDto.builder()
@@ -451,7 +451,7 @@ class CourtProfessionalInformationControllerTest {
                 .build())
         );
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalid)))
             .andExpect(status().isBadRequest())
@@ -459,7 +459,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 when DX array contains null element")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 when DX array contains null element")
     void postProfessionalInformationNullDxEntryReturnsBadRequest() throws Exception {
         CourtProfessionalInformationDetailsDto invalid = buildDetails(
             ProfessionalInformationDto.builder()
@@ -478,7 +478,7 @@ class CourtProfessionalInformationControllerTest {
                 .build())
         );
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalid)))
             .andExpect(status().isBadRequest())
@@ -486,7 +486,7 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 when fax array contains null element")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 when fax array contains null element")
     void postProfessionalInformationNullFaxEntryReturnsBadRequest() throws Exception {
         CourtProfessionalInformationDetailsDto invalid = buildDetails(
             ProfessionalInformationDto.builder()
@@ -505,7 +505,7 @@ class CourtProfessionalInformationControllerTest {
             Arrays.asList((CourtFaxDto) null)
         );
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", courtId)
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalid)))
             .andExpect(status().isBadRequest())
@@ -513,11 +513,11 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/professional-information returns 400 for invalid UUID")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for invalid UUID")
     void postProfessionalInformationInvalidUuid() throws Exception {
         CourtProfessionalInformationDetailsDto professionalInformation = sampleProfessionalInformationDetails();
 
-        mockMvc.perform(post("/courts/{courtId}/professional-information", "invalid-uuid")
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", "invalid-uuid")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(professionalInformation)))
             .andExpect(status().isBadRequest());

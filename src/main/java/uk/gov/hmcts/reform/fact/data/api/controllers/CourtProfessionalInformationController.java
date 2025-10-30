@@ -35,7 +35,7 @@ public class CourtProfessionalInformationController {
         this.courtProfessionalInformationService = courtProfessionalInformationService;
     }
 
-    @GetMapping("/professional-information")
+    @GetMapping("/v1/professional-information")
     @Operation(
         summary = "Get professional information for a court",
         description = "Fetch professional information for a given court. "
@@ -55,7 +55,7 @@ public class CourtProfessionalInformationController {
         ));
     }
 
-    @PostMapping("/professional-information")
+    @PostMapping("/v1/professional-information")
     @Operation(
         summary = "Create or update professional information for a court",
         description = "Creates new professional information for a court or updates an existing record."
