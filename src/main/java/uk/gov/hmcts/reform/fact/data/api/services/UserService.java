@@ -20,12 +20,14 @@ public class UserService {
     private final UserRepository userRepository;
     private final CourtRepository courtRepository;
     private final CourtLockRepository courtLockRepository;
+    private final CourtService courtService;
 
     public UserService(UserRepository userRepository, CourtRepository courtRepository,
-                       CourtLockRepository courtLockRepository) {
+                       CourtLockRepository courtLockRepository, CourtService courtService) {
         this.userRepository = userRepository;
         this.courtRepository = courtRepository;
         this.courtLockRepository = courtLockRepository;
+        this.courtService = courtService;
     }
 
     /**
@@ -43,7 +45,6 @@ public class UserService {
         return courtRepository.findAllById(favouriteCourtIds);
     }
 
-
     /**
      * Adds multiple courts to a user's favourite courts list.
      *
@@ -58,11 +59,12 @@ public class UserService {
         }
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
-        for (UUID courtId : courtIds) {
-            Court court = courtRepository.findById(courtId)
-                .orElseThrow(() -> new NotFoundException("No court found for court id: " + courtId));
-            user.getFavouriteCourts().add(court.getId());
-        }
+
+        List<UUID> validCourtIds = courtIds.stream()
+            .map(courtId -> courtService.getCourtById(courtId).getId())
+            .toList();
+
+        user.getFavouriteCourts().addAll(validCourtIds);
         userRepository.save(user);
     }
 

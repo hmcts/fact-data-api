@@ -36,6 +36,9 @@ class UserServiceTest {
     @Mock
     private CourtLockRepository courtLockRepository;
 
+    @Mock
+    private CourtService courtService;
+
     @InjectMocks
     private UserService userService;
 
@@ -75,7 +78,7 @@ class UserServiceTest {
         court.setId(courtId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(courtRepository.findById(courtId)).thenReturn(Optional.of(court));
+        when(courtService.getCourtById(courtId)).thenReturn(court);
 
         userService.addFavouriteCourt(userId, List.of(courtId));
 
@@ -99,9 +102,11 @@ class UserServiceTest {
         user.setFavouriteCourts(new ArrayList<>());
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(courtRepository.findById(courtId)).thenReturn(Optional.empty());
+        when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException("Court not found"));
 
-        assertThrows(NotFoundException.class, () -> userService.addFavouriteCourt(userId, List.of(courtId)));
+        assertThrows(NotFoundException.class, () ->
+            userService.addFavouriteCourt(userId, List.of(courtId))
+        );
     }
 
     @Test
