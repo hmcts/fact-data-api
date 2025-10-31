@@ -185,6 +185,8 @@ dependencies {
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test'
 
   integrationTestImplementation group: 'org.testcontainers', name: 'postgresql', version: '1.21.3'
+  integrationTestImplementation group: 'org.testcontainers', name: 'junit-jupiter', version: '1.21.3'
+  integrationTestImplementation group: 'com.github.tomakehurst', name: 'wiremock-jre8', version: '2.35.0'
 
   smokeTestImplementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.6'
 }

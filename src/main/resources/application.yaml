@@ -16,7 +16,9 @@ management:
         include: health, info, prometheus
 
 springdoc:
-  packagesToScan: uk.gov.hmcts.reform.fact.data.api.controllers
+  packagesToScan:
+    - uk.gov.hmcts.reform.fact.data.api.controllers
+    - uk.gov.hmcts.reform.fact.data.api.migration.controller
   writer-with-order-by-keys: true
 
 spring:
@@ -56,3 +58,6 @@ spring:
 
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
+
+migration:
+  source-base-url: ${FACT_MIGRATION_SOURCE_BASE_URL:http://localhost:8080}
