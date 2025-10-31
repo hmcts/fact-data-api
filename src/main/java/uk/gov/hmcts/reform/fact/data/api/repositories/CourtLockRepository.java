@@ -9,4 +9,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CourtLockRepository extends JpaRepository<CourtLock, UUID> {
+    void deleteAllByUserId(UUID userId);
 }
