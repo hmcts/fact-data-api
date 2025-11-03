@@ -50,13 +50,9 @@ public class UserService {
      *
      * @param userId   The user id to add favourite courts for
      * @param courtIds List of court IDs to add as favourites
-     * @throws IllegalArgumentException if the list of court Ids is null or empty
      * @throws NotFoundException if no user or court record exists
      */
     public void addFavouriteCourt(UUID userId, List<UUID> courtIds) {
-        if (courtIds == null || courtIds.isEmpty()) {
-            throw new IllegalArgumentException("List of Court Ids cannot be empty");
-        }
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
 

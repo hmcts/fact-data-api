@@ -110,13 +110,6 @@ class UserServiceTest {
     }
 
     @Test
-    void addFavouriteCourtShouldThrowIllegalArgumentExceptionWhenCourtIdsIsEmpty() {
-        UUID userId = UUID.randomUUID();
-
-        assertThrows(IllegalArgumentException.class, () -> userService.addFavouriteCourt(userId, List.of()));
-    }
-
-    @Test
     void removeFavouriteCourtShouldRemoveCourtFromUsersFavourites() {
         UUID userId = UUID.randomUUID();
         UUID courtId = UUID.randomUUID();
