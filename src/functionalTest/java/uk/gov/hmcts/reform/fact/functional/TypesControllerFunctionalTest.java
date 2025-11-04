@@ -9,7 +9,9 @@ import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED;
-import static uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper.assertSuccessfulJsonArrayResponse;
+import static org.springframework.http.HttpStatus.OK;
+import static uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper.assertJsonArrayResponse;
+import static uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper.assertJsonArrayResponseHasField;
 
 public final class TypesControllerFunctionalTest {
 
@@ -25,44 +27,56 @@ public final class TypesControllerFunctionalTest {
 
     @BeforeAll
     static void setUp() {
-        final var config = TestConfig.load();
+        final TestConfig config = TestConfig.load();
         http = new HttpClient(config);
     }
 
     @Test
     @DisplayName("GET /types/v1/areas-of-law returns 200 OK with JSON array")
     void shouldReturnAreasOfLawSuccessfully() {
-        assertSuccessfulJsonArrayResponse(http, AREAS_OF_LAW_ENDPOINT);
+        assertJsonArrayResponse(http, AREAS_OF_LAW_ENDPOINT, OK);
     }
 
     @Test
     @DisplayName("GET /types/v1/court-types returns 200 OK with JSON array")
     void shouldReturnCourtTypesSuccessfully() {
-        assertSuccessfulJsonArrayResponse(http, COURT_TYPES_ENDPOINT);
+        assertJsonArrayResponse(http, COURT_TYPES_ENDPOINT, OK);
     }
 
     @Test
     @DisplayName("GET /types/v1/opening-hours-types returns 200 OK with JSON array")
     void shouldReturnOpeningHoursTypesSuccessfully() {
-        assertSuccessfulJsonArrayResponse(http, OPENING_HOURS_TYPES_ENDPOINT);
+        assertJsonArrayResponse(http, OPENING_HOURS_TYPES_ENDPOINT, OK);
     }
 
     @Test
     @DisplayName("GET /types/v1/contact-description-types returns 200 OK with JSON array")
     void shouldReturnContactDescriptionTypesSuccessfully() {
-        assertSuccessfulJsonArrayResponse(http, CONTACT_DESCRIPTION_TYPES_ENDPOINT);
+        assertJsonArrayResponse(http, CONTACT_DESCRIPTION_TYPES_ENDPOINT, OK);
     }
 
     @Test
     @DisplayName("GET /types/v1/regions returns 200 OK with JSON array")
     void shouldReturnRegionsSuccessfully() {
-        assertSuccessfulJsonArrayResponse(http, REGIONS_ENDPOINT);
+        assertJsonArrayResponse(http, REGIONS_ENDPOINT, OK);
     }
 
     @Test
     @DisplayName("GET /types/v1/service-areas returns 200 OK with JSON array")
     void shouldReturnServiceAreasSuccessfully() {
-        assertSuccessfulJsonArrayResponse(http, SERVICE_AREAS_ENDPOINT);
+        assertJsonArrayResponse(http, SERVICE_AREAS_ENDPOINT, OK);
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/areas-of-law returns correct data structure")
+    void shouldReturnAreasOfLawWithCorrectFields() {
+        assertJsonArrayResponseHasField(http, AREAS_OF_LAW_ENDPOINT, OK, "name");
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/regions returns correct data structure")
+    void shouldReturnRegionsWithCorrectFields() {
+        assertJsonArrayResponseHasField(http, REGIONS_ENDPOINT, OK, "country");
     }
 
     @Test
