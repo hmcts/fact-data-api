@@ -1,0 +1,75 @@
+package uk.gov.hmcts.reform.fact.functional;
+
+import io.restassured.response.Response;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.reform.fact.functional.config.TestConfig;
+import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED;
+import static uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper.assertSuccessfulJsonArrayResponse;
+
+public final class TypesControllerFunctionalTest {
+
+    private static final String TYPES_BASE_PATH = "/types/v1";
+    private static final String AREAS_OF_LAW_ENDPOINT = TYPES_BASE_PATH + "/areas-of-law";
+    private static final String COURT_TYPES_ENDPOINT = TYPES_BASE_PATH + "/court-types";
+    private static final String OPENING_HOURS_TYPES_ENDPOINT = TYPES_BASE_PATH + "/opening-hours-types";
+    private static final String CONTACT_DESCRIPTION_TYPES_ENDPOINT = TYPES_BASE_PATH + "/contact-description-types";
+    private static final String REGIONS_ENDPOINT = TYPES_BASE_PATH + "/regions";
+    private static final String SERVICE_AREAS_ENDPOINT = TYPES_BASE_PATH + "/service-areas";
+
+    private static HttpClient http;
+
+    @BeforeAll
+    static void setUp() {
+        final var config = TestConfig.load();
+        http = new HttpClient(config);
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/areas-of-law returns 200 OK with JSON array")
+    void shouldReturnAreasOfLawSuccessfully() {
+        assertSuccessfulJsonArrayResponse(http, AREAS_OF_LAW_ENDPOINT);
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/court-types returns 200 OK with JSON array")
+    void shouldReturnCourtTypesSuccessfully() {
+        assertSuccessfulJsonArrayResponse(http, COURT_TYPES_ENDPOINT);
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/opening-hours-types returns 200 OK with JSON array")
+    void shouldReturnOpeningHoursTypesSuccessfully() {
+        assertSuccessfulJsonArrayResponse(http, OPENING_HOURS_TYPES_ENDPOINT);
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/contact-description-types returns 200 OK with JSON array")
+    void shouldReturnContactDescriptionTypesSuccessfully() {
+        assertSuccessfulJsonArrayResponse(http, CONTACT_DESCRIPTION_TYPES_ENDPOINT);
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/regions returns 200 OK with JSON array")
+    void shouldReturnRegionsSuccessfully() {
+        assertSuccessfulJsonArrayResponse(http, REGIONS_ENDPOINT);
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/service-areas returns 200 OK with JSON array")
+    void shouldReturnServiceAreasSuccessfully() {
+        assertSuccessfulJsonArrayResponse(http, SERVICE_AREAS_ENDPOINT);
+    }
+
+    @Test
+    @DisplayName("POST request to types endpoints should return 405 Method Not Allowed")
+    void shouldFailOnPost() {
+        final Response response = http.doPost(AREAS_OF_LAW_ENDPOINT, "");
+
+        assertThat(response.statusCode()).isEqualTo(METHOD_NOT_ALLOWED.value());
+    }
+}
