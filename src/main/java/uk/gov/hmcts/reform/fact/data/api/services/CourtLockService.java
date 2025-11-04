@@ -23,7 +23,6 @@ public class CourtLockService {
         this.courtLockRepository = courtLockRepository;
     }
 
-
     /**
      * Deletes all court locks associated with a specific user ID.
      *

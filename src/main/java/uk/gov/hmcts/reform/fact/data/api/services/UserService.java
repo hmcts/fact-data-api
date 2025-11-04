@@ -17,7 +17,7 @@ import java.util.UUID;
 public class UserService {
 
     private final CourtLockService courtLockService;
-    @Value("${user.retention-period:365}")
+    @Value("${user.retention-period}")
     private long retentionPeriod;
 
     private final UserRepository userRepository;
