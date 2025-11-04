@@ -40,6 +40,19 @@ public class UserService {
             .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
     }
 
+
+    /**
+     * Retrieves a user by their unique identifier.
+     *
+     * @param userId The unique identifier of the user to retrieve
+     * @return The user entity matching the provided ID
+     * @throws NotFoundException if no user record exists for the given ID
+     */
+    public User getUserById(UUID userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
+    }
+
     /**
      * Get user favourite courts by user id.
      *
