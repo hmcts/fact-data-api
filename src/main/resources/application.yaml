@@ -56,3 +56,6 @@ spring:
 
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
+
+user:
+  retention-period: 365

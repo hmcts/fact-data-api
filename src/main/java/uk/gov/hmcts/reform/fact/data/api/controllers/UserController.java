@@ -98,8 +98,8 @@ public class UserController {
         @ApiResponse(responseCode = "201", description = "Successfully created/updated user"),
         @ApiResponse(responseCode = "400", description = "Invalid request")
     })
-    public ResponseEntity<User> createOrUpdateUser(@Valid @RequestBody User user) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createOrUpdateUser(user));
+    public ResponseEntity<User> createOrUpdateLastLoginUser(@Valid @RequestBody User user) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createOrUpdateLastLoginUser(user));
     }
 
     @DeleteMapping("/v1/retention")

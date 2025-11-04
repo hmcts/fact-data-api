@@ -134,7 +134,7 @@ class UserControllerTest {
         user.setId(userId);
         user.setEmail("email@justice.gov.uk");
         user.setSsoId(UUID.randomUUID());
-        when(userService.createOrUpdateUser(any(User.class))).thenReturn(user);
+        when(userService.createOrUpdateLastLoginUser(any(User.class))).thenReturn(user);
 
         mockMvc.perform(post("/user/v1")
                             .contentType(MediaType.APPLICATION_JSON)

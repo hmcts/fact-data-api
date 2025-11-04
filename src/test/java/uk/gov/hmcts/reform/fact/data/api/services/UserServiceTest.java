@@ -8,8 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLockRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 
 import java.time.ZonedDateTime;
@@ -28,13 +26,10 @@ import static org.mockito.Mockito.when;
 class UserServiceTest {
 
     @Mock
-    private CourtRepository courtRepository;
-
-    @Mock
     private UserRepository userRepository;
 
     @Mock
-    private CourtLockRepository courtLockRepository;
+    private CourtLockService courtLockService;
 
     @Mock
     private CourtService courtService;
@@ -52,7 +47,7 @@ class UserServiceTest {
         court.setId(courtId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(courtRepository.findAllById(List.of(courtId))).thenReturn(List.of(court));
+        when(courtService.getAllCourtsByIds(List.of(courtId))).thenReturn(List.of(court));
 
         List<Court> result = userService.getUsersFavouriteCourts(userId);
 
@@ -141,7 +136,7 @@ class UserServiceTest {
 
         userService.clearUserLocks(userId);
 
-        verify(courtLockRepository).deleteAllByUserId(userId);
+        verify(courtLockService).deleteLocksByUserId(userId);
     }
 
     @Test
@@ -159,7 +154,7 @@ class UserServiceTest {
 
         when(userRepository.save(user)).thenReturn(user);
 
-        User result = userService.createOrUpdateUser(user);
+        User result = userService.createOrUpdateLastLoginUser(user);
 
         assertThat(result.getLastLogin()).isNotNull();
         assertThat(result.getLastLogin()).isAfterOrEqualTo(beforeSave);
@@ -170,7 +165,132 @@ class UserServiceTest {
         User user = new User();
         when(userRepository.save(any())).thenThrow(new RuntimeException("Database error"));
 
-        assertThrows(RuntimeException.class, () -> userService.createOrUpdateUser(user));
+        assertThrows(RuntimeException.class, () -> userService.createOrUpdateLastLoginUser(user));
+    }
+
+    @Test
+    void updateExistingUserShouldPreserveEmailAndSsoidButUpdateLastLogin() {
+        UUID userId = UUID.randomUUID();
+        UUID existingSsoId = UUID.randomUUID();
+
+        User existingUser = new User();
+        existingUser.setId(userId);
+        existingUser.setEmail("existing@email.com");
+        existingUser.setSsoId(existingSsoId);
+        existingUser.setFavouriteCourts(new ArrayList<>());
+
+        User updatedUser = new User();
+        updatedUser.setId(userId);
+        updatedUser.setEmail("new@email.com");
+        updatedUser.setSsoId(UUID.randomUUID());
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User savedUser = invocation.getArgument(0);
+            assertThat(savedUser.getId()).isEqualTo(userId);
+            assertThat(savedUser.getEmail()).isEqualTo("existing@email.com");
+            assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
+            assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
+            assertThat(savedUser.getLastLogin()).isNotNull();
+            return savedUser;
+        });
+
+        userService.createOrUpdateLastLoginUser(updatedUser);
+    }
+
+    @Test
+    void updateExistingUserShouldPreserveEmailAndUpdateLastLoginWhenIdExists() {
+        UUID userId = UUID.randomUUID();
+        String existingEmail = "existing@email.com";
+        UUID existingSsoId = UUID.randomUUID();
+
+        User existingUser = new User();
+        existingUser.setId(userId);
+        existingUser.setEmail(existingEmail);
+        existingUser.setSsoId(existingSsoId);
+        existingUser.setFavouriteCourts(new ArrayList<>());
+
+        User updatedUser = new User();
+        updatedUser.setId(userId);
+        updatedUser.setEmail("new@email.com");
+        updatedUser.setSsoId(UUID.randomUUID());
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User savedUser = invocation.getArgument(0);
+            assertThat(savedUser.getId()).isEqualTo(userId);
+            assertThat(savedUser.getEmail()).isEqualTo(existingEmail);
+            assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
+            assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
+            assertThat(savedUser.getLastLogin()).isNotNull();
+            return savedUser;
+        });
+
+        userService.createOrUpdateLastLoginUser(updatedUser);
+    }
+
+    @Test
+    void updateExistingUserShouldPreserveEmailAndUpdateLastLoginWhenEmailExists() {
+        UUID existingId = UUID.randomUUID();
+        String existingEmail = "existing@email.com";
+        UUID existingSsoId = UUID.randomUUID();
+
+        User existingUser = new User();
+        existingUser.setId(existingId);
+        existingUser.setEmail(existingEmail);
+        existingUser.setSsoId(existingSsoId);
+        existingUser.setFavouriteCourts(new ArrayList<>());
+
+        User updatedUser = new User();
+        updatedUser.setEmail(existingEmail);
+        updatedUser.setSsoId(UUID.randomUUID());
+
+        when(userRepository.findByEmail(existingEmail)).thenReturn(Optional.of(existingUser));
+
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User savedUser = invocation.getArgument(0);
+            assertThat(savedUser.getId()).isEqualTo(existingId);
+            assertThat(savedUser.getEmail()).isEqualTo(existingEmail);
+            assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
+            assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
+            assertThat(savedUser.getLastLogin()).isNotNull();
+            return savedUser;
+        });
+
+        userService.createOrUpdateLastLoginUser(updatedUser);
+    }
+
+    @Test
+    void updateExistingUserShouldPreserveSsoIdAndUpdateLastLoginWhenSsoIdExists() {
+        UUID existingId = UUID.randomUUID();
+        String existingEmail = "existing@email.com";
+        UUID existingSsoId = UUID.randomUUID();
+
+        User existingUser = new User();
+        existingUser.setId(existingId);
+        existingUser.setEmail(existingEmail);
+        existingUser.setSsoId(existingSsoId);
+        existingUser.setFavouriteCourts(new ArrayList<>());
+
+        User updatedUser = new User();
+        updatedUser.setSsoId(existingSsoId);
+        updatedUser.setEmail("new@email.com");
+
+        when(userRepository.findBySsoId(existingSsoId)).thenReturn(Optional.of(existingUser));
+
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User savedUser = invocation.getArgument(0);
+            assertThat(savedUser.getId()).isEqualTo(existingId);
+            assertThat(savedUser.getEmail()).isEqualTo(existingEmail);
+            assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
+            assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
+            assertThat(savedUser.getLastLogin()).isNotNull();
+            return savedUser;
+        });
+
+        userService.createOrUpdateLastLoginUser(updatedUser);
     }
 
     @Test

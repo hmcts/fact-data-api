@@ -164,9 +164,9 @@ class UserControllerTest {
     @Test
     void createOrUpdateUserReturns201() {
         User user = new User();
-        when(userService.createOrUpdateUser(user)).thenReturn(user);
+        when(userService.createOrUpdateLastLoginUser(user)).thenReturn(user);
 
-        ResponseEntity<User> response = userController.createOrUpdateUser(user);
+        ResponseEntity<User> response = userController.createOrUpdateLastLoginUser(user);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(user);

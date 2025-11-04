@@ -5,6 +5,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -27,5 +28,15 @@ public class CourtService {
         return courtRepository.findById(courtId).orElseThrow(
             () -> new NotFoundException("Court not found, ID: " + courtId)
         );
+    }
+
+    /**
+     * Get multiple courts by their IDs.
+     *
+     * @param courtIds List of court IDs to retrieve.
+     * @return List of courts matching the provided IDs.
+     */
+    public List<Court> getAllCourtsByIds(List<UUID> courtIds) {
+        return courtRepository.findAllById(courtIds);
     }
 }
