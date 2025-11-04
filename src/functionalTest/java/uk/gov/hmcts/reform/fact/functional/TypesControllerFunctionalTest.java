@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED;
 import static org.springframework.http.HttpStatus.OK;
 import static uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper.assertJsonArrayResponse;
-import static uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper.assertJsonArrayResponseHasField;
+import static uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper.assertJsonArrayResponseContainsValue;
 
 public final class TypesControllerFunctionalTest {
 
@@ -68,15 +68,15 @@ public final class TypesControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("GET /types/v1/areas-of-law returns correct data structure")
-    void shouldReturnAreasOfLawWithCorrectFields() {
-        assertJsonArrayResponseHasField(http, AREAS_OF_LAW_ENDPOINT, OK, "name");
+    @DisplayName("GET /types/v1/areas-of-law returns expected data")
+    void shouldReturnAreasOfLawWithExpectedData() {
+        assertJsonArrayResponseContainsValue(http, AREAS_OF_LAW_ENDPOINT, OK, "name", "Divorce");
     }
 
     @Test
-    @DisplayName("GET /types/v1/regions returns correct data structure")
-    void shouldReturnRegionsWithCorrectFields() {
-        assertJsonArrayResponseHasField(http, REGIONS_ENDPOINT, OK, "country");
+    @DisplayName("GET /types/v1/regions returns expected data")
+    void shouldReturnRegionsWithExpectedData() {
+        assertJsonArrayResponseContainsValue(http, REGIONS_ENDPOINT, OK, "country", "England");
     }
 
     @Test

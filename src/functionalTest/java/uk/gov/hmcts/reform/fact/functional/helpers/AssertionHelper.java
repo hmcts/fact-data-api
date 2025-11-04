@@ -38,15 +38,17 @@ public final class AssertionHelper {
      * @param endpoint the endpoint path to test
      * @param expectedStatus the expected HTTP status code
      * @param fieldName the field name to check in the first array element
+     * @param expectedValue the expected value for the field
      */
-    public static void assertJsonArrayResponseHasField(final HttpClient http,
-                                                        final String endpoint,
-                                                        final HttpStatus expectedStatus,
-                                                        final String fieldName) {
+    public static void assertJsonArrayResponseContainsValue(final HttpClient http,
+                                                             final String endpoint,
+                                                             final HttpStatus expectedStatus,
+                                                             final String fieldName,
+                                                             final String expectedValue) {
         final Response response = http.doGet(endpoint);
         assertThat(response.statusCode()).isEqualTo(expectedStatus.value());
         assertThat(response.contentType()).contains("json");
         assertThat(response.jsonPath().getList("$")).isNotEmpty();
-        assertThat(response.jsonPath().getString("[0]." + fieldName)).isNotNull();
+        assertThat(response.jsonPath().getString("[0]." + fieldName)).isEqualTo(expectedValue);
     }
 }
