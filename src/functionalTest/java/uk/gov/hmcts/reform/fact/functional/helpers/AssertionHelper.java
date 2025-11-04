@@ -15,7 +15,8 @@ public final class AssertionHelper {
     }
 
     /**
-     * Performs a GET request to the specified endpoint and asserts:
+     * Performs a GET request to the specified endpoint and validates the response.
+     * Asserts:
      * - Response status is 200 OK
      * - Content type is JSON
      * - Response body is a non-null JSON array
