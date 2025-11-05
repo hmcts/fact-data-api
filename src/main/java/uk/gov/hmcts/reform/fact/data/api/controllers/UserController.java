@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -31,9 +32,11 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final CourtLockService courtLockService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, CourtLockService courtLockService) {
         this.userService = userService;
+        this.courtLockService = courtLockService;
     }
 
     @GetMapping("/v1/{userId}/favourites")
@@ -57,10 +60,10 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "Invalid request"),
         @ApiResponse(responseCode = "404", description = "User or court not found")
     })
-    public ResponseEntity<Void> addUserFavorite(
+    public ResponseEntity<Void> addUserFavorites(
         @Parameter(description = "UUID of the user", required = true) @ValidUUID @PathVariable String userId,
         @Parameter(description = "UUIDs of the courts", required = true) @Valid @RequestBody List<UUID> courtIds) {
-        userService.addFavouriteCourt(UUID.fromString(userId), courtIds);
+        userService.addFavouriteCourts(UUID.fromString(userId), courtIds);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -69,7 +72,7 @@ public class UserController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Successfully deleted favourite court"),
         @ApiResponse(responseCode = "400", description = "Invalid request"),
-        @ApiResponse(responseCode = "404", description = "User or favourite not found")
+        @ApiResponse(responseCode = "404", description = "User not found")
     })
     public ResponseEntity<Void> deleteUserFavorite(
         @Parameter(description = "UUID of the user", required = true) @ValidUUID @PathVariable String userId,
@@ -88,7 +91,7 @@ public class UserController {
     })
     public ResponseEntity<Void> clearUserLocks(
         @Parameter(description = "UUID of the user", required = true) @ValidUUID @PathVariable String userId) {
-        userService.clearUserLocks(UUID.fromString(userId));
+        courtLockService.clearUserLocks(UUID.fromString(userId));
         return ResponseEntity.noContent().build();
     }
 

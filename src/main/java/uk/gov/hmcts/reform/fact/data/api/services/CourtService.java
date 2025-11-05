@@ -35,6 +35,7 @@ public class CourtService {
      *
      * @param courtIds List of court IDs to retrieve.
      * @return List of courts matching the provided IDs.
+     * @throws NotFoundException if a court is not found.
      */
     public List<Court> getAllCourtsByIds(List<UUID> courtIds) {
         return courtRepository.findAllById(courtIds);

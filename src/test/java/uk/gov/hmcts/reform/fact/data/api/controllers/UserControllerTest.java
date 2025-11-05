@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
 
 import java.util.List;
@@ -34,6 +35,9 @@ class UserControllerTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private CourtLockService courtLockService;
 
     @InjectMocks
     private UserController userController;
@@ -79,33 +83,33 @@ class UserControllerTest {
     }
 
     @Test
-    void addUserFavoriteReturns201() {
+    void addUserFavoritesReturns201() {
         List<UUID> courtIds = List.of(COURT_ID);
 
-        ResponseEntity<Void> response = userController.addUserFavorite(USER_ID.toString(), courtIds);
+        ResponseEntity<Void> response = userController.addUserFavorites(USER_ID.toString(), courtIds);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
     }
 
     @Test
-    void addUserFavoriteThrowsNotFoundExceptionWhenUserNotFound() {
+    void addUserFavoritesThrowsNotFoundExceptionWhenUserNotFound() {
         List<UUID> courtIds = List.of(COURT_ID);
         doThrow(new NotFoundException("User not found"))
-            .when(userService).addFavouriteCourt(UNKNOWN_USER_ID, courtIds);
+            .when(userService).addFavouriteCourts(UNKNOWN_USER_ID, courtIds);
 
         assertThrows(
             NotFoundException.class, () ->
-                userController.addUserFavorite(UNKNOWN_USER_ID.toString(), courtIds)
+                userController.addUserFavorites(UNKNOWN_USER_ID.toString(), courtIds)
         );
     }
 
     @Test
-    void addUserFavoriteThrowsIllegalArgumentExceptionForInvalidUUID() {
+    void addUserFavoritesThrowsIllegalArgumentExceptionForInvalidUUID() {
         List<UUID> courtIds = List.of(COURT_ID);
 
         assertThrows(
             IllegalArgumentException.class, () ->
-                userController.addUserFavorite(INVALID_UUID, courtIds)
+                userController.addUserFavorites(INVALID_UUID, courtIds)
         );
     }
 
@@ -145,7 +149,7 @@ class UserControllerTest {
     @Test
     void clearUserLocksThrowsNotFoundExceptionWhenUserNotFound() {
         doThrow(new NotFoundException("User not found"))
-            .when(userService).clearUserLocks(UNKNOWN_USER_ID);
+            .when(courtLockService).clearUserLocks(UNKNOWN_USER_ID);
 
         assertThrows(
             NotFoundException.class, () ->

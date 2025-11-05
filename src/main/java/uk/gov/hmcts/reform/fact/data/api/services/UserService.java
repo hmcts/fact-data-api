@@ -9,6 +9,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,17 +17,27 @@ import java.util.UUID;
 @Service
 public class UserService {
 
-    private final CourtLockService courtLockService;
     @Value("${user.retention-period}")
     private long retentionPeriod;
 
     private final UserRepository userRepository;
     private final CourtService courtService;
 
-    public UserService(UserRepository userRepository, CourtService courtService, CourtLockService courtLockService) {
+    public UserService(UserRepository userRepository, CourtService courtService) {
         this.userRepository = userRepository;
         this.courtService = courtService;
-        this.courtLockService = courtLockService;
+    }
+
+    /**
+     * Get a user by their unique identifier.
+     *
+     * @param userId The unique identifier of the user to find
+     * @return The user entity matching the provided ID
+     * @throws NotFoundException if no user exists with the given ID
+     */
+    public User getUserById(UUID userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
     }
 
     /**
@@ -51,15 +62,24 @@ public class UserService {
      * @param courtIds List of court IDs to add as favourites
      * @throws NotFoundException if no user or court record exists
      */
-    public void addFavouriteCourt(UUID userId, List<UUID> courtIds) {
+    public void addFavouriteCourts(UUID userId, List<UUID> courtIds) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
 
-        List<UUID> validCourtIds = courtIds.stream()
-            .map(courtId -> courtService.getCourtById(courtId).getId())
+        List<UUID> validCourtIds = courtService.getAllCourtsByIds(courtIds).stream()
+            .map(Court::getId)
             .toList();
 
-        user.getFavouriteCourts().addAll(validCourtIds);
+        List<UUID> favouriteCourtIds = new ArrayList<>(
+            Optional.ofNullable(user.getFavouriteCourts()).orElse(List.of())
+        );
+
+        // Add only court Ids that don't already exist in the user's favourites
+        validCourtIds.stream()
+            .filter(courtId -> !favouriteCourtIds.contains(courtId))
+            .forEach(favouriteCourtIds::add);
+
+        user.setFavouriteCourts(favouriteCourtIds);
         userRepository.save(user);
     }
 
@@ -67,28 +87,15 @@ public class UserService {
      * Removes a court from a user's favourite courts list.
      *
      * @param userId The user id to remove the favourite court from
-     * @param favouriteCourtIds The court id to remove from favourites
+     * @param favouriteCourtId The court id to remove from favourites
      * @throws NotFoundException if no user record exists
      */
-    public void removeFavouriteCourt(UUID userId, UUID favouriteCourtIds) {
+    public void removeFavouriteCourt(UUID userId, UUID favouriteCourtId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
 
-        user.getFavouriteCourts().remove(favouriteCourtIds);
+        user.getFavouriteCourts().remove(favouriteCourtId);
         userRepository.save(user);
-    }
-
-    /**
-     * Delete all locks for a user during logout.
-     *
-     * @param userId The user id to clear locks for.
-     * @throws NotFoundException if no user record exists.
-     */
-    @Transactional
-    public void clearUserLocks(UUID userId) {
-        userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
-        courtLockService.deleteLocksByUserId(userId);
     }
 
     /**

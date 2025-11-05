@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
 
 import java.util.List;
@@ -36,6 +37,9 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private CourtLockService courtLockService;
 
     private final UUID userId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
     private final UUID nonExistentUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -85,7 +89,7 @@ class UserControllerTest {
     void addUserFavoriteNonExistentUserReturnsNotFound() throws Exception {
         List<UUID> courtIds = List.of(courtId);
         doThrow(new NotFoundException("User not found"))
-            .when(userService).addFavouriteCourt(nonExistentUserId, courtIds);
+            .when(userService).addFavouriteCourts(nonExistentUserId, courtIds);
 
         mockMvc.perform(post("/user/v1/{userId}/favourites", nonExistentUserId)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -121,7 +125,7 @@ class UserControllerTest {
     @DisplayName("DELETE /user/v1/{userId}/locks returns 404 if user not found")
     void clearUserLocksNonExistentUserReturnsNotFound() throws Exception {
         doThrow(new NotFoundException("User not found"))
-            .when(userService).clearUserLocks(nonExistentUserId);
+            .when(courtLockService).clearUserLocks(nonExistentUserId);
 
         mockMvc.perform(delete("/user/v1/{userId}/locks", nonExistentUserId))
             .andExpect(status().isNotFound());

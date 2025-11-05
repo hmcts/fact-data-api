@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLockRepository;
 
 import java.util.UUID;
@@ -13,22 +14,26 @@ import java.util.UUID;
 public class CourtLockService {
 
     private final CourtLockRepository courtLockRepository;
+    private final UserService userService;
 
     /**
      * Constructs a new CourtLockService with required dependencies.
      *
      * @param courtLockRepository Repository for court lock operations
+     * @param userService Service for user operations
      */
-    public CourtLockService(CourtLockRepository courtLockRepository) {
+    public CourtLockService(CourtLockRepository courtLockRepository, UserService userService) {
         this.courtLockRepository = courtLockRepository;
+        this.userService = userService;
     }
 
     /**
-     * Deletes all court locks associated with a specific user ID.
+     * Delete all court locks for a given user id.
      *
-     * @param userId The unique identifier of the user whose locks should be deleted
+     * @param userId The user id to clear locks for.
      */
-    public void deleteLocksByUserId(UUID userId) {
-        courtLockRepository.deleteAllByUserId(userId);
+    @Transactional
+    public void clearUserLocks(UUID userId) {
+        courtLockRepository.deleteAllByUserId(userService.getUserById(userId).getId());
     }
 }

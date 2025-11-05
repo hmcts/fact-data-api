@@ -64,7 +64,7 @@ class UserServiceTest {
     }
 
     @Test
-    void addFavouriteCourtShouldAddCourtsToUsersFavourites() {
+    void addFavouriteCourtsShouldAddCourtsToUsersFavourites() {
         UUID userId = UUID.randomUUID();
         UUID courtId = UUID.randomUUID();
         User user = new User();
@@ -73,35 +73,35 @@ class UserServiceTest {
         court.setId(courtId);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtService.getAllCourtsByIds(List.of(courtId))).thenReturn(List.of(court));
 
-        userService.addFavouriteCourt(userId, List.of(courtId));
+        userService.addFavouriteCourts(userId, List.of(courtId));
 
         assertThat(user.getFavouriteCourts()).contains(courtId);
     }
 
     @Test
-    void addFavouriteCourtShouldThrowNotFoundExceptionWhenUserDoesNotExist() {
+    void addFavouriteCourtsShouldThrowNotFoundExceptionWhenUserDoesNotExist() {
         UUID userId = UUID.randomUUID();
         UUID courtId = UUID.randomUUID();
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> userService.addFavouriteCourt(userId, List.of(courtId)));
+        assertThrows(NotFoundException.class, () -> userService.addFavouriteCourts(userId, List.of(courtId)));
     }
 
     @Test
-    void addFavouriteCourtShouldThrowNotFoundExceptionWhenCourtDoesNotExist() {
+    void addFavouriteCourtsShouldNotAddWhenCourtDoesNotExist() {
         UUID userId = UUID.randomUUID();
         UUID courtId = UUID.randomUUID();
         User user = new User();
         user.setFavouriteCourts(new ArrayList<>());
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException("Court not found"));
+        when(courtService.getAllCourtsByIds(List.of(courtId))).thenReturn(List.of());
 
-        assertThrows(NotFoundException.class, () ->
-            userService.addFavouriteCourt(userId, List.of(courtId))
-        );
+        userService.addFavouriteCourts(userId, List.of(courtId));
+
+        assertThat(user.getFavouriteCourts()).doesNotContain(courtId);
     }
 
     @Test
@@ -125,26 +125,6 @@ class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> userService.removeFavouriteCourt(userId, courtId));
-    }
-
-    @Test
-    void clearUserLocksShouldDeleteAllLocksForUser() {
-        UUID userId = UUID.randomUUID();
-        User user = new User();
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-
-        userService.clearUserLocks(userId);
-
-        verify(courtLockService).deleteLocksByUserId(userId);
-    }
-
-    @Test
-    void clearUserLocksShouldThrowNotFoundExceptionWhenUserDoesNotExist() {
-        UUID userId = UUID.randomUUID();
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> userService.clearUserLocks(userId));
     }
 
     @Test
