@@ -48,11 +48,8 @@ public class UserService {
      * @throws NotFoundException if no user record exists for the court.
      */
     public List<Court> getUsersFavouriteCourts(UUID userId) {
-        List<UUID> favouriteCourtIds = userRepository.findById(userId)
-            .map(User::getFavouriteCourts)
-            .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
-
-        return courtService.getAllCourtsByIds(favouriteCourtIds);
+        return courtService.getAllCourtsByIds(
+            Optional.ofNullable(this.getUserById(userId).getFavouriteCourts()).orElse(List.of()));
     }
 
     /**
@@ -63,8 +60,7 @@ public class UserService {
      * @throws NotFoundException if no user or court record exists
      */
     public void addFavouriteCourts(UUID userId, List<UUID> courtIds) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
+        User user = this.getUserById(userId);
 
         List<UUID> validCourtIds = courtService.getAllCourtsByIds(courtIds).stream()
             .map(Court::getId)
@@ -91,8 +87,7 @@ public class UserService {
      * @throws NotFoundException if no user record exists
      */
     public void removeFavouriteCourt(UUID userId, UUID favouriteCourtId) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
+        User user = this.getUserById(userId);
 
         user.getFavouriteCourts().remove(favouriteCourtId);
         userRepository.save(user);
@@ -120,7 +115,6 @@ public class UserService {
 
         user.setLastLogin(ZonedDateTime.now());
         return userRepository.save(user);
-
     }
 
     /**

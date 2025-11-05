@@ -29,9 +29,6 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private CourtLockService courtLockService;
-
-    @Mock
     private CourtService courtService;
 
     @InjectMocks
@@ -92,9 +89,10 @@ class UserServiceTest {
     @Test
     void addFavouriteCourtsShouldNotAddWhenCourtDoesNotExist() {
         UUID userId = UUID.randomUUID();
-        UUID courtId = UUID.randomUUID();
         User user = new User();
+        user.setId(userId);
         user.setFavouriteCourts(new ArrayList<>());
+        UUID courtId = UUID.randomUUID();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(courtService.getAllCourtsByIds(List.of(courtId))).thenReturn(List.of());
@@ -109,6 +107,7 @@ class UserServiceTest {
         UUID userId = UUID.randomUUID();
         UUID courtId = UUID.randomUUID();
         User user = new User();
+        user.setId(userId);
         user.setFavouriteCourts(new ArrayList<>(List.of(courtId)));
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
