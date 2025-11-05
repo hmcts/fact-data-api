@@ -74,9 +74,33 @@ public final class TypesControllerFunctionalTest {
     }
 
     @Test
+    @DisplayName("GET /types/v1/court-types returns expected data")
+    void shouldReturnCourtTypesWithExpectedData() {
+        assertJsonArrayResponseContainsValue(http, COURT_TYPES_ENDPOINT, OK, "name", "Magistrates' Court");
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/opening-hours-types returns expected data")
+    void shouldReturnOpeningHoursTypesWithExpectedData() {
+        assertJsonArrayResponseContainsValue(http, OPENING_HOURS_TYPES_ENDPOINT, OK, "name", "Telephone enquiries answered");
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/contact-description-types returns expected data")
+    void shouldReturnContactDescriptionTypesWithExpectedData() {
+        assertJsonArrayResponseContainsValue(http, CONTACT_DESCRIPTION_TYPES_ENDPOINT, OK, "name", "Accessibility enquiries");
+    }
+
+    @Test
     @DisplayName("GET /types/v1/regions returns expected data")
     void shouldReturnRegionsWithExpectedData() {
         assertJsonArrayResponseContainsValue(http, REGIONS_ENDPOINT, OK, "country", "England");
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/service-areas returns expected data")
+    void shouldReturnServiceAreasWithExpectedData() {
+        assertJsonArrayResponseContainsValue(http, SERVICE_AREAS_ENDPOINT, OK, "name", "Divorce");
     }
 
     @Test
