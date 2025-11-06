@@ -20,12 +20,12 @@ withPipeline(type, product, component) {
     builder.gradle('allureReport')
 
     publishHTML target: [
-      allowMissing         : true,
+      allowMissing: true,
       alwaysLinkToLastBuild: true,
-      keepAll              : true,
-      reportDir            : 'build/reports/allure-report',
-      reportFiles          : 'index.html',
-      reportName           : 'Allure Functional Test Report'
+      keepAll: true,
+      reportDir: 'build/reports/allure-report/allureReport',
+      reportFiles: 'index.html',
+      reportName: 'Allure Functional Test Report'
     ]
   }
 
@@ -33,12 +33,12 @@ withPipeline(type, product, component) {
     builder.gradle('allureReport')
 
     publishHTML target: [
-      allowMissing         : true,
+      allowMissing: true,
       alwaysLinkToLastBuild: true,
-      keepAll              : true,
-      reportDir            : 'build/reports/allure-report',
-      reportFiles          : 'index.html',
-      reportName           : 'Allure Functional Test Report'
+      keepAll: true,
+      reportDir: 'build/reports/allure-report/allureReport',
+      reportFiles: 'index.html',
+      reportName: 'Allure Functional Test Report'
     ]
   }
 
