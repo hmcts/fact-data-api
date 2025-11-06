@@ -3,7 +3,6 @@ package uk.gov.hmcts.reform.fact.functional.examples;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import uk.gov.hmcts.reform.fact.functional.config.TestConfig;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,8 +15,7 @@ public final class HealthFunctionalTest {
 
     @BeforeAll
     static void setUp() {
-        final var config = TestConfig.load();
-        http = new HttpClient(config);
+        http = new HttpClient();
     }
 
     @Test

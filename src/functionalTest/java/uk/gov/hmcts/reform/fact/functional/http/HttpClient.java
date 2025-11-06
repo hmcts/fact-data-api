@@ -3,7 +3,6 @@ package uk.gov.hmcts.reform.fact.functional.http;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import uk.gov.hmcts.reform.fact.functional.config.TestConfig;
 
 import java.io.File;
 import java.util.Map;
@@ -15,15 +14,15 @@ import static io.restassured.RestAssured.given;
  */
 public final class HttpClient {
 
-    private final TestConfig config;
+    private final String baseUrl;
 
-    public HttpClient(final TestConfig config) {
-        this.config = config;
+    public HttpClient() {
+        this.baseUrl = System.getenv().getOrDefault("TEST_URL", "http://localhost:8989");
     }
 
     public Response doGet(final String path) {
         return given()
-            .baseUri(config.baseUrl())
+            .baseUri(baseUrl)
             .when()
             .get(path)
             .thenReturn();
@@ -34,7 +33,7 @@ public final class HttpClient {
      * Example: doGet("/courts/v1", Map.of("pageNumber", 0, "pageSize", 25))
      */
     public Response doGet(final String path, final Map<String, Object> queryParams) {
-        RequestSpecification request = given().baseUri(config.baseUrl());
+        RequestSpecification request = given().baseUri(baseUrl);
 
         // Add each query parameter - RestAssured handles null values gracefully
         for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
@@ -51,7 +50,7 @@ public final class HttpClient {
 
     public Response doPost(final String path, final Object body) {
         return given()
-            .baseUri(config.baseUrl())
+            .baseUri(baseUrl)
             .contentType(ContentType.JSON)
             .body(body)
             .when()
@@ -61,7 +60,7 @@ public final class HttpClient {
 
     public Response doPut(final String path, final Object body) {
         return given()
-            .baseUri(config.baseUrl())
+            .baseUri(baseUrl)
             .contentType(ContentType.JSON)
             .body(body)
             .when()
@@ -71,7 +70,7 @@ public final class HttpClient {
 
     public Response doDelete(final String path) {
         return given()
-            .baseUri(config.baseUrl())
+            .baseUri(baseUrl)
             .when()
             .delete(path)
             .thenReturn();
@@ -79,7 +78,7 @@ public final class HttpClient {
 
     public Response doMultipartPost(final String path, final String fileParamName, final File file) {
         return given()
-            .baseUri(config.baseUrl())
+            .baseUri(baseUrl)
             .contentType(ContentType.MULTIPART)
             .multiPart(fileParamName, file)
             .when()

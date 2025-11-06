@@ -1,28 +1,33 @@
 package uk.gov.hmcts.reform.fact.functional.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import uk.gov.hmcts.reform.fact.functional.config.TestConfig;
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.functional.data.CourtTestData;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
 
 public final class CourtControllerFunctionalTest {
 
     private static HttpClient http;
-    private static ObjectMapper mapper;
+    private static final ObjectMapper mapper = new ObjectMapper()
+        .registerModule(new JavaTimeModule())
+        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private static String regionId;
 
     @BeforeAll
     static void setUp() {
-        final TestConfig config = TestConfig.load();
-        http = new HttpClient(config);
-        mapper = new ObjectMapper();
+        http = new HttpClient();
         regionId = getRegionId();
     }
 
@@ -44,5 +49,29 @@ public final class CourtControllerFunctionalTest {
 
         assertThat(response.statusCode()).isEqualTo(CREATED.value());
         assertThat(response.jsonPath().getString("id")).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Example create court test")
+    void shouldCreateCourt() throws Exception {
+        Court court = new Court();
+        court.setName("Functional Test Court test");
+        court.setRegionId(UUID.fromString(regionId));
+        court.setIsServiceCentre(true);
+
+        Response createResponse = http.doPost("/courts/v1", court);
+        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
+
+        String id = createResponse.jsonPath().getString("id");
+        assertThat(id).isNotNull();
+
+        Response getResponse = http.doGet("/courts/" + id + "/v1");
+        assertThat(getResponse.statusCode()).isEqualTo(OK.value());
+
+        Court fetchedCourt = mapper.readValue(getResponse.getBody().asString(), Court.class);
+
+        assertThat(fetchedCourt.getName()).isEqualTo(court.getName());
+        assertThat(fetchedCourt.getRegionId()).isEqualTo(court.getRegionId());
+        assertThat(fetchedCourt.getIsServiceCentre()).isTrue();
     }
 }

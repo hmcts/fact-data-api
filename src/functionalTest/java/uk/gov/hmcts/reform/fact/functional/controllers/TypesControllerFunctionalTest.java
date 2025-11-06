@@ -4,7 +4,6 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import uk.gov.hmcts.reform.fact.functional.config.TestConfig;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,8 +25,7 @@ public final class TypesControllerFunctionalTest {
 
     @BeforeAll
     static void setUp() {
-        final TestConfig config = TestConfig.load();
-        http = new HttpClient(config);
+        http = new HttpClient();
     }
 
     @Test

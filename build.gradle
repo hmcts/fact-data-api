@@ -189,6 +189,7 @@ dependencies {
   integrationTestImplementation group: 'org.testcontainers', name: 'postgresql', version: '1.21.3'
 
   smokeTestImplementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.6'
+  functionalTestImplementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.20.1'
 }
 
 bootJar {
