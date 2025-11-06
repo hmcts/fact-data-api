@@ -19,17 +19,11 @@ import static org.springframework.http.HttpStatus.OK;
 
 public final class CourtControllerFunctionalTest {
 
-    private static HttpClient http;
+    private static final HttpClient http = new HttpClient();
     private static final ObjectMapper mapper = new ObjectMapper()
         .registerModule(new JavaTimeModule())
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    private static String regionId;
-
-    @BeforeAll
-    static void setUp() {
-        http = new HttpClient();
-        regionId = getRegionId();
-    }
+    private static final String regionId = getRegionId();
 
     private static String getRegionId() {
         final Response response = http.doGet("/types/v1/regions");
