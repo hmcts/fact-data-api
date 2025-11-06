@@ -1,4 +1,4 @@
-package uk.gov.hmcts.reform.fact.functional;
+package uk.gov.hmcts.reform.fact.functional.controllers;
 
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
