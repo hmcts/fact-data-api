@@ -199,6 +199,16 @@ dependencies {
   functionalTestImplementation group: 'io.qameta.allure', name: 'allure-rest-assured', version: '2.30.0'
 }
 
+tasks.named('test') {
+  systemProperty 'allure.label.parentSuite', 'Unit tests'
+}
+tasks.named('integration') {
+  systemProperty 'allure.label.parentSuite', 'Integration tests'
+}
+tasks.named('functional') {
+  systemProperty 'allure.label.parentSuite', 'Functional tests'
+}
+
 bootJar {
   archiveFileName = "fact-data-api.jar"
 
