@@ -16,7 +16,20 @@ withPipeline(type, product, component) {
     builder.gradle('integration')
   }
 
-  afterAlways('functionalTest') {
+  afterAlways('functionalTest:preview') {
+    builder.gradle('allureReport')
+
+    publishHTML target: [
+      allowMissing         : true,
+      alwaysLinkToLastBuild: true,
+      keepAll              : true,
+      reportDir            : 'build/reports/allure-report',
+      reportFiles          : 'index.html',
+      reportName           : 'Allure Functional Test Report'
+    ]
+  }
+
+  afterAlways('functionalTest:aat') {
     builder.gradle('allureReport')
 
     publishHTML target: [
