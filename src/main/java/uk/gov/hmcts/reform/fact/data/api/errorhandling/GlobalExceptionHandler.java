@@ -8,13 +8,13 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -27,10 +27,10 @@ public class GlobalExceptionHandler {
         return generateExceptionResponse(ex.getMessage());
     }
 
-    @ExceptionHandler(TranslationNotFoundException.class)
+    @ExceptionHandler(CourtResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ExceptionResponse handle(TranslationNotFoundException ex) {
-        log.trace("204, no translation services for a court. Details: {}", ex.getMessage());
+    public ExceptionResponse handle(CourtResourceNotFoundException ex) {
+        log.trace("204, court resource not found. Details: {}", ex.getMessage());
         return generateExceptionResponse(ex.getMessage());
     }
 
@@ -54,12 +54,14 @@ public class GlobalExceptionHandler {
     public Map<String, String> handle(MethodArgumentNotValidException ex) {
         log.error("400, error while validating request body. Details: {}", ex.getMessage());
 
-        return ex.getBindingResult().getFieldErrors().stream()
-            .collect(Collectors.toMap(
-                fieldError -> fieldError.getField(),
-                fieldError -> fieldError.getDefaultMessage(),
-                (existing, replacement) -> existing
-            ));
+        LinkedHashMap<String, String> errors = new LinkedHashMap<>();
+
+        ex.getBindingResult().getFieldErrors().forEach(fieldError ->
+            errors.putIfAbsent(fieldError.getField(), fieldError.getDefaultMessage())
+        );
+
+        errors.put("timestamp", LocalDateTime.now().toString());
+        return errors;
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -79,4 +81,3 @@ public class GlobalExceptionHandler {
         return response;
     }
 }
-

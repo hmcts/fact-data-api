@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -58,7 +59,10 @@ public class CourtFax {
     private String faxNumber;
 
     @Schema(description = "Description")
-    @Column(name = "description", length = Integer.MAX_VALUE)
+    @Size(max = 250, message = "Fax description must be {max} characters or fewer")
+    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
+        message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
+    @Column(name = "description", length = 250)
     private String description;
 
 }

@@ -9,8 +9,8 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
 
 import java.util.Collections;
 import java.util.Map;
@@ -40,8 +40,8 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void testHandleTranslationNotFoundException() {
-        TranslationNotFoundException ex = new TranslationNotFoundException(TEST_MESSAGE);
+    void testHandleCourtResourceNotFoundException() {
+        CourtResourceNotFoundException ex = new CourtResourceNotFoundException(TEST_MESSAGE);
         ExceptionResponse response = handler.handle(ex);
 
         assertThat(response).isNotNull();
@@ -70,8 +70,8 @@ class GlobalExceptionHandlerTest {
         Map<String, String> response = handler.handle(methodArgumentNotValidException);
 
         assertThat(response).isNotNull();
-        assertThat(response).containsKey("field");
-        assertThat(response.get("field")).isEqualTo(TEST_MESSAGE);
+        assertThat(response).containsEntry("field", TEST_MESSAGE);
+        assertThat(response).containsKey("timestamp");
     }
 
     @Test

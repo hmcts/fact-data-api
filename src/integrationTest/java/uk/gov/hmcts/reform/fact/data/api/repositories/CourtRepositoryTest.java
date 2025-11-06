@@ -30,7 +30,7 @@ public class CourtRepositoryTest {
     @Test
     public void shouldSaveAndLoadCourtEntity() {
 
-        final var nowish = ZonedDateTime.now().minusSeconds(1);
+        final ZonedDateTime nowish = ZonedDateTime.now().minusSeconds(1);
 
         // Create and save a Region
         Region region = new Region();
@@ -38,7 +38,7 @@ public class CourtRepositoryTest {
         region = regionRepository.save(region);
 
         // Create and save a Court
-        var court = Court.builder()
+        Court court = Court.builder()
             .name("Test Court")
             .slug("test-court")
             .open(true).temporaryUrgentNotice("Urgent notice")
@@ -48,10 +48,10 @@ public class CourtRepositoryTest {
             .mrdId(UUID.randomUUID().toString())
             .build();
 
-        var savedCourt = courtRepository.save(court);
+        Court savedCourt = courtRepository.save(court);
 
         // Retrieve and inspect
-        var foundCourt = courtRepository.findById(savedCourt.getId()).orElse(null);
+        Court foundCourt = courtRepository.findById(savedCourt.getId()).orElse(null);
         assertNotNull(foundCourt);
         assertEquals("Test Court", foundCourt.getName());
         assertNotNull(foundCourt.getRegion());
