@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
+
 public final class CourtControllerFunctionalTest {
 
     private static HttpClient http;
