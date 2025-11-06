@@ -15,22 +15,6 @@ public final class AssertionHelper {
     }
 
     /**
-     * Performs a GET request to the specified endpoint and validates the response.
-     *
-     * @param http the HTTP client
-     * @param endpoint the endpoint path to test
-     * @param expectedStatus the expected HTTP status code
-     */
-    public static void assertJsonArrayResponse(final HttpClient http,
-                                                final String endpoint,
-                                                final HttpStatus expectedStatus) {
-        final Response response = http.doGet(endpoint);
-        assertThat(response.statusCode()).isEqualTo(expectedStatus.value());
-        assertThat(response.contentType()).contains("json");
-        assertThat(response.jsonPath().getList("$")).isNotNull();
-    }
-
-    /**
      * Performs a GET request to the specified endpoint and validates the response contains expected data.
      * Useful for verifying endpoints are not misconfigured or returning the wrong data type.
      *
