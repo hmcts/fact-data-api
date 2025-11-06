@@ -205,6 +205,9 @@ tasks.named('test') {
 tasks.named('integration') {
   systemProperty 'allure.label.parentSuite', 'Integration tests'
 }
+tasks.named('smoke') {
+  systemProperty 'allure.label.parentSuite', 'Smoke tests'
+}
 tasks.named('functional') {
   systemProperty 'allure.label.parentSuite', 'Functional tests'
 }
