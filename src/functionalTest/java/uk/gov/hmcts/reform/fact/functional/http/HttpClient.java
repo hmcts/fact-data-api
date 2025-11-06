@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.functional.http;
 
+import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -22,6 +23,7 @@ public final class HttpClient {
 
     public Response doGet(final String path) {
         return given()
+            .filter(new AllureRestAssured())
             .baseUri(baseUrl)
             .when()
             .get(path)
@@ -33,9 +35,10 @@ public final class HttpClient {
      * Example: doGet("/courts/v1", Map.of("pageNumber", 0, "pageSize", 25))
      */
     public Response doGet(final String path, final Map<String, Object> queryParams) {
-        RequestSpecification request = given().baseUri(baseUrl);
+        RequestSpecification request = given()
+            .filter(new AllureRestAssured())
+            .baseUri(baseUrl);
 
-        // Add each query parameter - RestAssured handles null values gracefully
         for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
             if (entry.getValue() != null) {
                 request.queryParam(entry.getKey(), entry.getValue());
@@ -50,6 +53,7 @@ public final class HttpClient {
 
     public Response doPost(final String path, final Object body) {
         return given()
+            .filter(new AllureRestAssured())
             .baseUri(baseUrl)
             .contentType(ContentType.JSON)
             .body(body)
@@ -60,6 +64,7 @@ public final class HttpClient {
 
     public Response doPut(final String path, final Object body) {
         return given()
+            .filter(new AllureRestAssured())
             .baseUri(baseUrl)
             .contentType(ContentType.JSON)
             .body(body)
@@ -70,6 +75,7 @@ public final class HttpClient {
 
     public Response doDelete(final String path) {
         return given()
+            .filter(new AllureRestAssured())
             .baseUri(baseUrl)
             .when()
             .delete(path)
@@ -78,6 +84,7 @@ public final class HttpClient {
 
     public Response doMultipartPost(final String path, final String fileParamName, final File file) {
         return given()
+            .filter(new AllureRestAssured())
             .baseUri(baseUrl)
             .contentType(ContentType.MULTIPART)
             .multiPart(fileParamName, file)

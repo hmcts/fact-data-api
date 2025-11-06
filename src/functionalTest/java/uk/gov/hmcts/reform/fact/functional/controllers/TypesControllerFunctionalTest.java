@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.functional.controllers;
 
+import io.qameta.allure.Feature;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +12,8 @@ import static org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED;
 import static org.springframework.http.HttpStatus.OK;
 import static uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper.assertJsonArrayResponseContainsValue;
 
+@Feature("Types Controller")
+@DisplayName("Types Controller")
 public final class TypesControllerFunctionalTest {
 
     private static final String TYPES_BASE_PATH = "/types/v1";

@@ -17,6 +17,7 @@ plugins {
   id 'uk.gov.hmcts.java' version '0.12.67'
   id 'io.freefair.lombok' version '9.0.0'
   id 'org.flywaydb.flyway' version '11.13.2'
+  id 'io.qameta.allure' version '3.0.1'
 }
 
 application {
@@ -148,6 +149,10 @@ dependencyCheck {
   suppressionFile = 'config/owasp/suppressions.xml'
 }
 
+allure {
+  version = '2.34.1'
+}
+
 repositories {
   mavenLocal()
   mavenCentral()
@@ -190,6 +195,8 @@ dependencies {
 
   smokeTestImplementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.6'
   functionalTestImplementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.20.1'
+  functionalTestImplementation group: 'io.qameta.allure', name: 'allure-junit5', version: '2.30.0'
+  functionalTestImplementation group: 'io.qameta.allure', name: 'allure-rest-assured', version: '2.30.0'
 }
 
 bootJar {
