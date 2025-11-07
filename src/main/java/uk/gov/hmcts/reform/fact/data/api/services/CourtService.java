@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -103,6 +104,23 @@ public class CourtService {
         return courtRepository.save(existingCourt);
     }
 
+    /**
+     * Deletes courts whose names start with the supplied prefix.
+     *
+     * @param courtNamePrefix the name prefix to match (case-insensitive).
+     * @return the number of courts removed.
+     */
+    @Transactional
+    public long deleteCourtsByNamePrefix(String courtNamePrefix) {
+        List<Court> courtsToDelete = courtRepository.findByNameStartingWithIgnoreCase(courtNamePrefix.trim());
+
+        if (courtsToDelete.isEmpty()) {
+            return 0;
+        }
+
+        courtRepository.deleteAllInBatch(courtsToDelete);
+        return courtsToDelete.size();
+    }
 
     /**
      * Converts a court name to a unique slug.
