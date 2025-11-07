@@ -8,6 +8,7 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
@@ -30,10 +31,10 @@ public final class CourtControllerFunctionalTest {
     private static final String regionId = TestDataHelper.getRegionId(http);
 
     @Test
-    @DisplayName("POST /courts/v1 creates court with valid payload")
+    @DisplayName("POST /courts/v1 creates court and verifies persistence")
     void shouldCreateCourtWithValidPayload() throws Exception {
         final Court court = new Court();
-        court.setName("Test Court Valid Payload");
+        court.setName("Test Court Create Valid");
         court.setRegionId(UUID.fromString(regionId));
         court.setIsServiceCentre(true);
 
@@ -47,7 +48,7 @@ public final class CourtControllerFunctionalTest {
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
         final Court fetchedCourt = mapper.readValue(getResponse.getBody().asString(), Court.class);
-        assertThat(fetchedCourt.getName()).isEqualTo("Test Court Valid Payload");
+        assertThat(fetchedCourt.getName()).isEqualTo("Test Court Create Valid");
         assertThat(fetchedCourt.getRegionId()).isEqualTo(UUID.fromString(regionId));
         assertThat(fetchedCourt.getIsServiceCentre()).isTrue();
     }
@@ -56,13 +57,15 @@ public final class CourtControllerFunctionalTest {
     @DisplayName("POST /courts/v1 fails with non-existent region ID")
     void shouldFailWithNonExistentRegionId() throws Exception {
         final Court court = new Court();
-        court.setName("Test Court Random UUID");
+        court.setName("Test Court Invalid Region");
         court.setRegionId(UUID.randomUUID());
         court.setIsServiceCentre(true);
 
         final Response response = http.doPost("/courts/v1", court);
 
         assertThat(response.statusCode()).isEqualTo(NOT_FOUND.value());
+        assertThat(response.jsonPath().getString("message"))
+            .contains("Region not found, ID: " + court.getRegionId());
     }
 
     @Test
@@ -75,6 +78,8 @@ public final class CourtControllerFunctionalTest {
         final Response response = http.doPost("/courts/v1", court);
 
         assertThat(response.statusCode()).isEqualTo(BAD_REQUEST.value());
+        assertThat(response.jsonPath().getString("name"))
+            .contains("Court name must be specified");
     }
 
     @Test
@@ -85,10 +90,12 @@ public final class CourtControllerFunctionalTest {
         final Response response = http.doGet("/courts/" + nonExistentCourtId + "/v1");
 
         assertThat(response.statusCode()).isEqualTo(NOT_FOUND.value());
+        assertThat(response.jsonPath().getString("message"))
+            .contains("Court not found, ID: " + nonExistentCourtId);
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1 updates existing court")
+    @DisplayName("PUT /courts/{courtId}/v1 updates existing court and verifies changes")
     void shouldUpdateExistingCourt() throws Exception {
         final Court court = new Court();
         court.setName("Test Court Original");
@@ -119,20 +126,22 @@ public final class CourtControllerFunctionalTest {
         final String nonExistentCourtId = UUID.randomUUID().toString();
 
         final Court updatedCourt = new Court();
-        updatedCourt.setName("Test Court Non-Existent");
+        updatedCourt.setName("Test Court Non-Existent court ID");
         updatedCourt.setRegionId(UUID.fromString(regionId));
         updatedCourt.setIsServiceCentre(true);
 
         final Response response = http.doPut("/courts/" + nonExistentCourtId + "/v1", updatedCourt);
 
         assertThat(response.statusCode()).isEqualTo(NOT_FOUND.value());
+        assertThat(response.jsonPath().getString("message"))
+            .contains("Court not found, ID: " + nonExistentCourtId);
     }
 
     @Test
     @DisplayName("PUT /courts/{courtId}/v1 update fails with non-existent regionId")
     void shouldFailToUpdateCourtWithNonExistentRegionId() throws Exception {
         final Court court = new Court();
-        court.setName("Test Court Non-Existent Region");
+        court.setName("Update Test Court Non-Existent Region ID");
         court.setRegionId(UUID.fromString(regionId));
         court.setIsServiceCentre(true);
 
@@ -140,13 +149,15 @@ public final class CourtControllerFunctionalTest {
         final String courtId = createResponse.jsonPath().getString("id");
 
         final Court updatedCourt = new Court();
-        updatedCourt.setName("Test Court Non-Existent Region Updated");
+        updatedCourt.setName("Test Court Non-Existent Region ID Updated");
         updatedCourt.setRegionId(UUID.randomUUID());
         updatedCourt.setIsServiceCentre(true);
 
         final Response response = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
 
         assertThat(response.statusCode()).isEqualTo(NOT_FOUND.value());
+        assertThat(response.jsonPath().getString("message"))
+            .contains("Region not found, ID: " + updatedCourt.getRegionId());
     }
 
     @Test
@@ -172,27 +183,20 @@ public final class CourtControllerFunctionalTest {
         assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
         final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
-        final Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=25&includeClosed=true");
+        final Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=200&includeClosed=true");
 
-        assertThat(listResponse.statusCode()).isEqualTo(OK.value());
-        assertThat(listResponse.jsonPath().getMap("page")).isNotNull();
-
-        final java.util.List<String> courtIdStrings = listResponse.jsonPath().getList("content.id", String.class);
-        final java.util.List<UUID> courtIds = courtIdStrings.stream()
-            .map(UUID::fromString)
-            .toList();
-        assertThat(courtIds).contains(courtId);
+        AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
     }
 
     @Test
     @DisplayName("GET /courts/v1 with includeClosed=false returns only open courts")
     void shouldReturnOnlyActiveCourts() throws Exception {
-        Court newCourt = new Court();
-        newCourt.setName("Test Open Court");
-        newCourt.setRegionId(UUID.fromString(regionId));
-        newCourt.setIsServiceCentre(true);
+        Court Court = new Court();
+        Court.setName("Test Open Court");
+        Court.setRegionId(UUID.fromString(regionId));
+        Court.setIsServiceCentre(true);
 
-        Response createResponse = http.doPost("/courts/v1", newCourt);
+        Response createResponse = http.doPost("/courts/v1", Court);
         assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
         UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
@@ -205,15 +209,61 @@ public final class CourtControllerFunctionalTest {
         Response updateResponse = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
         assertThat(updateResponse.statusCode()).isEqualTo(OK.value());
 
-        Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=50&includeClosed=false");
-        assertThat(listResponse.statusCode()).isEqualTo(OK.value());
+        Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=200&includeClosed=false");
 
-        final java.util.List<String> courtIdStrings = listResponse.jsonPath().getList("content.id", String.class);
-        final java.util.List<UUID> courtIds = courtIdStrings.stream()
-            .map(UUID::fromString)
-            .toList();
-
-        assertThat(courtIds).contains(courtId);
+        AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
     }
 
+    @Test
+    @DisplayName("GET /courts/v1 filtered only by valid region id")
+    void shouldReturnCourtsFilteredByValidRegionId() throws Exception {
+        final Court court = new Court();
+        court.setName("Test Court for regionId filtering");
+        court.setRegionId(UUID.fromString(regionId));
+        court.setIsServiceCentre(true);
+
+        final Response createResponse = http.doPost("/courts/v1", court);
+        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
+        final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
+
+        final Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId);
+
+        AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
+    }
+
+    @Test
+    @DisplayName("GET /courts/v1 filtered by partialCourtName")
+    void shouldReturnCourtsFilteredByPartialCourtName() throws Exception {
+        final Court court = new Court();
+        court.setName("Functional Test Birmingham Court");
+        court.setRegionId(UUID.fromString(regionId));
+        court.setIsServiceCentre(true);
+
+        final Response createResponse = http.doPost("/courts/v1", court);
+        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
+        final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
+
+        final Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&partialCourtName=Birmingham");
+
+        AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
+    }
+
+    @Test
+    @DisplayName("GET /courts/v1 filtered by combined filters (regionId + partialCourtName + includeClosed)")
+    void shouldReturnCourtsFilteredByCombinedFilters() throws Exception {
+        final Court court = new Court();
+        court.setName("Functional Test Manchester Court");
+        court.setRegionId(UUID.fromString(regionId));
+        court.setIsServiceCentre(true);
+
+        final Response createResponse = http.doPost("/courts/v1", court);
+        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
+        final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
+
+        final Response listResponse = http.doGet(
+            "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId + "&partialCourtName=Manchester"
+        );
+
+        AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
+    }
 }

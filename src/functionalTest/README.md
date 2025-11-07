@@ -1,12 +1,11 @@
 # Functional Tests
 
-Functional tests for the Court and Photo controllers. These are end-to-end HTTP tests that run against a live application instance.
+Functional tests for the Court and Types controllers. These are end-to-end HTTP tests that run against a live application instance.
 
 ## Prerequisites
 
 1. Application running on configured URL (default: `http://localhost:8989`)
-2. PostgreSQL database accessible (default: `localhost:5999`)
-3. Environment variables configured (see below)
+2. Environment variable configured: `TEST_URL`
 
 ## Local Development Setup
 
@@ -28,7 +27,7 @@ Functional tests for the Court and Photo controllers. These are end-to-end HTTP 
 
 ## Running Tests
 
-Make sure the application and database are running first as per documentation.
+Make sure the application is running first as per documentation.
 
 Then run the functional tests:
 
@@ -42,17 +41,21 @@ In the pipeline, Helm automatically injects environment variables.
 
 ## Structure
 
-- `config/` - Configuration loading from environment variables
+- `config/` - Configuration loading from environment variables (TEST_URL)
 - `controllers/` - Test classes for each controller
-- `data/` - Test data POJOs and builders
-- `helpers/` - Helper utilities (database access, test data creation)
+- `helpers/` - Helper utilities (TestDataHelper for fetching reference data, AssertionHelper for common assertions)
 - `http/` - HTTP client wrapper
 
 ## Test Approach
 
-Tests follow a simple, modular pattern:
 
-1. **Data Builders** - Use `CourtTestDataBuilder` to create test data with sensible defaults
-2. **Helpers** - Use `TestDataHelper` to create data via API endpoints
-3. **No Fixtures** - Each test creates what it needs
-4. **No Cleanup** - Database is wiped between runs in a pipeline
+1. **Real Entities** - Use actual domain entities from main source code (e.g., `Court` entity) instead of test POJOs
+2. **Static Initialization** - Use `private static final` for HttpClient, ObjectMapper, and reference data
+3. **ObjectMapper Configuration** - JavaTimeModule for ZonedDateTime support, disable WRITE_DATES_AS_TIMESTAMPS
+4. **Type Safety** - Use strongly typed UUIDs throughout
+5. **Bidirectional Mapping** - POJO → JSON for requests, JSON → POJO for response validation
+6. **POST + GET Verification** - Create data then verify persistence by fetching it back
+7. **Helpers** - `TestDataHelper` fetches reference data via API, `AssertionHelper` provides reusable assertions
+8. **Allure Reporting** - @Feature and @DisplayName annotations for test organization
+9. **No Fixtures** - Each test creates what it needs
+10. **No Cleanup** - Database is wiped between runs in the pipeline

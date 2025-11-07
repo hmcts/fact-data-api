@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.fact.functional.controllers;
 
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
@@ -24,12 +23,7 @@ public final class TypesControllerFunctionalTest {
     private static final String REGIONS_ENDPOINT = TYPES_BASE_PATH + "/regions";
     private static final String SERVICE_AREAS_ENDPOINT = TYPES_BASE_PATH + "/service-areas";
 
-    private static HttpClient http;
-
-    @BeforeAll
-    static void setUp() {
-        http = new HttpClient();
-    }
+    private static final HttpClient http = new HttpClient();
 
     @Test
     @DisplayName("GET /types/v1/areas-of-law returns expected data")
