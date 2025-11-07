@@ -191,25 +191,27 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 with includeClosed=false returns only open courts")
     void shouldReturnOnlyActiveCourts() throws Exception {
-        Court Court = new Court();
-        Court.setName("Test Open Court");
-        Court.setRegionId(UUID.fromString(regionId));
-        Court.setIsServiceCentre(true);
+        final Court court = new Court();
+        court.setName("Test Open Court");
+        court.setRegionId(UUID.fromString(regionId));
+        court.setIsServiceCentre(true);
 
-        Response createResponse = http.doPost("/courts/v1", Court);
+        final Response createResponse = http.doPost("/courts/v1", court);
         assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
-        UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
+        final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
-        Court updatedCourt = new Court();
+        final Court updatedCourt = new Court();
         updatedCourt.setName("Test Open Court");
         updatedCourt.setRegionId(UUID.fromString(regionId));
         updatedCourt.setIsServiceCentre(true);
         updatedCourt.setOpen(true);
 
-        Response updateResponse = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
+        final Response updateResponse = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
         assertThat(updateResponse.statusCode()).isEqualTo(OK.value());
 
-        Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=200&includeClosed=false");
+        final Response listResponse = http.doGet(
+            "/courts/v1?pageNumber=0&pageSize=200&includeClosed=false"
+        );
 
         AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
     }
@@ -226,7 +228,9 @@ public final class CourtControllerFunctionalTest {
         assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
         final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
-        final Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId);
+        final Response listResponse = http.doGet(
+            "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId
+        );
 
         AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
     }
@@ -243,7 +247,9 @@ public final class CourtControllerFunctionalTest {
         assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
         final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
-        final Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&partialCourtName=Birmingham");
+        final Response listResponse = http.doGet(
+            "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&partialCourtName=Birmingham"
+        );
 
         AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
     }
@@ -261,7 +267,8 @@ public final class CourtControllerFunctionalTest {
         final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
         final Response listResponse = http.doGet(
-            "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId + "&partialCourtName=Manchester"
+            "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId
+                + "&partialCourtName=Manchester"
         );
 
         AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
