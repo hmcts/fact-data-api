@@ -59,3 +59,6 @@ dbMigration:
 
 user:
   retention-period: 365
+
+courtLock:
+  timeout-minutes: 60

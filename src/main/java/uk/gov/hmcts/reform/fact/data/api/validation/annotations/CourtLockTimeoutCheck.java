@@ -6,7 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Validates if a court page lock is valid based on configured timeout.
+ * Validates if a court page lock has exceeded timeout before allowing operation.
+ * Applied to controller methods that modify locked resources.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

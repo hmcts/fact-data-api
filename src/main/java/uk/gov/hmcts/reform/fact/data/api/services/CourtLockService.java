@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLockRepository;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.CourtLockTimeoutCheck;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -76,6 +77,7 @@ public class CourtLockService {
      * @param userId  The user's unique identifier
      * @return The created court lock
      */
+    @CourtLockTimeoutCheck
     public CourtLock createLock(UUID courtId, Page page, UUID userId) {
         CourtLock lock = new CourtLock();
         lock.setCourtId(courtService.getCourtById(courtId).getId());
@@ -93,6 +95,7 @@ public class CourtLockService {
      * @param userId  The user's unique identifier
      * @return The updated court lock
      */
+    @CourtLockTimeoutCheck
     public CourtLock updateLock(UUID courtId, Page page, UUID userId) {
         Optional<CourtLock> existingLock =
             courtLockRepository.findByCourtIdAndPage(courtService.getCourtById(courtId).getId(), page);
