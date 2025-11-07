@@ -100,6 +100,7 @@ public class CourtLockService {
         if (existingLock.isPresent()) {
             CourtLock lock = existingLock.get();
             lock.setUserId(userId);
+            lock.setLockAcquired(ZonedDateTime.now());
             return courtLockRepository.save(lock);
         }
 

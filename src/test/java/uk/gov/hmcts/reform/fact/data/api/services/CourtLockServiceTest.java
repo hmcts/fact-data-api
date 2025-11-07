@@ -69,14 +69,7 @@ class CourtLockServiceTest {
     void clearUserLocksShouldDeleteAllLocksForUser() {
         when(userService.getUserById(userId)).thenReturn(user);
         courtLockService.clearUserLocks(userId);
-    }
 
-    @Test
-    void deleteLocksByUserIdShouldRemoveAllLocksForUser() {
-        when(userService.getUserById(userId)).thenReturn(user);
-
-        courtLockService.deleteLocksByUserId(userId);
-        verify(userService).getUserById(userId);
         verify(courtLockRepository).deleteAllByUserId(userId);
     }
 
@@ -87,12 +80,13 @@ class CourtLockServiceTest {
         assertThrows(NotFoundException.class, () -> courtLockService.clearUserLocks(userId));
     }
 
+    @Test
     void deleteLocksByUserIdShouldHandleNoLocksForUser() {
         UUID newUserId = UUID.randomUUID();
         User newUser = new User();
         newUser.setId(newUserId);
         when(userService.getUserById(newUserId)).thenReturn(newUser);
-        courtLockService.deleteLocksByUserId(newUserId);
+        courtLockService.clearUserLocks(newUserId);
         verify(courtLockRepository).deleteAllByUserId(newUserId);
     }
 
