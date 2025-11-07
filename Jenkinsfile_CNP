@@ -17,8 +17,25 @@ withPipeline(type, product, component) {
   }
 
   afterAlways('functionalTest:preview') {
+    // Retrieve the Allure history from the last build if available
+    copyArtifacts(
+      projectName: env.JOB_NAME,
+      selector: lastSuccessful(),
+      filter: 'build/reports/allure-report/allureReport/history/**',
+      optional: true
+    )
+    sh '''
+      mkdir -p build/allure-results/history
+      cp -r build/reports/allure-report/allureReport/history/* build/allure-results/history/ || true
+    '''
+
+    // Generate the Allure report
     builder.gradle('allureReport')
 
+    // Archive the history for next build
+    archiveArtifacts artifacts: 'build/reports/allure-report/allureReport/history/**'
+
+    // Publish the Allure report
     publishHTML target: [
       allowMissing: true,
       alwaysLinkToLastBuild: true,
