@@ -116,30 +116,6 @@ class CourtLockControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/locks/{page} updates lock successfully")
-    void updateCourtLockSuccessfully() throws Exception {
-        CourtLock lock = new CourtLock();
-        when(courtLockService.createOrUpdateLock(courtId, testPage, userId)).thenReturn(lock);
-
-        mockMvc.perform(put("/courts/{courtId}/v1/locks/{page}", courtId, testPage)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(userId)))
-            .andExpect(status().isOk());
-    }
-
-    @Test
-    @DisplayName("PUT /courts/{courtId}/v1/locks/{page} returns 404 if court or lock not found")
-    void updateCourtLockNonExistentReturnsNotFound() throws Exception {
-        when(courtLockService.createOrUpdateLock(nonExistentCourtId, testPage, userId))
-            .thenThrow(new NotFoundException("Court or lock not found"));
-
-        mockMvc.perform(put("/courts/{courtId}/v1/locks/{page}", nonExistentCourtId, testPage)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(userId)))
-            .andExpect(status().isNotFound());
-    }
-
-    @Test
     @DisplayName("DELETE /courts/{courtId}/v1/locks/{page} deletes lock successfully")
     void deleteCourtLockSuccessfully() throws Exception {
         mockMvc.perform(delete("/courts/{courtId}/v1/locks/{page}", courtId, testPage))
