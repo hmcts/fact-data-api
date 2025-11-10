@@ -95,7 +95,7 @@ class CourtLockControllerTest {
     @DisplayName("POST /courts/{courtId}/v1/locks/{page} creates lock successfully")
     void createCourtLockSuccessfully() throws Exception {
         CourtLock lock = new CourtLock();
-        when(courtLockService.createLock(courtId, testPage, userId)).thenReturn(lock);
+        when(courtLockService.createOrUpdateLock(courtId, testPage, userId)).thenReturn(lock);
 
         mockMvc.perform(post("/courts/{courtId}/v1/locks/{page}", courtId, testPage)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -106,7 +106,7 @@ class CourtLockControllerTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/locks/{page} returns 404 if court not found")
     void createCourtLockNonExistentReturnsNotFound() throws Exception {
-        when(courtLockService.createLock(nonExistentCourtId, testPage, userId))
+        when(courtLockService.createOrUpdateLock(nonExistentCourtId, testPage, userId))
             .thenThrow(new NotFoundException("Court not found"));
 
         mockMvc.perform(post("/courts/{courtId}/v1/locks/{page}", nonExistentCourtId, testPage)
@@ -119,7 +119,7 @@ class CourtLockControllerTest {
     @DisplayName("PUT /courts/{courtId}/v1/locks/{page} updates lock successfully")
     void updateCourtLockSuccessfully() throws Exception {
         CourtLock lock = new CourtLock();
-        when(courtLockService.updateLock(courtId, testPage, userId)).thenReturn(lock);
+        when(courtLockService.createOrUpdateLock(courtId, testPage, userId)).thenReturn(lock);
 
         mockMvc.perform(put("/courts/{courtId}/v1/locks/{page}", courtId, testPage)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -130,7 +130,7 @@ class CourtLockControllerTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1/locks/{page} returns 404 if court or lock not found")
     void updateCourtLockNonExistentReturnsNotFound() throws Exception {
-        when(courtLockService.updateLock(nonExistentCourtId, testPage, userId))
+        when(courtLockService.createOrUpdateLock(nonExistentCourtId, testPage, userId))
             .thenThrow(new NotFoundException("Court or lock not found"));
 
         mockMvc.perform(put("/courts/{courtId}/v1/locks/{page}", nonExistentCourtId, testPage)

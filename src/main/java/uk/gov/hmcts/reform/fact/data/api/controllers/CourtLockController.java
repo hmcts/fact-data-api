@@ -12,7 +12,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.CourtLockTimeoutCheck;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
@@ -64,32 +64,20 @@ public class CourtLockController {
     }
 
     @PostMapping("/v1/locks/{page}")
-    @Operation(summary = "Create a court lock for a specific page")
+    @CourtLockTimeoutCheck
+    @Operation(summary = "Create or update court lock for a specific page")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Successfully created court lock"),
+        @ApiResponse(responseCode = "201", description = "Successfully created or updated court lock"),
         @ApiResponse(responseCode = "400", description = "Invalid court ID, page or user ID supplied"),
-        @ApiResponse(responseCode = "404", description = "Court not found")
+        @ApiResponse(responseCode = "404", description = "Court not found"),
+        @ApiResponse(responseCode = "409", description = "Conflict with existing court lock")
     })
-    public ResponseEntity<CourtLock> createCourtLock(
+    public ResponseEntity<CourtLock> createOrUpdateCourtLock(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Page to lock", required = true) @PathVariable Page page,
         @Parameter(description = "User ID creating the lock", required = true) @Valid @RequestBody UUID userId) {
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(courtLockService.createLock(UUID.fromString(courtId), page, userId));
-    }
-
-    @PutMapping("/v1/locks/{page}")
-    @Operation(summary = "Update a court lock for a specific page")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully updated court lock"),
-        @ApiResponse(responseCode = "400", description = "Invalid court ID, page or user ID supplied"),
-        @ApiResponse(responseCode = "404", description = "Court or lock not found")
-    })
-    public ResponseEntity<CourtLock> updateCourtLock(
-        @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
-        @Parameter(description = "Page to update lock", required = true) @PathVariable Page page,
-        @Parameter(description = "User ID updating the lock", required = true) @Valid @RequestBody UUID userId) {
-        return ResponseEntity.ok(courtLockService.updateLock(UUID.fromString(courtId), page, userId));
+            .body(courtLockService.createOrUpdateLock(UUID.fromString(courtId), page, userId));
     }
 
     @DeleteMapping("/v1/locks/{page}")

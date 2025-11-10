@@ -116,18 +116,19 @@ class CourtLockServiceTest {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(userService.getUserById(userId)).thenReturn(user);
         when(courtLockRepository.save(any(CourtLock.class))).thenReturn(lock);
-        CourtLock result = courtLockService.createLock(courtId, Page.COURT, userId);
+        CourtLock result = courtLockService.createOrUpdateLock(courtId, Page.COURT, userId);
         assertNotNull(result);
         verify(courtLockRepository).save(any(CourtLock.class));
     }
 
     @Test
-    void createLockShouldUpdateExistingLock() {
+    void createOrUpdateLockShouldUpdateExistingLock() {
         Page page = Page.COURT;
         when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(userService.getUserById(userId)).thenReturn(user);
         when(courtLockRepository.findByCourtIdAndPage(courtId, page)).thenReturn(Optional.of(lock));
         when(courtLockRepository.save(any(CourtLock.class))).thenReturn(lock);
-        CourtLock result = courtLockService.updateLock(courtId, page, userId);
+        CourtLock result = courtLockService.createOrUpdateLock(courtId, page, userId);
         assertNotNull(result);
         verify(courtService).getCourtById(courtId);
         verify(courtLockRepository).findByCourtIdAndPage(courtId, page);

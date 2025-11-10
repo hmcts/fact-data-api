@@ -80,9 +80,9 @@ class CourtLockControllerTest {
     @Test
     void createCourtLockReturns201() {
         CourtLock lock = new CourtLock();
-        when(courtLockService.createLock(COURT_ID, TEST_PAGE, USER_ID)).thenReturn(lock);
+        when(courtLockService.createOrUpdateLock(COURT_ID, TEST_PAGE, USER_ID)).thenReturn(lock);
 
-        ResponseEntity<CourtLock> response = courtLockController.createCourtLock(
+        ResponseEntity<CourtLock> response = courtLockController.createOrUpdateCourtLock(
             COURT_ID.toString(),
             TEST_PAGE,
             USER_ID
@@ -96,31 +96,23 @@ class CourtLockControllerTest {
     void createCourtLockThrowsIllegalArgumentExceptionForInvalidUUID() {
         assertThrows(
             IllegalArgumentException.class, () ->
-                courtLockController.createCourtLock(INVALID_UUID, TEST_PAGE, USER_ID)
+                courtLockController.createOrUpdateCourtLock(INVALID_UUID, TEST_PAGE, USER_ID)
         );
     }
 
     @Test
-    void updateCourtLockReturns200() {
+    void updateCourtLockReturns201() {
         CourtLock lock = new CourtLock();
-        when(courtLockService.updateLock(COURT_ID, TEST_PAGE, USER_ID)).thenReturn(lock);
+        when(courtLockService.createOrUpdateLock(COURT_ID, TEST_PAGE, USER_ID)).thenReturn(lock);
 
-        ResponseEntity<CourtLock> response = courtLockController.updateCourtLock(
+        ResponseEntity<CourtLock> response = courtLockController.createOrUpdateCourtLock(
             COURT_ID.toString(),
             TEST_PAGE,
             USER_ID
         );
 
-        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(lock);
-    }
-
-    @Test
-    void updateCourtLockThrowsIllegalArgumentExceptionForInvalidUUID() {
-        assertThrows(
-            IllegalArgumentException.class, () ->
-                courtLockController.updateCourtLock(INVALID_UUID, TEST_PAGE, USER_ID)
-        );
     }
 
     @Test

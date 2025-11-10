@@ -5,7 +5,8 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLockRepository;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.CourtLockTimeoutCheck;
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.User;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -70,24 +71,6 @@ public class CourtLockService {
     }
 
     /**
-     * Creates a new court lock.
-     *
-     * @param courtId The court's unique identifier
-     * @param page    The page to lock
-     * @param userId  The user's unique identifier
-     * @return The created court lock
-     */
-    @CourtLockTimeoutCheck
-    public CourtLock createLock(UUID courtId, Page page, UUID userId) {
-        CourtLock lock = new CourtLock();
-        lock.setCourtId(courtService.getCourtById(courtId).getId());
-        lock.setPage(page);
-        lock.setUserId(userService.getUserById(userId).getId());
-        lock.setLockAcquired(ZonedDateTime.now());
-        return courtLockRepository.save(lock);
-    }
-
-    /**
      * Updates an existing court lock.
      *
      * @param courtId The court's unique identifier
@@ -95,19 +78,19 @@ public class CourtLockService {
      * @param userId  The user's unique identifier
      * @return The updated court lock
      */
-    @CourtLockTimeoutCheck
-    public CourtLock updateLock(UUID courtId, Page page, UUID userId) {
-        Optional<CourtLock> existingLock =
-            courtLockRepository.findByCourtIdAndPage(courtService.getCourtById(courtId).getId(), page);
+    public CourtLock createOrUpdateLock(UUID courtId, Page page, UUID userId) {
+        Court court = courtService.getCourtById(courtId);
+        User user = userService.getUserById(userId);
 
-        if (existingLock.isPresent()) {
-            CourtLock lock = existingLock.get();
-            lock.setUserId(userId);
-            lock.setLockAcquired(ZonedDateTime.now());
-            return courtLockRepository.save(lock);
-        }
+        CourtLock courtLock = courtLockRepository.findByCourtIdAndPage(court.getId(), page)
+            .orElse(new CourtLock());
 
-        return createLock(courtId, page, userId);
+        courtLock.setCourtId(court.getId());
+        courtLock.setUserId(user.getId());
+        courtLock.setPage(page);
+        courtLock.setLockAcquired(ZonedDateTime.now());
+
+        return courtLockRepository.save(courtLock);
     }
 
     /**
@@ -116,6 +99,7 @@ public class CourtLockService {
      * @param courtId The court's unique identifier
      * @param page    The page to unlock
      */
+    @Transactional
     public void deleteLock(UUID courtId, Page page) {
         courtLockRepository.deleteByCourtIdAndPage(courtService.getCourtById(courtId).getId(), page);
     }
