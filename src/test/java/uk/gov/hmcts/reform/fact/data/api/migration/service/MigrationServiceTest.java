@@ -3,7 +3,6 @@ package uk.gov.hmcts.reform.fact.data.api.migration.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -11,7 +10,6 @@ import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtPostcode;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
@@ -20,8 +18,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
 import uk.gov.hmcts.reform.fact.data.api.migration.client.LegacyFactClient;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyService;
-import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationAudit;
-import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationAuditStatus;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationAlreadyAppliedException;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto;
@@ -32,7 +28,7 @@ import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDxCodeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtFaxDto;
-import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtPostcodeDto;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtProfessionalInformationDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtServiceAreaDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtSinglePointOfEntryDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtTypeDto;
@@ -51,7 +47,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPostcodeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
@@ -60,8 +56,8 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeReposito
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHourTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
+import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
-import uk.gov.hmcts.reform.fact.data.api.migration.repository.MigrationAuditRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -96,8 +92,6 @@ class MigrationServiceTest {
     @Mock
     private LegacyServiceRepository legacyServiceRepository;
     @Mock
-    private MigrationAuditRepository migrationAuditRepository;
-    @Mock
     private LocalAuthorityTypeRepository localAuthorityTypeRepository;
     @Mock
     private ContactDescriptionTypeRepository contactDescriptionTypeRepository;
@@ -116,13 +110,15 @@ class MigrationServiceTest {
     @Mock
     private CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
     @Mock
-    private CourtPostcodeRepository courtPostcodeRepository;
+    private CourtProfessionalInformationRepository courtProfessionalInformationRepository;
     @Mock
     private CourtCodesRepository courtCodesRepository;
     @Mock
     private CourtDxCodeRepository courtDxCodeRepository;
     @Mock
     private CourtFaxRepository courtFaxRepository;
+    @Mock
+    private LegacyCourtMappingRepository legacyCourtMappingRepository;
     @Mock
     private TransactionTemplate transactionTemplate;
 
@@ -159,13 +155,6 @@ class MigrationServiceTest {
             @SuppressWarnings("unchecked")
             TransactionCallback<MigrationSummary> callback = invocation.getArgument(0);
             return callback.doInTransaction(null);
-        });
-
-        lenient().when(migrationAuditRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        lenient().when(courtPostcodeRepository.save(any(CourtPostcode.class))).thenAnswer(invocation -> {
-            CourtPostcode entity = invocation.getArgument(0);
-            entity.setId(UUID.randomUUID());
-            return entity;
         });
         lenient().when(courtLocalAuthoritiesRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         LocalAuthorityType localAuthorityType = LocalAuthorityType.builder()
@@ -232,16 +221,7 @@ class MigrationServiceTest {
         assertThat(result.openingHourTypesMigrated()).isEqualTo(1);
         assertThat(result.courtTypesMigrated()).isEqualTo(1);
         assertThat(result.courtLocalAuthoritiesMigrated()).isEqualTo(1);
-        assertThat(summary.skippedCourtPostcodes()).isEmpty();
-
-        ArgumentCaptor<MigrationAudit> auditCaptor = ArgumentCaptor.forClass(MigrationAudit.class);
-        verify(migrationAuditRepository).save(auditCaptor.capture());
-        assertThat(auditCaptor.getValue().getStatus()).isEqualTo(MigrationAuditStatus.SUCCESS);
-        assertThat(auditCaptor.getValue().getDetails()).contains("AB1 2CD");
-
-        ArgumentCaptor<CourtPostcode> postcodeCaptor = ArgumentCaptor.forClass(CourtPostcode.class);
-        verify(courtPostcodeRepository).save(postcodeCaptor.capture());
-        assertThat(postcodeCaptor.getValue().getPostcode()).isEqualTo("AB1 2CD");
+        assertThat(result.courtProfessionalInformationMigrated()).isEqualTo(1);
 
         verify(serviceAreaRepository).save(any(ServiceArea.class));
         verify(legacyServiceRepository).save(any(LegacyService.class));
@@ -249,39 +229,11 @@ class MigrationServiceTest {
         verify(courtAreasOfLawRepository).save(any());
         verify(courtSinglePointsOfEntryRepository).save(any());
         verify(courtLocalAuthoritiesRepository).save(any());
+        verify(courtProfessionalInformationRepository).save(any());
         verify(courtCodesRepository).save(any());
         verify(courtDxCodeRepository).save(any());
         verify(courtFaxRepository).save(any());
-    }
-
-    @Test
-    void shouldReportSkippedCourtPostcodes() {
-        lenient().when(courtRepository.count()).thenReturn(0L);
-        LegacyExportResponse response = new LegacyExportResponse(
-            List.of(courtDtoWithInvalidPostcode()),
-            List.of(new LocalAuthorityTypeDto(1, "Local Authority")),
-            List.of(serviceAreaDto()),
-            List.of(serviceDto()),
-            List.of(new ContactDescriptionTypeDto(1, "CDT", "CDT CY")),
-            List.of(new OpeningHourTypeDto(1, "Monday", "Llun")),
-            List.of(new CourtTypeDto(1, "Magistrates")),
-            List.of(new RegionDto(1, "Midlands", "England")),
-            List.of(new AreaOfLawTypeDto(1, "Housing", "Tai"))
-        );
-
-        when(legacyFactClient.fetchExport()).thenReturn(response);
-
-        MigrationSummary summary = migrationService.migrate();
-
-        assertThat(summary.skippedCourtPostcodes())
-            .containsExactly("example-court: SNB 6DB (failed regex validation)");
-        verify(courtPostcodeRepository, never()).save(any());
-
-        ArgumentCaptor<MigrationAudit> auditCaptor = ArgumentCaptor.forClass(MigrationAudit.class);
-        verify(migrationAuditRepository).save(auditCaptor.capture());
-        MigrationAudit auditRecord = auditCaptor.getValue();
-        assertThat(auditRecord.getStatus()).isEqualTo(MigrationAuditStatus.FAILURE);
-        assertThat(auditRecord.getDetails()).contains("SNB 6DB");
+        verify(legacyCourtMappingRepository).save(any());
     }
 
     @Test
@@ -315,8 +267,8 @@ class MigrationServiceTest {
             true,
             1,
             List.of(new CourtServiceAreaDto(1, CatchmentType.LOCAL.name(), List.of(1))),
-            List.of(new CourtPostcodeDto(1, "ab12cd")),
             List.of(new CourtLocalAuthorityDto(1, 1, List.of(1))),
+            professionalInformationDto(),
             new CourtCodesDto("codes", 1, 2, 3, 4, 5, "6"),
             new CourtAreasOfLawDto("areas", List.of(1)),
             new CourtSinglePointOfEntryDto("spoe", List.of(1)),
@@ -356,26 +308,6 @@ class MigrationServiceTest {
         );
     }
 
-    private CourtDto courtDtoWithInvalidPostcode() {
-        return new CourtDto(
-            "legacy-court-id",
-            "Example Court",
-            "example-court",
-            true,
-            1,
-            List.of(new CourtServiceAreaDto(1, CatchmentType.LOCAL.name(), List.of(1))),
-            List.of(new CourtPostcodeDto(1, "SNB 6DB")),
-            List.of(new CourtLocalAuthorityDto(1, 1, List.of(1))),
-            new CourtCodesDto("codes", 1, 2, 3, 4, 5, "6"),
-            new CourtAreasOfLawDto("areas", List.of(1)),
-            new CourtSinglePointOfEntryDto("spoe", List.of(1)),
-            List.of(new CourtDxCodeDto("dx", "123", "dx explanation")),
-            List.of(new CourtFaxDto("fax", "01632960000")),
-            null,
-            true
-        );
-    }
-
     private CourtDto courtDtoWithEmptyDxCode() {
         return new CourtDto(
             "legacy-court-id",
@@ -384,8 +316,8 @@ class MigrationServiceTest {
             true,
             1,
             List.of(new CourtServiceAreaDto(1, CatchmentType.LOCAL.name(), List.of(1))),
-            List.of(new CourtPostcodeDto(1, "ab12cd")),
             List.of(new CourtLocalAuthorityDto(1, 1, List.of(1))),
+            professionalInformationDto(),
             new CourtCodesDto("codes", 1, 2, 3, 4, 5, "6"),
             new CourtAreasOfLawDto("areas", List.of(1)),
             new CourtSinglePointOfEntryDto("spoe", List.of(1)),
@@ -393,6 +325,17 @@ class MigrationServiceTest {
             List.of(new CourtFaxDto("fax", "01632960000")),
             null,
             true
+        );
+    }
+
+    private CourtProfessionalInformationDto professionalInformationDto() {
+        return new CourtProfessionalInformationDto(
+            true,
+            2,
+            "01234567890",
+            true,
+            true,
+            false
         );
     }
 }

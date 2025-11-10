@@ -1,7 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.service;
 
 import org.apache.commons.lang3.StringUtils;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCodes;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDxCode;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFax;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtPostcode;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtSinglePointsOfEntry;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
@@ -25,17 +24,16 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
-import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.migration.client.LegacyFactClient;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationAlreadyAppliedException;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
+import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyCourtMapping;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyService;
-import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationAudit;
-import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationAuditStatus;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.ContactDescriptionTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtLocalAuthorityDto;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtProfessionalInformationDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LegacyExportResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationResult;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationSummary;
@@ -48,7 +46,6 @@ import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtSinglePointOfEntry
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtCodesDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDxCodeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtFaxDto;
-import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtPostcodeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LocalAuthorityTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.RegionDto;
@@ -58,8 +55,8 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPostcodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
@@ -68,8 +65,8 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeReposito
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHourTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
+import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
-import uk.gov.hmcts.reform.fact.data.api.migration.repository.MigrationAuditRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,7 +74,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 /**
  * Coordinates the end-to-end migration workflow. Fetches the legacy payload, maps it into the
@@ -95,7 +91,7 @@ public class MigrationService {
     private final AreaOfLawTypeRepository areaOfLawTypeRepository;
     private final ServiceAreaRepository serviceAreaRepository;
     private final LegacyServiceRepository legacyServiceRepository;
-    private final MigrationAuditRepository migrationAuditRepository;
+    private final LegacyCourtMappingRepository legacyCourtMappingRepository;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
     private final OpeningHourTypeRepository openingHourTypeRepository;
@@ -105,14 +101,11 @@ public class MigrationService {
     private final CourtAreasOfLawRepository courtAreasOfLawRepository;
     private final CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
     private final CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
-    private final CourtPostcodeRepository courtPostcodeRepository;
+    private final CourtProfessionalInformationRepository courtProfessionalInformationRepository;
     private final CourtCodesRepository courtCodesRepository;
     private final CourtDxCodeRepository courtDxCodeRepository;
     private final CourtFaxRepository courtFaxRepository;
     private final TransactionTemplate transactionTemplate;
-
-    private static final Pattern COURT_POSTCODE_PATTERN =
-        Pattern.compile(ValidationConstants.POSTCODE_REGEX);
 
     public MigrationService(
         LegacyFactClient legacyFactClient,
@@ -120,7 +113,7 @@ public class MigrationService {
         AreaOfLawTypeRepository areaOfLawTypeRepository,
         ServiceAreaRepository serviceAreaRepository,
         LegacyServiceRepository legacyServiceRepository,
-        MigrationAuditRepository migrationAuditRepository,
+        LegacyCourtMappingRepository legacyCourtMappingRepository,
         LocalAuthorityTypeRepository localAuthorityTypeRepository,
         ContactDescriptionTypeRepository contactDescriptionTypeRepository,
         OpeningHourTypeRepository openingHourTypeRepository,
@@ -130,7 +123,7 @@ public class MigrationService {
         CourtAreasOfLawRepository courtAreasOfLawRepository,
         CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository,
         CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository,
-        CourtPostcodeRepository courtPostcodeRepository,
+        CourtProfessionalInformationRepository courtProfessionalInformationRepository,
         CourtCodesRepository courtCodesRepository,
         CourtDxCodeRepository courtDxCodeRepository,
         CourtFaxRepository courtFaxRepository,
@@ -141,7 +134,7 @@ public class MigrationService {
         this.areaOfLawTypeRepository = areaOfLawTypeRepository;
         this.serviceAreaRepository = serviceAreaRepository;
         this.legacyServiceRepository = legacyServiceRepository;
-        this.migrationAuditRepository = migrationAuditRepository;
+        this.legacyCourtMappingRepository = legacyCourtMappingRepository;
         this.localAuthorityTypeRepository = localAuthorityTypeRepository;
         this.contactDescriptionTypeRepository = contactDescriptionTypeRepository;
         this.openingHourTypeRepository = openingHourTypeRepository;
@@ -151,7 +144,7 @@ public class MigrationService {
         this.courtAreasOfLawRepository = courtAreasOfLawRepository;
         this.courtSinglePointsOfEntryRepository = courtSinglePointsOfEntryRepository;
         this.courtLocalAuthoritiesRepository = courtLocalAuthoritiesRepository;
-        this.courtPostcodeRepository = courtPostcodeRepository;
+        this.courtProfessionalInformationRepository = courtProfessionalInformationRepository;
         this.courtCodesRepository = courtCodesRepository;
         this.courtDxCodeRepository = courtDxCodeRepository;
         this.courtFaxRepository = courtFaxRepository;
@@ -204,10 +197,11 @@ public class MigrationService {
             contactDescriptionTypesMigrated,
             openingHourTypesMigrated,
             courtTypesMigrated,
-            context.courtLocalAuthoritiesMigrated
+            context.courtLocalAuthoritiesMigrated,
+            context.courtProfessionalInformationMigrated
         );
 
-        return new MigrationSummary(result, List.copyOf(context.skippedCourtPostcodes));
+        return new MigrationSummary(result);
     }
 
     /**
@@ -478,10 +472,11 @@ public class MigrationService {
             persistCourtAreasOfLaw(dto.courtAreasOfLaw(), courtId, context);
             persistCourtSinglePointsOfEntry(dto.courtSinglePointsOfEntry(), courtId, context);
             persistCourtLocalAuthorities(dto.courtLocalAuthorities(), courtId, context);
-            persistCourtPostcodes(dto.courtPostcodes(), courtId, context, dto.slug());
+            persistCourtProfessionalInformation(dto.courtProfessionalInformation(), courtId, context);
             persistCourtCodes(dto.courtCodes(), courtId);
             persistCourtDxCodes(dto.courtDxCodes(), courtId);
             persistCourtFax(dto.courtFax(), courtId);
+            persistLegacyCourtMapping(dto.id(), courtId);
             total++;
         }
         return total;
@@ -607,47 +602,44 @@ public class MigrationService {
     }
 
     /**
-     * Persists associated postcodes for a court.
+     * Persists the professional information record for a court.
      *
-     * @param postcodes legacy postcode records for the court.
-     * @param courtId   identifier of the court that was just migrated.
+     * @param dto     legacy professional information payload.
+     * @param courtId identifier of the court that was just migrated.
+     * @param context migration context used to track counters.
      */
-    private void persistCourtPostcodes(
-        List<CourtPostcodeDto> postcodes,
+    private void persistCourtProfessionalInformation(
+        CourtProfessionalInformationDto dto,
         UUID courtId,
-        MigrationContext context,
-        String courtSlug
+        MigrationContext context
     ) {
-        if (postcodes == null) {
+        if (dto == null) {
             return;
         }
 
-        for (CourtPostcodeDto dto : postcodes) {
-            if (StringUtils.isBlank(dto.postcode())) {
-                continue;
-            }
-            CourtPostcode candidate = CourtPostcode.builder()
-                .courtId(courtId)
-                .postcode(dto.postcode())
-                .build();
+        CourtProfessionalInformation entity = CourtProfessionalInformation.builder()
+            .courtId(courtId)
+            .interviewRooms(dto.interviewRooms())
+            .interviewRoomCount(dto.interviewRoomCount())
+            .interviewPhoneNumber(dto.interviewPhoneNumber())
+            .videoHearings(dto.videoHearings())
+            .commonPlatform(dto.commonPlatform())
+            .accessScheme(dto.accessScheme())
+            .build();
+        courtProfessionalInformationRepository.save(entity);
+        context.courtProfessionalInformationMigrated++;
+    }
 
-            if (StringUtils.length(candidate.getPostcode()) > ValidationConstants.POSTCODE_MAX_LENGTH) {
-                recordPostcodeFailure(context, courtSlug, dto.postcode(), "exceeds maximum length");
-                continue;
-            }
-
-            if (!COURT_POSTCODE_PATTERN.matcher(candidate.getPostcode()).matches()) {
-                recordPostcodeFailure(context, courtSlug, dto.postcode(), "failed regex validation");
-                continue;
-            }
-
-            CourtPostcode savedPostcode = courtPostcodeRepository.save(candidate);
-            recordAuditSuccess(
-                "court_postcodes",
-                "postcode",
-                String.format("Normalised postcode '%s'", savedPostcode.getPostcode())
-            );
+    private void persistLegacyCourtMapping(String legacyCourtId, UUID courtId) {
+        if (StringUtils.isBlank(legacyCourtId)) {
+            return;
         }
+        legacyCourtMappingRepository.save(
+            LegacyCourtMapping.builder()
+                .courtId(courtId)
+                .legacyCourtId(legacyCourtId)
+                .build()
+        );
     }
 
     /**
@@ -829,44 +821,7 @@ public class MigrationService {
         private final Map<Integer, UUID> areaOfLawIds = new HashMap<>();
         private final Map<Integer, UUID> serviceAreaIds = new HashMap<>();
         private final Map<Integer, UUID> localAuthorityTypeIds = new HashMap<>();
-        private final List<String> skippedCourtPostcodes = new ArrayList<>();
         private int courtLocalAuthoritiesMigrated;
-    }
-
-    private void recordPostcodeFailure(MigrationContext context, String courtSlug, String postcode, String reason) {
-        context.skippedCourtPostcodes.add(String.format("%s: %s (%s)", courtSlug, postcode, reason));
-        LOG.warn(
-            "Skipping postcode '{}' for court '{}' because {}",
-            postcode,
-            courtSlug,
-            reason
-        );
-        recordAuditFailure(
-            "court_postcodes",
-            "postcode",
-            String.format("Court '%s' - value '%s' %s", courtSlug, postcode, reason)
-        );
-    }
-
-    private void recordAuditSuccess(String table, String field, String details) {
-        migrationAuditRepository.save(
-            MigrationAudit.builder()
-                .tableName(table)
-                .fieldName(field)
-                .status(MigrationAuditStatus.SUCCESS)
-                .details(details)
-                .build()
-        );
-    }
-
-    private void recordAuditFailure(String table, String field, String details) {
-        migrationAuditRepository.save(
-            MigrationAudit.builder()
-                .tableName(table)
-                .fieldName(field)
-                .status(MigrationAuditStatus.FAILURE)
-                .details(details)
-                .build()
-        );
+        private int courtProfessionalInformationMigrated;
     }
 }

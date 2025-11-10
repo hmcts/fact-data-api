@@ -10,6 +10,7 @@ public record MigrationResult(
     int contactDescriptionTypesMigrated,
     int openingHourTypesMigrated,
     int courtTypesMigrated,
-    int courtLocalAuthoritiesMigrated
+    int courtLocalAuthoritiesMigrated,
+    int courtProfessionalInformationMigrated
 ) {
 }

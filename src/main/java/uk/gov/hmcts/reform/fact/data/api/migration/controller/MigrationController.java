@@ -43,8 +43,7 @@ public class MigrationController {
         MigrationSummary summary = migrationService.migrate();
         MigrationResponse response = new MigrationResponse(
             "Migration completed successfully",
-            summary.result(),
-            summary.skippedCourtPostcodes()
+            summary.result()
         );
         return ResponseEntity.ok(response);
     }
