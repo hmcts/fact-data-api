@@ -69,7 +69,7 @@ public class CourtLockController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Successfully created or updated court lock"),
         @ApiResponse(responseCode = "400", description = "Invalid court ID, page or user ID supplied"),
-        @ApiResponse(responseCode = "404", description = "Court not found"),
+        @ApiResponse(responseCode = "404", description = "Court or user not found"),
         @ApiResponse(responseCode = "409", description = "Conflict with existing court lock")
     })
     public ResponseEntity<CourtLock> createOrUpdateCourtLock(
