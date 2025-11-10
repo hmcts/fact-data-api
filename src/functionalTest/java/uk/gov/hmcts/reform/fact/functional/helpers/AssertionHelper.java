@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.fact.functional.helpers;
 
 import io.restassured.response.Response;
 import org.springframework.http.HttpStatus;
-import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.util.List;
 import java.util.UUID;
