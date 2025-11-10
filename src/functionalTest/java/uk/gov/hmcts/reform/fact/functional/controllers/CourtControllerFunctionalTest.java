@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -141,7 +142,7 @@ public final class CourtControllerFunctionalTest {
     @DisplayName("PUT /courts/{courtId}/v1 update fails with non-existent regionId")
     void shouldFailToUpdateCourtWithNonExistentRegionId() throws Exception {
         final Court court = new Court();
-        court.setName("Update Test Court Non-Existent Region ID");
+        court.setName("Test Court Update Non-Existent Region ID");
         court.setRegionId(UUID.fromString(regionId));
         court.setIsServiceCentre(true);
 
@@ -192,7 +193,7 @@ public final class CourtControllerFunctionalTest {
     @DisplayName("GET /courts/v1 with includeClosed=false returns only open courts")
     void shouldReturnOnlyActiveCourts() throws Exception {
         final Court court = new Court();
-        court.setName("Test Open Court");
+        court.setName("Test Court Open");
         court.setRegionId(UUID.fromString(regionId));
         court.setIsServiceCentre(true);
 
@@ -201,7 +202,7 @@ public final class CourtControllerFunctionalTest {
         final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
         final Court updatedCourt = new Court();
-        updatedCourt.setName("Test Open Court");
+        updatedCourt.setName("Test Court Open");
         updatedCourt.setRegionId(UUID.fromString(regionId));
         updatedCourt.setIsServiceCentre(true);
         updatedCourt.setOpen(true);
@@ -239,7 +240,7 @@ public final class CourtControllerFunctionalTest {
     @DisplayName("GET /courts/v1 filtered by partialCourtName")
     void shouldReturnCourtsFilteredByPartialCourtName() throws Exception {
         final Court court = new Court();
-        court.setName("Functional Test Birmingham Court");
+        court.setName("Test Court Birmingham");
         court.setRegionId(UUID.fromString(regionId));
         court.setIsServiceCentre(true);
 
@@ -258,7 +259,7 @@ public final class CourtControllerFunctionalTest {
     @DisplayName("GET /courts/v1 filtered by combined filters (regionId + partialCourtName + includeClosed)")
     void shouldReturnCourtsFilteredByCombinedFilters() throws Exception {
         final Court court = new Court();
-        court.setName("Functional Test Manchester Court");
+        court.setName("Test Court Manchester");
         court.setRegionId(UUID.fromString(regionId));
         court.setIsServiceCentre(true);
 
@@ -272,5 +273,10 @@ public final class CourtControllerFunctionalTest {
         );
 
         AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
+    }
+
+    @AfterAll
+    static void cleanUpTestData() {
+        http.doDelete("/testing-support/courts/name-prefix/Test Court");
     }
 }

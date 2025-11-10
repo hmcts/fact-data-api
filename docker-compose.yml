@@ -15,6 +15,7 @@ services:
       - AZURE_TENANT_ID=${AZURE_TENANT_ID}
       - AZURE_STORAGE_ACCOUNT_NAME=${AZURE_STORAGE_ACCOUNT_NAME}
       - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
+      - TESTING_SUPPORT_ENABLE_API=${TESTING_SUPPORT_ENABLE_API}
   fact-database:
     image: hmctspublic.azurecr.io/imported/postgres:16-alpine
     environment:

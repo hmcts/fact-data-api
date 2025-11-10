@@ -9,7 +9,6 @@ import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED;
 import static org.springframework.http.HttpStatus.OK;
-import static uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper.assertJsonArrayResponseContainsValue;
 
 @Feature("Types Controller")
 @DisplayName("Types Controller")
@@ -28,43 +27,67 @@ public final class TypesControllerFunctionalTest {
     @Test
     @DisplayName("GET /types/v1/areas-of-law returns expected data")
     void shouldReturnAreasOfLawWithExpectedData() {
-        assertJsonArrayResponseContainsValue(http, AREAS_OF_LAW_ENDPOINT, OK, "name",
-                                             "Divorce");
+        final Response response = http.doGet(AREAS_OF_LAW_ENDPOINT);
+
+        assertThat(response.statusCode()).isEqualTo(OK.value());
+        assertThat(response.contentType()).contains("json");
+        assertThat(response.jsonPath().getList("$")).isNotEmpty();
+        assertThat(response.jsonPath().getString("[0].name")).isEqualTo("Divorce");
     }
 
     @Test
     @DisplayName("GET /types/v1/court-types returns expected data")
     void shouldReturnCourtTypesWithExpectedData() {
-        assertJsonArrayResponseContainsValue(http, COURT_TYPES_ENDPOINT, OK, "name",
-                                             "Magistrates' Court");
+        final Response response = http.doGet(COURT_TYPES_ENDPOINT);
+
+        assertThat(response.statusCode()).isEqualTo(OK.value());
+        assertThat(response.contentType()).contains("json");
+        assertThat(response.jsonPath().getList("$")).isNotEmpty();
+        assertThat(response.jsonPath().getString("[0].name")).isEqualTo("Magistrates' Court");
     }
 
     @Test
     @DisplayName("GET /types/v1/opening-hours-types returns expected data")
     void shouldReturnOpeningHoursTypesWithExpectedData() {
-        assertJsonArrayResponseContainsValue(http, OPENING_HOURS_TYPES_ENDPOINT, OK, "name",
-                                             "Telephone enquiries answered");
+        final Response response = http.doGet(OPENING_HOURS_TYPES_ENDPOINT);
+
+        assertThat(response.statusCode()).isEqualTo(OK.value());
+        assertThat(response.contentType()).contains("json");
+        assertThat(response.jsonPath().getList("$")).isNotEmpty();
+        assertThat(response.jsonPath().getString("[0].name")).isEqualTo("Telephone enquiries answered");
     }
 
     @Test
     @DisplayName("GET /types/v1/contact-description-types returns expected data")
     void shouldReturnContactDescriptionTypesWithExpectedData() {
-        assertJsonArrayResponseContainsValue(http, CONTACT_DESCRIPTION_TYPES_ENDPOINT, OK, "name",
-                                             "Accessibility enquiries");
+        final Response response = http.doGet(CONTACT_DESCRIPTION_TYPES_ENDPOINT);
+
+        assertThat(response.statusCode()).isEqualTo(OK.value());
+        assertThat(response.contentType()).contains("json");
+        assertThat(response.jsonPath().getList("$")).isNotEmpty();
+        assertThat(response.jsonPath().getString("[0].name")).isEqualTo("Accessibility enquiries");
     }
 
     @Test
     @DisplayName("GET /types/v1/regions returns expected data")
     void shouldReturnRegionsWithExpectedData() {
-        assertJsonArrayResponseContainsValue(http, REGIONS_ENDPOINT, OK, "country",
-                                             "England");
+        final Response response = http.doGet(REGIONS_ENDPOINT);
+
+        assertThat(response.statusCode()).isEqualTo(OK.value());
+        assertThat(response.contentType()).contains("json");
+        assertThat(response.jsonPath().getList("$")).isNotEmpty();
+        assertThat(response.jsonPath().getString("[0].country")).isEqualTo("England");
     }
 
     @Test
     @DisplayName("GET /types/v1/service-areas returns expected data")
     void shouldReturnServiceAreasWithExpectedData() {
-        assertJsonArrayResponseContainsValue(http, SERVICE_AREAS_ENDPOINT, OK, "name",
-                                             "Divorce");
+        final Response response = http.doGet(SERVICE_AREAS_ENDPOINT);
+
+        assertThat(response.statusCode()).isEqualTo(OK.value());
+        assertThat(response.contentType()).contains("json");
+        assertThat(response.jsonPath().getList("$")).isNotEmpty();
+        assertThat(response.jsonPath().getString("[0].name")).isEqualTo("Divorce");
     }
 
     @Test
