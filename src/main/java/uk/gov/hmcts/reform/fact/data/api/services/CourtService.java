@@ -46,7 +46,8 @@ public class CourtService {
     public List<Court> getAllCourtsByIds(List<UUID> courtIds) {
         return courtRepository.findAllById(courtIds);
     }
-  
+
+    /**
      * Get a paginated list of courts with optional filters.
      *
      * @param pageable The pagination information.
