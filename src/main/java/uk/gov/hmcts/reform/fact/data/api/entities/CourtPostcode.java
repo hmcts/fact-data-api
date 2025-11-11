@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.fact.data.api.entities;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
-import java.util.Locale;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -24,7 +23,6 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -61,39 +59,6 @@ public class CourtPostcode {
         return new CourtPostcodeBuilder();
     }
 
-    public void setPostcode(String postcode) {
-        this.postcode = normalisePostcode(postcode);
-    }
-
-    private static String normalisePostcode(String postcode) {
-        if (StringUtils.isBlank(postcode)) {
-            return postcode;
-        }
-
-        String trimmed = postcode.replaceAll("\\s+", "").toUpperCase(Locale.UK);
-        int length = trimmed.length();
-        if (length <= 4) {
-            return trimmed;
-        }
-
-        int splitIndex;
-        if (length == 5) {
-            splitIndex = 4;
-        } else if (length == 6) {
-            char secondLast = trimmed.charAt(length - 2);
-            splitIndex = Character.isLetter(secondLast) ? length - 3 : 4;
-        } else {
-            splitIndex = length - 3;
-        }
-
-        String outward = trimmed.substring(0, splitIndex);
-        String inward = trimmed.substring(splitIndex);
-        if (!inward.isEmpty() && inward.charAt(0) == 'O') {
-            inward = '0' + inward.substring(1);
-        }
-        return outward + " " + inward;
-    }
-
     public static class CourtPostcodeBuilder {
         private UUID id;
         private UUID courtId;
@@ -119,7 +84,7 @@ public class CourtPostcode {
         }
 
         public CourtPostcodeBuilder postcode(String postcode) {
-            this.postcode = normalisePostcode(postcode);
+            this.postcode = postcode;
             return this;
         }
 
