@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
-import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationAlreadyAppliedException;
-import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -72,20 +70,6 @@ public class GlobalExceptionHandler {
         String message = "Invalid request body: " + ex.getMessage();
 
         return generateExceptionResponse(message);
-    }
-
-    @ExceptionHandler(MigrationAlreadyAppliedException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ExceptionResponse handle(MigrationAlreadyAppliedException ex) {
-        log.warn("409, migration already applied: {}", ex.getMessage());
-        return generateExceptionResponse(ex.getMessage());
-    }
-
-    @ExceptionHandler(MigrationClientException.class)
-    @ResponseStatus(HttpStatus.BAD_GATEWAY)
-    public ExceptionResponse handle(MigrationClientException ex) {
-        log.error("502, migration client error: {}", ex.getMessage(), ex);
-        return generateExceptionResponse(ex.getMessage());
     }
 
     private ExceptionResponse generateExceptionResponse(String message) {
