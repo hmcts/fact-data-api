@@ -6,11 +6,9 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -65,75 +63,93 @@ class MigrationIntegrationTest {
     @LocalServerPort
     private int port;
 
-    @Autowired
-    private TestRestTemplate restTemplate;
+    private final TestRestTemplate restTemplate;
 
-    @Autowired
-    private RegionRepository regionRepository;
+    private final RegionRepository regionRepository;
 
-    @Autowired
-    private LegacyServiceRepository legacyServiceRepository;
+    private final LegacyServiceRepository legacyServiceRepository;
 
-    @Autowired
-    private ServiceAreaRepository serviceAreaRepository;
+    private final ServiceAreaRepository serviceAreaRepository;
 
-    @Autowired
-    private LocalAuthorityTypeRepository localAuthorityTypeRepository;
+    private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
 
-    @Autowired
-    private ContactDescriptionTypeRepository contactDescriptionTypeRepository;
+    private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
 
-    @Autowired
-    private OpeningHourTypeRepository openingHourTypeRepository;
+    private final OpeningHourTypeRepository openingHourTypeRepository;
 
-    @Autowired
-    private CourtTypeRepository courtTypeRepository;
+    private final CourtTypeRepository courtTypeRepository;
 
-    @Autowired
-    private CourtRepository courtRepository;
+    private final CourtRepository courtRepository;
 
-    @Autowired
-    private CourtServiceAreasRepository courtServiceAreasRepository;
+    private final CourtServiceAreasRepository courtServiceAreasRepository;
 
-    @Autowired
-    private CourtAreasOfLawRepository courtAreasOfLawRepository;
+    private final CourtAreasOfLawRepository courtAreasOfLawRepository;
 
-    @Autowired
-    private CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
+    private final CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
 
-    @Autowired
-    private CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
+    private final CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
 
-    @Autowired
-    private CourtCodesRepository courtCodesRepository;
+    private final CourtCodesRepository courtCodesRepository;
 
-    @Autowired
-    private CourtProfessionalInformationRepository courtProfessionalInformationRepository;
+    private final CourtProfessionalInformationRepository courtProfessionalInformationRepository;
 
-    @Autowired
-    private CourtDxCodeRepository courtDxCodeRepository;
+    private final CourtDxCodeRepository courtDxCodeRepository;
 
-    @Autowired
-    private CourtFaxRepository courtFaxRepository;
+    private final CourtFaxRepository courtFaxRepository;
 
-    @Autowired
-    private LegacyCourtMappingRepository legacyCourtMappingRepository;
+    private final LegacyCourtMappingRepository legacyCourtMappingRepository;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-    @Value("${migration.source-base-url}")
-    private String migrationSourceBaseUrl;
+    private final LegacyExportResponse legacySnapshot;
 
-    private LegacyExportResponse legacySnapshot;
+    MigrationIntegrationTest(
+        TestRestTemplate restTemplate,
+        RegionRepository regionRepository,
+        LegacyServiceRepository legacyServiceRepository,
+        ServiceAreaRepository serviceAreaRepository,
+        LocalAuthorityTypeRepository localAuthorityTypeRepository,
+        ContactDescriptionTypeRepository contactDescriptionTypeRepository,
+        OpeningHourTypeRepository openingHourTypeRepository,
+        CourtTypeRepository courtTypeRepository,
+        CourtRepository courtRepository,
+        CourtServiceAreasRepository courtServiceAreasRepository,
+        CourtAreasOfLawRepository courtAreasOfLawRepository,
+        CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository,
+        CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository,
+        CourtCodesRepository courtCodesRepository,
+        CourtProfessionalInformationRepository courtProfessionalInformationRepository,
+        CourtDxCodeRepository courtDxCodeRepository,
+        CourtFaxRepository courtFaxRepository,
+        LegacyCourtMappingRepository legacyCourtMappingRepository,
+        ObjectMapper objectMapper,
+        @Value("${migration.source-base-url}") String migrationSourceBaseUrl
+    ) throws IOException {
+        this.restTemplate = restTemplate;
+        this.regionRepository = regionRepository;
+        this.legacyServiceRepository = legacyServiceRepository;
+        this.serviceAreaRepository = serviceAreaRepository;
+        this.localAuthorityTypeRepository = localAuthorityTypeRepository;
+        this.contactDescriptionTypeRepository = contactDescriptionTypeRepository;
+        this.openingHourTypeRepository = openingHourTypeRepository;
+        this.courtTypeRepository = courtTypeRepository;
+        this.courtRepository = courtRepository;
+        this.courtServiceAreasRepository = courtServiceAreasRepository;
+        this.courtAreasOfLawRepository = courtAreasOfLawRepository;
+        this.courtSinglePointsOfEntryRepository = courtSinglePointsOfEntryRepository;
+        this.courtLocalAuthoritiesRepository = courtLocalAuthoritiesRepository;
+        this.courtCodesRepository = courtCodesRepository;
+        this.courtProfessionalInformationRepository = courtProfessionalInformationRepository;
+        this.courtDxCodeRepository = courtDxCodeRepository;
+        this.courtFaxRepository = courtFaxRepository;
+        this.legacyCourtMappingRepository = legacyCourtMappingRepository;
+        this.objectMapper = objectMapper;
 
-    @BeforeAll
-    void fetchLegacySnapshot() throws IOException {
         assumeTrue(StringUtils.isNotBlank(migrationSourceBaseUrl), "migration.source-base-url must be configured");
         RestTemplate template = new RestTemplate();
         ResponseEntity<String> response = template.getForEntity(migrationSourceBaseUrl + EXPORT_ENDPOINT, String.class);
         assumeTrue(response.getStatusCode().is2xxSuccessful(), "Legacy FaCT API is unavailable");
-        legacySnapshot = objectMapper.readValue(response.getBody(), LegacyExportResponse.class);
+        this.legacySnapshot = objectMapper.readValue(response.getBody(), LegacyExportResponse.class);
     }
 
     @BeforeEach
@@ -141,6 +157,7 @@ class MigrationIntegrationTest {
         if (legacySnapshot == null || legacySnapshot.localAuthorityTypes() == null) {
             return;
         }
+        localAuthorityTypeRepository.deleteAll();
         legacySnapshot.localAuthorityTypes().forEach(type ->
             localAuthorityTypeRepository.save(
                 LocalAuthorityType.builder()
