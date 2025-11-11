@@ -42,7 +42,7 @@ public final class CourtControllerFunctionalTest {
         final Response createResponse = http.doPost("/courts/v1", court);
 
         assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
-        final String courtId = createResponse.jsonPath().getString("id");
+        final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
         assertThat(courtId).isNotNull();
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1");
@@ -86,7 +86,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1 fails with non-existent court ID")
     void shouldFailToRetrieveNonExistentCourt() {
-        final String nonExistentCourtId = UUID.randomUUID().toString();
+        final UUID nonExistentCourtId = UUID.randomUUID();
 
         final Response response = http.doGet("/courts/" + nonExistentCourtId + "/v1");
 
@@ -98,13 +98,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1 updates existing court and verifies changes")
     void shouldUpdateExistingCourt() throws Exception {
-        final Court court = new Court();
-        court.setName("Test Court Original");
-        court.setRegionId(UUID.fromString(regionId));
-        court.setIsServiceCentre(true);
-
-        final Response createResponse = http.doPost("/courts/v1", court);
-        final String courtId = createResponse.jsonPath().getString("id");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Original");
 
         final Court updatedCourt = new Court();
         updatedCourt.setName("Test Court Updated");
@@ -124,7 +118,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1 fails with non-existent court ID")
     void shouldFailToUpdateNonExistentCourt() throws Exception {
-        final String nonExistentCourtId = UUID.randomUUID().toString();
+        final UUID nonExistentCourtId = UUID.randomUUID();
 
         final Court updatedCourt = new Court();
         updatedCourt.setName("Test Court Non-Existent court ID");
@@ -141,13 +135,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1 update fails with non-existent regionId")
     void shouldFailToUpdateCourtWithNonExistentRegionId() throws Exception {
-        final Court court = new Court();
-        court.setName("Test Court Update Non-Existent Region ID");
-        court.setRegionId(UUID.fromString(regionId));
-        court.setIsServiceCentre(true);
-
-        final Response createResponse = http.doPost("/courts/v1", court);
-        final String courtId = createResponse.jsonPath().getString("id");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Update Non-Existent Region ID");
 
         final Court updatedCourt = new Court();
         updatedCourt.setName("Test Court Non-Existent Region ID Updated");
@@ -175,14 +163,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 with filters returns created court in list")
     void shouldReturnCreatedCourtInFilteredList() throws Exception {
-        final Court court = new Court();
-        court.setName("Test Court for List Retrieval");
-        court.setRegionId(UUID.fromString(regionId));
-        court.setIsServiceCentre(true);
-
-        final Response createResponse = http.doPost("/courts/v1", court);
-        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
-        final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court for List Retrieval");
 
         final Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=200&includeClosed=true");
 
@@ -192,14 +173,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 with includeClosed=false returns only open courts")
     void shouldReturnOnlyActiveCourts() throws Exception {
-        final Court court = new Court();
-        court.setName("Test Court Open");
-        court.setRegionId(UUID.fromString(regionId));
-        court.setIsServiceCentre(true);
-
-        final Response createResponse = http.doPost("/courts/v1", court);
-        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
-        final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Open");
 
         final Court updatedCourt = new Court();
         updatedCourt.setName("Test Court Open");
@@ -220,14 +194,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 filtered only by valid region id")
     void shouldReturnCourtsFilteredByValidRegionId() throws Exception {
-        final Court court = new Court();
-        court.setName("Test Court for regionId filtering");
-        court.setRegionId(UUID.fromString(regionId));
-        court.setIsServiceCentre(true);
-
-        final Response createResponse = http.doPost("/courts/v1", court);
-        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
-        final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court for regionId filtering");
 
         final Response listResponse = http.doGet(
             "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId
@@ -239,14 +206,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 filtered by partialCourtName")
     void shouldReturnCourtsFilteredByPartialCourtName() throws Exception {
-        final Court court = new Court();
-        court.setName("Test Court Birmingham");
-        court.setRegionId(UUID.fromString(regionId));
-        court.setIsServiceCentre(true);
-
-        final Response createResponse = http.doPost("/courts/v1", court);
-        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
-        final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Birmingham");
 
         final Response listResponse = http.doGet(
             "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&partialCourtName=Birmingham"
@@ -258,14 +218,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 filtered by combined filters (regionId + partialCourtName + includeClosed)")
     void shouldReturnCourtsFilteredByCombinedFilters() throws Exception {
-        final Court court = new Court();
-        court.setName("Test Court Manchester");
-        court.setRegionId(UUID.fromString(regionId));
-        court.setIsServiceCentre(true);
-
-        final Response createResponse = http.doPost("/courts/v1", court);
-        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
-        final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Manchester");
 
         final Response listResponse = http.doGet(
             "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId

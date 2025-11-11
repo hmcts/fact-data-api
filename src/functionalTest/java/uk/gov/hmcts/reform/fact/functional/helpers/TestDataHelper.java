@@ -1,7 +1,13 @@
 package uk.gov.hmcts.reform.fact.functional.helpers;
 
 import io.restassured.response.Response;
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
+
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.CREATED;
 
 /**
  * Helper methods for fetching test data via API endpoints.
@@ -21,5 +27,24 @@ public final class TestDataHelper {
     public static String getRegionId(final HttpClient http) {
         final Response response = http.doGet("/types/v1/regions");
         return response.jsonPath().getString("[0].id");
+    }
+
+    /**
+     * Creates a test court with the given name.
+     *
+     * @param http the HTTP client
+     * @param courtName the name for the test court
+     * @return the created court's UUID
+     */
+    public static UUID createCourt(final HttpClient http, final String courtName) {
+        final Court court = new Court();
+        court.setName(courtName);
+        court.setRegionId(UUID.fromString(getRegionId(http)));
+        court.setIsServiceCentre(true);
+
+        final Response createResponse = http.doPost("/courts/v1", court);
+        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
+
+        return UUID.fromString(createResponse.jsonPath().getString("id"));
     }
 }
