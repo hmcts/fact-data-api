@@ -18,4 +18,9 @@ public @interface ValidUUID {
     String message() default "Invalid UUID format";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
+
+    /**
+     * When true, null or blank values are accepted (used for optional UUID params).
+     */
+    boolean allowNull() default false;
 }
