@@ -53,6 +53,25 @@ spring:
   # regardless of their null/empty state
   jackson:
     default-property-inclusion: always
+  cloud:
+    azure:
+      profile:
+        tenant-id: ${AZURE_TENANT_ID}
+      credential:
+        managed-identity-enabled: ${AZURE_MANAGED_IDENTITY_ENABLED:false}
+        client-id: ${AZURE_CLIENT_ID}
+      storage:
+        account-name: ${AZURE_STORAGE_ACCOUNT_NAME}
+        blob:
+          container-name: photos
+          connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
+  servlet:
+    multipart:
+      max-file-size: 2MB
+  data:
+    web:
+      pageable:
+        serialization-mode: via_dto
 
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
@@ -62,3 +81,6 @@ user:
 
 courtLock:
   timeout-minutes: 60
+  
+testingSupport:
+  enableApi: ${TESTING_SUPPORT_ENABLE_API:false}

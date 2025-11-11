@@ -63,7 +63,7 @@ public class CourtPhoto {
     private ZonedDateTime lastUpdatedAt;
 
     @Schema(description = "The ID of the associated Court")
-    @NotNull
+    // @NotNull(message = "user ID must be specified") TODO: Uncomment when user is implemented
     @Column(name = "updated_by_user_id")
     private UUID updatedByUserId;
 

@@ -37,7 +37,6 @@ public class CourtTranslationController {
     @Operation(
         summary = "Get translation services by court ID",
         description = "Fetch translation services for a given court."
-            + "Returns null if no translation service exists for the court."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved translation services"),
