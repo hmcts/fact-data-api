@@ -19,6 +19,4 @@ public interface CourtLockRepository extends JpaRepository<CourtLock, UUID> {
     Optional<CourtLock> findByCourtIdAndPage(UUID courtId, Page page);
 
     void deleteByCourtIdAndPage(UUID courtId, Page page);
-
-
 }
