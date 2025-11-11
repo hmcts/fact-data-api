@@ -59,11 +59,9 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should allow operation when no lock exists")
     void shouldAllowWhenNoLockExists() {
-        // Given
         setupJoinPoint(courtId, page, userId);
         when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.empty());
 
-        // When & Then
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
         verify(courtLockService, never()).deleteLock(any(), any());
     }
@@ -71,12 +69,10 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should allow operation when same user owns the lock")
     void shouldAllowWhenSameUserOwnsLock() {
-        // Given
         setupJoinPoint(courtId, page, userId);
         CourtLock lock = createLock(userId, ZonedDateTime.now().minusMinutes(30));
         when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
 
-        // When & Then
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
         verify(courtLockService, never()).deleteLock(any(), any());
     }
@@ -84,12 +80,10 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should throw 409 CONFLICT when lock is valid and held by another user")
     void shouldThrowConflictWhenLockIsValid() {
-        // Given
         setupJoinPoint(courtId, page, userId);
         CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(30));
         when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
 
-        // When
         ResponseStatusException exception = assertThrows(
             ResponseStatusException.class,
             () -> validator.validateLockTimeout(joinPoint)
@@ -104,12 +98,10 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should delete stale lock and allow operation when lock has exceeded timeout")
     void shouldDeleteStaleLockAndAllow() {
-        // Given
         setupJoinPoint(courtId, page, userId);
         CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(61));
         when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
 
-        // When & Then
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
         verify(courtLockService).deleteLock(courtId, page);
     }
@@ -117,12 +109,10 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should delete lock exactly at timeout threshold")
     void shouldDeleteLockAtExactTimeout() {
-        // Given
         setupJoinPoint(courtId, page, userId);
         CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(60));
         when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
 
-        // When & Then
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
         verify(courtLockService).deleteLock(courtId, page);
     }
@@ -130,18 +120,15 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should not delete lock just before timeout threshold")
     void shouldNotDeleteLockJustBeforeTimeout() {
-        // Given
         setupJoinPoint(courtId, page, userId);
         CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(59));
         when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
 
-        // When
         ResponseStatusException exception = assertThrows(
             ResponseStatusException.class,
             () -> validator.validateLockTimeout(joinPoint)
         );
 
-        // Then
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
         verify(courtLockService, never()).deleteLock(any(), any());
     }
@@ -149,12 +136,10 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should handle very old stale locks")
     void shouldHandleVeryOldStaleLocks() {
-        // Given
         setupJoinPoint(courtId, page, userId);
         CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusHours(24));
         when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
 
-        // When & Then
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
         verify(courtLockService).deleteLock(courtId, page);
     }
@@ -162,13 +147,11 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should respect custom timeout configuration")
     void shouldRespectCustomTimeout() {
-        // Given
         ReflectionTestUtils.setField(validator, "lockTimeoutMinutes", 15L);
         setupJoinPoint(courtId, page, userId);
         CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(20));
         when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
 
-        // When & Then
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
         verify(courtLockService).deleteLock(courtId, page);
     }
@@ -176,10 +159,8 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should throw IllegalArgumentException when courtId parameter is missing")
     void shouldThrowWhenCourtIdMissing() {
-        // Given
         setupJoinPointWithoutCourtId(page, userId);
 
-        // When & Then
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
             () -> validator.validateLockTimeout(joinPoint)
@@ -190,10 +171,8 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should throw IllegalArgumentException when page parameter is missing")
     void shouldThrowWhenPageMissing() {
-        // Given
         setupJoinPointWithoutPage(courtId, userId);
 
-        // When & Then
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
             () -> validator.validateLockTimeout(joinPoint)
@@ -204,10 +183,8 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should throw IllegalArgumentException when userId parameter is missing")
     void shouldThrowWhenUserIdMissing() {
-        // Given
         setupJoinPointWithoutUserId(courtId, page);
 
-        // When & Then
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
             () -> validator.validateLockTimeout(joinPoint)
@@ -218,22 +195,18 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should handle courtId as String and convert to UUID")
     void shouldHandleCourtIdAsString() {
-        // Given
         setupJoinPointWithStringCourtId(courtId.toString(), page, userId);
         when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.empty());
 
-        // When & Then
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
     }
 
     @Test
     @DisplayName("Should handle page as String and convert to enum")
     void shouldHandlePageAsString() {
-        // Given
         setupJoinPointWithStringPage(courtId, "COURT", userId);
         when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.empty());
 
-        // When & Then
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
     }
 

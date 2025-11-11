@@ -32,7 +32,7 @@ public class CourtLockTimeoutValidator {
 
     private final CourtLockService courtLockService;
 
-    @Value("${court.lock.timeout.minutes:60}")
+    @Value("${courtLock.timeout-minutes}")
     private long lockTimeoutMinutes;
 
     /**
@@ -41,32 +41,26 @@ public class CourtLockTimeoutValidator {
      */
     @Before("@annotation(uk.gov.hmcts.reform.fact.data.api.validation.annotations.CourtLockTimeoutCheck)")
     public void validateLockTimeout(JoinPoint joinPoint) {
-        // STEP 1: Extract method metadata
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Parameter[] parameters = signature.getMethod().getParameters();
         Object[] args = joinPoint.getArgs();
 
-        // STEP 2: Find and extract required parameters
         UUID courtId = extractUuid(parameters, args, "courtId");
         Page page = extractPage(parameters, args, "page");
         UUID userId = extractUuid(parameters, args, "userId");
 
-        // STEP 3: Check if lock exists
         Optional<CourtLock> lock = courtLockService.getPageLock(courtId, page);
         if (lock.isEmpty() || lock.get().getUserId().equals(userId)) {
             return; // No lock or same user owns it
         }
 
-        // STEP 4: Validate lock timeout
         long minutesLocked = Duration.between(lock.get().getLockAcquired(), ZonedDateTime.now()).toMinutes();
 
         if (minutesLocked < lockTimeoutMinutes) {
-            // Lock is still valid, block the operation
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                 String.format("Page locked by another user (%d/%d min)", minutesLocked, lockTimeoutMinutes));
         }
 
-        // STEP 5: Lock is stale, delete it
         courtLockService.deleteLock(courtId, page);
     }
 
@@ -100,19 +94,16 @@ public class CourtLockTimeoutValidator {
      * Checks if a parameter matches the given name by checking annotations.
      */
     private boolean isNamedParameter(Parameter parameter, String name) {
-        // Check @PathVariable
         PathVariable pathVar = parameter.getAnnotation(PathVariable.class);
         if (pathVar != null && (pathVar.value().equals(name) || pathVar.name().equals(name))) {
             return true;
         }
 
-        // Check @RequestParam
         RequestParam reqParam = parameter.getAnnotation(RequestParam.class);
         if (reqParam != null && (reqParam.value().equals(name) || reqParam.name().equals(name))) {
             return true;
         }
 
-        // Fallback to parameter name (requires -parameters compiler flag)
         return parameter.getName().equals(name);
     }
 }
