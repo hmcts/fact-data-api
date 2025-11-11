@@ -52,49 +52,6 @@ public class CourtPostcode {
     @Schema(description = "The postcode", minLength = 1)
     @NotBlank(message = "The postcode must be specified")
     @Size(max = ValidationConstants.POSTCODE_MAX_LENGTH, message = ValidationConstants.POSTCODE_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.POSTCODE_REGEX, message = ValidationConstants.COURT_POSTCODE_REGEX_MESSAGE)
+    @Pattern(regexp = ValidationConstants.POSTCODE_REGEX, message = ValidationConstants.POSTCODE_REGEX_MESSAGE)
     private String postcode;
-
-    public static CourtPostcodeBuilder builder() {
-        return new CourtPostcodeBuilder();
-    }
-
-    public static class CourtPostcodeBuilder {
-        private UUID id;
-        private UUID courtId;
-        private Court court;
-        private String postcode;
-
-        CourtPostcodeBuilder() {
-        }
-
-        public CourtPostcodeBuilder id(UUID id) {
-            this.id = id;
-            return this;
-        }
-
-        public CourtPostcodeBuilder courtId(UUID courtId) {
-            this.courtId = courtId;
-            return this;
-        }
-
-        public CourtPostcodeBuilder court(Court court) {
-            this.court = court;
-            return this;
-        }
-
-        public CourtPostcodeBuilder postcode(String postcode) {
-            this.postcode = postcode;
-            return this;
-        }
-
-        public CourtPostcode build() {
-            CourtPostcode courtPostcode = new CourtPostcode();
-            courtPostcode.setId(id);
-            courtPostcode.setCourtId(courtId);
-            courtPostcode.setCourt(court);
-            courtPostcode.setPostcode(postcode);
-            return courtPostcode;
-        }
-    }
 }
