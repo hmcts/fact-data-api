@@ -17,6 +17,7 @@ plugins {
   id 'uk.gov.hmcts.java' version '0.12.67'
   id 'io.freefair.lombok' version '9.0.0'
   id 'org.flywaydb.flyway' version '11.13.2'
+  id 'io.qameta.allure' version '3.0.1'
 }
 
 application {
@@ -148,6 +149,10 @@ dependencyCheck {
   suppressionFile = 'config/owasp/suppressions.xml'
 }
 
+allure {
+  version = '2.34.1'
+}
+
 repositories {
   mavenLocal()
   mavenCentral()
@@ -175,6 +180,8 @@ dependencies {
   implementation group: 'org.flywaydb', name: 'flyway-core', version: '11.13.2'
   implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '11.13.2'
 
+  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '6.0.0'
+
   implementation group: 'io.hypersistence', name: 'hypersistence-utils-hibernate-63', version: '3.10.3'
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '6.1.9'
@@ -187,6 +194,22 @@ dependencies {
   integrationTestImplementation group: 'org.testcontainers', name: 'postgresql', version: '1.21.3'
 
   smokeTestImplementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.6'
+  functionalTestImplementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.20.1'
+  functionalTestImplementation group: 'io.qameta.allure', name: 'allure-junit5', version: '2.30.0'
+  functionalTestImplementation group: 'io.qameta.allure', name: 'allure-rest-assured', version: '2.30.0'
+}
+
+tasks.named('test') {
+  systemProperty 'allure.label.parentSuite', 'Unit tests'
+}
+tasks.named('integration') {
+  systemProperty 'allure.label.parentSuite', 'Integration tests'
+}
+tasks.named('smoke') {
+  systemProperty 'allure.label.parentSuite', 'Smoke tests'
+}
+tasks.named('functional') {
+  systemProperty 'allure.label.parentSuite', 'Functional tests'
 }
 
 bootJar {
