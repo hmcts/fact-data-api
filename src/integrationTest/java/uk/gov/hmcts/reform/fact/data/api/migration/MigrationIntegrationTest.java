@@ -54,7 +54,6 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Full-stack integration tests that stand up the application, hit the migration endpoint over HTTP,
@@ -68,67 +67,71 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @ActiveProfiles("test")
 class MigrationIntegrationTest {
 
-    private static final String EXPORT_ENDPOINT = "/private-migration/export";
-
     @LocalServerPort
     private int port;
 
-    @Autowired
-    private TestRestTemplate restTemplate;
+    private final TestRestTemplate restTemplate;
+    private final RegionRepository regionRepository;
+    private final LegacyServiceRepository legacyServiceRepository;
+    private final ServiceAreaRepository serviceAreaRepository;
+    private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
+    private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
+    private final OpeningHourTypeRepository openingHourTypeRepository;
+    private final CourtTypeRepository courtTypeRepository;
+    private final CourtRepository courtRepository;
+    private final CourtServiceAreasRepository courtServiceAreasRepository;
+    private final CourtAreasOfLawRepository courtAreasOfLawRepository;
+    private final CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
+    private final CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
+    private final CourtCodesRepository courtCodesRepository;
+    private final CourtProfessionalInformationRepository courtProfessionalInformationRepository;
+    private final CourtDxCodeRepository courtDxCodeRepository;
+    private final CourtFaxRepository courtFaxRepository;
+    private final LegacyCourtMappingRepository legacyCourtMappingRepository;
+    private final LegacyFactClient legacyFactClient;
 
     @Autowired
-    private RegionRepository regionRepository;
-
-    @Autowired
-    private LegacyServiceRepository legacyServiceRepository;
-
-    @Autowired
-    private ServiceAreaRepository serviceAreaRepository;
-
-    @Autowired
-    private LocalAuthorityTypeRepository localAuthorityTypeRepository;
-
-    @Autowired
-    private ContactDescriptionTypeRepository contactDescriptionTypeRepository;
-
-    @Autowired
-    private OpeningHourTypeRepository openingHourTypeRepository;
-
-    @Autowired
-    private CourtTypeRepository courtTypeRepository;
-
-    @Autowired
-    private CourtRepository courtRepository;
-
-    @Autowired
-    private CourtServiceAreasRepository courtServiceAreasRepository;
-
-    @Autowired
-    private CourtAreasOfLawRepository courtAreasOfLawRepository;
-
-    @Autowired
-    private CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
-
-    @Autowired
-    private CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
-
-    @Autowired
-    private CourtCodesRepository courtCodesRepository;
-
-    @Autowired
-    private CourtProfessionalInformationRepository courtProfessionalInformationRepository;
-
-    @Autowired
-    private CourtDxCodeRepository courtDxCodeRepository;
-
-    @Autowired
-    private CourtFaxRepository courtFaxRepository;
-
-    @Autowired
-    private LegacyCourtMappingRepository legacyCourtMappingRepository;
-
-    @Autowired
-    private LegacyFactClient legacyFactClient;
+    MigrationIntegrationTest(
+        TestRestTemplate restTemplate,
+        RegionRepository regionRepository,
+        LegacyServiceRepository legacyServiceRepository,
+        ServiceAreaRepository serviceAreaRepository,
+        LocalAuthorityTypeRepository localAuthorityTypeRepository,
+        ContactDescriptionTypeRepository contactDescriptionTypeRepository,
+        OpeningHourTypeRepository openingHourTypeRepository,
+        CourtTypeRepository courtTypeRepository,
+        CourtRepository courtRepository,
+        CourtServiceAreasRepository courtServiceAreasRepository,
+        CourtAreasOfLawRepository courtAreasOfLawRepository,
+        CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository,
+        CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository,
+        CourtCodesRepository courtCodesRepository,
+        CourtProfessionalInformationRepository courtProfessionalInformationRepository,
+        CourtDxCodeRepository courtDxCodeRepository,
+        CourtFaxRepository courtFaxRepository,
+        LegacyCourtMappingRepository legacyCourtMappingRepository,
+        LegacyFactClient legacyFactClient
+    ) {
+        this.restTemplate = restTemplate;
+        this.regionRepository = regionRepository;
+        this.legacyServiceRepository = legacyServiceRepository;
+        this.serviceAreaRepository = serviceAreaRepository;
+        this.localAuthorityTypeRepository = localAuthorityTypeRepository;
+        this.contactDescriptionTypeRepository = contactDescriptionTypeRepository;
+        this.openingHourTypeRepository = openingHourTypeRepository;
+        this.courtTypeRepository = courtTypeRepository;
+        this.courtRepository = courtRepository;
+        this.courtServiceAreasRepository = courtServiceAreasRepository;
+        this.courtAreasOfLawRepository = courtAreasOfLawRepository;
+        this.courtSinglePointsOfEntryRepository = courtSinglePointsOfEntryRepository;
+        this.courtLocalAuthoritiesRepository = courtLocalAuthoritiesRepository;
+        this.courtCodesRepository = courtCodesRepository;
+        this.courtProfessionalInformationRepository = courtProfessionalInformationRepository;
+        this.courtDxCodeRepository = courtDxCodeRepository;
+        this.courtFaxRepository = courtFaxRepository;
+        this.legacyCourtMappingRepository = legacyCourtMappingRepository;
+        this.legacyFactClient = legacyFactClient;
+    }
 
     private LegacyExportResponse legacySnapshot;
     private List<CourtDto> migratableCourts = Collections.emptyList();
