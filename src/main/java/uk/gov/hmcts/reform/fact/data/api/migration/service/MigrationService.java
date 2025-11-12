@@ -69,6 +69,7 @@ import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMapping
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -180,7 +181,7 @@ public class MigrationService {
         final int serviceAreasMigrated = persistServiceAreas(exportResponse.serviceAreas(), context);
         final int servicesMigrated = persistServices(exportResponse.services(), context);
         final int localAuthorityTypesMigrated =
-            persistLocalAuthorityTypes(exportResponse.localAuthorityTypes(), context.localAuthorityTypeIds);
+            mapExistingLocalAuthorityTypes(exportResponse.localAuthorityTypes(), context.localAuthorityTypeIds);
         final int contactDescriptionTypesMigrated =
             persistContactDescriptionTypes(exportResponse.contactDescriptionTypes());
         final int openingHourTypesMigrated = persistOpeningHourTypes(exportResponse.openingHourTypes());
@@ -229,7 +230,7 @@ public class MigrationService {
      * @return the number of region records migrated.
      */
     private int persistRegions(List<RegionDto> regions, Map<Integer, UUID> regionIds) {
-        if (regions == null) {
+        if (isEmpty(regions)) {
             return 0;
         }
 
@@ -255,7 +256,7 @@ public class MigrationService {
         List<AreaOfLawTypeDto> areaOfLawTypes,
         Map<Integer, UUID> ids
     ) {
-        if (areaOfLawTypes == null) {
+        if (isEmpty(areaOfLawTypes)) {
             return 0;
         }
 
@@ -279,7 +280,7 @@ public class MigrationService {
      * @return the number of service area records migrated.
      */
     private int persistServiceAreas(List<ServiceAreaDto> serviceAreas, MigrationContext context) {
-        if (serviceAreas == null) {
+        if (isEmpty(serviceAreas)) {
             return 0;
         }
 
@@ -326,7 +327,7 @@ public class MigrationService {
      * @return the number of provided services migrated.
      */
     private int persistServices(List<ServiceDto> services, MigrationContext context) {
-        if (services == null) {
+        if (isEmpty(services)) {
             return 0;
         }
 
@@ -348,13 +349,14 @@ public class MigrationService {
      * Migrates the static local authority type reference data.
      *
      * @param localAuthorityTypes legacy local authority types.
+     * @param ids mapping between legacy identifiers and the UUIDs already present in the database.
      * @return the number of records migrated.
      */
-    private int persistLocalAuthorityTypes(
+    private int mapExistingLocalAuthorityTypes(
         List<LocalAuthorityTypeDto> localAuthorityTypes,
         Map<Integer, UUID> ids
     ) {
-        if (localAuthorityTypes == null) {
+        if (isEmpty(localAuthorityTypes)) {
             return 0;
         }
 
@@ -366,12 +368,13 @@ public class MigrationService {
             }
 
             Optional<LocalAuthorityType> existing = localAuthorityTypeRepository.findByName(dto.name());
-            if (existing.isPresent()) {
-                ids.put(dto.id(), existing.get().getId());
-                mapped++;
-            } else {
+            if (existing.isEmpty()) {
                 LOG.warn("No matching local authority type found for name '{}'", dto.name());
+                continue;
             }
+
+            ids.put(dto.id(), existing.get().getId());
+            mapped++;
         }
         return mapped;
     }
@@ -383,7 +386,7 @@ public class MigrationService {
      * @return the number of records migrated.
      */
     private int persistContactDescriptionTypes(List<ContactDescriptionTypeDto> dtos) {
-        if (dtos == null) {
+        if (isEmpty(dtos)) {
             return 0;
         }
 
@@ -404,7 +407,7 @@ public class MigrationService {
      * @return the number of records migrated.
      */
     private int persistOpeningHourTypes(List<OpeningHourTypeDto> dtos) {
-        if (dtos == null) {
+        if (isEmpty(dtos)) {
             return 0;
         }
 
@@ -425,7 +428,7 @@ public class MigrationService {
      * @return the number of records migrated.
      */
     private int persistCourtTypes(List<CourtTypeDto> dtos) {
-        if (dtos == null) {
+        if (isEmpty(dtos)) {
             return 0;
         }
 
@@ -446,7 +449,7 @@ public class MigrationService {
      * @return the number of courts migrated.
      */
     private int persistCourts(List<CourtDto> courts, MigrationContext context) {
-        if (courts == null) {
+        if (isEmpty(courts)) {
             return 0;
         }
 
@@ -494,7 +497,7 @@ public class MigrationService {
         UUID courtId,
         MigrationContext context
     ) {
-        if (serviceAreas == null) {
+        if (isEmpty(serviceAreas)) {
             return;
         }
 
@@ -520,7 +523,7 @@ public class MigrationService {
         UUID courtId,
         MigrationContext context
     ) {
-        if (dto == null || dto.areaOfLawIds() == null || dto.areaOfLawIds().isEmpty()) {
+        if (dto == null || isEmpty(dto.areaOfLawIds())) {
             return;
         }
 
@@ -543,7 +546,7 @@ public class MigrationService {
         UUID courtId,
         MigrationContext context
     ) {
-        if (dto == null || dto.areaOfLawIds() == null || dto.areaOfLawIds().isEmpty()) {
+        if (dto == null || isEmpty(dto.areaOfLawIds())) {
             return;
         }
 
@@ -559,7 +562,7 @@ public class MigrationService {
         UUID courtId,
         MigrationContext context
     ) {
-        if (localAuthorities == null) {
+        if (isEmpty(localAuthorities)) {
             return;
         }
 
@@ -672,7 +675,7 @@ public class MigrationService {
      * @param courtId identifier of the court that was just migrated.
      */
     private void persistCourtDxCodes(List<CourtDxCodeDto> dtos, UUID courtId) {
-        if (dtos == null) {
+        if (isEmpty(dtos)) {
             return;
         }
 
@@ -697,7 +700,7 @@ public class MigrationService {
      * @param courtId identifier of the court that was just migrated.
      */
     private void persistCourtFax(List<CourtFaxDto> dtos, UUID courtId) {
-        if (dtos == null) {
+        if (isEmpty(dtos)) {
             return;
         }
 
@@ -823,5 +826,16 @@ public class MigrationService {
         private final Map<Integer, UUID> localAuthorityTypeIds = new HashMap<>();
         private int courtLocalAuthoritiesMigrated;
         private int courtProfessionalInformationMigrated;
+    }
+
+    /**
+     * Convenience helper to treat {@code null} and empty collections the same way when guarding
+     * optional payload sections from the legacy export.
+     *
+     * @param values collection to check.
+     * @return {@code true} when the collection is {@code null} or contains no elements.
+     */
+    private static boolean isEmpty(Collection<?> values) {
+        return values == null || values.isEmpty();
     }
 }

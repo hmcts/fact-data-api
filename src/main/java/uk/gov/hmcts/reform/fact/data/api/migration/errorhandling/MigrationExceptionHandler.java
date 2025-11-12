@@ -15,10 +15,21 @@ import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientExce
  * Scoped exception handler for the private migration endpoint so the migration module can be removed
  * cleanly once the feature is decommissioned.
  */
+/**
+ * Localised error handler for the migration controller so that migration-specific HTTP responses
+ * can be removed alongside the rest of the migration module in future.
+ */
 @Slf4j
 @RestControllerAdvice(assignableTypes = MigrationController.class)
 public class MigrationExceptionHandler {
 
+    /**
+     * Translates duplicate-execution guards into a 409 response so callers know the run was blocked
+     * intentionally.
+     *
+     * @param ex raised when the migration tables are already populated.
+     * @return API-friendly error payload.
+     */
     @ExceptionHandler(MigrationAlreadyAppliedException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ExceptionResponse handle(MigrationAlreadyAppliedException ex) {
@@ -26,6 +37,13 @@ public class MigrationExceptionHandler {
         return generateExceptionResponse(ex.getMessage());
     }
 
+    /**
+     * Surfaces legacy endpoint failures as 502 errors so the caller can distinguish them from
+     * problems inside the new FaCT service.
+     *
+     * @param ex raised when the HTTP call to the legacy service fails.
+     * @return API-friendly error payload.
+     */
     @ExceptionHandler(MigrationClientException.class)
     @ResponseStatus(HttpStatus.BAD_GATEWAY)
     public ExceptionResponse handle(MigrationClientException ex) {
@@ -33,6 +51,12 @@ public class MigrationExceptionHandler {
         return generateExceptionResponse(ex.getMessage());
     }
 
+    /**
+     * Shared helper so responses align with the format used elsewhere in the API.
+     *
+     * @param message description of the failure.
+     * @return a populated {@link ExceptionResponse}.
+     */
     private ExceptionResponse generateExceptionResponse(String message) {
         ExceptionResponse response = new ExceptionResponse();
         response.setMessage(message);
