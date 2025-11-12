@@ -1,8 +1,12 @@
 package uk.gov.hmcts.reform.fact.functional.http;
 
+import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import uk.gov.hmcts.reform.fact.functional.config.TestConfig;
+import io.restassured.specification.RequestSpecification;
+
+import java.io.File;
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 
@@ -11,15 +15,37 @@ import static io.restassured.RestAssured.given;
  */
 public final class HttpClient {
 
-    private final TestConfig config;
+    private final String baseUrl;
 
-    public HttpClient(final TestConfig config) {
-        this.config = config;
+    public HttpClient() {
+        this.baseUrl = System.getenv().getOrDefault("TEST_URL", "http://localhost:8989");
     }
 
     public Response doGet(final String path) {
         return given()
-            .baseUri(config.baseUrl())
+            .filter(new AllureRestAssured())
+            .baseUri(baseUrl)
+            .when()
+            .get(path)
+            .thenReturn();
+    }
+
+    /**
+     * GET request with query parameters.
+     * Example: doGet("/courts/v1", Map.of("pageNumber", 0, "pageSize", 25))
+     */
+    public Response doGet(final String path, final Map<String, Object> queryParams) {
+        RequestSpecification request = given()
+            .filter(new AllureRestAssured())
+            .baseUri(baseUrl);
+
+        for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
+            if (entry.getValue() != null) {
+                request.queryParam(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return request
             .when()
             .get(path)
             .thenReturn();
@@ -27,9 +53,41 @@ public final class HttpClient {
 
     public Response doPost(final String path, final Object body) {
         return given()
-            .baseUri(config.baseUrl())
+            .filter(new AllureRestAssured())
+            .baseUri(baseUrl)
             .contentType(ContentType.JSON)
             .body(body)
+            .when()
+            .post(path)
+            .thenReturn();
+    }
+
+    public Response doPut(final String path, final Object body) {
+        return given()
+            .filter(new AllureRestAssured())
+            .baseUri(baseUrl)
+            .contentType(ContentType.JSON)
+            .body(body)
+            .when()
+            .put(path)
+            .thenReturn();
+    }
+
+    public Response doDelete(final String path) {
+        return given()
+            .filter(new AllureRestAssured())
+            .baseUri(baseUrl)
+            .when()
+            .delete(path)
+            .thenReturn();
+    }
+
+    public Response doMultipartPost(final String path, final String fileParamName, final File file) {
+        return given()
+            .filter(new AllureRestAssured())
+            .baseUri(baseUrl)
+            .contentType(ContentType.MULTIPART)
+            .multiPart(fileParamName, file)
             .when()
             .post(path)
             .thenReturn();

@@ -10,13 +10,39 @@ def component = "data-api"
 GradleBuilder builder = new GradleBuilder(this, product)
 
 withPipeline(type, product, component) {
-    env.FACT_MIGRATION_SOURCE_BASE_URL = 'https://fact-data-api.aat.platform.hmcts.net'
+  env.FACT_MIGRATION_SOURCE_BASE_URL = 'https://fact-data-api.aat.platform.hmcts.net'
 
-    enableDbMigration('fact-kv')
+  enableDbMigration('fact-kv')
 
-    afterSuccess('test') {
-        builder.gradle('integration')
-    }
+  afterSuccess('test') {
+    builder.gradle('integration')
+  }
+
+  afterAlways('functionalTest:preview') {
+    builder.gradle('allureReport')
+
+    publishHTML target: [
+      allowMissing         : true,
+      alwaysLinkToLastBuild: true,
+      keepAll              : true,
+      reportDir            : 'build/reports/allure-report/allureReport',
+      reportFiles          : 'index.html',
+      reportName           : 'Allure Functional Test Report'
+    ]
+  }
+
+  afterAlways('functionalTest:aat') {
+    builder.gradle('allureReport')
+
+    publishHTML target: [
+      allowMissing         : true,
+      alwaysLinkToLastBuild: true,
+      keepAll              : true,
+      reportDir            : 'build/reports/allure-report/allureReport',
+      reportFiles          : 'index.html',
+      reportName           : 'Allure Functional Test Report'
+    ]
+  }
 
   syncBranchesWithMaster(['demo', 'perftest', 'ithc'])
 }
