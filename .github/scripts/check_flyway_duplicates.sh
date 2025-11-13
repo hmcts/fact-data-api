@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MIGRATION_DIR="src/main/resources/migration"
+MIGRATION_DIR="src/main/resources/db/migration"
 DUP_FILE="duplicate_versions.txt"
 
 # Clean up previous results
