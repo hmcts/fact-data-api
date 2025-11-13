@@ -1,0 +1,66 @@
+name: Check Duplicate Flyway Scripts
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  flyway-duplicate-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch master branch
+        run: git fetch origin master
+
+      - name: Run duplicate check script
+        id: check
+        run: |
+          if ! bash .github/scripts/check_flyway_duplicates.sh; then
+            echo "FAILED=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Read duplicates file
+        id: duplicates
+        if: steps.check.outputs.FAILED == 'true'
+        run: |
+          if [[ -f duplicate_versions.txt ]]; then
+            {
+              echo 'versions<<EOF'
+              cat duplicate_versions.txt
+              echo EOF
+            } >> $GITHUB_OUTPUT
+          else
+            echo "versions=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on PR with duplicates
+        if: steps.check.outputs.FAILED == 'true'
+        uses: thollander/actions-comment-pull-request@v3.0.1
+        with:
+          comment-tag: flyway-duplicate
+          mode: upsert
+          message: |
+            ## ⚠️ Flyway Duplicate Version Check Failed
+
+            Duplicate version(s) detected:
+            ```
+            ${{ steps.duplicates.outputs.versions }}
+            ```
+
+            Please ensure all Flyway migration version numbers are unique.
+
+      - name: Remove comment on success
+        if: steps.check.outputs.FAILED != 'true'
+        uses: thollander/actions-comment-pull-request@v3.0.1
+        with:
+          comment-tag: flyway-duplicate
+          mode: delete
+
+      - name: Fail the job
+        if: steps.check.outputs.FAILED == 'true'
+        run: exit 1
