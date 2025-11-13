@@ -9,7 +9,7 @@ rm -f "$DUP_FILE"
 
 # Get all version prefixes in master
 MASTER_VERSIONS=$(git ls-tree -r --name-only origin/master -- "$MIGRATION_DIR" \
-  | xargs -n1 basename \
+  | sed 's:.*/::' \
   | grep -E '^V[0-9]+\.[0-9]+' \
   | sed -E 's/^(V[0-9]+\.[0-9]+).*/\1/' \
   | sort -u || true)
