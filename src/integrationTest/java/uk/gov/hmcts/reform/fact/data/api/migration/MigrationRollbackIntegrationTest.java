@@ -14,6 +14,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
@@ -41,7 +42,15 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
  * insert so the database remains empty.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@TestPropertySource(properties = {
+    "spring.cloud.azure.profile.tenant-id=test-tenant",
+    "spring.cloud.azure.credential.managed-identity-enabled=false",
+    "spring.cloud.azure.credential.client-id=test-client",
+    "spring.cloud.azure.storage.account-name=test-account",
+    "spring.cloud.azure.storage.blob.connection-string=",
+    "spring.cloud.azure.storage.blob.container-name=test-container"
+})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Import(MigrationRollbackIntegrationTest.StubConfiguration.class)
 @ActiveProfiles("test")

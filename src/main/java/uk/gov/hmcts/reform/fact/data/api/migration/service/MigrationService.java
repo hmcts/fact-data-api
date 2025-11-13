@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.service;
 
+import jakarta.validation.ConstraintViolationException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
@@ -75,6 +77,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.UUID;
 
 /**
@@ -109,6 +112,8 @@ public class MigrationService {
     private final CourtFaxRepository courtFaxRepository;
     private final TransactionTemplate transactionTemplate;
     private final CourtService courtService;
+    private static final Pattern GENERIC_DESCRIPTION_PATTERN =
+        Pattern.compile(ValidationConstants.GENERIC_DESCRIPTION_REGEX);
 
     public MigrationService(
         LegacyFactClient legacyFactClient,
@@ -465,15 +470,27 @@ public class MigrationService {
                 continue;
             }
 
+            String courtName = sanitiseCourtName(dto.name());
+            if (StringUtils.isBlank(courtName)) {
+                LOG.warn("Skipping court {} because sanitised name was blank", dto.slug());
+                continue;
+            }
+
             Court court = Court.builder()
-                .name(dto.name())
+                .name(courtName)
                 .slug(dto.slug())
                 .open(dto.open())
                 .regionId(regionId)
                 .isServiceCentre(dto.isServiceCentre())
                 .build();
 
-            Court savedCourt = courtService.createCourt(court);
+            Court savedCourt;
+            try {
+                savedCourt = courtService.createCourt(court);
+            } catch (ConstraintViolationException ex) {
+                LOG.error("Validation failed while migrating court '{}': {}", dto.name(), ex.getMessage());
+                throw ex;
+            }
             UUID courtId = savedCourt.getId();
             persistCourtServiceAreas(dto.courtServiceAreas(), courtId, context);
             persistCourtAreasOfLaw(dto.courtAreasOfLaw(), courtId, context);
@@ -667,7 +684,7 @@ public class MigrationService {
             .tribunalCode(dto.tribunalCode())
             .countyCourtCode(dto.countyCourtCode())
             .crownCourtCode(dto.crownCourtCode())
-            .gbs(parseInteger(dto.gbs(), "court GBS code"))
+            .gbs(dto.gbs())
             .build();
         courtCodesRepository.save(entity);
     }
@@ -688,9 +705,18 @@ public class MigrationService {
                 LOG.debug("Skipping DX code for court '{}' because both code and explanation are blank", courtId);
                 continue;
             }
+            if (StringUtils.length(dto.dxCode()) > 200) {
+                LOG.warn("Skipping DX code '{}' for court '{}' because it exceeds 200 characters", dto.dxCode(), courtId);
+                continue;
+            }
+            if (StringUtils.isNotBlank(dto.dxCode())
+                && !GENERIC_DESCRIPTION_PATTERN.matcher(dto.dxCode()).matches()) {
+                LOG.warn("Skipping DX code '{}' for court '{}' due to invalid characters", dto.dxCode(), courtId);
+                continue;
+            }
             CourtDxCode entity = CourtDxCode.builder()
                 .courtId(courtId)
-                .dxCode(parseInteger(dto.dxCode(), "court DX code"))
+                .dxCode(dto.dxCode())
                 .explanation(dto.explanation())
                 .build();
             courtDxCodeRepository.save(entity);
@@ -841,5 +867,13 @@ public class MigrationService {
      */
     private static boolean isEmpty(Collection<?> values) {
         return values == null || values.isEmpty();
+    }
+
+    private String sanitiseCourtName(String name) {
+        if (StringUtils.isBlank(name)) {
+            return name;
+        }
+        String cleaned = name.replaceAll("[^A-Za-z0-9 ()':,-]", " ");
+        return cleaned.replaceAll("\\s+", " ").trim();
     }
 }
