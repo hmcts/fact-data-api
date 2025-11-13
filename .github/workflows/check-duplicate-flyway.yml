@@ -40,7 +40,7 @@ jobs:
 
       - name: Comment on PR with duplicates
         if: steps.check.outputs.FAILED == 'true'
-        uses: thollander/actions-comment-pull-request@v3.0.1
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b
         with:
           comment-tag: flyway-duplicate
           mode: upsert
@@ -56,7 +56,7 @@ jobs:
 
       - name: Remove comment on success
         if: steps.check.outputs.FAILED != 'true'
-        uses: thollander/actions-comment-pull-request@v3.0.1
+        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b
         with:
           comment-tag: flyway-duplicate
           mode: delete
