@@ -58,6 +58,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import java.util.List;
 import java.util.Optional;
@@ -121,6 +122,8 @@ class MigrationServiceTest {
     private LegacyCourtMappingRepository legacyCourtMappingRepository;
     @Mock
     private TransactionTemplate transactionTemplate;
+    @Mock
+    private CourtService courtService;
 
     @InjectMocks
     private MigrationService migrationService;
@@ -145,7 +148,7 @@ class MigrationServiceTest {
             return serviceArea;
         });
 
-        lenient().when(courtRepository.save(any(Court.class))).thenAnswer(invocation -> {
+        lenient().when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
             Court court = invocation.getArgument(0);
             court.setId(COURT_ID);
             return court;

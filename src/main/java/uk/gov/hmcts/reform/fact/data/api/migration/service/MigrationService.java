@@ -67,6 +67,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -107,6 +108,7 @@ public class MigrationService {
     private final CourtDxCodeRepository courtDxCodeRepository;
     private final CourtFaxRepository courtFaxRepository;
     private final TransactionTemplate transactionTemplate;
+    private final CourtService courtService;
 
     public MigrationService(
         LegacyFactClient legacyFactClient,
@@ -128,7 +130,8 @@ public class MigrationService {
         CourtCodesRepository courtCodesRepository,
         CourtDxCodeRepository courtDxCodeRepository,
         CourtFaxRepository courtFaxRepository,
-        TransactionTemplate transactionTemplate
+        TransactionTemplate transactionTemplate,
+        CourtService courtService
     ) {
         this.legacyFactClient = legacyFactClient;
         this.regionRepository = regionRepository;
@@ -150,6 +153,7 @@ public class MigrationService {
         this.courtDxCodeRepository = courtDxCodeRepository;
         this.courtFaxRepository = courtFaxRepository;
         this.transactionTemplate = transactionTemplate;
+        this.courtService = courtService;
     }
 
     /**
@@ -469,7 +473,7 @@ public class MigrationService {
                 .isServiceCentre(dto.isServiceCentre())
                 .build();
 
-            Court savedCourt = courtRepository.save(court);
+            Court savedCourt = courtService.createCourt(court);
             UUID courtId = savedCourt.getId();
             persistCourtServiceAreas(dto.courtServiceAreas(), courtId, context);
             persistCourtAreasOfLaw(dto.courtAreasOfLaw(), courtId, context);
