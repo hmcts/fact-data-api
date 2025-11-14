@@ -1,6 +1,10 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
+
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -8,7 +12,8 @@ import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -35,52 +40,50 @@ import org.hibernate.type.SqlTypes;
 @Builder
 @Entity
 @Table(name = "audit")
+@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 public class Audit {
 
     @Schema(
-        description = "The internal ID - assigned by the server during creation",
-        accessMode = Schema.AccessMode.READ_ONLY
+        description = "The internal ID - assigned by the server during creation"
     )
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Schema(description = "The ID of the associated Court", requiredMode = Schema.RequiredMode.REQUIRED)
+    @JsonIgnore
     @NotNull
     @Column(name = "court_id")
     private UUID courtId;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @Schema(description = "The associated Court")
+    @ManyToOne
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
     private Court court;
 
-    @Schema(description = "The ID of the associated User")
+    @JsonIgnore
     @NotNull
     @Column(name = "user_id")
     private UUID userId;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @Schema(description = "The associated User")
+    @ManyToOne
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
 
     @Schema(description = "The action type")
-    private String actionType;
+    @Enumerated(EnumType.STRING)
+    private AuditActionType actionType;
 
-    @Schema(description = "The previous data state")
-    @Type(JsonBinaryType.class)
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private Object actionDataBefore;
+    @Schema(description = "The action entity")
+    private String actionEntity;
 
     @Schema(description = "The new data state")
     @Type(JsonBinaryType.class)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private Object actionDataAfter;
+    private List<Change> actionDataDiff;
 
-    @Schema(description = "The created date/time of the Audit record", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "The created date/time of the Audit record")
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)
     @CreationTimestamp
     @Setter(AccessLevel.NONE)
