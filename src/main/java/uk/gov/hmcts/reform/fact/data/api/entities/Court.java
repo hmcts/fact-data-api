@@ -22,6 +22,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -30,12 +31,13 @@ import org.hibernate.annotations.TimeZoneStorageType;
 import org.hibernate.annotations.UpdateTimestamp;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
 @Table(name = "court")
-public class Court {
+public class Court extends AuditableCourtEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
@@ -105,4 +107,8 @@ public class Court {
     @Schema(description = "The Court's Master Reference Data ID")
     private String mrdId;
 
+    @Override
+    public UUID getCourtId() {
+        return id;
+    }
 }
