@@ -74,7 +74,10 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
 
     private void writeAudit(AuditableCourtEntity entity, AuditActionType auditActionType) {
         if (ensureEntityManager()) {
-            writeAuditRecord(entity, findPreviousEntity(entity), auditActionType);
+            AuditableCourtEntity previousEntity = auditActionType == AuditActionType.INSERT
+                ? null
+                : findPreviousEntity(entity);
+            writeAuditRecord(entity, previousEntity, auditActionType);
         } else {
             log.warn("No entity manager available during an audit operation");
         }

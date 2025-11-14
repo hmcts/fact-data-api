@@ -108,6 +108,7 @@ public class Court extends AuditableCourtEntity {
     private String mrdId;
 
     @Override
+    @JsonIgnore
     public UUID getCourtId() {
         return id;
     }
