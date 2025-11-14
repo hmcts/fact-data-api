@@ -26,12 +26,14 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.migration.client.LegacyFactClient;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyService;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtAreasOfLawDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDto;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDxCodeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtSinglePointOfEntryDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LocalAuthorityTypeDto;
@@ -55,6 +57,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeReposito
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHourTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -100,6 +103,10 @@ class MigrationIntegrationTest {
     private final CourtFaxRepository courtFaxRepository;
     private final LegacyCourtMappingRepository legacyCourtMappingRepository;
     private final LegacyFactClient legacyFactClient;
+    private static final Pattern COURT_NAME_PATTERN =
+        Pattern.compile(ValidationConstants.COURT_NAME_REGEX);
+    private static final Pattern GENERIC_DESCRIPTION_PATTERN =
+        Pattern.compile(ValidationConstants.GENERIC_DESCRIPTION_REGEX);
 
     @Autowired
     MigrationIntegrationTest(
@@ -358,7 +365,7 @@ class MigrationIntegrationTest {
             .map(CourtDto::courtDxCodes)
             .filter(Objects::nonNull)
             .flatMap(List::stream)
-            .filter(dto -> StringUtils.isNotBlank(dto.dxCode()) || StringUtils.isNotBlank(dto.explanation()))
+            .filter(this::isPersistableDxCode)
             .count();
     }
 
@@ -381,7 +388,8 @@ class MigrationIntegrationTest {
     private boolean isMigratableCourt(CourtDto court) {
         return court != null
             && court.regionId() != null
-            && exportedRegionIds.contains(court.regionId());
+            && exportedRegionIds.contains(court.regionId())
+            && isValidCourtName(court.name());
     }
 
     private boolean hasMappedAreaOfLawIds(CourtAreasOfLawDto dto) {
@@ -417,6 +425,33 @@ class MigrationIntegrationTest {
             .map(extractor)
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
+    }
+
+    private boolean isValidCourtName(String name) {
+        String sanitised = sanitiseCourtName(name);
+        return StringUtils.isNotBlank(sanitised) && COURT_NAME_PATTERN.matcher(sanitised).matches();
+    }
+
+    private String sanitiseCourtName(String name) {
+        if (StringUtils.isBlank(name)) {
+            return name;
+        }
+        String cleaned = name.replaceAll("[^A-Za-z&'(),\\- ]", " ");
+        return cleaned.replaceAll("\\s+", " ").trim();
+    }
+
+    private boolean isPersistableDxCode(CourtDxCodeDto dto) {
+        if (dto == null) {
+            return false;
+        }
+        if (StringUtils.isBlank(dto.dxCode()) && StringUtils.isBlank(dto.explanation())) {
+            return false;
+        }
+        if (StringUtils.length(dto.dxCode()) > 200) {
+            return false;
+        }
+        return StringUtils.isBlank(dto.dxCode())
+            || GENERIC_DESCRIPTION_PATTERN.matcher(dto.dxCode()).matches();
     }
 
     private TableCounts captureTableCounts() {

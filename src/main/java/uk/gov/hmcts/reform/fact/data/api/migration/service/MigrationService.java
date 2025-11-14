@@ -114,6 +114,8 @@ public class MigrationService {
     private final CourtService courtService;
     private static final Pattern GENERIC_DESCRIPTION_PATTERN =
         Pattern.compile(ValidationConstants.GENERIC_DESCRIPTION_REGEX);
+    private static final Pattern COURT_NAME_PATTERN =
+        Pattern.compile(ValidationConstants.COURT_NAME_REGEX);
 
     public MigrationService(
         LegacyFactClient legacyFactClient,
@@ -473,6 +475,10 @@ public class MigrationService {
             String courtName = sanitiseCourtName(dto.name());
             if (StringUtils.isBlank(courtName)) {
                 LOG.warn("Skipping court {} because sanitised name was blank", dto.slug());
+                continue;
+            }
+            if (!COURT_NAME_PATTERN.matcher(courtName).matches()) {
+                LOG.warn("Skipping court {} because sanitised name '{}' still fails validation regex", dto.slug(), courtName);
                 continue;
             }
 
@@ -873,7 +879,7 @@ public class MigrationService {
         if (StringUtils.isBlank(name)) {
             return name;
         }
-        String cleaned = name.replaceAll("[^A-Za-z0-9 ()':,-]", " ");
+        String cleaned = name.replaceAll("[^A-Za-z&'(),\\- ]", " ");
         return cleaned.replaceAll("\\s+", " ").trim();
     }
 }
