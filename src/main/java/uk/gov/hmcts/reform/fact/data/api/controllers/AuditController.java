@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
 import uk.gov.hmcts.reform.fact.data.api.services.AuditService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -61,6 +62,11 @@ public class AuditController {
         LocalDate fromDate,
         @Parameter(name = "toDate", description = "'To' date (end of day) for result filtering")
         @RequestParam(name = "toDate", required = false) LocalDate toDate) {
+
+        if (toDate != null && toDate.isBefore(fromDate)) {
+            throw new InvalidDateRangeException("toDate must not be before fromDate");
+        }
+
         return ResponseEntity.ok(
             auditService.getFilteredAndPaginatedAudits(
                 pageNumber,
