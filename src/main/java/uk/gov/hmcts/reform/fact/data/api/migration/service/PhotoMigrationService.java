@@ -66,7 +66,7 @@ public class PhotoMigrationService {
 
         LegacyExportResponse legacyData = legacyFactClient.fetchExport();
 
-        Map<String, UUID> courtIdMap = legacyCourtMappingRepository.findAll().stream()
+        Map<Long, UUID> courtIdMap = legacyCourtMappingRepository.findAll().stream()
             .collect(Collectors.toMap(
                 LegacyCourtMapping::getLegacyCourtId,
                 LegacyCourtMapping::getCourtId
