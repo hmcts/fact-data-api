@@ -26,7 +26,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
-
 /**
  * Entity listener implementation for all {@link AuditableCourtEntity} derived entities.
  */
@@ -79,7 +78,8 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
                 : findPreviousEntity(entity);
             writeAuditRecord(entity, previousEntity, auditActionType);
         } else {
-            log.warn("No entity manager available during an audit operation");
+            log.error("No entity manager available during an audit operation");
+            throw new IllegalStateException("No entity manager available during an audit operation");
         }
     }
 
@@ -91,16 +91,27 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
         // listening to.
 
         AtomicReference<AuditableCourtEntity> previousEntity = new AtomicReference<>();
+        AtomicReference<Exception> exception = new AtomicReference<>();
         try {
             Thread lookupThread = new Thread(() -> {
                 try {
                     previousEntity.set(entityManagerRef.get().find(entity.getClass(), entity.getId()));
                 } catch (Exception e) {
-                    log.warn("Failed to determine previous state for an entity during an audit operation", e);
+                    log.error(
+                        "Unexpected error while looking up previous entity during an audit operation: {}",
+                        e.getMessage()
+                    );
+                    exception.set(e);
                 }
             });
             lookupThread.start();
             lookupThread.join();
+            if (exception.get() != null) {
+                throw new IllegalStateException(
+                    "Unexpected error while looking up previous entity during an audit operation",
+                    exception.get()
+                );
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -113,7 +124,6 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
             .courtId(entity.getCourtId())
             .actionType(operationType)
             .actionEntity(entity.getClass().getSimpleName())
-            // FIXME: figure out why this isn't setting itself
             .createdAt(ZonedDateTime.now())
             .userId(getSSOUserId());
         if (operationType != AuditActionType.DELETE) {
@@ -146,7 +156,7 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
                 }
             });
         } catch (JsonProcessingException e) {
-            log.error("Failed to extract diffs for an entity during auditing", e);
+            log.warn("Failed to extract diffs for an entity during auditing", e);
         }
         return diffs;
     }

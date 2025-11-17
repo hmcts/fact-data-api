@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.audit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -55,19 +56,19 @@ class AuditableCourtEntityListenerTest {
     void shouldNotPersistAuditOnMissingEntityManager() {
         when(applicationContext.getBean(EntityManager.class)).thenReturn(null);
         Court court = createCourt();
-        listener.beforePersist(court);
+        assertThrows(IllegalStateException.class, () -> listener.beforePersist(court));
         verify(entityManager, times(0)).persist(any(Audit.class));
         verify(entityManager, times(0)).find(any(), any());
     }
 
     @Test
-    void shouldPersistAuditEvenIfPreviousStateLookupFails() {
+    void shouldNotPersistAuditIfPreviousStateLookupFails() {
         Court court = createCourt();
 
         when(entityManager.find(Audit.class, court.getId())).thenThrow(new RuntimeException());
 
-        listener.beforeUpdate(court);
-        verify(entityManager, times(1)).persist(any(Audit.class));
+        assertThrows(IllegalStateException.class, () -> listener.beforeUpdate(court));
+        verify(entityManager, times(0)).persist(any(Audit.class));
         verify(entityManager, times(1)).find(Court.class, court.getId());
     }
 
