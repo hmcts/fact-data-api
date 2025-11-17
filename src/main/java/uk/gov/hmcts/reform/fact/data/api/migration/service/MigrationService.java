@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.service;
 
 import jakarta.validation.ConstraintViolationException;
+import java.time.Instant;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,8 @@ import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationAlreadyApp
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyCourtMapping;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyService;
+import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationAudit;
+import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationStatus;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.ContactDescriptionTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDto;
@@ -69,6 +72,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
+import uk.gov.hmcts.reform.fact.data.api.migration.repository.MigrationAuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import java.util.ArrayList;
@@ -79,6 +83,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Coordinates the end-to-end migration workflow. Fetches the legacy payload, maps it into the
@@ -110,12 +115,16 @@ public class MigrationService {
     private final CourtCodesRepository courtCodesRepository;
     private final CourtDxCodeRepository courtDxCodeRepository;
     private final CourtFaxRepository courtFaxRepository;
+    private final MigrationAuditRepository migrationAuditRepository;
     private final TransactionTemplate transactionTemplate;
     private final CourtService courtService;
     private static final Pattern GENERIC_DESCRIPTION_PATTERN =
         Pattern.compile(ValidationConstants.GENERIC_DESCRIPTION_REGEX);
     private static final Pattern COURT_NAME_PATTERN =
         Pattern.compile(ValidationConstants.COURT_NAME_REGEX);
+    private static final String SERVICE_CENTRE_REGION_NAME = "Service Centre";
+    private static final String SERVICE_CENTRE_REGION_COUNTRY = "England";
+    private static final String DATA_MIGRATION_NAME = "legacy-data-migration";
 
     public MigrationService(
         LegacyFactClient legacyFactClient,
@@ -137,6 +146,7 @@ public class MigrationService {
         CourtCodesRepository courtCodesRepository,
         CourtDxCodeRepository courtDxCodeRepository,
         CourtFaxRepository courtFaxRepository,
+        MigrationAuditRepository migrationAuditRepository,
         TransactionTemplate transactionTemplate,
         CourtService courtService
     ) {
@@ -159,6 +169,7 @@ public class MigrationService {
         this.courtCodesRepository = courtCodesRepository;
         this.courtDxCodeRepository = courtDxCodeRepository;
         this.courtFaxRepository = courtFaxRepository;
+        this.migrationAuditRepository = migrationAuditRepository;
         this.transactionTemplate = transactionTemplate;
         this.courtService = courtService;
     }
@@ -172,10 +183,18 @@ public class MigrationService {
     public MigrationSummary migrate() {
         guardAgainstDuplicateExecution();
 
-        final LegacyExportResponse exportResponse = Optional.ofNullable(legacyFactClient.fetchExport())
-            .orElseThrow(() -> new MigrationClientException("Legacy export response was empty"));
+        markMigrationStatus(MigrationStatus.IN_PROGRESS);
+        try {
+            final LegacyExportResponse exportResponse = Optional.ofNullable(legacyFactClient.fetchExport())
+                .orElseThrow(() -> new MigrationClientException("Legacy export response was empty"));
 
-        return transactionTemplate.execute(status -> persistExport(exportResponse));
+            MigrationSummary summary = transactionTemplate.execute(status -> persistExport(exportResponse));
+            markMigrationStatus(MigrationStatus.SUCCESS);
+            return summary;
+        } catch (RuntimeException ex) {
+            markMigrationStatus(MigrationStatus.FAILED);
+            throw ex;
+        }
     }
 
     /**
@@ -187,16 +206,17 @@ public class MigrationService {
     MigrationSummary persistExport(LegacyExportResponse exportResponse) {
         final MigrationContext context = new MigrationContext();
 
-        final int regionsMigrated = persistRegions(exportResponse.regions(), context.regionIds);
-        final int areasOfLawMigrated = persistAreasOfLaw(exportResponse.areaOfLawTypes(), context.areaOfLawIds);
+        mapExistingRegions(exportResponse.regions(), context.regionIds);
+        final int regionsMigrated = 0;
+        final int areasOfLawMigrated = mapExistingAreasOfLaw(exportResponse.areaOfLawTypes(), context.areaOfLawIds);
         final int serviceAreasMigrated = persistServiceAreas(exportResponse.serviceAreas(), context);
         final int servicesMigrated = persistServices(exportResponse.services(), context);
         final int localAuthorityTypesMigrated =
             mapExistingLocalAuthorityTypes(exportResponse.localAuthorityTypes(), context.localAuthorityTypeIds);
         final int contactDescriptionTypesMigrated =
-            persistContactDescriptionTypes(exportResponse.contactDescriptionTypes());
-        final int openingHourTypesMigrated = persistOpeningHourTypes(exportResponse.openingHourTypes());
-        final int courtTypesMigrated = persistCourtTypes(exportResponse.courtTypes());
+            mapExistingContactDescriptions(exportResponse.contactDescriptionTypes());
+        final int openingHourTypesMigrated = mapExistingOpeningHours(exportResponse.openingHourTypes());
+        final int courtTypesMigrated = 0;
         final int courtsMigrated = persistCourts(exportResponse.courts(), context);
 
         MigrationResult result = new MigrationResult(
@@ -216,20 +236,33 @@ public class MigrationService {
         return new MigrationSummary(result);
     }
 
-    /**
-     * Ensures we do not attempt to migrate when the key tables already contain data.
-     *
-     * @throws MigrationAlreadyAppliedException when any of the key tables contain data.
-     */
     private void guardAgainstDuplicateExecution() {
-        long existingCourtCount = courtRepository.count();
-        if (existingCourtCount > 0) {
+        Optional<MigrationAudit> audit = migrationAuditRepository.findByMigrationName(DATA_MIGRATION_NAME);
+        if (audit.isEmpty()) {
+            return;
+        }
+        MigrationStatus status = audit.get().getStatus();
+        if (status == MigrationStatus.SUCCESS) {
             throw new MigrationAlreadyAppliedException(
-                "Legacy data migration aborted: "
-                    + "one or more courts already exist in the target database. "
-                    + "Please verify the data and clear the COURT table before retrying."
+                "Legacy data migration has already been applied successfully. "
+                    + "If you need to rerun it, reset the migration audit record first."
             );
         }
+        if (status == MigrationStatus.IN_PROGRESS) {
+            throw new MigrationAlreadyAppliedException(
+                "Legacy data migration is already running. Please wait for it to finish."
+            );
+        }
+    }
+
+    private void markMigrationStatus(MigrationStatus status) {
+        MigrationAudit audit = migrationAuditRepository.findByMigrationName(DATA_MIGRATION_NAME)
+            .orElseGet(() -> MigrationAudit.builder()
+                .migrationName(DATA_MIGRATION_NAME)
+                .build());
+        audit.setStatus(status);
+        audit.setUpdatedAt(Instant.now());
+        migrationAuditRepository.save(audit);
     }
 
     /**
@@ -238,22 +271,21 @@ public class MigrationService {
      *
      * @param regions   regions supplied by the legacy export.
      * @param regionIds map used to store the legacy-to-new identifier mapping.
-     * @return the number of region records migrated.
      */
-    private int persistRegions(List<RegionDto> regions, Map<Integer, UUID> regionIds) {
+    private void mapExistingRegions(List<RegionDto> regions, Map<Integer, UUID> regionIds) {
         if (isEmpty(regions)) {
-            return 0;
+            return;
         }
 
         for (RegionDto regionDto : regions) {
-            Region region = Region.builder()
-                .name(regionDto.name())
-                .country(regionDto.country())
-                .build();
-            Region saved = regionRepository.save(region);
-            regionIds.put(regionDto.id(), saved.getId());
+            Region region = regionRepository.findByNameAndCountry(regionDto.name(), regionDto.country())
+                .orElseThrow(() -> new MigrationClientException(
+                    "Region '%s' (%s) was not found in the target database".formatted(
+                        regionDto.name(), regionDto.country()
+                    )
+                ));
+            regionIds.put(regionDto.id(), region.getId());
         }
-        return regions.size();
     }
 
     /**
@@ -263,7 +295,7 @@ public class MigrationService {
      * @param ids            map used to store the converted identifiers.
      * @return the number of area-of-law records migrated.
      */
-    private int persistAreasOfLaw(
+    private int mapExistingAreasOfLaw(
         List<AreaOfLawTypeDto> areaOfLawTypes,
         Map<Integer, UUID> ids
     ) {
@@ -272,14 +304,13 @@ public class MigrationService {
         }
 
         for (AreaOfLawTypeDto dto : areaOfLawTypes) {
-            AreaOfLawType entity = AreaOfLawType.builder()
-                .name(dto.name())
-                .nameCy(dto.nameCy())
-                .build();
-            AreaOfLawType saved = areaOfLawTypeRepository.save(entity);
-            ids.put(dto.id(), saved.getId());
+            AreaOfLawType entity = areaOfLawTypeRepository.findByNameIgnoreCase(dto.name())
+                .orElseThrow(() -> new MigrationClientException(
+                    "Area of law '%s' was not found in the target database".formatted(dto.name())
+                ));
+            ids.put(dto.id(), entity.getId());
         }
-        return areaOfLawTypes.size();
+        return 0;
     }
 
     /**
@@ -396,19 +427,23 @@ public class MigrationService {
      * @param dtos legacy contact description types.
      * @return the number of records migrated.
      */
-    private int persistContactDescriptionTypes(List<ContactDescriptionTypeDto> dtos) {
+    private int mapExistingContactDescriptions(List<ContactDescriptionTypeDto> dtos) {
         if (isEmpty(dtos)) {
             return 0;
         }
 
+        Map<String, ContactDescriptionType> existing = contactDescriptionTypeRepository.findAll().stream()
+            .collect(Collectors.toMap(ContactDescriptionType::getName, type -> type, (left, right) -> left));
+
         for (ContactDescriptionTypeDto dto : dtos) {
-            ContactDescriptionType entity = ContactDescriptionType.builder()
-                .name(dto.name())
-                .nameCy(dto.nameCy())
-                .build();
-            contactDescriptionTypeRepository.save(entity);
+            ContactDescriptionType entity = existing.get(dto.name());
+            if (entity == null) {
+                LOG.warn("Contact description '{}' was not found in the target database", dto.name());
+                continue;
+            }
+            // no id mapping needed; nothing else references these in migration
         }
-        return dtos.size();
+        return 0;
     }
 
     /**
@@ -417,19 +452,20 @@ public class MigrationService {
      * @param dtos legacy opening hour types.
      * @return the number of records migrated.
      */
-    private int persistOpeningHourTypes(List<OpeningHourTypeDto> dtos) {
+    private int mapExistingOpeningHours(List<OpeningHourTypeDto> dtos) {
         if (isEmpty(dtos)) {
             return 0;
         }
 
+        Map<String, OpeningHourType> existing = openingHourTypeRepository.findAll().stream()
+            .collect(Collectors.toMap(OpeningHourType::getName, type -> type, (left, right) -> left));
+
         for (OpeningHourTypeDto dto : dtos) {
-            OpeningHourType entity = OpeningHourType.builder()
-                .name(dto.name())
-                .nameCy(dto.nameCy())
-                .build();
-            openingHourTypeRepository.save(entity);
+            if (!existing.containsKey(dto.name())) {
+                LOG.warn("Opening hour type '{}' was not found in the target database", dto.name());
+            }
         }
-        return dtos.size();
+        return 0;
     }
 
     /**
@@ -438,18 +474,20 @@ public class MigrationService {
      * @param dtos legacy court types.
      * @return the number of records migrated.
      */
-    private int persistCourtTypes(List<CourtTypeDto> dtos) {
+    private int mapExistingCourtTypes(List<CourtTypeDto> dtos) {
         if (isEmpty(dtos)) {
             return 0;
         }
 
+        Map<String, CourtType> existing = courtTypeRepository.findAll().stream()
+            .collect(Collectors.toMap(CourtType::getName, type -> type, (left, right) -> left));
+
         for (CourtTypeDto dto : dtos) {
-            CourtType entity = CourtType.builder()
-                .name(dto.name())
-                .build();
-            courtTypeRepository.save(entity);
+            if (!existing.containsKey(dto.name())) {
+                LOG.warn("Court type '{}' was not found in the target database", dto.name());
+            }
         }
-        return dtos.size();
+        return 0;
     }
 
     /**
@@ -466,7 +504,7 @@ public class MigrationService {
 
         int total = 0;
         for (CourtDto dto : courts) {
-            UUID regionId = context.regionIds.get(dto.regionId());
+            UUID regionId = resolveRegionId(dto, context);
             if (regionId == null) {
                 LOG.warn("Skipping court {} because region {} was not migrated", dto.slug(), dto.regionId());
                 continue;
@@ -478,7 +516,11 @@ public class MigrationService {
                 continue;
             }
             if (!COURT_NAME_PATTERN.matcher(courtName).matches()) {
-                LOG.warn("Skipping court {} because sanitised name '{}' still fails validation regex", dto.slug(), courtName);
+                LOG.warn(
+                    "Skipping court {} because sanitised name '{}' still fails validation regex",
+                    dto.slug(),
+                    courtName
+                );
                 continue;
             }
 
@@ -510,6 +552,40 @@ public class MigrationService {
             total++;
         }
         return total;
+    }
+
+    private UUID resolveRegionId(CourtDto dto, MigrationContext context) {
+        UUID regionId = dto.regionId() == null ? null : context.regionIds.get(dto.regionId());
+        if (regionId != null) {
+            return regionId;
+        }
+        if (!Boolean.TRUE.equals(dto.isServiceCentre())) {
+            return null;
+        }
+        UUID fallback = context.serviceCentreRegionId;
+        if (fallback == null) {
+            fallback = loadServiceCentreRegionId();
+            context.serviceCentreRegionId = fallback;
+            if (fallback == null) {
+                LOG.warn(
+                    "Unable to assign region for service centre '{}' because the fallback region was not found",
+                    dto.slug()
+                );
+                return null;
+            }
+        }
+        LOG.info(
+            "Assigned '{}' region to service centre '{}'",
+            SERVICE_CENTRE_REGION_NAME,
+            dto.slug()
+        );
+        return fallback;
+    }
+
+    private UUID loadServiceCentreRegionId() {
+        return regionRepository.findByNameAndCountry(SERVICE_CENTRE_REGION_NAME, SERVICE_CENTRE_REGION_COUNTRY)
+            .map(Region::getId)
+            .orElse(null);
     }
 
     /**
@@ -708,16 +784,27 @@ public class MigrationService {
 
         for (CourtDxCodeDto dto : dtos) {
             if (StringUtils.isBlank(dto.dxCode()) && StringUtils.isBlank(dto.explanation())) {
-                LOG.debug("Skipping DX code for court '{}' because both code and explanation are blank", courtId);
+                LOG.debug(
+                    "Skipping DX code for court '{}' because both code and explanation are blank",
+                    courtId
+                );
                 continue;
             }
             if (StringUtils.length(dto.dxCode()) > 200) {
-                LOG.warn("Skipping DX code '{}' for court '{}' because it exceeds 200 characters", dto.dxCode(), courtId);
+                LOG.warn(
+                    "Skipping DX code '{}' for court '{}' because it exceeds 200 characters",
+                    dto.dxCode(),
+                    courtId
+                );
                 continue;
             }
             if (StringUtils.isNotBlank(dto.dxCode())
                 && !GENERIC_DESCRIPTION_PATTERN.matcher(dto.dxCode()).matches()) {
-                LOG.warn("Skipping DX code '{}' for court '{}' due to invalid characters", dto.dxCode(), courtId);
+                LOG.warn(
+                    "Skipping DX code '{}' for court '{}' due to invalid characters",
+                    dto.dxCode(),
+                    courtId
+                );
                 continue;
             }
             CourtDxCode entity = CourtDxCode.builder()
@@ -860,6 +947,7 @@ public class MigrationService {
         private final Map<Integer, UUID> areaOfLawIds = new HashMap<>();
         private final Map<Integer, UUID> serviceAreaIds = new HashMap<>();
         private final Map<Integer, UUID> localAuthorityTypeIds = new HashMap<>();
+        private UUID serviceCentreRegionId;
         private int courtLocalAuthoritiesMigrated;
         private int courtProfessionalInformationMigrated;
     }

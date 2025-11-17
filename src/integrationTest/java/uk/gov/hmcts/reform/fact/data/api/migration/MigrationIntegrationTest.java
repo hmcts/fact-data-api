@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.migration;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -25,10 +26,11 @@ import org.springframework.test.context.TestPropertySource;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
-import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.migration.client.LegacyFactClient;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyService;
+import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationAudit;
+import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationStatus;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtAreasOfLawDto;
@@ -42,6 +44,7 @@ import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.RegionDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
+import uk.gov.hmcts.reform.fact.data.api.migration.repository.MigrationAuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
@@ -77,7 +80,7 @@ import static org.assertj.core.api.Assertions.assertThat;
     "spring.cloud.azure.storage.blob.container-name=test-container"
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
 class MigrationIntegrationTest {
 
@@ -89,6 +92,7 @@ class MigrationIntegrationTest {
     private final LegacyServiceRepository legacyServiceRepository;
     private final ServiceAreaRepository serviceAreaRepository;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
+    private final MigrationAuditRepository migrationAuditRepository;
     private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
     private final OpeningHourTypeRepository openingHourTypeRepository;
     private final CourtTypeRepository courtTypeRepository;
@@ -128,6 +132,7 @@ class MigrationIntegrationTest {
         CourtDxCodeRepository courtDxCodeRepository,
         CourtFaxRepository courtFaxRepository,
         LegacyCourtMappingRepository legacyCourtMappingRepository,
+        MigrationAuditRepository migrationAuditRepository,
         LegacyFactClient legacyFactClient
     ) {
         this.restTemplate = restTemplate;
@@ -148,6 +153,7 @@ class MigrationIntegrationTest {
         this.courtDxCodeRepository = courtDxCodeRepository;
         this.courtFaxRepository = courtFaxRepository;
         this.legacyCourtMappingRepository = legacyCourtMappingRepository;
+        this.migrationAuditRepository = migrationAuditRepository;
         this.legacyFactClient = legacyFactClient;
     }
 
@@ -188,6 +194,7 @@ class MigrationIntegrationTest {
 
     @BeforeEach
     void insertReferenceDataBeforeTest() {
+        migrationAuditRepository.deleteAll();
         if (legacySnapshot == null || legacySnapshot.localAuthorityTypes() == null) {
             return;
         }
@@ -236,26 +243,25 @@ class MigrationIntegrationTest {
         long expectedCourtCodes = countCourtCodes();
 
         assertThat(body.result().courtsMigrated()).isEqualTo(expectedCourts);
-        assertThat(body.result().regionsMigrated()).isEqualTo(expectedRegions);
+        assertThat(body.result().regionsMigrated()).isZero();
         assertThat(body.result().areaOfLawTypesMigrated()).isEqualTo(expectedAreasOfLaw);
         assertThat(body.result().serviceAreasMigrated()).isEqualTo(expectedServiceAreas);
         assertThat(body.result().servicesMigrated()).isEqualTo(expectedServices);
         assertThat(body.result().localAuthorityTypesMigrated()).isEqualTo(expectedLocalAuthorityTypes);
         assertThat(body.result().contactDescriptionTypesMigrated()).isEqualTo(expectedContactDescriptionTypes);
         assertThat(body.result().openingHourTypesMigrated()).isEqualTo(expectedOpeningHourTypes);
-        assertThat(body.result().courtTypesMigrated()).isEqualTo(expectedCourtTypes);
+        assertThat(body.result().courtTypesMigrated()).isZero();
         assertThat(body.result().courtLocalAuthoritiesMigrated()).isEqualTo(expectedCourtLocalAuthorities);
         assertThat(body.result().courtProfessionalInformationMigrated())
             .isEqualTo(expectedCourtProfessionalInformation);
 
-        assertThat(regionRepository.count()).isEqualTo(before.regions() + expectedRegions);
         assertThat(legacyServiceRepository.count()).isEqualTo(before.services() + expectedServices);
         assertThat(serviceAreaRepository.count()).isEqualTo(before.serviceAreas() + expectedServiceAreas);
         assertThat(localAuthorityTypeRepository.count()).isEqualTo(before.localAuthorityTypes());
         assertThat(contactDescriptionTypeRepository.count())
             .isEqualTo(before.contactDescriptionTypes() + expectedContactDescriptionTypes);
         assertThat(openingHourTypeRepository.count()).isEqualTo(before.openingHourTypes() + expectedOpeningHourTypes);
-        assertThat(courtTypeRepository.count()).isEqualTo(before.courtTypes() + expectedCourtTypes);
+        // Reference tables (regions, court types, etc.) are populated via Flyway and not reasserted here.
         assertThat(courtRepository.count()).isEqualTo(before.courts() + expectedCourts);
         assertThat(courtServiceAreasRepository.count())
             .isEqualTo(before.courtServiceAreas() + expectedCourtServiceAreas);
@@ -281,20 +287,11 @@ class MigrationIntegrationTest {
     @Test
     void shouldNotInvokeLegacyEndpointWhenDataAlreadyPresent() {
         Assumptions.assumeTrue(legacySnapshot != null, "Legacy FaCT export endpoint is unavailable");
-        // Seed data so the migration guard recognises that it has already been executed.
-        Region region = regionRepository.save(
-            Region.builder()
-                .name("Existing Region")
-                .country("England")
-                .build()
-        );
-        courtRepository.save(
-            Court.builder()
-                .name("Existing Court")
-                .slug("existing-court")
-                .open(true)
-                .regionId(region.getId())
-                .isServiceCentre(false)
+        migrationAuditRepository.save(
+            MigrationAudit.builder()
+                .migrationName("legacy-data-migration")
+                .status(MigrationStatus.SUCCESS)
+                .updatedAt(Instant.now())
                 .build()
         );
 
@@ -386,10 +383,13 @@ class MigrationIntegrationTest {
     }
 
     private boolean isMigratableCourt(CourtDto court) {
-        return court != null
-            && court.regionId() != null
-            && exportedRegionIds.contains(court.regionId())
-            && isValidCourtName(court.name());
+        if (court == null || !isValidCourtName(court.name())) {
+            return false;
+        }
+        if (Boolean.TRUE.equals(court.isServiceCentre())) {
+            return true;
+        }
+        return court.regionId() != null && exportedRegionIds.contains(court.regionId());
     }
 
     private boolean hasMappedAreaOfLawIds(CourtAreasOfLawDto dto) {

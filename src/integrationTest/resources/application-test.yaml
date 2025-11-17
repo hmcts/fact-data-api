@@ -5,7 +5,3 @@ spring:
 
 migration:
   source-base-url: ${FACT_MIGRATION_SOURCE_BASE_URL:http://localhost:8080}
-
-logging:
-  level:
-    uk.gov.hmcts.reform.fact.data.api.migration: DEBUG
