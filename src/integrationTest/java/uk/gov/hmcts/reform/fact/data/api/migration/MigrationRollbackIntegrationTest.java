@@ -118,7 +118,7 @@ class MigrationRollbackIntegrationTest {
         LegacyFactClient failingLegacyFactClient() {
             LegacyExportResponse response = new LegacyExportResponse(
                 List.of(new CourtDto(
-                    "legacy-court",
+                    123L,
                     "Court",
                     "court",
                     true,

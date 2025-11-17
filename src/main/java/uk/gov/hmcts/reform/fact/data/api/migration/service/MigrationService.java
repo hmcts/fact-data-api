@@ -207,30 +207,24 @@ public class MigrationService {
         final MigrationContext context = new MigrationContext();
 
         mapExistingRegions(exportResponse.regions(), context.regionIds);
-        final int regionsMigrated = 0;
-        final int areasOfLawMigrated = mapExistingAreasOfLaw(exportResponse.areaOfLawTypes(), context.areaOfLawIds);
-        final int serviceAreasMigrated = persistServiceAreas(exportResponse.serviceAreas(), context);
-        final int servicesMigrated = persistServices(exportResponse.services(), context);
-        final int localAuthorityTypesMigrated =
-            mapExistingLocalAuthorityTypes(exportResponse.localAuthorityTypes(), context.localAuthorityTypeIds);
-        final int contactDescriptionTypesMigrated =
-            mapExistingContactDescriptions(exportResponse.contactDescriptionTypes());
-        final int openingHourTypesMigrated = mapExistingOpeningHours(exportResponse.openingHourTypes());
-        final int courtTypesMigrated = 0;
+        mapExistingAreasOfLaw(exportResponse.areaOfLawTypes(), context.areaOfLawIds);
+        persistServiceAreas(exportResponse.serviceAreas(), context);
+        persistServices(exportResponse.services(), context);
+        mapExistingLocalAuthorityTypes(exportResponse.localAuthorityTypes(), context.localAuthorityTypeIds);
+        mapExistingContactDescriptions(exportResponse.contactDescriptionTypes());
+        mapExistingOpeningHours(exportResponse.openingHourTypes());
         final int courtsMigrated = persistCourts(exportResponse.courts(), context);
 
         MigrationResult result = new MigrationResult(
             courtsMigrated,
-            regionsMigrated,
-            areasOfLawMigrated,
-            serviceAreasMigrated,
-            servicesMigrated,
-            localAuthorityTypesMigrated,
-            contactDescriptionTypesMigrated,
-            openingHourTypesMigrated,
-            courtTypesMigrated,
+            context.courtAreasOfLawMigrated,
+            context.courtServiceAreasMigrated,
             context.courtLocalAuthoritiesMigrated,
-            context.courtProfessionalInformationMigrated
+            context.courtSinglePointsOfEntryMigrated,
+            context.courtProfessionalInformationMigrated,
+            context.courtCodesMigrated,
+            context.courtDxCodesMigrated,
+            context.courtFaxMigrated
         );
 
         return new MigrationSummary(result);
@@ -326,39 +320,17 @@ public class MigrationService {
             return 0;
         }
 
+        int mapped = 0;
         for (ServiceAreaDto dto : serviceAreas) {
-            if (dto.areaOfLawId() == null) {
-                LOG.warn("Skipping service area {} because area_of_law_id is missing", dto.id());
+            Optional<ServiceArea> existing = serviceAreaRepository.findByNameIgnoreCase(dto.name());
+            if (existing.isEmpty()) {
+                LOG.warn("Service area '{}' was not found in the target database", dto.name());
                 continue;
             }
-            UUID areaOfLawId = context.areaOfLawIds.get(dto.areaOfLawId());
-            if (areaOfLawId == null) {
-                LOG.warn(
-                    "Skipping service area {} because area of law {} was not migrated",
-                    dto.id(),
-                    dto.areaOfLawId()
-                );
-                continue;
-            }
-
-            ServiceArea entity = ServiceArea.builder()
-                .name(dto.name())
-                .nameCy(dto.nameCy())
-                .description(dto.description())
-                .descriptionCy(dto.descriptionCy())
-                .onlineUrl(dto.onlineUrl())
-                .onlineText(dto.onlineText())
-                .onlineTextCy(dto.onlineTextCy())
-                .text(dto.text())
-                .textCy(dto.textCy())
-                .catchmentMethod(parseCatchmentMethod(dto.catchmentMethod()))
-                .areaOfLawId(areaOfLawId)
-                .type(parseServiceAreaType(dto.type()))
-                .build();
-            ServiceArea saved = serviceAreaRepository.save(entity);
-            context.serviceAreaIds.put(dto.id(), saved.getId());
+            context.serviceAreaIds.put(dto.id(), existing.get().getId());
+            mapped++;
         }
-        return serviceAreas.size();
+        return mapped;
     }
 
     /**
@@ -373,18 +345,20 @@ public class MigrationService {
             return 0;
         }
 
+        int processed = 0;
         for (ServiceDto dto : services) {
             List<UUID> serviceAreaIds = mapIds(dto.serviceAreaIds(), context.serviceAreaIds, "service area");
-            LegacyService entity = LegacyService.builder()
-                .name(dto.name())
-                .nameCy(dto.nameCy())
-                .description(dto.description())
-                .descriptionCy(dto.descriptionCy())
-                .serviceAreas(serviceAreaIds)
-                .build();
+            LegacyService entity = legacyServiceRepository.findByName(dto.name())
+                .orElseGet(LegacyService::new);
+            entity.setName(dto.name());
+            entity.setNameCy(dto.nameCy());
+            entity.setDescription(dto.description());
+            entity.setDescriptionCy(dto.descriptionCy());
+            entity.setServiceAreas(serviceAreaIds);
             legacyServiceRepository.save(entity);
+            processed++;
         }
-        return services.size();
+        return processed;
     }
 
     /**
@@ -545,9 +519,9 @@ public class MigrationService {
             persistCourtSinglePointsOfEntry(dto.courtSinglePointsOfEntry(), courtId, context);
             persistCourtLocalAuthorities(dto.courtLocalAuthorities(), courtId, context);
             persistCourtProfessionalInformation(dto.courtProfessionalInformation(), courtId, context);
-            persistCourtCodes(dto.courtCodes(), courtId);
-            persistCourtDxCodes(dto.courtDxCodes(), courtId);
-            persistCourtFax(dto.courtFax(), courtId);
+            persistCourtCodes(dto.courtCodes(), courtId, context);
+            persistCourtDxCodes(dto.courtDxCodes(), courtId, context);
+            persistCourtFax(dto.courtFax(), courtId, context);
             persistLegacyCourtMapping(dto.id(), courtId);
             total++;
         }
@@ -611,6 +585,7 @@ public class MigrationService {
                 .catchmentType(parseCatchmentType(dto.catchmentType()))
                 .build();
             courtServiceAreasRepository.save(entity);
+            context.courtServiceAreasMigrated++;
         }
     }
 
@@ -635,6 +610,7 @@ public class MigrationService {
             .areasOfLaw(mapIds(dto.areaOfLawIds(), context.areaOfLawIds, "court areas of law"))
             .build();
         courtAreasOfLawRepository.save(entity);
+        context.courtAreasOfLawMigrated++;
     }
 
     /**
@@ -658,6 +634,7 @@ public class MigrationService {
             .areasOfLaw(mapIds(dto.areaOfLawIds(), context.areaOfLawIds, "court single point of entry"))
             .build();
         courtSinglePointsOfEntryRepository.save(entity);
+        context.courtSinglePointsOfEntryMigrated++;
     }
 
     private void persistCourtLocalAuthorities(
@@ -736,8 +713,8 @@ public class MigrationService {
         context.courtProfessionalInformationMigrated++;
     }
 
-    private void persistLegacyCourtMapping(String legacyCourtId, UUID courtId) {
-        if (StringUtils.isBlank(legacyCourtId)) {
+    private void persistLegacyCourtMapping(Long legacyCourtId, UUID courtId) {
+        if (legacyCourtId == null) {
             return;
         }
         legacyCourtMappingRepository.save(
@@ -754,7 +731,7 @@ public class MigrationService {
      * @param dto     legacy code payload.
      * @param courtId identifier of the court that was just migrated.
      */
-    private void persistCourtCodes(CourtCodesDto dto, UUID courtId) {
+    private void persistCourtCodes(CourtCodesDto dto, UUID courtId, MigrationContext context) {
         if (dto == null) {
             return;
         }
@@ -769,6 +746,7 @@ public class MigrationService {
             .gbs(dto.gbs())
             .build();
         courtCodesRepository.save(entity);
+        context.courtCodesMigrated++;
     }
 
     /**
@@ -777,7 +755,7 @@ public class MigrationService {
      * @param dtos    legacy DX code payload.
      * @param courtId identifier of the court that was just migrated.
      */
-    private void persistCourtDxCodes(List<CourtDxCodeDto> dtos, UUID courtId) {
+    private void persistCourtDxCodes(List<CourtDxCodeDto> dtos, UUID courtId, MigrationContext context) {
         if (isEmpty(dtos)) {
             return;
         }
@@ -813,6 +791,7 @@ public class MigrationService {
                 .explanation(dto.explanation())
                 .build();
             courtDxCodeRepository.save(entity);
+            context.courtDxCodesMigrated++;
         }
     }
 
@@ -822,7 +801,7 @@ public class MigrationService {
      * @param dtos    legacy fax payload.
      * @param courtId identifier of the court that was just migrated.
      */
-    private void persistCourtFax(List<CourtFaxDto> dtos, UUID courtId) {
+    private void persistCourtFax(List<CourtFaxDto> dtos, UUID courtId, MigrationContext context) {
         if (isEmpty(dtos)) {
             return;
         }
@@ -836,6 +815,7 @@ public class MigrationService {
                 .faxNumber(dto.faxNumber())
                 .build();
             courtFaxRepository.save(entity);
+            context.courtFaxMigrated++;
         }
     }
 
@@ -948,8 +928,14 @@ public class MigrationService {
         private final Map<Integer, UUID> serviceAreaIds = new HashMap<>();
         private final Map<Integer, UUID> localAuthorityTypeIds = new HashMap<>();
         private UUID serviceCentreRegionId;
+        private int courtAreasOfLawMigrated;
+        private int courtServiceAreasMigrated;
         private int courtLocalAuthoritiesMigrated;
+        private int courtSinglePointsOfEntryMigrated;
         private int courtProfessionalInformationMigrated;
+        private int courtCodesMigrated;
+        private int courtDxCodesMigrated;
+        private int courtFaxMigrated;
     }
 
     /**

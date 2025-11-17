@@ -38,7 +38,7 @@ public class LegacyCourtMapping {
     private UUID courtId;
 
     @Column(name = "legacy_court_id", nullable = false)
-    private String legacyCourtId;
+    private Long legacyCourtId;
 
     @CreationTimestamp
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)

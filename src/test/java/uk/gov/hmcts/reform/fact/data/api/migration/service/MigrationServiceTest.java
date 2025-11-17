@@ -16,6 +16,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
@@ -170,11 +171,12 @@ class MigrationServiceTest {
                 .build());
         });
 
-        lenient().when(serviceAreaRepository.save(any(ServiceArea.class))).thenAnswer(invocation -> {
-            ServiceArea serviceArea = invocation.getArgument(0);
+        lenient().when(serviceAreaRepository.findByNameIgnoreCase(anyString())).thenAnswer(invocation -> {
+            ServiceArea serviceArea = new ServiceArea();
             serviceArea.setId(SERVICE_AREA_ID);
-            return serviceArea;
+            return Optional.of(serviceArea);
         });
+        lenient().when(legacyServiceRepository.findByName(anyString())).thenReturn(Optional.empty());
 
         lenient().when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
             Court court = invocation.getArgument(0);
@@ -252,18 +254,15 @@ class MigrationServiceTest {
         MigrationResult result = summary.result();
 
         assertThat(result.courtsMigrated()).isEqualTo(1);
-        assertThat(result.regionsMigrated()).isZero();
-        assertThat(result.areaOfLawTypesMigrated()).isZero();
-        assertThat(result.serviceAreasMigrated()).isEqualTo(1);
-        assertThat(result.servicesMigrated()).isEqualTo(1);
-        assertThat(result.localAuthorityTypesMigrated()).isEqualTo(1);
-        assertThat(result.contactDescriptionTypesMigrated()).isZero();
-        assertThat(result.openingHourTypesMigrated()).isZero();
-        assertThat(result.courtTypesMigrated()).isZero();
+        assertThat(result.courtAreasOfLawMigrated()).isEqualTo(1);
+        assertThat(result.courtServiceAreasMigrated()).isEqualTo(1);
         assertThat(result.courtLocalAuthoritiesMigrated()).isEqualTo(1);
+        assertThat(result.courtSinglePointsOfEntryMigrated()).isEqualTo(1);
         assertThat(result.courtProfessionalInformationMigrated()).isEqualTo(1);
+        assertThat(result.courtCodesMigrated()).isEqualTo(1);
+        assertThat(result.courtDxCodesMigrated()).isEqualTo(1);
+        assertThat(result.courtFaxMigrated()).isEqualTo(1);
 
-        verify(serviceAreaRepository).save(any(ServiceArea.class));
         verify(legacyServiceRepository).save(any(LegacyService.class));
         verify(courtServiceAreasRepository).save(any());
         verify(courtAreasOfLawRepository).save(any());
@@ -307,7 +306,7 @@ class MigrationServiceTest {
     @Test
     void shouldAssignFallbackRegionToServiceCentresWithoutRegion() {
         CourtDto serviceCentre = new CourtDto(
-            "service-centre",
+            999L,
             "Service Centre Court",
             "service-centre-court",
             true,
@@ -351,7 +350,7 @@ class MigrationServiceTest {
 
     private CourtDto courtDto() {
         return new CourtDto(
-            "legacy-court-id",
+            1L,
             "Example Court",
             "example-court",
             true,
@@ -400,7 +399,7 @@ class MigrationServiceTest {
 
     private CourtDto courtDtoWithEmptyDxCode() {
         return new CourtDto(
-            "legacy-court-id",
+            2L,
             "Example Court",
             "example-court",
             true,
