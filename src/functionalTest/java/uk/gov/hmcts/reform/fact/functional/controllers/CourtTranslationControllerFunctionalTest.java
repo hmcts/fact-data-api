@@ -1,128 +1,215 @@
 package uk.gov.hmcts.reform.fact.functional.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.qameta.allure.Feature;
 import io.restassured.response.Response;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import uk.gov.hmcts.reform.fact.functional.config.TestConfig;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
+import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.OK;
 
+@Feature("Court Translation Controller")
+@DisplayName("Court Translation Controller")
 public final class CourtTranslationControllerFunctionalTest {
 
-    private static final UUID COURT_WITH_TRANSLATION = UUID.fromString("550e8400-e29b-41d4-a716-446655440001");
-    private static final UUID COURT_WITHOUT_TRANSLATION = UUID.fromString("550e8400-e29b-41d4-a716-446655440002");
-    //private static final UUID NON_EXISTENT_COURT = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    private static final UUID VALID_JSON_UUID = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
-    private static final String INVALID_UUID = "invalid-uuid";
+    private static final HttpClient http = new HttpClient();
+    private static final ObjectMapper mapper = new ObjectMapper()
+        .registerModule(new JavaTimeModule())
+        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-    private static HttpClient http;
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/translation-services with email and phone")
+    void shouldCreateTranslationWithEmailAndPhone() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Full");
 
-    @BeforeAll
-    static void setUp() {
-        final var config = TestConfig.load();
-        http = new HttpClient(config);
+        final CourtTranslation translation = new CourtTranslation();
+        translation.setCourtId(courtId);
+        translation.setEmail("translation@court.gov.uk");
+        translation.setPhoneNumber("01234567890");
+
+        final Response postResponse = http.doPost("/courts/" + courtId + "/v1/translation-services", translation);
+        assertThat(postResponse.statusCode()).isEqualTo(CREATED.value());
+
+        final CourtTranslation createdTranslation = mapper.readValue(postResponse.asString(), CourtTranslation.class);
+        assertThat(createdTranslation.getId()).isNotNull();
+        assertThat(createdTranslation.getCourtId()).isEqualTo(courtId);
+        assertThat(createdTranslation.getEmail()).isEqualTo("translation@court.gov.uk");
+        assertThat(createdTranslation.getPhoneNumber()).isEqualTo("01234567890");
+
+        final Response getResponse = http.doGet("/courts/" + courtId + "/v1/translation-services");
+        assertThat(getResponse.statusCode()).isEqualTo(OK.value());
+
+        final CourtTranslation retrievedTranslation = mapper.readValue(getResponse.asString(), CourtTranslation.class);
+        assertThat(retrievedTranslation.getId()).isEqualTo(createdTranslation.getId());
+        assertThat(retrievedTranslation.getCourtId()).isEqualTo(courtId);
+        assertThat(retrievedTranslation.getEmail()).isEqualTo("translation@court.gov.uk");
+        assertThat(retrievedTranslation.getPhoneNumber()).isEqualTo("01234567890");
     }
 
     @Test
-    void shouldUpdateTranslationServices() {
-        String translationJson = """
-            {
-                "courtId": "%s",
-                "email": "updated@court.com",
-                "phoneNumber": "01234567890"
-            }
-            """.formatted(VALID_JSON_UUID);
+    @DisplayName("POST /courts/{courtId}/v1/translation-services updates existing translation service")
+    void shouldUpdateExistingTranslation() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Update");
 
-        Response postResponse = http.doPost(
-            "/courts/" + COURT_WITH_TRANSLATION + "/v1/translation-services",
-            translationJson
-        );
+        final CourtTranslation initialTranslation = new CourtTranslation();
+        initialTranslation.setCourtId(courtId);
+        initialTranslation.setEmail("initial@court.gov.uk");
+        initialTranslation.setPhoneNumber("01111111111");
 
-        assertThat(postResponse.statusCode()).isEqualTo(201);
-        assertThat(postResponse.jsonPath().getString("email")).isEqualTo("updated@court.com");
-        assertThat(postResponse.jsonPath().getString("phoneNumber")).isEqualTo("01234567890");
+        final Response createResponse = http.doPost("/courts/"
+                                                        + courtId + "/v1/translation-services", initialTranslation);
+        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
+
+        final CourtTranslation createdTranslation = mapper.readValue(createResponse.asString(), CourtTranslation.class);
+        final UUID translationId = createdTranslation.getId();
+
+        final CourtTranslation updatedTranslation = new CourtTranslation();
+        updatedTranslation.setCourtId(courtId);
+        updatedTranslation.setEmail("updated@court.gov.uk");
+        updatedTranslation.setPhoneNumber("02222222222");
+
+        final Response updateResponse = http.doPost("/courts/"
+                                                        + courtId + "/v1/translation-services", updatedTranslation);
+        assertThat(updateResponse.statusCode()).isEqualTo(CREATED.value());
+
+        final CourtTranslation upsertedTranslation = mapper.readValue(updateResponse
+                                                                          .asString(), CourtTranslation.class);
+        assertThat(upsertedTranslation.getId()).isEqualTo(translationId);
+        assertThat(upsertedTranslation.getEmail()).isEqualTo("updated@court.gov.uk");
+        assertThat(upsertedTranslation.getPhoneNumber()).isEqualTo("02222222222");
+
+        final Response getResponse = http.doGet("/courts/" + courtId + "/v1/translation-services");
+        assertThat(getResponse.statusCode()).isEqualTo(OK.value());
+
+        final CourtTranslation retrievedTranslation = mapper.readValue(getResponse.asString(), CourtTranslation.class);
+        assertThat(retrievedTranslation.getId()).isEqualTo(translationId);
+        assertThat(retrievedTranslation.getEmail()).isEqualTo("updated@court.gov.uk");
+        assertThat(retrievedTranslation.getPhoneNumber()).isEqualTo("02222222222");
     }
 
     @Test
-    void shouldRetrieveExistingTranslationServices() {
-        Response getResponse = http.doGet("/courts/" + COURT_WITH_TRANSLATION + "/v1/translation-services");
+    @DisplayName("POST /courts/{courtId}/v1/translation-services fails with non-existent court")
+    void shouldFailToCreateTranslationForNonExistentCourt() {
+        final UUID nonExistentCourtId = UUID.randomUUID();
 
-        assertThat(getResponse.statusCode()).isEqualTo(200);
-        assertThat(getResponse.jsonPath().getString("email")).isNotNull();
-        assertThat(getResponse.jsonPath().getString("phoneNumber")).isNotNull();
+        final CourtTranslation translation = new CourtTranslation();
+        translation.setCourtId(nonExistentCourtId);
+        translation.setEmail("test@court.gov.uk");
+        translation.setPhoneNumber("01234567890");
+
+        final Response postResponse = http.doPost("/courts/"
+                                                      + nonExistentCourtId + "/v1/translation-services", translation);
+        assertThat(postResponse.statusCode()).isEqualTo(NOT_FOUND.value());
+        assertThat(postResponse.jsonPath().getString("message"))
+            .contains("Court not found, ID: " + nonExistentCourtId);
     }
 
     @Test
-    void shouldReturn204WhenNoTranslationServices() {
-        Response getResponse = http.doGet("/courts/" + COURT_WITHOUT_TRANSLATION + "/v1/translation-services");
+    @DisplayName("POST /courts/{courtId}/v1/translation-services fails with invalid email format")
+    void shouldFailWithInvalidEmailFormat() {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Invalid Email");
 
-        assertThat(getResponse.statusCode()).isEqualTo(204);
+        final CourtTranslation translation = new CourtTranslation();
+        translation.setCourtId(courtId);
+        translation.setEmail("invalid-email-no-at-sign");
+        translation.setPhoneNumber("01234567890");
+
+        final Response postResponse = http.doPost("/courts/" + courtId + "/v1/translation-services", translation);
+        assertThat(postResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
+        assertThat(postResponse.jsonPath().getString("email"))
+            .contains("Email address must match the regex '^(|[A-Za-z0-9._+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$'");
     }
 
     @Test
-    void shouldReturn404ForNonExistentCourt() {
-        Response getResponse = http.doGet("/courts/" + VALID_JSON_UUID + "/v1/translation-services");
+    @DisplayName("POST /courts/{courtId}/v1/translation-services fails with invalid phone")
+    void shouldFailWithInvalidPhoneFormat() {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Invalid Phone");
 
-        assertThat(getResponse.statusCode()).isEqualTo(404);
+        final CourtTranslation translation = new CourtTranslation();
+        translation.setCourtId(courtId);
+        translation.setEmail("valid@court.gov.uk");
+        translation.setPhoneNumber("123");
 
-        String translationJson = """
-            {
-                "courtId": "%s",
-                "email": "test@court.com",
-                "phoneNumber": "01234567890"
-            }
-            """.formatted(VALID_JSON_UUID);
-
-        Response postResponse = http.doPost(
-            "/courts/" + VALID_JSON_UUID + "/v1/translation-services",
-            translationJson
-        );
-
-        assertThat(postResponse.statusCode()).isEqualTo(404);
+        final Response postResponse = http.doPost("/courts/" + courtId + "/v1/translation-services", translation);
+        assertThat(postResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
+        assertThat(postResponse.jsonPath().getString("phoneNumber"))
+                .contains("Phone Number must match the regex '^(|[0-9 ]{10,20})$'");
     }
 
     @Test
-    void shouldRejectInvalidEmailFormat() {
-        String invalidEmailJson = """
-            {
-                "courtId": "%s",
-                "email": "invalid-email-no-at-sign",
-                "phoneNumber": "01234567890"
-            }
-            """.formatted(VALID_JSON_UUID);
+    @DisplayName("POST /courts/{courtId}/v1/translation-services fails with invalid UUID")
+    void shouldFailPostWithInvalidUuid() {
+        final String invalidUuid = "invalid-uuid";
 
-        Response postResponse = http.doPost(
-            "/courts/" + COURT_WITH_TRANSLATION + "/v1/translation-services",
-            invalidEmailJson
-        );
+        final CourtTranslation translation = new CourtTranslation();
+        translation.setCourtId(UUID.randomUUID());
+        translation.setEmail("test@court.gov.uk");
+        translation.setPhoneNumber("01234567890");
 
-        assertThat(postResponse.statusCode()).isEqualTo(400);
+        final Response postResponse = http.doPost("/courts/"
+                                                      + invalidUuid + "/v1/translation-services", translation);
+        assertThat(postResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
+        assertThat(postResponse.jsonPath().getString("message"))
+                .contains("Invalid UUID supplied: " + invalidUuid);
     }
 
     @Test
-    void shouldRejectInvalidPhoneFormat() {
-        String invalidPhoneJson = """
-            {
-                "courtId": "%s",
-                "email": "test@court.com",
-                "phoneNumber": "123"
-            }
-            """.formatted(VALID_JSON_UUID);
+    @DisplayName("GET /courts/{courtId}/v1/translation-services retrieves existing service")
+    void shouldRetrieveExistingTranslation() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Get");
 
-        Response postResponse = http.doPost(
-            "/courts/" + COURT_WITH_TRANSLATION + "/v1/translation-services",
-            invalidPhoneJson
-        );
+        final CourtTranslation translation = new CourtTranslation();
+        translation.setCourtId(courtId);
+        translation.setEmail("get@court.gov.uk");
+        translation.setPhoneNumber("01234567890");
 
-        assertThat(postResponse.statusCode()).isEqualTo(400);
+        http.doPost("/courts/" + courtId + "/v1/translation-services", translation);
+
+        final Response getResponse = http.doGet("/courts/" + courtId + "/v1/translation-services");
+        assertThat(getResponse.statusCode()).isEqualTo(OK.value());
+
+        final CourtTranslation retrievedTranslation = mapper.readValue(getResponse.asString(), CourtTranslation.class);
+        assertThat(retrievedTranslation.getId()).isNotNull();
+        assertThat(retrievedTranslation.getCourtId()).isEqualTo(courtId);
+        assertThat(retrievedTranslation.getEmail()).isEqualTo("get@court.gov.uk");
+        assertThat(retrievedTranslation.getPhoneNumber()).isEqualTo("01234567890");
     }
 
     @Test
-    void shouldReturn400ForInvalidUuidFormat() {
-        Response getResponse = http.doGet("/courts/" + INVALID_UUID + "/v1/translation-services");
-        assertThat(getResponse.statusCode()).isEqualTo(400);
+    @DisplayName("GET /courts/{courtId}/v1/translation-services returns 204 when no translation exists")
+    void shouldReturn204WhenNoTranslation() {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court No Translation");
+
+        final Response getResponse = http.doGet("/courts/" + courtId + "/v1/translation-services");
+        assertThat(getResponse.statusCode()).isEqualTo(NO_CONTENT.value());
+    }
+
+    @Test
+    @DisplayName("GET /courts/{courtId}/v1/translation-services fails with non-existent court")
+    void shouldFailToGetTranslationForNonExistentCourt() {
+        final UUID nonExistentCourtId = UUID.randomUUID();
+
+        final Response getResponse = http.doGet("/courts/" + nonExistentCourtId + "/v1/translation-services");
+        assertThat(getResponse.statusCode()).isEqualTo(NOT_FOUND.value());
+        assertThat(getResponse.jsonPath().getString("message"))
+            .contains("Court not found, ID: " + nonExistentCourtId);
+    }
+
+    @AfterAll
+    static void cleanUpTestData() {
+        http.doDelete("/testing-support/courts/name-prefix/Test Court");
     }
 }
