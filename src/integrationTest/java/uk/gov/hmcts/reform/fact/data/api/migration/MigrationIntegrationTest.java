@@ -225,14 +225,6 @@ class MigrationIntegrationTest {
         assertThat(body.message()).isEqualTo("Migration completed successfully");
 
         int expectedCourts = countMigratableCourts();
-        int expectedRegions = safeSize(legacySnapshot.regions());
-        int expectedAreasOfLaw = safeSize(legacySnapshot.areaOfLawTypes());
-        int expectedServiceAreas = safeSize(legacySnapshot.serviceAreas());
-        int expectedServices = safeSize(legacySnapshot.services());
-        int expectedLocalAuthorityTypes = countMigratableLocalAuthorityTypes(legacySnapshot);
-        int expectedContactDescriptionTypes = safeSize(legacySnapshot.contactDescriptionTypes());
-        int expectedOpeningHourTypes = safeSize(legacySnapshot.openingHourTypes());
-        int expectedCourtTypes = safeSize(legacySnapshot.courtTypes());
         long expectedCourtLocalAuthorities = countCourtLocalAuthorities();
         long expectedCourtServiceAreas = countCourtServiceAreas();
         long expectedCourtAreasOfLaw = countCourtAreasOfLaw();
@@ -243,24 +235,21 @@ class MigrationIntegrationTest {
         long expectedCourtCodes = countCourtCodes();
 
         assertThat(body.result().courtsMigrated()).isEqualTo(expectedCourts);
-        assertThat(body.result().regionsMigrated()).isZero();
-        assertThat(body.result().areaOfLawTypesMigrated()).isEqualTo(expectedAreasOfLaw);
-        assertThat(body.result().serviceAreasMigrated()).isEqualTo(expectedServiceAreas);
-        assertThat(body.result().servicesMigrated()).isEqualTo(expectedServices);
-        assertThat(body.result().localAuthorityTypesMigrated()).isEqualTo(expectedLocalAuthorityTypes);
-        assertThat(body.result().contactDescriptionTypesMigrated()).isEqualTo(expectedContactDescriptionTypes);
-        assertThat(body.result().openingHourTypesMigrated()).isEqualTo(expectedOpeningHourTypes);
-        assertThat(body.result().courtTypesMigrated()).isZero();
+        assertThat(body.result().courtAreasOfLawMigrated()).isEqualTo(expectedCourtAreasOfLaw);
+        assertThat(body.result().courtServiceAreasMigrated()).isEqualTo(expectedCourtServiceAreas);
         assertThat(body.result().courtLocalAuthoritiesMigrated()).isEqualTo(expectedCourtLocalAuthorities);
+        assertThat(body.result().courtSinglePointsOfEntryMigrated()).isEqualTo(expectedCourtSpocs);
         assertThat(body.result().courtProfessionalInformationMigrated())
             .isEqualTo(expectedCourtProfessionalInformation);
+        assertThat(body.result().courtCodesMigrated()).isEqualTo(expectedCourtCodes);
+        assertThat(body.result().courtDxCodesMigrated()).isEqualTo(expectedCourtDxCodes);
+        assertThat(body.result().courtFaxMigrated()).isEqualTo(expectedCourtFax);
 
-        assertThat(legacyServiceRepository.count()).isEqualTo(before.services() + expectedServices);
-        assertThat(serviceAreaRepository.count()).isEqualTo(before.serviceAreas() + expectedServiceAreas);
+        assertThat(legacyServiceRepository.count()).isEqualTo(before.services());
+        assertThat(serviceAreaRepository.count()).isEqualTo(before.serviceAreas());
         assertThat(localAuthorityTypeRepository.count()).isEqualTo(before.localAuthorityTypes());
-        assertThat(contactDescriptionTypeRepository.count())
-            .isEqualTo(before.contactDescriptionTypes() + expectedContactDescriptionTypes);
-        assertThat(openingHourTypeRepository.count()).isEqualTo(before.openingHourTypes() + expectedOpeningHourTypes);
+        assertThat(contactDescriptionTypeRepository.count()).isEqualTo(before.contactDescriptionTypes());
+        assertThat(openingHourTypeRepository.count()).isEqualTo(before.openingHourTypes());
         // Reference tables (regions, court types, etc.) are populated via Flyway and not reasserted here.
         assertThat(courtRepository.count()).isEqualTo(before.courts() + expectedCourts);
         assertThat(courtServiceAreasRepository.count())

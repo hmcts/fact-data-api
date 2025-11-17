@@ -4,7 +4,7 @@
 CREATE TABLE legacy_court_mapping (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     court_id UUID NOT NULL REFERENCES court(id) ON DELETE CASCADE,
-    legacy_court_id VARCHAR(255) NOT NULL,
+    legacy_court_id NUMERIC(10) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

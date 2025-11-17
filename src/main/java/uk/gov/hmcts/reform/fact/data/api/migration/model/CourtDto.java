@@ -7,7 +7,7 @@ import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record CourtDto(
-    String id,
+    Long id,
     String name,
     String slug,
     Boolean open,
