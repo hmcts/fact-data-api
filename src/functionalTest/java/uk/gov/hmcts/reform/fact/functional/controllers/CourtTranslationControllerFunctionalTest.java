@@ -30,6 +30,18 @@ public final class CourtTranslationControllerFunctionalTest {
         .registerModule(new JavaTimeModule())
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
+    private void assertTranslationFields(CourtTranslation translation, UUID expectedId, UUID expectedCourtId,
+                                         String expectedEmail, String expectedPhone) {
+        if (expectedId != null) {
+            assertThat(translation.getId()).isEqualTo(expectedId);
+        } else {
+            assertThat(translation.getId()).isNotNull();
+        }
+        assertThat(translation.getCourtId()).isEqualTo(expectedCourtId);
+        assertThat(translation.getEmail()).isEqualTo(expectedEmail);
+        assertThat(translation.getPhoneNumber()).isEqualTo(expectedPhone);
+    }
+
     @Test
     @DisplayName("POST /courts/{courtId}/v1/translation-services with email and phone")
     void shouldCreateTranslationWithEmailAndPhone() throws Exception {
@@ -44,19 +56,15 @@ public final class CourtTranslationControllerFunctionalTest {
         assertThat(postResponse.statusCode()).isEqualTo(CREATED.value());
 
         final CourtTranslation createdTranslation = mapper.readValue(postResponse.asString(), CourtTranslation.class);
-        assertThat(createdTranslation.getId()).isNotNull();
-        assertThat(createdTranslation.getCourtId()).isEqualTo(courtId);
-        assertThat(createdTranslation.getEmail()).isEqualTo("translation@court.gov.uk");
-        assertThat(createdTranslation.getPhoneNumber()).isEqualTo("01234567890");
+        assertTranslationFields(createdTranslation, null, courtId, "translation@court.gov.uk",
+                                "01234567890");
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/translation-services");
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
         final CourtTranslation retrievedTranslation = mapper.readValue(getResponse.asString(), CourtTranslation.class);
-        assertThat(retrievedTranslation.getId()).isEqualTo(createdTranslation.getId());
-        assertThat(retrievedTranslation.getCourtId()).isEqualTo(courtId);
-        assertThat(retrievedTranslation.getEmail()).isEqualTo("translation@court.gov.uk");
-        assertThat(retrievedTranslation.getPhoneNumber()).isEqualTo("01234567890");
+        assertTranslationFields(retrievedTranslation, createdTranslation.getId(), courtId,
+                               "translation@court.gov.uk", "01234567890");
     }
 
     @Test
@@ -85,19 +93,17 @@ public final class CourtTranslationControllerFunctionalTest {
                                                         + courtId + "/v1/translation-services", updatedTranslation);
         assertThat(updateResponse.statusCode()).isEqualTo(CREATED.value());
 
-        final CourtTranslation upsertedTranslation = mapper.readValue(updateResponse
+        final CourtTranslation modifiedTranslation = mapper.readValue(updateResponse
                                                                           .asString(), CourtTranslation.class);
-        assertThat(upsertedTranslation.getId()).isEqualTo(translationId);
-        assertThat(upsertedTranslation.getEmail()).isEqualTo("updated@court.gov.uk");
-        assertThat(upsertedTranslation.getPhoneNumber()).isEqualTo("02222222222");
+        assertTranslationFields(modifiedTranslation, translationId, courtId, "updated@court.gov.uk",
+                                "02222222222");
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/translation-services");
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
         final CourtTranslation retrievedTranslation = mapper.readValue(getResponse.asString(), CourtTranslation.class);
-        assertThat(retrievedTranslation.getId()).isEqualTo(translationId);
-        assertThat(retrievedTranslation.getEmail()).isEqualTo("updated@court.gov.uk");
-        assertThat(retrievedTranslation.getPhoneNumber()).isEqualTo("02222222222");
+        assertTranslationFields(retrievedTranslation, translationId, courtId, "updated@court.gov.uk",
+                                "02222222222");
     }
 
     @Test
@@ -182,10 +188,8 @@ public final class CourtTranslationControllerFunctionalTest {
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
         final CourtTranslation retrievedTranslation = mapper.readValue(getResponse.asString(), CourtTranslation.class);
-        assertThat(retrievedTranslation.getId()).isNotNull();
-        assertThat(retrievedTranslation.getCourtId()).isEqualTo(courtId);
-        assertThat(retrievedTranslation.getEmail()).isEqualTo("get@court.gov.uk");
-        assertThat(retrievedTranslation.getPhoneNumber()).isEqualTo("01234567890");
+        assertTranslationFields(retrievedTranslation, null, courtId, "get@court.gov.uk",
+                                "01234567890");
     }
 
     @Test
