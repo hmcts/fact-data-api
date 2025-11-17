@@ -11,6 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,6 +43,11 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
 
     private ApplicationContext applicationContext;
     private final AtomicReference<EntityManager> entityManagerRef = new AtomicReference<>();
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor((ThreadFactory) r -> new Thread(
+        r,
+        "AuditableCourtEntityListener"
+    ));
 
     @Override
     public void setApplicationContext(final ApplicationContext applicationContext) throws BeansException {
@@ -90,32 +100,24 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
         // data that's about to be persisted as part of the event we're
         // listening to.
 
-        AtomicReference<AuditableCourtEntity> previousEntity = new AtomicReference<>();
-        AtomicReference<Exception> exception = new AtomicReference<>();
+        Future<AuditableCourtEntity> future = executor.submit(
+            () -> entityManagerRef.get().find(
+                entity.getClass(),
+                entity.getId()
+            )
+        );
+
         try {
-            Thread lookupThread = new Thread(() -> {
-                try {
-                    previousEntity.set(entityManagerRef.get().find(entity.getClass(), entity.getId()));
-                } catch (Exception e) {
-                    log.error(
-                        "Unexpected error while looking up previous entity during an audit operation: {}",
-                        e.getMessage()
-                    );
-                    exception.set(e);
-                }
-            });
-            lookupThread.start();
-            lookupThread.join();
-            if (exception.get() != null) {
-                throw new IllegalStateException(
-                    "Unexpected error while looking up previous entity during an audit operation",
-                    exception.get()
-                );
-            }
+            return future.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            return null;
+        } catch (ExecutionException e) {
+            throw new IllegalStateException(
+                "Unexpected error while looking up previous entity during an audit operation",
+                e
+            );
         }
-        return previousEntity.get();
     }
 
     private final void writeAuditRecord(AuditableCourtEntity entity, AuditableCourtEntity previous,
