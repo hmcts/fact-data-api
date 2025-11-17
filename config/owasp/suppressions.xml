@@ -17,5 +17,9 @@
     <notes>No later versions of msal4j available</notes>
     <cve>CVE-2024-35255</cve>
   </suppress>
+  <suppress>
+    <notes>False positive: Jakarta Mail is not on the classpath, only in Spring Boot BOM metadata</notes>
+    <cve>CVE-2025-7962</cve>
+  </suppress>
   <!--End of false positives section -->
 </suppressions>
