@@ -16,10 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
-import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
-import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyService;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LegacyExportResponse;
@@ -65,25 +63,13 @@ class ReferenceDataImporterTest {
         when(areaOfLawTypeRepository.findByNameIgnoreCase("Family"))
             .thenReturn(Optional.of(AreaOfLawType.builder().id(areaOfLawId).build()));
 
-        LegacyExportResponse response = new LegacyExportResponse(
-            Collections.emptyList(),
-            List.of(new LocalAuthorityTypeDto(1, "LA")),
-            List.of(serviceAreaDto()),
-            List.of(new ServiceDto(1, "Service", "Gwasanaeth", "desc", "desc cy", List.of(1))),
-            null,
-            null,
-            null,
-            List.of(new RegionDto(5, "South", "England")),
-            List.of(new AreaOfLawTypeDto(10, "Family", "Teulu"))
-        );
-
         when(localAuthorityTypeRepository.findByName("LA"))
             .thenReturn(Optional.of(LocalAuthorityType.builder().id(UUID.randomUUID()).name("LA").build()));
         ServiceArea serviceArea = new ServiceArea();
         serviceArea.setId(UUID.randomUUID());
         when(serviceAreaRepository.findByNameIgnoreCase("Money claims")).thenReturn(Optional.of(serviceArea));
 
-        importer.importReferenceData(response, context);
+        importer.importReferenceData(createResponse(), context);
         assertThat(context.getRegionIds()).containsEntry(5, regionId);
         assertThat(context.getAreaOfLawIds()).containsEntry(10, areaOfLawId);
         assertThat(context.getServiceAreaIds()).containsValue(serviceArea.getId());
@@ -91,13 +77,13 @@ class ReferenceDataImporterTest {
 
     @Test
     void shouldThrowWhenRegionMissing() {
-        LegacyExportResponse response = new LegacyExportResponse(
+        LegacyExportResponse failingResponse = new LegacyExportResponse(
             Collections.emptyList(),
             null, null, null, null, null, null,
             List.of(new RegionDto(5, "Missing", "England")),
             null
         );
-        assertThatThrownBy(() -> importer.importReferenceData(response, context))
+        assertThatThrownBy(() -> importer.importReferenceData(failingResponse, context))
             .isInstanceOf(MigrationClientException.class);
     }
 
@@ -116,6 +102,20 @@ class ReferenceDataImporterTest {
             null,
             "POSTCODE",
             10
+        );
+    }
+
+    private LegacyExportResponse createResponse() {
+        return new LegacyExportResponse(
+            Collections.emptyList(),
+            List.of(new LocalAuthorityTypeDto(1, "LA")),
+            List.of(serviceAreaDto()),
+            List.of(new ServiceDto(1, "Service", "Gwasanaeth", "desc", "desc cy", List.of(1))),
+            null,
+            null,
+            null,
+            List.of(new RegionDto(5, "South", "England")),
+            List.of(new AreaOfLawTypeDto(10, "Family", "Teulu"))
         );
     }
 }
