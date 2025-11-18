@@ -45,9 +45,9 @@ public class MigrationExceptionHandler {
      * @return API-friendly error payload.
      */
     @ExceptionHandler(MigrationClientException.class)
-    @ResponseStatus(HttpStatus.BAD_GATEWAY)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(MigrationClientException ex) {
-        log.error("502, migration client error: {}", ex.getMessage(), ex);
+        log.error("400, migration client error: {}", ex.getMessage(), ex);
         return generateExceptionResponse(ex.getMessage());
     }
 

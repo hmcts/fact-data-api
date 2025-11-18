@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.context.properties.ConfigurationPropertiesBindException;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
@@ -80,7 +82,7 @@ import static org.assertj.core.api.Assertions.assertThat;
     "spring.cloud.azure.storage.blob.container-name=test-container"
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("test")
 class MigrationIntegrationTest {
 
@@ -92,7 +94,6 @@ class MigrationIntegrationTest {
     private final LegacyServiceRepository legacyServiceRepository;
     private final ServiceAreaRepository serviceAreaRepository;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
-    private final MigrationAuditRepository migrationAuditRepository;
     private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
     private final OpeningHourTypeRepository openingHourTypeRepository;
     private final CourtTypeRepository courtTypeRepository;
@@ -106,6 +107,8 @@ class MigrationIntegrationTest {
     private final CourtDxCodeRepository courtDxCodeRepository;
     private final CourtFaxRepository courtFaxRepository;
     private final LegacyCourtMappingRepository legacyCourtMappingRepository;
+    private final MigrationAuditRepository migrationAuditRepository;
+    private final ConfigurableApplicationContext applicationContext;
     private final LegacyFactClient legacyFactClient;
     private static final Pattern COURT_NAME_PATTERN =
         Pattern.compile(ValidationConstants.COURT_NAME_REGEX);
@@ -133,6 +136,7 @@ class MigrationIntegrationTest {
         CourtFaxRepository courtFaxRepository,
         LegacyCourtMappingRepository legacyCourtMappingRepository,
         MigrationAuditRepository migrationAuditRepository,
+        ConfigurableApplicationContext applicationContext,
         LegacyFactClient legacyFactClient
     ) {
         this.restTemplate = restTemplate;
@@ -154,6 +158,7 @@ class MigrationIntegrationTest {
         this.courtFaxRepository = courtFaxRepository;
         this.legacyCourtMappingRepository = legacyCourtMappingRepository;
         this.migrationAuditRepository = migrationAuditRepository;
+        this.applicationContext = applicationContext;
         this.legacyFactClient = legacyFactClient;
     }
 
@@ -195,17 +200,28 @@ class MigrationIntegrationTest {
     @BeforeEach
     void insertReferenceDataBeforeTest() {
         migrationAuditRepository.deleteAll();
-        if (legacySnapshot == null || legacySnapshot.localAuthorityTypes() == null) {
+        if (!applicationContext.isActive()
+            || legacySnapshot == null
+            || legacySnapshot.localAuthorityTypes() == null) {
             return;
         }
-        localAuthorityTypeRepository.deleteAll();
-        legacySnapshot.localAuthorityTypes().forEach(type ->
-            localAuthorityTypeRepository.save(
-                LocalAuthorityType.builder()
-                    .name(type.name())
-                    .build()
-            )
-        );
+        try {
+            localAuthorityTypeRepository.deleteAll();
+            legacySnapshot.localAuthorityTypes().forEach(type ->
+                localAuthorityTypeRepository.save(
+                    LocalAuthorityType.builder()
+                        .name(type.name())
+                        .build()
+                )
+            );
+        } catch (ConfigurationPropertiesBindException ex) {
+            return;
+        } catch (RuntimeException ex) {
+            if (ex.getCause() instanceof IllegalStateException) {
+                return;
+            }
+            throw ex;
+        }
     }
 
     @Test

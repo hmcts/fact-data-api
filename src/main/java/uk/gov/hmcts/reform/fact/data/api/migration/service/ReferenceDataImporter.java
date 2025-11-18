@@ -15,6 +15,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyService;
+import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.ContactDescriptionTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LegacyExportResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LocalAuthorityTypeDto;
@@ -77,7 +78,7 @@ class ReferenceDataImporter {
 
         for (RegionDto regionDto : regions) {
             Region region = regionRepository.findByNameAndCountry(regionDto.name(), regionDto.country())
-                .orElseThrow(() -> new IllegalStateException(
+                .orElseThrow(() -> new MigrationClientException(
                     "Region '%s' (%s) was not found in the target database".formatted(
                         regionDto.name(), regionDto.country()
                     )
@@ -96,7 +97,7 @@ class ReferenceDataImporter {
 
         for (uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto dto : areaOfLawTypes) {
             AreaOfLawType entity = areaOfLawTypeRepository.findByNameIgnoreCase(dto.name())
-                .orElseThrow(() -> new IllegalStateException(
+                .orElseThrow(() -> new MigrationClientException(
                     "Area of law '%s' was not found in the target database".formatted(dto.name())
                 ));
             ids.put(dto.id(), entity.getId());
