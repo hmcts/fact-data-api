@@ -25,6 +25,12 @@ public class AuditService {
     private final AuditRepository auditRepository;
     private final AuditConfigurationProperties auditConfiguration;
 
+    // bitfields for query column matching
+    private static final int IGNORE             = 0b0000;
+    private static final int INCLUDE_COURT_ID   = 0b0001;
+    private static final int INCLUDE_TO_DATE    = 0b0010;
+    private static final int INCLUDE_EMAIL      = 0b0100;
+
     /**
      * Get a paginated list of {@link Audit}s with optional filters.
      *
@@ -53,10 +59,7 @@ public class AuditService {
 
         UUID courtUUID = Optional.ofNullable(courtId).map(UUID::fromString).orElse(null);
 
-        if (email != null && !email.isBlank()) {
-            return performEmailMatchAuditQuery(courtUUID, toDateTime, fromDateTime, email, pageable);
-        }
-        return performAuditQuery(courtUUID, toDateTime, fromDateTime, pageable);
+        return performAuditQuery(fromDateTime, toDateTime, courtUUID, email, pageable);
     }
 
     /**
@@ -71,39 +74,37 @@ public class AuditService {
         );
     }
 
-    private Page<Audit> performAuditQuery(final UUID courtUUID, final ZonedDateTime toDateTime,
-                                          final ZonedDateTime fromDateTime, final Pageable pageable) {
-        if (courtUUID != null && toDateTime != null) {
-            return auditRepository.findByCourtIdAndCreatedAtBetween(
-                courtUUID, fromDateTime, toDateTime, pageable);
-        } else if (courtUUID != null) {
-            return auditRepository.findByCourtIdAndCreatedAtAfter(
+    private Page<Audit> performAuditQuery(@NonNull ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
+                                          UUID courtUUID, String email, Pageable pageable) {
+
+        // create a query bitfield that can be tested in the switch
+        // below using boolean arithmetic matching.
+        int query = 0;
+        query |= courtUUID != null ? INCLUDE_COURT_ID : IGNORE;
+        query |= toDateTime != null ? INCLUDE_TO_DATE : IGNORE;
+        query |= email != null && !email.isBlank() ? INCLUDE_EMAIL : IGNORE;
+
+        // perform the appropriate repository lookup based on matching
+        // bits in the query param
+        return switch (query) {
+            case INCLUDE_COURT_ID -> auditRepository.findByCourtIdAndCreatedAtAfter(
                 courtUUID, fromDateTime, pageable);
-        } else if (toDateTime != null) {
-            return auditRepository.findByCreatedAtBetween(
+            case INCLUDE_TO_DATE -> auditRepository.findByCreatedAtBetween(
                 fromDateTime, toDateTime, pageable);
-        } else {
-            return auditRepository.findByCreatedAtAfter(
-                fromDateTime, pageable);
-        }
-    }
-
-    private Page<Audit> performEmailMatchAuditQuery(final UUID courtUUID, final ZonedDateTime toDateTime,
-                                                    final ZonedDateTime fromDateTime, String email,
-                                                    final Pageable pageable) {
-        if (courtUUID != null && toDateTime != null) {
-            return auditRepository.findByCourtIdAndCreatedAtBetweenAndEmailAddressLike(
-                courtUUID, fromDateTime, toDateTime, email, pageable);
-        } else if (courtUUID != null) {
-            return auditRepository.findByCourtIdAndCreatedAtAfterAndEmailAddressLike(
-                courtUUID, fromDateTime, email, pageable);
-        } else if (toDateTime != null) {
-            return auditRepository.findByCreatedAtBetweenAndEmailAddressLike(
-                fromDateTime, toDateTime, email, pageable);
-        } else {
-            return auditRepository.findByCreatedAtAfterAndEmailAddressLike(
+            case INCLUDE_COURT_ID | INCLUDE_TO_DATE -> auditRepository.findByCourtIdAndCreatedAtBetween(
+                courtUUID, fromDateTime, toDateTime, pageable);
+            case INCLUDE_EMAIL -> auditRepository.findByCreatedAtAfterAndEmailAddressLike(
                 fromDateTime, email, pageable);
-        }
+            case INCLUDE_COURT_ID | INCLUDE_EMAIL -> auditRepository.findByCourtIdAndCreatedAtAfterAndEmailAddressLike(
+                courtUUID, fromDateTime, email, pageable);
+            case INCLUDE_TO_DATE | INCLUDE_EMAIL -> auditRepository.findByCreatedAtBetweenAndEmailAddressLike(
+                fromDateTime, toDateTime, email, pageable);
+            case INCLUDE_COURT_ID | INCLUDE_TO_DATE | INCLUDE_EMAIL ->
+                auditRepository.findByCourtIdAndCreatedAtBetweenAndEmailAddressLike(
+                    courtUUID, fromDateTime, toDateTime, email, pageable);
+            // if no field match bits are set then test only using the
+            // mandatory fromDate.
+            default -> auditRepository.findByCreatedAtAfter(fromDateTime, pageable);
+        };
     }
-
 }
