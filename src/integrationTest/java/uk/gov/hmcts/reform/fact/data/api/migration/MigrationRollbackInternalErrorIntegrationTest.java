@@ -24,7 +24,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.migration.client.LegacyFactClient;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LegacyExportResponse;
-import uk.gov.hmcts.reform.fact.data.api.migration.model.LocalAuthorityTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.RegionDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
