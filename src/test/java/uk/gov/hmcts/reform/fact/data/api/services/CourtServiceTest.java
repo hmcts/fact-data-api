@@ -11,10 +11,10 @@ import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.models.LinkCaTHCourtsResponse;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -241,36 +241,45 @@ class CourtServiceTest {
         court.setOpen(Boolean.TRUE);
         court.setOpenOnCath(Boolean.FALSE);
 
-        when(courtRepository.findByMrdIdIn(anyList())).thenReturn(List.of(court));
+        when(courtRepository.findByMrdId("MRD123")).thenReturn(Optional.of(court));
+        when(courtRepository.findByMrdId("UNKNOWN")).thenReturn(Optional.empty());
 
-        LinkCaTHCourtsResponse response = courtService.linkCaTHCourtsToFaCT(List.of("MRD123", "UNKNOWN"));
+        Map<String, Object> response = courtService.linkCathCourtsToFact(List.of("MRD123", "UNKNOWN"));
 
-        assertThat(response.getMatchedLocations()).hasSize(1);
-        assertThat(response.getMatchedLocations().get(0).getMrdId()).isEqualTo("MRD123");
-        assertThat(response.getMatchedLocations().get(0).isOpen()).isTrue();
-        assertThat(response.getUnmatchedLocations()).containsExactly("UNKNOWN");
+        Map<String, Object> expected = Map.of(
+            "matchedLocations", List.of(Map.of("mrdId", "MRD123", "isOpen", true)),
+            "unmatchedLocations", List.of("UNKNOWN")
+        );
+
+        assertThat(response).isEqualTo(expected);
         assertThat(court.getOpenOnCath()).isTrue();
-        verify(courtRepository).saveAll(anyList());
+        verify(courtRepository).save(court);
+        verify(courtRepository).findByMrdId("MRD123");
+        verify(courtRepository).findByMrdId("UNKNOWN");
     }
 
     @Test
     void linkCaTHCourtsToFaCTShouldHandleEmptyInput() {
-        LinkCaTHCourtsResponse response = courtService.linkCaTHCourtsToFaCT(List.of());
+        Map<String, Object> response = courtService.linkCathCourtsToFact(List.of());
 
-        assertThat(response.getMatchedLocations()).isEmpty();
-        assertThat(response.getUnmatchedLocations()).isEmpty();
-        verify(courtRepository, never()).findByMrdIdIn(anyList());
+        Map<String, Object> expected = Map.of(
+            "matchedLocations", List.of(),
+            "unmatchedLocations", List.of()
+        );
+
+        assertThat(response).isEqualTo(expected);
+        verify(courtRepository, never()).findByMrdId(anyString());
     }
 
     @Test
     void handleCaTHCourtDeletionShouldMarkCourtClosed() {
         Court court = new Court();
-        court.setMrdId("123");
+        court.setMrdId("MRD123");
         court.setOpenOnCath(Boolean.TRUE);
 
-        when(courtRepository.findByMrdId("123")).thenReturn(Optional.of(court));
+        when(courtRepository.findByMrdId("MRD123")).thenReturn(Optional.of(court));
 
-        courtService.handleCaTHCourtDeletion(123L);
+        courtService.handleCathCourtDeletion("MRD123");
 
         assertThat(court.getOpenOnCath()).isFalse();
         verify(courtRepository).save(court);
@@ -278,12 +287,12 @@ class CourtServiceTest {
 
     @Test
     void handleCaTHCourtDeletionShouldThrowWhenCourtMissing() {
-        when(courtRepository.findByMrdId("123")).thenReturn(Optional.empty());
+        when(courtRepository.findByMrdId("MRD123")).thenReturn(Optional.empty());
 
         NotFoundException exception = assertThrows(NotFoundException.class, () ->
-            courtService.handleCaTHCourtDeletion(123L)
+            courtService.handleCathCourtDeletion("MRD123")
         );
 
-        assertThat(exception.getMessage()).isEqualTo("Court not found, MRD ID: 123");
+        assertThat(exception.getMessage()).isEqualTo("Court not found, MRD ID: MRD123");
     }
 }

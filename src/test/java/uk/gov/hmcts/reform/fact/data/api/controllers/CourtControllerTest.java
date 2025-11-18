@@ -12,10 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.models.LinkCaTHCourtsResponse;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -157,19 +157,14 @@ class CourtControllerTest {
     @Test
     void linkCaTHCourtsReturns200() {
         List<String> mrdIds = List.of("MRD123", "UNKNOWN");
-        LinkCaTHCourtsResponse responseBody = LinkCaTHCourtsResponse.builder()
-            .matchedLocations(List.of(
-                LinkCaTHCourtsResponse.MatchedLocation.builder()
-                    .mrdId("MRD123")
-                    .open(true)
-                    .build()
-            ))
-            .unmatchedLocations(List.of("UNKNOWN"))
-            .build();
+        Map<String, Object> responseBody = Map.of(
+            "matchedLocations", List.of(Map.of("mrdId", "MRD123", "isOpen", true)),
+            "unmatchedLocations", List.of("UNKNOWN")
+        );
 
-        when(courtService.linkCaTHCourtsToFaCT(mrdIds)).thenReturn(responseBody);
+        when(courtService.linkCathCourtsToFact(mrdIds)).thenReturn(responseBody);
 
-        ResponseEntity<LinkCaTHCourtsResponse> response = courtController.linkCaTHCourtsToFaCT(mrdIds);
+        ResponseEntity<Map<String, Object>> response = courtController.linkCaTHCourtsToFaCT(mrdIds);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(responseBody);
@@ -177,10 +172,10 @@ class CourtControllerTest {
 
     @Test
     void handleCaTHCourtDeletionReturns204() {
-        ResponseEntity<Void> response = courtController.handleCaTHCourtDeletion(123L);
+        ResponseEntity<Void> response = courtController.handleCaTHCourtDeletion("MRD123");
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.NO_CONTENT);
-        verify(courtService).handleCaTHCourtDeletion(123L);
+        verify(courtService).handleCathCourtDeletion("MRD123");
     }
 
     private Court createCourt() {
