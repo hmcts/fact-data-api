@@ -74,7 +74,7 @@ public class AuditService {
         );
     }
 
-    private Page<Audit> performAuditQuery(@NonNull ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
+    private Page<Audit> performAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
                                           UUID courtUUID, String email, Pageable pageable) {
 
         // create a query bitfield that can be tested in the switch
