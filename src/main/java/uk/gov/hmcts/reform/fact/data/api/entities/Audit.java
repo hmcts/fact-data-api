@@ -7,7 +7,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -50,7 +49,6 @@ public class Audit {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @JsonIgnore
     @NotNull
     @Column(name = "court_id")
     private UUID courtId;
@@ -60,7 +58,6 @@ public class Audit {
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
     private Court court;
 
-    @JsonIgnore
     @NotNull
     @Column(name = "user_id")
     private UUID userId;
