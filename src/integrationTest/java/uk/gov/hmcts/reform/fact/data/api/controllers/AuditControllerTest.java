@@ -40,10 +40,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @Feature("Audit Controller")
 @DisplayName("Audit Controller")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = "spring.config.name=application-test"
-)
+@SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class AuditControllerTest {
@@ -82,11 +79,10 @@ class AuditControllerTest {
                         .param("fromDate", LocalDate.now().toString()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray())
-            .andExpect(jsonPath("$.first").value(true))
-            .andExpect(jsonPath("$.last").value(false))
-            .andExpect(jsonPath("$.numberOfElements").value(5))
-            .andExpect(jsonPath("$.number").value(0))
-            .andExpect(jsonPath("$.totalElements").value(13));
+            .andExpect(jsonPath("$.content.length()").value(5))
+            .andExpect(jsonPath("$.page.number").value(0))
+            .andExpect(jsonPath("$.page.totalPages").value(3))
+            .andExpect(jsonPath("$.page.totalElements").value(13));
 
         mvc.perform(get("/audits/v1")
                         .param("pageNumber", "1")
@@ -94,11 +90,10 @@ class AuditControllerTest {
                         .param("fromDate", LocalDate.now().toString()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray())
-            .andExpect(jsonPath("$.first").value(false))
-            .andExpect(jsonPath("$.last").value(false))
-            .andExpect(jsonPath("$.numberOfElements").value(5))
-            .andExpect(jsonPath("$.number").value(1))
-            .andExpect(jsonPath("$.totalElements").value(13));
+            .andExpect(jsonPath("$.content.length()").value(5))
+            .andExpect(jsonPath("$.page.number").value(1))
+            .andExpect(jsonPath("$.page.totalPages").value(3))
+            .andExpect(jsonPath("$.page.totalElements").value(13));
 
         mvc.perform(get("/audits/v1")
                         .param("pageNumber", "2")
@@ -106,11 +101,10 @@ class AuditControllerTest {
                         .param("fromDate", LocalDate.now().toString()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray())
-            .andExpect(jsonPath("$.first").value(false))
-            .andExpect(jsonPath("$.last").value(true))
-            .andExpect(jsonPath("$.numberOfElements").value(3))
-            .andExpect(jsonPath("$.number").value(2))
-            .andExpect(jsonPath("$.totalElements").value(13));
+            .andExpect(jsonPath("$.content.length()").value(3))
+            .andExpect(jsonPath("$.page.number").value(2))
+            .andExpect(jsonPath("$.page.totalPages").value(3))
+            .andExpect(jsonPath("$.page.totalElements").value(13));
 
     }
 
@@ -147,13 +141,13 @@ class AuditControllerTest {
                         .param("fromDate", LocalDate.now().toString())
                         .param("courtId", court1.getId().toString()))
             .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(7))
             .andExpect(jsonPath("$.content[0]").exists())
             .andExpect(jsonPath("$.content[*].court.id").value(allElementsEqual(court1.getCourtId().toString())))
-            .andExpect(jsonPath("$.first").value(true))
-            .andExpect(jsonPath("$.last").value(true))
-            .andExpect(jsonPath("$.numberOfElements").value(7))
-            .andExpect(jsonPath("$.totalElements").value(7));
-
+            .andExpect(jsonPath("$.page.number").value(0))
+            .andExpect(jsonPath("$.page.totalPages").value(1))
+            .andExpect(jsonPath("$.page.totalElements").value(7));
 
         // court2
         mvc.perform(get("/audits/v1")
@@ -162,12 +156,13 @@ class AuditControllerTest {
                         .param("fromDate", LocalDate.now().toString())
                         .param("courtId", court2.getId().toString()))
             .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(3))
             .andExpect(jsonPath("$.content[0]").exists())
             .andExpect(jsonPath("$.content[*].court.id").value(allElementsEqual(court2.getCourtId().toString())))
-            .andExpect(jsonPath("$.first").value(true))
-            .andExpect(jsonPath("$.last").value(true))
-            .andExpect(jsonPath("$.numberOfElements").value(3))
-            .andExpect(jsonPath("$.totalElements").value(3));
+            .andExpect(jsonPath("$.page.number").value(0))
+            .andExpect(jsonPath("$.page.totalPages").value(1))
+            .andExpect(jsonPath("$.page.totalElements").value(3));
     }
 
 
@@ -204,10 +199,9 @@ class AuditControllerTest {
                 AuditActionType.UPDATE.name(),
                 AuditActionType.INSERT.name()
             ))))
-            .andExpect(jsonPath("$.first").value(true))
-            .andExpect(jsonPath("$.last").value(true))
-            .andExpect(jsonPath("$.numberOfElements").value(6))
-            .andExpect(jsonPath("$.totalElements").value(6));
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(6))
+            .andExpect(jsonPath("$.page.totalElements").value(6));
     }
 
     @Test

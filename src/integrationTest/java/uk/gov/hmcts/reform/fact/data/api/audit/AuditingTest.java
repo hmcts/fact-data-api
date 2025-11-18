@@ -35,10 +35,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Feature("Background Auditing")
 @DisplayName("Background Auditing")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = "spring.config.name=application-test"
-)
+@SpringBootTest
 @ActiveProfiles("test")
 class AuditingTest {
 
