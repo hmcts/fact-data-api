@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,4 +28,6 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
     boolean existsBySlug(String slug);
 
     List<Court> findByNameStartingWithIgnoreCase(String namePrefix);
+
+    Optional<Court> findByMrdId(String mrdId);
 }

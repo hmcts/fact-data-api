@@ -14,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.models.LinkCaTHCourtsResponse;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import java.util.List;
@@ -21,7 +22,10 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -237,6 +241,49 @@ class CourtControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalidCourt)))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1/link returns matched and unmatched results")
+    void linkCaTHCourtsReturnsOk() throws Exception {
+        LinkCaTHCourtsResponse response = LinkCaTHCourtsResponse.builder()
+            .matchedLocations(List.of(
+                LinkCaTHCourtsResponse.MatchedLocation.builder()
+                    .mrdId("MRD123")
+                    .open(true)
+                    .build()
+            ))
+            .unmatchedLocations(List.of("UNKNOWN"))
+            .build();
+
+        when(courtService.linkCaTHCourtsToFaCT(anyList())).thenReturn(response);
+
+        mockMvc.perform(post("/courts/v1/link")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(List.of("MRD123", "UNKNOWN"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.matchedLocations[0].mrdId").value("MRD123"))
+            .andExpect(jsonPath("$.matchedLocations[0].isOpen").value(true))
+            .andExpect(jsonPath("$.unmatchedLocations[0]").value("UNKNOWN"));
+    }
+
+    @Test
+    @DisplayName("PUT /courts/v1/link/{mrdId} returns 204 when deletion processed")
+    void handleCaTHCourtDeletionReturnsNoContent() throws Exception {
+        mockMvc.perform(put("/courts/v1/link/{mrdId}", 123L))
+            .andExpect(status().isNoContent());
+
+        verify(courtService).handleCaTHCourtDeletion(123L);
+    }
+
+    @Test
+    @DisplayName("PUT /courts/v1/link/{mrdId} returns 404 when court missing")
+    void handleCaTHCourtDeletionReturnsNotFound() throws Exception {
+        doThrow(new NotFoundException("Court not found"))
+            .when(courtService).handleCaTHCourtDeletion(123L);
+
+        mockMvc.perform(put("/courts/v1/link/{mrdId}", 123L))
+            .andExpect(status().isNotFound());
     }
 
     private Court buildCourt(UUID id) {

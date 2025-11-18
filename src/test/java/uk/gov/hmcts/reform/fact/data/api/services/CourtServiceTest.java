@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.models.LinkCaTHCourtsResponse;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
 import java.util.List;
@@ -231,5 +232,58 @@ class CourtServiceTest {
 
         assertThat(result.getSlug()).isEqualTo("same-name");
         verify(courtRepository, never()).existsBySlug(anyString());
+    }
+
+    @Test
+    void linkCaTHCourtsToFaCTShouldReturnMatchedAndUnmatchedIds() {
+        Court court = new Court();
+        court.setMrdId("MRD123");
+        court.setOpen(Boolean.TRUE);
+        court.setOpenOnCath(Boolean.FALSE);
+
+        when(courtRepository.findByMrdIdIn(anyList())).thenReturn(List.of(court));
+
+        LinkCaTHCourtsResponse response = courtService.linkCaTHCourtsToFaCT(List.of("MRD123", "UNKNOWN"));
+
+        assertThat(response.getMatchedLocations()).hasSize(1);
+        assertThat(response.getMatchedLocations().get(0).getMrdId()).isEqualTo("MRD123");
+        assertThat(response.getMatchedLocations().get(0).isOpen()).isTrue();
+        assertThat(response.getUnmatchedLocations()).containsExactly("UNKNOWN");
+        assertThat(court.getOpenOnCath()).isTrue();
+        verify(courtRepository).saveAll(anyList());
+    }
+
+    @Test
+    void linkCaTHCourtsToFaCTShouldHandleEmptyInput() {
+        LinkCaTHCourtsResponse response = courtService.linkCaTHCourtsToFaCT(List.of());
+
+        assertThat(response.getMatchedLocations()).isEmpty();
+        assertThat(response.getUnmatchedLocations()).isEmpty();
+        verify(courtRepository, never()).findByMrdIdIn(anyList());
+    }
+
+    @Test
+    void handleCaTHCourtDeletionShouldMarkCourtClosed() {
+        Court court = new Court();
+        court.setMrdId("123");
+        court.setOpenOnCath(Boolean.TRUE);
+
+        when(courtRepository.findByMrdId("123")).thenReturn(Optional.of(court));
+
+        courtService.handleCaTHCourtDeletion(123L);
+
+        assertThat(court.getOpenOnCath()).isFalse();
+        verify(courtRepository).save(court);
+    }
+
+    @Test
+    void handleCaTHCourtDeletionShouldThrowWhenCourtMissing() {
+        when(courtRepository.findByMrdId("123")).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(NotFoundException.class, () ->
+            courtService.handleCaTHCourtDeletion(123L)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Court not found, MRD ID: 123");
     }
 }

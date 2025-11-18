@@ -9,7 +9,9 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -120,6 +122,46 @@ public class CourtService {
 
         courtRepository.deleteAllInBatch(courtsToDelete);
         return courtsToDelete.size();
+    }
+
+    /**
+     * Marks courts received from CaTH as open and records which MRD IDs could not be matched.
+     *
+     * @param mrdIds the MRD IDs supplied by CaTH.
+     * @return the matched and unmatched MRD IDs.
+     */
+    public Map<String, Object> linkCathCourtsToFact(List<String> mrdIds) {
+        List<Map<String, Object>> matchedLocations = new ArrayList<>();
+        List<String> unmatchedIds = new ArrayList<>();
+
+        mrdIds.forEach(mrdId -> {
+            courtRepository.findByMrdId(mrdId).ifPresentOrElse(court -> {
+                court.setOpenOnCath(true);
+                courtRepository.save(court);
+                matchedLocations.add(Map.of(
+                    "mrdId", mrdId,
+                    "isOpen", court.getOpen()
+                ));
+            }, () -> unmatchedIds.add(mrdId));
+        });
+
+        return Map.of(
+            "matchedLocations", matchedLocations,
+            "unmatchedLocations", unmatchedIds
+        );
+    }
+
+    /**
+     * Marks the court as closed on CaTH when its link has been deleted.
+     *
+     * @param mrdId the MRD ID supplied by CaTH.
+     */
+    @Transactional
+    public void handleCathCourtDeletion(String mrdId) {
+        Court court = courtRepository.findByMrdId(mrdId)
+            .orElseThrow(() -> new NotFoundException("Court not found, MRD ID: " + mrdId));
+        court.setOpenOnCath(Boolean.FALSE);
+        courtRepository.save(court);
     }
 
     /**
