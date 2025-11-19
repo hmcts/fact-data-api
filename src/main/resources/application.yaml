@@ -78,3 +78,9 @@ dbMigration:
 
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}
+
+# fact-data-api internal configuration
+fact:
+  data-api:
+    audit:
+      retention-days: ${AUDIT_RETENTION_DAYS:365}
