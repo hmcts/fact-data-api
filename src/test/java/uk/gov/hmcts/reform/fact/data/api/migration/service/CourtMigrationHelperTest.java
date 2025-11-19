@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.migration.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -10,15 +11,18 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtAreasOfLawDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtServiceAreaDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtSinglePointOfEntryDto;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtProfessionalInformationDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
@@ -139,5 +143,40 @@ class CourtMigrationHelperTest {
         int migrated = helper.migrateCourts(List.of(serviceCentre), context);
         assertThat(migrated).isEqualTo(1);
         assertThat(context.getServiceCentreRegionId()).isEqualTo(fallbackRegion);
+    }
+
+    @Test
+    void shouldAllowNullInterviewRoomCount() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(UUID.randomUUID());
+            return court;
+        });
+
+        CourtProfessionalInformationDto info = new CourtProfessionalInformationDto(null, null, null, null, null, null);
+        CourtDto dto = new CourtDto(
+            700L,
+            "Null Interview Court",
+            "null-interview-court",
+            true,
+            1,
+            null,
+            null,
+            info,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            false
+        );
+
+        helper.migrateCourts(List.of(dto), context);
+        assertThat(context.getCourtProfessionalInformationMigrated()).isEqualTo(1);
+        ArgumentCaptor<CourtProfessionalInformation> captor = ArgumentCaptor.forClass(CourtProfessionalInformation.class);
+        verify(courtProfessionalInformationRepository).save(captor.capture());
+        assertThat(captor.getValue().getInterviewRoomCount()).isNull();
     }
 }
