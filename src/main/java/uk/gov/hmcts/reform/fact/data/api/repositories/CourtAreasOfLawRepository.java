@@ -1,9 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.repositories;
 
-import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
