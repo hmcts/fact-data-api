@@ -175,7 +175,8 @@ class CourtMigrationHelperTest {
 
         helper.migrateCourts(List.of(dto), context);
         assertThat(context.getCourtProfessionalInformationMigrated()).isEqualTo(1);
-        ArgumentCaptor<CourtProfessionalInformation> captor = ArgumentCaptor.forClass(CourtProfessionalInformation.class);
+        ArgumentCaptor<CourtProfessionalInformation> captor =
+            ArgumentCaptor.forClass(CourtProfessionalInformation.class);
         verify(courtProfessionalInformationRepository).save(captor.capture());
         assertThat(captor.getValue().getInterviewRoomCount()).isNull();
     }
