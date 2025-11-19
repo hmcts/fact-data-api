@@ -171,10 +171,6 @@ class AuditingTest {
         final CountDownLatch latch = new CountDownLatch(1);
 
         // make changes
-
-        court.setOpen(Boolean.TRUE);
-        courtPhoto.setFileLink("https://example.com/update.png");
-        courtTranslation.setEmail("different@somewhereelse.com");
         Thread threadA = new Thread(() -> {
             synchronized (latch) {
                 try {
@@ -184,7 +180,7 @@ class AuditingTest {
                     throw new RuntimeException(e);
                 }
             }
-            // 10 writes
+            // lot of updates
             for (int i = 0; i < updateCount; i++) {
                 court.setName("Court Test " + RandomStringUtils.insecure().nextAlphabetic(6));
                 courtRepository.save(court);
@@ -200,7 +196,7 @@ class AuditingTest {
                     throw new RuntimeException(e);
                 }
             }
-            // 10 writes
+            // lot of updates
             for (int i = 0; i < updateCount; i++) {
                 courtTranslation.setEmail(RandomStringUtils.insecure().nextAlphabetic(6) + "@here.com");
                 courtTranslationRepository.save(courtTranslation);
@@ -216,7 +212,7 @@ class AuditingTest {
                     throw new RuntimeException(e);
                 }
             }
-            // 10 writes
+            // lot of updates
             for (int i = 0; i < updateCount; i++) {
                 courtPhoto.setFileLink(String.format(
                     "https://example.com/%s.png",
@@ -226,16 +222,21 @@ class AuditingTest {
             }
         });
 
+        // all threads should park waiting for the latch
         threadA.start();
         threadB.start();
         threadC.start();
 
+        // start them
         latch.countDown();
 
+        // join them
         threadA.join(Duration.ofSeconds(10));
         threadB.join(Duration.ofSeconds(10));
         threadC.join(Duration.ofSeconds(10));
 
+        // It's great that we got here, but we need to check that we have all
+        // the audit records we're expecting
         List<AuditActionType> expectedActions = new ArrayList<>();
         // a load of updates
         for (int i = 0; i < updateCount; i++) {
