@@ -1,6 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,11 +14,6 @@ import uk.gov.hmcts.reform.fact.data.api.migration.model.PhotoMigrationResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.service.MigrationService;
 import uk.gov.hmcts.reform.fact.data.api.migration.service.PhotoMigrationService;
 
-/**
- * REST endpoint used to trigger a one-off import of data from the legacy FaCT service.
- * The endpoint is intentionally segregated from the public API surface and is expected
- * to be invoked by internal tooling only.
- */
 @RestController
 @RequestMapping("/migration")
 @Tag(name = "Migration", description = "Endpoints supporting one-off migrations from the legacy FaCT system")
@@ -43,11 +40,17 @@ public class MigrationController {
         description = "Fetches data from the legacy FaCT private migration endpoint "
             + "and persists it into the new schema."
     )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Migration completed successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid legacy payload or reference data missing"),
+        @ApiResponse(responseCode = "409", description = "Migration already applied"),
+        @ApiResponse(responseCode = "500", description = "Unexpected server error")
+    })
     public ResponseEntity<MigrationResponse> importLegacyData() {
         MigrationSummary summary = migrationService.migrate();
         MigrationResponse response = new MigrationResponse(
             "Migration completed successfully",
-            summary.result()
+            summary.getResult()
         );
         return ResponseEntity.ok(response);
     }

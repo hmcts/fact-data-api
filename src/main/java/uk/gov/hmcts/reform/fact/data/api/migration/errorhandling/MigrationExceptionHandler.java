@@ -11,14 +11,6 @@ import uk.gov.hmcts.reform.fact.data.api.migration.controller.MigrationControlle
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationAlreadyAppliedException;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
 
-/**
- * Scoped exception handler for the private migration endpoint so the migration module can be removed
- * cleanly once the feature is decommissioned.
- */
-/**
- * Localised error handler for the migration controller so that migration-specific HTTP responses
- * can be removed alongside the rest of the migration module in future.
- */
 @Slf4j
 @RestControllerAdvice(assignableTypes = MigrationController.class)
 public class MigrationExceptionHandler {
@@ -45,9 +37,9 @@ public class MigrationExceptionHandler {
      * @return API-friendly error payload.
      */
     @ExceptionHandler(MigrationClientException.class)
-    @ResponseStatus(HttpStatus.BAD_GATEWAY)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(MigrationClientException ex) {
-        log.error("502, migration client error: {}", ex.getMessage(), ex);
+        log.error("400, migration client error: {}", ex.getMessage(), ex);
         return generateExceptionResponse(ex.getMessage());
     }
 

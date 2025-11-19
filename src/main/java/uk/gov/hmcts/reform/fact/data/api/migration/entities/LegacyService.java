@@ -19,11 +19,6 @@ import org.hibernate.annotations.Type;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Minimal entity used by the migration helper to persist the legacy "service" data into the
- * existing table. Deliberately lives inside the migration package so it can be removed with the
- * helper once the migration code is retired.
- */
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor

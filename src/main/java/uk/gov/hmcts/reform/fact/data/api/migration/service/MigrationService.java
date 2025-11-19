@@ -115,7 +115,7 @@ public class MigrationService {
     MigrationSummary persistExport(LegacyExportResponse exportResponse) {
         final MigrationContext context = new MigrationContext();
         referenceDataImporter.importReferenceData(exportResponse, context);
-        int courtsMigrated = courtMigrationHelper.migrateCourts(exportResponse.courts(), context);
+        int courtsMigrated = courtMigrationHelper.migrateCourts(exportResponse.getCourts(), context);
 
         MigrationResult result = new MigrationResult(
             courtsMigrated,

@@ -18,10 +18,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
 
-/**
- * Temporary table that holds the mapping between the legacy FaCT court identifier and the new UUID
- * whilst the migration is underway. Drop after the production migration is complete.
- */
 @Entity
 @Table(name = "legacy_court_mapping")
 @Getter

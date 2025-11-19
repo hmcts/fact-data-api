@@ -7,10 +7,6 @@ import uk.gov.hmcts.reform.fact.data.api.migration.config.MigrationProperties;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LegacyExportResponse;
 
-/**
- * Thin HTTP client used to access the legacy FaCT export endpoint. Centralising the calls keeps
- * the migration service focused on business logic and makes the endpoint easier to stub in tests.
- */
 @Component
 public class LegacyFactClient {
 

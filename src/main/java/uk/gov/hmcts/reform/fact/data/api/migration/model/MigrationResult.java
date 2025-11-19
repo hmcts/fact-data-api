@@ -1,14 +1,20 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.model;
 
-public record MigrationResult(
-    int courtsMigrated,
-    int courtAreasOfLawMigrated,
-    int courtServiceAreasMigrated,
-    int courtLocalAuthoritiesMigrated,
-    int courtSinglePointsOfEntryMigrated,
-    int courtProfessionalInformationMigrated,
-    int courtCodesMigrated,
-    int courtDxCodesMigrated,
-    int courtFaxMigrated
-) {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class MigrationResult {
+    private int courtsMigrated;
+    private int courtAreasOfLawMigrated;
+    private int courtServiceAreasMigrated;
+    private int courtLocalAuthoritiesMigrated;
+    private int courtSinglePointsOfEntryMigrated;
+    private int courtProfessionalInformationMigrated;
+    private int courtCodesMigrated;
+    private int courtDxCodesMigrated;
+    private int courtFaxMigrated;
 }
