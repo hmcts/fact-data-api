@@ -16,12 +16,17 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.AuditService;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import io.qameta.allure.Feature;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -129,13 +134,135 @@ class AuditingTest {
         courtPhotoRepository.save(courtPhoto);
 
         // UPDATE
-        courtPhoto.setFileLink("https://example.com/image.png");
+        courtPhoto.setFileLink("https://example.com/update.png");
         courtPhotoRepository.save(courtPhoto);
 
         // DELETE
         courtPhotoRepository.delete(courtPhoto);
 
         assertCreateUpdateAndDeleteForEntity(court, CourtPhoto.class.getSimpleName());
+    }
+
+    @Test
+    @DisplayName("Creating entities on multiple threads should correctly audit")
+    void creatingEntitiesOnMultipleThreadsShouldCreateAuditRecords() throws InterruptedException {
+
+        // in total this will perform 300 updates across three threads
+        final int updateCount = 100;
+
+        // SETUP
+        Region region = regionRepository.findAll().getFirst();
+        final Court court = createCourt(region.getId(), TEST_COURT_NAME);
+        courtRepository.save(court);
+
+        final CourtPhoto courtPhoto = CourtPhoto.builder()
+            .courtId(court.getId())
+            .fileLink("https://example.com/image.png")
+            .build();
+        courtPhotoRepository.save(courtPhoto);
+
+        final CourtTranslation courtTranslation = CourtTranslation.builder()
+            .courtId(court.getId())
+            .phoneNumber("01234567890")
+            .email("test@here.com")
+            .build();
+        courtTranslationRepository.save(courtTranslation);
+
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        // make changes
+
+        court.setOpen(Boolean.TRUE);
+        courtPhoto.setFileLink("https://example.com/update.png");
+        courtTranslation.setEmail("different@somewhereelse.com");
+        Thread threadA = new Thread(() -> {
+            synchronized (latch) {
+                try {
+                    latch.await(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
+                }
+            }
+            // 10 writes
+            for (int i = 0; i < updateCount; i++) {
+                court.setName("Court Test " + RandomStringUtils.insecure().nextAlphabetic(6));
+                courtRepository.save(court);
+            }
+        });
+
+        Thread threadB = new Thread(() -> {
+            synchronized (latch) {
+                try {
+                    latch.await(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
+                }
+            }
+            // 10 writes
+            for (int i = 0; i < updateCount; i++) {
+                courtTranslation.setEmail(RandomStringUtils.insecure().nextAlphabetic(6) + "@here.com");
+                courtTranslationRepository.save(courtTranslation);
+            }
+        });
+
+        Thread threadC = new Thread(() -> {
+            synchronized (latch) {
+                try {
+                    latch.await(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
+                }
+            }
+            // 10 writes
+            for (int i = 0; i < updateCount; i++) {
+                courtPhoto.setFileLink(String.format(
+                    "https://example.com/%s.png",
+                    RandomStringUtils.insecure().nextAlphabetic(6)
+                ));
+                courtPhotoRepository.save(courtPhoto);
+            }
+        });
+
+        threadA.start();
+        threadB.start();
+        threadC.start();
+
+        latch.countDown();
+
+        threadA.join(Duration.ofSeconds(10));
+        threadB.join(Duration.ofSeconds(10));
+        threadC.join(Duration.ofSeconds(10));
+
+        List<AuditActionType> expectedActions = new ArrayList<>();
+        // a load of updates
+        for (int i = 0; i < updateCount; i++) {
+            expectedActions.add(AuditActionType.UPDATE);
+        }
+        // and one insert
+        expectedActions.add(AuditActionType.INSERT);
+        AuditActionType[] expectedAuditActionTypes = expectedActions.toArray(new AuditActionType[0]);
+
+        assertAuditActionsForEntity(
+            court,
+            Court.class.getSimpleName(),
+            expectedAuditActionTypes
+        );
+
+        assertAuditActionsForEntity(
+            court,
+            CourtPhoto.class.getSimpleName(),
+            expectedAuditActionTypes
+        );
+
+        assertAuditActionsForEntity(
+            court,
+            CourtTranslation.class.getSimpleName(),
+            expectedAuditActionTypes
+        );
+
     }
 
     // bottled assertions
@@ -164,7 +291,7 @@ class AuditingTest {
         // list audits filtered by court id
         Page<Audit> audits = auditService.getFilteredAndPaginatedAudits(
             0,
-            100,
+            1000,
             CREATED_AFTER,
             null,
             owningCourt.getId().toString(),
