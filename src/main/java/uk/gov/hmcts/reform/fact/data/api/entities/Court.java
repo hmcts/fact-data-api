@@ -28,7 +28,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
 import org.hibernate.annotations.UpdateTimestamp;
-import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -50,8 +49,9 @@ public class Court {
     @NotBlank(message = "Court name must be specified")
     @Size(min = 5, max = 200, message = "Court name should be between 5 and 200 chars")
     @Pattern(
-        regexp = ValidationConstants.COURT_NAME_REGEX,
-        message = ValidationConstants.COURT_NAME_REGEX_MESSAGE
+        regexp = "^[A-Za-z&'(),\\- ]+$",
+        message = "Court name may only contain letters, spaces, commas, apostrophes, "
+            + "hyphens, ampersands, and parentheses"
     )
     private String name;
 

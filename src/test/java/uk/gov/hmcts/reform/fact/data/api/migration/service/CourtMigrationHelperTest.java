@@ -85,23 +85,17 @@ class CourtMigrationHelperTest {
             return court;
         });
 
-        CourtDto courtDto = new CourtDto(
-            500L,
-            "Sample Court",
-            "sample-court",
-            true,
-            1,
-            List.of(new CourtServiceAreaDto(1, "LOCAL", List.of(100))),
-            List.of(new CourtLocalAuthorityDto(10, 10, List.of(20))),
-            null,
-            null,
-            new CourtAreasOfLawDto("areas", List.of(10)),
-            new CourtSinglePointOfEntryDto("spoe", List.of(10)),
-            null,
-            null,
-            null,
-            false
-        );
+        CourtDto courtDto = new CourtDto();
+        courtDto.setId(500L);
+        courtDto.setName("Sample Court");
+        courtDto.setSlug("sample-court");
+        courtDto.setOpen(true);
+        courtDto.setRegionId(1);
+        courtDto.setCourtServiceAreas(List.of(new CourtServiceAreaDto(1, "LOCAL", List.of(100))));
+        courtDto.setCourtLocalAuthorities(List.of(new CourtLocalAuthorityDto(10, 10, List.of(20))));
+        courtDto.setCourtAreasOfLaw(new CourtAreasOfLawDto("areas", List.of(10)));
+        courtDto.setCourtSinglePointsOfEntry(new CourtSinglePointOfEntryDto("spoe", List.of(10)));
+        courtDto.setIsServiceCentre(false);
 
         int migrated = helper.migrateCourts(List.of(courtDto), context);
         assertThat(migrated).isEqualTo(1);
@@ -122,23 +116,12 @@ class CourtMigrationHelperTest {
             return court;
         });
 
-        CourtDto serviceCentre = new CourtDto(
-            600L,
-            "Service Centre Court",
-            "service-centre-court",
-            true,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            true
-        );
+        CourtDto serviceCentre = new CourtDto();
+        serviceCentre.setId(600L);
+        serviceCentre.setName("Service Centre Court");
+        serviceCentre.setSlug("service-centre-court");
+        serviceCentre.setOpen(true);
+        serviceCentre.setIsServiceCentre(true);
 
         int migrated = helper.migrateCourts(List.of(serviceCentre), context);
         assertThat(migrated).isEqualTo(1);
@@ -155,23 +138,14 @@ class CourtMigrationHelperTest {
         });
 
         CourtProfessionalInformationDto info = new CourtProfessionalInformationDto(null, null, null, null, null, null);
-        CourtDto dto = new CourtDto(
-            700L,
-            "Null Interview Court",
-            "null-interview-court",
-            true,
-            1,
-            null,
-            null,
-            info,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            false
-        );
+        CourtDto dto = new CourtDto();
+        dto.setId(700L);
+        dto.setName("Null Interview Court");
+        dto.setSlug("null-interview-court");
+        dto.setOpen(true);
+        dto.setRegionId(1);
+        dto.setCourtProfessionalInformation(info);
+        dto.setIsServiceCentre(false);
 
         helper.migrateCourts(List.of(dto), context);
         assertThat(context.getCourtProfessionalInformationMigrated()).isEqualTo(1);

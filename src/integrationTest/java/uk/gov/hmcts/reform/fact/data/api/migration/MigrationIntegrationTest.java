@@ -112,7 +112,7 @@ class MigrationIntegrationTest {
     private final ConfigurableApplicationContext applicationContext;
     private final LegacyFactClient legacyFactClient;
     private static final Pattern COURT_NAME_PATTERN =
-        Pattern.compile(ValidationConstants.COURT_NAME_REGEX);
+        Pattern.compile("^[A-Za-z&'(),\\- ]+$");
     private static final Pattern GENERIC_DESCRIPTION_PATTERN =
         Pattern.compile(ValidationConstants.GENERIC_DESCRIPTION_REGEX);
 
@@ -229,7 +229,7 @@ class MigrationIntegrationTest {
     void shouldImportLegacyData() {
         Assumptions.assumeTrue(legacySnapshot != null, "Legacy FaCT export endpoint is unavailable");
         // Capture baseline counts so we can assert on the delta introduced by this migration run.
-        TableCounts before = captureTableCounts();
+        final TableCounts before = captureTableCounts();
 
         // Trigger the new FaCT migration endpoint which fetches the legacy export again inside the service layer.
         ResponseEntity<MigrationResponse> response = restTemplate.postForEntity(

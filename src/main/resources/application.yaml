@@ -78,7 +78,7 @@ dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
 
 migration:
-  source-base-url: ${FACT_MIGRATION_SOURCE_BASE_URL:http://localhost:8080}
+  source-base-url: ${FACT_MIGRATION_SOURCE_BASE_URL}
 
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}
