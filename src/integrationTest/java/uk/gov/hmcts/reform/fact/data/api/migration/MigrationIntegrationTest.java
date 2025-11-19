@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.migration;
 
+import feign.FeignException;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
@@ -178,7 +179,7 @@ class MigrationIntegrationTest {
             // Capture the payload returned by the legacy FaCT private migration endpoint so the
             // assertions below can compare each migrated table with the source data.
             legacySnapshot = legacyFactClient.fetchExport();
-        } catch (MigrationClientException ex) {
+        } catch (FeignException | MigrationClientException ex) {
             legacySnapshot = null;
         }
         Assumptions.assumeTrue(legacySnapshot != null, "Legacy FaCT export endpoint is unavailable");

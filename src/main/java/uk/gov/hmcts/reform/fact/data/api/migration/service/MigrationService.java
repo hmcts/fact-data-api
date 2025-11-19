@@ -1,9 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.service;
 
+import feign.FeignException;
 import java.time.Instant;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import uk.gov.hmcts.reform.fact.data.api.migration.client.LegacyFactClient;
@@ -35,8 +34,6 @@ import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 @Service
 public class MigrationService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MigrationService.class);
 
     private static final String DATA_MIGRATION_NAME = "legacy-data-migration";
 
@@ -100,7 +97,7 @@ public class MigrationService {
 
         markMigrationStatus(MigrationStatus.IN_PROGRESS);
         try {
-            final LegacyExportResponse exportResponse = Optional.ofNullable(legacyFactClient.fetchExport())
+            final LegacyExportResponse exportResponse = Optional.ofNullable(fetchLegacyExport())
                 .orElseThrow(() -> new MigrationClientException("Legacy export response was empty"));
 
             MigrationSummary summary = transactionTemplate.execute(status -> persistExport(exportResponse));
@@ -159,5 +156,13 @@ public class MigrationService {
         audit.setStatus(status);
         audit.setUpdatedAt(Instant.now());
         migrationAuditRepository.save(audit);
+    }
+
+    private LegacyExportResponse fetchLegacyExport() {
+        try {
+            return legacyFactClient.fetchExport();
+        } catch (FeignException ex) {
+            throw new MigrationClientException("Failed to fetch data from legacy FaCT", ex);
+        }
     }
 }
