@@ -1,10 +1,15 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record CourtTypeDto(
-    Integer id,
-    String name
-) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class CourtTypeDto {
+    private Integer id;
+    private String name;
 }

@@ -31,6 +31,11 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
 
+/**
+ * Handles one-off reference data mapping before the court entities are persisted. This keeps the
+ * main migration service focused on orchestration while this helper deals with translating legacy
+ * IDs into the UUIDs generated in the new schema.
+ */
 class ReferenceDataImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceDataImporter.class);
@@ -61,32 +66,52 @@ class ReferenceDataImporter {
         this.openingHourTypeRepository = openingHourTypeRepository;
     }
 
+    /**
+     * Maps all reference data from the legacy export into the supplied migration context. Missing
+     * reference records trigger warnings (or exceptions for required entities such as regions) so
+     * that later steps can rely on a complete set of lookups.
+     *
+     * @param response legacy payload containing the reference sections.
+     * @param context migration context used to store identifier mappings.
+     */
     void importReferenceData(LegacyExportResponse response, MigrationContext context) {
-        mapExistingRegions(response.regions(), context.getRegionIds());
-        mapExistingAreasOfLaw(response.areaOfLawTypes(), context.getAreaOfLawIds());
-        mapExistingLocalAuthorityTypes(response.localAuthorityTypes(), context.getLocalAuthorityTypeIds());
-        mapExistingContactDescriptions(response.contactDescriptionTypes());
-        mapExistingOpeningHours(response.openingHourTypes());
-        persistServiceAreas(response.serviceAreas(), context);
-        persistServices(response.services(), context);
+        mapExistingRegions(response.getRegions(), context.getRegionIds());
+        mapExistingAreasOfLaw(response.getAreaOfLawTypes(), context.getAreaOfLawIds());
+        mapExistingLocalAuthorityTypes(response.getLocalAuthorityTypes(), context.getLocalAuthorityTypeIds());
+        mapExistingContactDescriptions(response.getContactDescriptionTypes());
+        mapExistingOpeningHours(response.getOpeningHourTypes());
+        persistServiceAreas(response.getServiceAreas(), context);
+        persistServices(response.getServices(), context);
     }
 
+    /**
+     * Maps region identifiers from the legacy export onto the pre-seeded regions in the new schema.
+     *
+     * @param regions regions supplied by the legacy export.
+     * @param regionIds map storing the legacy-to-new identifier mapping.
+     */
     private void mapExistingRegions(List<RegionDto> regions, Map<Integer, UUID> regionIds) {
         if (isEmpty(regions)) {
             return;
         }
 
         for (RegionDto regionDto : regions) {
-            Region region = regionRepository.findByNameAndCountry(regionDto.name(), regionDto.country())
+            Region region = regionRepository.findByNameAndCountry(regionDto.getName(), regionDto.getCountry())
                 .orElseThrow(() -> new MigrationClientException(
                     "Region '%s' (%s) was not found in the target database".formatted(
-                        regionDto.name(), regionDto.country()
+                        regionDto.getName(), regionDto.getCountry()
                     )
                 ));
-            regionIds.put(regionDto.id(), region.getId());
+            regionIds.put(regionDto.getId(), region.getId());
         }
     }
 
+    /**
+     * Maps area-of-law identifiers from the legacy export onto the pre-seeded records.
+     *
+     * @param areaOfLawTypes legacy area-of-law records.
+     * @param ids destination map storing legacy-to-new mappings.
+     */
     private void mapExistingAreasOfLaw(
         List<uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto> areaOfLawTypes,
         Map<Integer, UUID> ids
@@ -96,42 +121,55 @@ class ReferenceDataImporter {
         }
 
         for (uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto dto : areaOfLawTypes) {
-            AreaOfLawType entity = areaOfLawTypeRepository.findByNameIgnoreCase(dto.name())
+            AreaOfLawType entity = areaOfLawTypeRepository.findByNameIgnoreCase(dto.getName())
                 .orElseThrow(() -> new MigrationClientException(
-                    "Area of law '%s' was not found in the target database".formatted(dto.name())
+                    "Area of law '%s' was not found in the target database".formatted(dto.getName())
                 ));
-            ids.put(dto.id(), entity.getId());
+            ids.put(dto.getId(), entity.getId());
         }
     }
 
+    /**
+     * Reuses service areas that were seeded via Flyway and stores the ID mappings in the context.
+     *
+     * @param serviceAreas legacy service area definitions.
+     * @param context migration context used to store mappings.
+     */
     private void persistServiceAreas(List<ServiceAreaDto> serviceAreas, MigrationContext context) {
         if (isEmpty(serviceAreas)) {
             return;
         }
 
         for (ServiceAreaDto dto : serviceAreas) {
-            Optional<ServiceArea> existing = serviceAreaRepository.findByNameIgnoreCase(dto.name());
+            Optional<ServiceArea> existing = serviceAreaRepository.findByNameIgnoreCase(dto.getName());
             if (existing.isEmpty()) {
-                LOG.warn("Service area '{}' was not found in the target database", dto.name());
+                LOG.warn("Service area '{}' was not found in the target database", dto.getName());
                 continue;
             }
-            context.getServiceAreaIds().put(dto.id(), existing.get().getId());
+            context.getServiceAreaIds().put(dto.getId(), existing.get().getId());
         }
     }
 
+    /**
+     * Updates the temporary legacy service records with the IDs of the service areas that were
+     * seeded earlier, so joins can be recreated.
+     *
+     * @param services legacy service definitions.
+     * @param context migration context containing the service-area ID mappings.
+     */
     private void persistServices(List<ServiceDto> services, MigrationContext context) {
         if (isEmpty(services)) {
             return;
         }
 
         for (ServiceDto dto : services) {
-            LegacyService entity = legacyServiceRepository.findByName(dto.name())
+            LegacyService entity = legacyServiceRepository.findByName(dto.getName())
                 .orElseGet(LegacyService::new);
-            entity.setName(dto.name());
-            entity.setNameCy(dto.nameCy());
-            entity.setDescription(dto.description());
-            entity.setDescriptionCy(dto.descriptionCy());
-            entity.setServiceAreas(mapIds(dto.serviceAreaIds(), context.getServiceAreaIds(), "service area"));
+            entity.setName(dto.getName());
+            entity.setNameCy(dto.getNameCy());
+            entity.setDescription(dto.getDescription());
+            entity.setDescriptionCy(dto.getDescriptionCy());
+            entity.setServiceAreas(mapIds(dto.getServiceAreaIds(), context.getServiceAreaIds(), "service area"));
             legacyServiceRepository.save(entity);
         }
     }
@@ -145,18 +183,18 @@ class ReferenceDataImporter {
         }
 
         for (LocalAuthorityTypeDto dto : localAuthorityTypes) {
-            if (StringUtils.isBlank(dto.name())) {
-                LOG.warn("Skipping local authority type with id {} because name is blank", dto.id());
+            if (StringUtils.isBlank(dto.getName())) {
+                LOG.warn("Skipping local authority type with id {} because name is blank", dto.getId());
                 continue;
             }
 
-            Optional<LocalAuthorityType> existing = localAuthorityTypeRepository.findByName(dto.name());
+            Optional<LocalAuthorityType> existing = localAuthorityTypeRepository.findByName(dto.getName());
             if (existing.isEmpty()) {
-                LOG.warn("No matching local authority type found for name '{}'", dto.name());
+                LOG.warn("No matching local authority type found for name '{}'", dto.getName());
                 continue;
             }
 
-            ids.put(dto.id(), existing.get().getId());
+            ids.put(dto.getId(), existing.get().getId());
         }
     }
 
@@ -171,8 +209,8 @@ class ReferenceDataImporter {
             ));
 
         for (ContactDescriptionTypeDto dto : dtos) {
-            if (!existing.containsKey(dto.name())) {
-                LOG.warn("Contact description '{}' was not found in the target database", dto.name());
+            if (!existing.containsKey(dto.getName())) {
+                LOG.warn("Contact description '{}' was not found in the target database", dto.getName());
             }
         }
     }
@@ -188,8 +226,8 @@ class ReferenceDataImporter {
             ));
 
         for (OpeningHourTypeDto dto : dtos) {
-            if (!existing.containsKey(dto.name())) {
-                LOG.warn("Opening hour type '{}' was not found in the target database", dto.name());
+            if (!existing.containsKey(dto.getName())) {
+                LOG.warn("Opening hour type '{}' was not found in the target database", dto.getName());
             }
         }
     }

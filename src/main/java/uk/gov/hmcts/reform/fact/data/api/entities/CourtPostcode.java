@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import lombok.Builder;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 import java.util.UUID;
@@ -27,6 +28,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
+@Builder
 @Entity
 @Table(name = "court_postcodes")
 public class CourtPostcode {

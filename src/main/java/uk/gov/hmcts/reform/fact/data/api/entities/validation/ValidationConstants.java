@@ -32,5 +32,4 @@ public class ValidationConstants {
     public static final String COURT_NAME_REGEX = "^[A-Za-z&'(),\\- ]+$";
     public static final String COURT_NAME_REGEX_MESSAGE =
         "Court name may only contain letters, spaces, commas, apostrophes, hyphens, ampersands, and parentheses";
-
 }

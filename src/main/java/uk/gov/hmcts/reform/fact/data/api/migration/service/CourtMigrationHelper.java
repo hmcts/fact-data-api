@@ -43,6 +43,11 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
 
+/**
+ * Responsible for migrating each court plus its related child entities (service areas, SPOEs,
+ * codes, etc.). Keeps the primary migration service small by grouping the relationship logic in
+ * one place.
+ */
 class CourtMigrationHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(CourtMigrationHelper.class);
@@ -88,6 +93,15 @@ class CourtMigrationHelper {
         this.courtService = courtService;
     }
 
+    /**
+     * Persists the supplied courts and their relationships. Skips any courts that cannot be mapped
+     * (e.g. missing region) and records migration counts in the context so the caller can include
+     * them in the final summary.
+     *
+     * @param courts legacy court definitions.
+     * @param context migration context containing previously mapped reference IDs.
+     * @return number of courts migrated successfully.
+     */
     int migrateCourts(List<CourtDto> courts, MigrationContext context) {
         if (isEmpty(courts)) {
             return 0;
@@ -97,19 +111,19 @@ class CourtMigrationHelper {
         for (CourtDto dto : courts) {
             UUID regionId = resolveRegionId(dto, context);
             if (regionId == null) {
-                LOG.warn("Skipping court {} because region {} was not migrated", dto.slug(), dto.regionId());
+                LOG.warn("Skipping court {} because region {} was not migrated", dto.getSlug(), dto.getRegionId());
                 continue;
             }
 
-            String courtName = sanitiseCourtName(dto.name());
+            String courtName = sanitiseCourtName(dto.getName());
             if (StringUtils.isBlank(courtName)) {
-                LOG.warn("Skipping court {} because sanitised name was blank", dto.slug());
+                LOG.warn("Skipping court {} because sanitised name was blank", dto.getSlug());
                 continue;
             }
             if (!COURT_NAME_PATTERN.matcher(courtName).matches()) {
                 LOG.warn(
                     "Skipping court {} because sanitised name '{}' still fails validation regex",
-                    dto.slug(),
+                    dto.getSlug(),
                     courtName
                 );
                 continue;
@@ -117,34 +131,41 @@ class CourtMigrationHelper {
 
             Court court = Court.builder()
                 .name(courtName)
-                .slug(dto.slug())
-                .open(dto.open())
+                .slug(dto.getSlug())
+                .open(dto.getOpen())
                 .regionId(regionId)
-                .isServiceCentre(dto.isServiceCentre())
+                .isServiceCentre(dto.getIsServiceCentre())
                 .build();
 
             Court savedCourt;
             try {
                 savedCourt = courtService.createCourt(court);
             } catch (ConstraintViolationException ex) {
-                LOG.error("Validation failed while migrating court '{}': {}", dto.name(), ex.getMessage());
+                LOG.error("Validation failed while migrating court '{}': {}", dto.getName(), ex.getMessage());
                 throw ex;
             }
             UUID courtId = savedCourt.getId();
-            persistCourtServiceAreas(dto.courtServiceAreas(), courtId, context);
-            persistCourtAreasOfLaw(dto.courtAreasOfLaw(), courtId, context);
-            persistCourtSinglePointsOfEntry(dto.courtSinglePointsOfEntry(), courtId, context);
-            persistCourtLocalAuthorities(dto.courtLocalAuthorities(), courtId, context);
-            persistCourtProfessionalInformation(dto.courtProfessionalInformation(), courtId, context);
-            persistCourtCodes(dto.courtCodes(), courtId, context);
-            persistCourtDxCodes(dto.courtDxCodes(), courtId, context);
-            persistCourtFax(dto.courtFax(), courtId, context);
-            persistLegacyCourtMapping(dto.id(), courtId);
+            persistCourtServiceAreas(dto.getCourtServiceAreas(), courtId, context);
+            persistCourtAreasOfLaw(dto.getCourtAreasOfLaw(), courtId, context);
+            persistCourtSinglePointsOfEntry(dto.getCourtSinglePointsOfEntry(), courtId, context);
+            persistCourtLocalAuthorities(dto.getCourtLocalAuthorities(), courtId, context);
+            persistCourtProfessionalInformation(dto.getCourtProfessionalInformation(), courtId, context);
+            persistCourtCodes(dto.getCourtCodes(), courtId, context);
+            persistCourtDxCodes(dto.getCourtDxCodes(), courtId, context);
+            persistCourtFax(dto.getCourtFax(), courtId, context);
+            persistLegacyCourtMapping(dto.getId(), courtId);
             total++;
         }
         return total;
     }
 
+    /**
+     * Persists court-service-area joins for a single court.
+     *
+     * @param serviceAreas legacy service-area relationships.
+     * @param courtId identifier of the newly created court.
+     * @param context migration context containing service-area ID mappings.
+     */
     private void persistCourtServiceAreas(
         List<CourtServiceAreaDto> serviceAreas,
         UUID courtId,
@@ -157,48 +178,70 @@ class CourtMigrationHelper {
         for (CourtServiceAreaDto dto : serviceAreas) {
             CourtServiceAreas entity = CourtServiceAreas.builder()
                 .courtId(courtId)
-                .serviceAreaId(mapIds(dto.serviceAreaIds(), context.getServiceAreaIds(), "court service area"))
-                .catchmentType(parseCatchmentType(dto.catchmentType()))
+                .serviceAreaId(mapIds(dto.getServiceAreaIds(), context.getServiceAreaIds(), "court service area"))
+                .catchmentType(parseCatchmentType(dto.getCatchmentType()))
                 .build();
             courtServiceAreasRepository.save(entity);
             context.courtServiceAreasMigrated++;
         }
     }
 
+    /**
+     * Persists the areas-of-law association for the supplied court.
+     *
+     * @param dto legacy areas-of-law payload.
+     * @param courtId identifier of the court being migrated.
+     * @param context migration context with mapped area-of-law IDs.
+     */
     private void persistCourtAreasOfLaw(
         CourtAreasOfLawDto dto,
         UUID courtId,
         MigrationContext context
     ) {
-        if (dto == null || isEmpty(dto.areaOfLawIds())) {
+        if (dto == null || isEmpty(dto.getAreaOfLawIds())) {
             return;
         }
 
         CourtAreasOfLaw entity = CourtAreasOfLaw.builder()
             .courtId(courtId)
-            .areasOfLaw(mapIds(dto.areaOfLawIds(), context.getAreaOfLawIds(), "court areas of law"))
+            .areasOfLaw(mapIds(dto.getAreaOfLawIds(), context.getAreaOfLawIds(), "court areas of law"))
             .build();
         courtAreasOfLawRepository.save(entity);
         context.courtAreasOfLawMigrated++;
     }
 
+    /**
+     * Persists single-point-of-entry associations for the supplied court.
+     *
+     * @param dto legacy SPOE payload.
+     * @param courtId identifier of the court being migrated.
+     * @param context migration context with mapped area-of-law IDs.
+     */
     private void persistCourtSinglePointsOfEntry(
         CourtSinglePointOfEntryDto dto,
         UUID courtId,
         MigrationContext context
     ) {
-        if (dto == null || isEmpty(dto.areaOfLawIds())) {
+        if (dto == null || isEmpty(dto.getAreaOfLawIds())) {
             return;
         }
 
         CourtSinglePointsOfEntry entity = CourtSinglePointsOfEntry.builder()
             .courtId(courtId)
-            .areasOfLaw(mapIds(dto.areaOfLawIds(), context.getAreaOfLawIds(), "court single point of entry"))
+            .areasOfLaw(mapIds(dto.getAreaOfLawIds(), context.getAreaOfLawIds(), "court single point of entry"))
             .build();
         courtSinglePointsOfEntryRepository.save(entity);
         context.courtSinglePointsOfEntryMigrated++;
     }
 
+    /**
+     * Persists local-authority relationships for the supplied court. Skips entries whose area of
+     * law or local authority ID cannot be mapped.
+     *
+     * @param localAuthorities legacy local authority payload.
+     * @param courtId identifier of the court being migrated.
+     * @param context migration context containing mapped IDs.
+     */
     private void persistCourtLocalAuthorities(
         List<CourtLocalAuthorityDto> localAuthorities,
         UUID courtId,
@@ -209,22 +252,22 @@ class CourtMigrationHelper {
         }
 
         for (CourtLocalAuthorityDto dto : localAuthorities) {
-            if (dto.localAuthorityIds() == null || dto.localAuthorityIds().isEmpty()) {
+            if (dto.getLocalAuthorityIds() == null || dto.getLocalAuthorityIds().isEmpty()) {
                 continue;
             }
 
-            UUID areaOfLawId = context.getAreaOfLawIds().get(dto.areaOfLawId());
-            if (areaOfLawId == null && dto.areaOfLawId() != null) {
+            UUID areaOfLawId = context.getAreaOfLawIds().get(dto.getAreaOfLawId());
+            if (areaOfLawId == null && dto.getAreaOfLawId() != null) {
                 LOG.warn(
                     "Skipping court local authority for court '{}' because area_of_law_id {} was not migrated",
                     courtId,
-                    dto.areaOfLawId()
+                    dto.getAreaOfLawId()
                 );
                 continue;
             }
 
             List<UUID> localAuthorityIds = mapIds(
-                dto.localAuthorityIds(),
+                dto.getLocalAuthorityIds(),
                 context.getLocalAuthorityTypeIds(),
                 "court local authorities"
             );
@@ -246,6 +289,13 @@ class CourtMigrationHelper {
         }
     }
 
+    /**
+     * Persists professional information for the supplied court.
+     *
+     * @param dto legacy professional information payload.
+     * @param courtId identifier of the court being migrated.
+     * @param context migration context used to track counters.
+     */
     private void persistCourtProfessionalInformation(
         CourtProfessionalInformationDto dto,
         UUID courtId,
@@ -257,17 +307,24 @@ class CourtMigrationHelper {
 
         CourtProfessionalInformation entity = CourtProfessionalInformation.builder()
             .courtId(courtId)
-            .interviewRooms(dto.interviewRooms())
-            .interviewRoomCount(dto.interviewRoomCount())
-            .interviewPhoneNumber(dto.interviewPhoneNumber())
-            .videoHearings(dto.videoHearings())
-            .commonPlatform(dto.commonPlatform())
-            .accessScheme(dto.accessScheme())
+            .interviewRooms(dto.getInterviewRooms())
+            .interviewRoomCount(dto.getInterviewRoomCount())
+            .interviewPhoneNumber(dto.getInterviewPhoneNumber())
+            .videoHearings(dto.getVideoHearings())
+            .commonPlatform(dto.getCommonPlatform())
+            .accessScheme(dto.getAccessScheme())
             .build();
         courtProfessionalInformationRepository.save(entity);
         context.courtProfessionalInformationMigrated++;
     }
 
+    /**
+     * Persists court-code metadata such as GBS, magistrate, etc.
+     *
+     * @param dto legacy court-code payload.
+     * @param courtId identifier of the court being migrated.
+     * @param context migration context used to track counts.
+     */
     private void persistCourtCodes(CourtCodesDto dto, UUID courtId, MigrationContext context) {
         if (dto == null) {
             return;
@@ -275,69 +332,83 @@ class CourtMigrationHelper {
 
         CourtCodes entity = CourtCodes.builder()
             .courtId(courtId)
-            .magistrateCourtCode(dto.magistrateCourtCode())
-            .familyCourtCode(dto.familyCourtCode())
-            .tribunalCode(dto.tribunalCode())
-            .countyCourtCode(dto.countyCourtCode())
-            .crownCourtCode(dto.crownCourtCode())
-            .gbs(dto.gbs())
+            .magistrateCourtCode(dto.getMagistrateCourtCode())
+            .familyCourtCode(dto.getFamilyCourtCode())
+            .tribunalCode(dto.getTribunalCode())
+            .countyCourtCode(dto.getCountyCourtCode())
+            .crownCourtCode(dto.getCrownCourtCode())
+            .gbs(dto.getGbs())
             .build();
         courtCodesRepository.save(entity);
         context.courtCodesMigrated++;
     }
 
+    /**
+     * Persists DX codes for the supplied court, skipping invalid entries.
+     *
+     * @param dtos legacy DX payload.
+     * @param courtId identifier of the court being migrated.
+     * @param context migration context used to track counts.
+     */
     private void persistCourtDxCodes(List<CourtDxCodeDto> dtos, UUID courtId, MigrationContext context) {
         if (isEmpty(dtos)) {
             return;
         }
 
         for (CourtDxCodeDto dto : dtos) {
-            if (StringUtils.isBlank(dto.dxCode()) && StringUtils.isBlank(dto.explanation())) {
+            if (StringUtils.isBlank(dto.getDxCode()) && StringUtils.isBlank(dto.getExplanation())) {
                 LOG.debug(
                     "Skipping DX code for court '{}' because both code and explanation are blank",
                     courtId
                 );
                 continue;
             }
-            if (StringUtils.length(dto.dxCode()) > 200) {
+            if (StringUtils.length(dto.getDxCode()) > 200) {
                 LOG.warn(
                     "Skipping DX code '{}' for court '{}' because it exceeds 200 characters",
-                    dto.dxCode(),
+                    dto.getDxCode(),
                     courtId
                 );
                 continue;
             }
-            if (StringUtils.isNotBlank(dto.dxCode())
-                && !GENERIC_DESCRIPTION_PATTERN.matcher(dto.dxCode()).matches()) {
+            if (StringUtils.isNotBlank(dto.getDxCode())
+                && !GENERIC_DESCRIPTION_PATTERN.matcher(dto.getDxCode()).matches()) {
                 LOG.warn(
                     "Skipping DX code '{}' for court '{}' due to invalid characters",
-                    dto.dxCode(),
+                    dto.getDxCode(),
                     courtId
                 );
                 continue;
             }
             CourtDxCode entity = CourtDxCode.builder()
                 .courtId(courtId)
-                .dxCode(dto.dxCode())
-                .explanation(dto.explanation())
+                .dxCode(dto.getDxCode())
+                .explanation(dto.getExplanation())
                 .build();
             courtDxCodeRepository.save(entity);
             context.courtDxCodesMigrated++;
         }
     }
 
+    /**
+     * Persists fax numbers for the supplied court, ignoring blank entries.
+     *
+     * @param dtos legacy fax payload.
+     * @param courtId identifier of the court being migrated.
+     * @param context migration context used to track counts.
+     */
     private void persistCourtFax(List<CourtFaxDto> dtos, UUID courtId, MigrationContext context) {
         if (isEmpty(dtos)) {
             return;
         }
 
         for (CourtFaxDto dto : dtos) {
-            if (StringUtils.isBlank(dto.faxNumber())) {
+            if (StringUtils.isBlank(dto.getFaxNumber())) {
                 continue;
             }
             CourtFax entity = CourtFax.builder()
                 .courtId(courtId)
-                .faxNumber(dto.faxNumber())
+                .faxNumber(dto.getFaxNumber())
                 .build();
             courtFaxRepository.save(entity);
             context.courtFaxMigrated++;
@@ -356,12 +427,20 @@ class CourtMigrationHelper {
         );
     }
 
+    /**
+     * Resolves the region ID for the supplied court. Service centres fall back to the dedicated
+     * "Service Centre" region when the legacy payload omits a region.
+     *
+     * @param dto legacy court payload.
+     * @param context migration context containing mapped region IDs.
+     * @return mapped region ID or {@code null} when the court should be skipped.
+     */
     private UUID resolveRegionId(CourtDto dto, MigrationContext context) {
-        UUID regionId = dto.regionId() == null ? null : context.getRegionIds().get(dto.regionId());
+        UUID regionId = dto.getRegionId() == null ? null : context.getRegionIds().get(dto.getRegionId());
         if (regionId != null) {
             return regionId;
         }
-        if (!Boolean.TRUE.equals(dto.isServiceCentre())) {
+        if (!Boolean.TRUE.equals(dto.getIsServiceCentre())) {
             return null;
         }
         UUID fallback = context.getServiceCentreRegionId();
@@ -371,7 +450,7 @@ class CourtMigrationHelper {
             if (fallback == null) {
                 LOG.warn(
                     "Unable to assign region for service centre '{}' because the fallback region was not found",
-                    dto.slug()
+                    dto.getSlug()
                 );
                 return null;
             }
@@ -379,12 +458,24 @@ class CourtMigrationHelper {
         return fallback;
     }
 
+    /**
+     * Loads the fallback region for service centres. Returns {@code null} if the region is not
+     * present (the caller logs the warning).
+     *
+     * @return identifier of the service-centre region or {@code null}.
+     */
     private UUID loadServiceCentreRegionId() {
         return regionRepository.findByNameAndCountry("Service Centre", "England")
             .map(uk.gov.hmcts.reform.fact.data.api.entities.Region::getId)
             .orElse(null);
     }
 
+    /**
+     * Normalises the catchment type value coming from the legacy service area payload.
+     *
+     * @param value legacy catchment text.
+     * @return parsed {@link CatchmentType} or {@code null} if the value is blank/unknown.
+     */
     private static CatchmentType parseCatchmentType(String value) {
         if (StringUtils.isBlank(value)) {
             return null;

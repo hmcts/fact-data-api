@@ -51,7 +51,7 @@ public class MigrationController {
         MigrationSummary summary = migrationService.migrate();
         MigrationResponse response = new MigrationResponse(
             "Migration completed successfully",
-            summary.result()
+            summary.getResult()
         );
         return ResponseEntity.ok(response);
     }

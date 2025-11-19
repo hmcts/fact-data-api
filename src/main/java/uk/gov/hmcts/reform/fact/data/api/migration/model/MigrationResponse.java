@@ -1,14 +1,17 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  * Wrapper returned by the migration endpoint providing a human-readable message alongside
  * the detailed counts of the imported entities.
- *
- * @param message contextual message for the caller.
- * @param result  detailed counts of entities migrated during the run.
  */
-public record MigrationResponse(
-    String message,
-    MigrationResult result
-) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class MigrationResponse {
+    private String message;
+    private MigrationResult result;
 }

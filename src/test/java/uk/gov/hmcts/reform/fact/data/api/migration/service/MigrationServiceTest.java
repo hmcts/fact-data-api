@@ -251,17 +251,17 @@ class MigrationServiceTest {
         when(legacyFactClient.fetchExport()).thenReturn(response);
 
         MigrationSummary summary = migrationService.migrate();
-        MigrationResult result = summary.result();
+        MigrationResult result = summary.getResult();
 
-        assertThat(result.courtsMigrated()).isEqualTo(1);
-        assertThat(result.courtAreasOfLawMigrated()).isEqualTo(1);
-        assertThat(result.courtServiceAreasMigrated()).isEqualTo(1);
-        assertThat(result.courtLocalAuthoritiesMigrated()).isEqualTo(1);
-        assertThat(result.courtSinglePointsOfEntryMigrated()).isEqualTo(1);
-        assertThat(result.courtProfessionalInformationMigrated()).isEqualTo(1);
-        assertThat(result.courtCodesMigrated()).isEqualTo(1);
-        assertThat(result.courtDxCodesMigrated()).isEqualTo(1);
-        assertThat(result.courtFaxMigrated()).isEqualTo(1);
+        assertThat(result.getCourtsMigrated()).isEqualTo(1);
+        assertThat(result.getCourtAreasOfLawMigrated()).isEqualTo(1);
+        assertThat(result.getCourtServiceAreasMigrated()).isEqualTo(1);
+        assertThat(result.getCourtLocalAuthoritiesMigrated()).isEqualTo(1);
+        assertThat(result.getCourtSinglePointsOfEntryMigrated()).isEqualTo(1);
+        assertThat(result.getCourtProfessionalInformationMigrated()).isEqualTo(1);
+        assertThat(result.getCourtCodesMigrated()).isEqualTo(1);
+        assertThat(result.getCourtDxCodesMigrated()).isEqualTo(1);
+        assertThat(result.getCourtFaxMigrated()).isEqualTo(1);
 
         verify(legacyServiceRepository).save(any(LegacyService.class));
         verify(courtServiceAreasRepository).save(any());
@@ -299,7 +299,7 @@ class MigrationServiceTest {
 
         MigrationSummary summary = migrationService.migrate();
 
-        assertThat(summary.result().courtsMigrated()).isEqualTo(1);
+        assertThat(summary.getResult().getCourtsMigrated()).isEqualTo(1);
         verify(courtDxCodeRepository, never()).save(any());
     }
 
@@ -341,7 +341,7 @@ class MigrationServiceTest {
 
         MigrationSummary summary = migrationService.migrate();
 
-        assertThat(summary.result().courtsMigrated()).isEqualTo(1);
+        assertThat(summary.getResult().getCourtsMigrated()).isEqualTo(1);
         ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
         verify(courtService).createCourt(captor.capture());
         assertThat(captor.getValue().getRegionId()).isNotNull();
