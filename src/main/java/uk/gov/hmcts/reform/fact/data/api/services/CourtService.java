@@ -1,9 +1,11 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import feign.FeignException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uk.gov.hmcts.reform.fact.data.api.clients.CathClient;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -19,10 +21,13 @@ public class CourtService {
 
     private final CourtRepository courtRepository;
     private final RegionService regionService;
+    private final CathClient cathClient;
 
-    public CourtService(CourtRepository courtRepository, RegionService regionService) {
+    public CourtService(CourtRepository courtRepository, RegionService regionService,
+                        CathClient cathClient) {
         this.courtRepository = courtRepository;
         this.regionService = regionService;
+        this.cathClient = cathClient;
     }
 
     /**
@@ -91,6 +96,7 @@ public class CourtService {
      */
     public Court updateCourt(UUID courtId, Court court) {
         Court existingCourt = getCourtById(courtId);
+        final Boolean previousOpenStatus = existingCourt.getOpen();
         Region foundRegion = regionService.getRegionById(court.getRegionId());
 
         if (!existingCourt.getName().equalsIgnoreCase(court.getName())) {
@@ -103,7 +109,13 @@ public class CourtService {
         existingCourt.setRegionId(foundRegion.getId());
         existingCourt.setWarningNotice(court.getWarningNotice());
 
-        return courtRepository.save(existingCourt);
+        Court updatedCourt = courtRepository.save(existingCourt);
+
+        if (shouldNotifyCath(previousOpenStatus, court.getOpen(), updatedCourt)) {
+            notifyCath(updatedCourt);
+        }
+
+        return updatedCourt;
     }
 
     /**
@@ -184,5 +196,24 @@ public class CourtService {
         }
 
         return slug;
+    }
+
+    private boolean shouldNotifyCath(Boolean previousOpen, Boolean newOpen, Court court) {
+        boolean statusChanged = Boolean.TRUE.equals(previousOpen) != Boolean.TRUE.equals(newOpen);
+        boolean hasMrdId = court.getMrdId() != null && !court.getMrdId().isBlank();
+        boolean isLinkedToCath = Boolean.TRUE.equals(court.getOpenOnCath());
+
+        return statusChanged && hasMrdId && isLinkedToCath;
+    }
+
+    private void notifyCath(Court court) {
+        try {
+            cathClient.notifyCourtStatusChange(
+                court.getMrdId(),
+                Map.of("isOpen", Boolean.TRUE.equals(court.getOpen()))
+            );
+        } catch (FeignException exception) {
+            throw exception;
+        }
     }
 }

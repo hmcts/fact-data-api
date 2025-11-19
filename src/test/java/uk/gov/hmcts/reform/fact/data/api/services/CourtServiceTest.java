@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import uk.gov.hmcts.reform.fact.data.api.clients.CathClient;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -36,6 +38,9 @@ class CourtServiceTest {
 
     @Mock
     private RegionService regionService;
+
+    @Mock
+    private CathClient cathClient;
 
     @InjectMocks
     private CourtService courtService;
@@ -232,6 +237,68 @@ class CourtServiceTest {
 
         assertThat(result.getSlug()).isEqualTo("same-name");
         verify(courtRepository, never()).existsBySlug(anyString());
+    }
+
+    @Test
+    void updateCourtShouldNotifyCathWhenOpenStatusChangesAndCourtLinked() {
+        UUID courtId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
+        Region region = new Region();
+        region.setId(regionId);
+
+        Court existing = new Court();
+        existing.setId(courtId);
+        existing.setName("Existing Name");
+        existing.setSlug("existing-name");
+        existing.setOpen(Boolean.TRUE);
+        existing.setRegionId(regionId);
+        existing.setRegion(region);
+        existing.setOpenOnCath(Boolean.TRUE);
+        existing.setMrdId("MRD123");
+
+        Court updated = new Court();
+        updated.setName("Existing Name");
+        updated.setRegionId(regionId);
+        updated.setOpen(Boolean.FALSE);
+
+        when(courtRepository.findById(courtId)).thenReturn(Optional.of(existing));
+        when(regionService.getRegionById(regionId)).thenReturn(region);
+        when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        courtService.updateCourt(courtId, updated);
+
+        verify(cathClient).notifyCourtStatusChange("MRD123", Map.of("isOpen", false));
+    }
+
+    @Test
+    void updateCourtShouldNotNotifyCathWhenCourtNotLinked() {
+        UUID courtId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
+        Region region = new Region();
+        region.setId(regionId);
+
+        Court existing = new Court();
+        existing.setId(courtId);
+        existing.setName("Existing Name");
+        existing.setSlug("existing-name");
+        existing.setOpen(Boolean.FALSE);
+        existing.setRegionId(regionId);
+        existing.setRegion(region);
+        existing.setOpenOnCath(Boolean.FALSE);
+        existing.setMrdId("MRD123");
+
+        Court updated = new Court();
+        updated.setName("Existing Name");
+        updated.setRegionId(regionId);
+        updated.setOpen(Boolean.TRUE);
+
+        when(courtRepository.findById(courtId)).thenReturn(Optional.of(existing));
+        when(regionService.getRegionById(regionId)).thenReturn(region);
+        when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        courtService.updateCourt(courtId, updated);
+
+        verify(cathClient, never()).notifyCourtStatusChange(anyString(), anyMap());
     }
 
     @Test
