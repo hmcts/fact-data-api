@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
-import lombok.Builder;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 import java.util.UUID;
@@ -22,6 +21,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -56,4 +56,5 @@ public class CourtPostcode {
     @Size(max = ValidationConstants.POSTCODE_MAX_LENGTH, message = ValidationConstants.POSTCODE_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.POSTCODE_REGEX, message = ValidationConstants.POSTCODE_REGEX_MESSAGE)
     private String postcode;
+
 }
