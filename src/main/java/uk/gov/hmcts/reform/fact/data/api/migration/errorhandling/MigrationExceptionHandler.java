@@ -11,14 +11,6 @@ import uk.gov.hmcts.reform.fact.data.api.migration.controller.MigrationControlle
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationAlreadyAppliedException;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
 
-/**
- * Scoped exception handler for the private migration endpoint so the migration module can be removed
- * cleanly once the feature is decommissioned.
- */
-/**
- * Localised error handler for the migration controller so that migration-specific HTTP responses
- * can be removed alongside the rest of the migration module in future.
- */
 @Slf4j
 @RestControllerAdvice(assignableTypes = MigrationController.class)
 public class MigrationExceptionHandler {
