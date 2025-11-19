@@ -309,18 +309,8 @@ class MigrationIntegrationTest {
         return URI.create("http://localhost:" + port + "/migration/import");
     }
 
-    private int safeSize(List<?> values) {
-        return values == null ? 0 : values.size();
-    }
-
     private int countMigratableCourts() {
         return migratableCourts.size();
-    }
-
-    private int countMigratableLocalAuthorityTypes(LegacyExportResponse snapshot) {
-        return (int) snapshot.getLocalAuthorityTypes().stream()
-            .filter(type -> StringUtils.isNotBlank(type.getName()))
-            .count();
     }
 
     private long countCourtServiceAreas() {

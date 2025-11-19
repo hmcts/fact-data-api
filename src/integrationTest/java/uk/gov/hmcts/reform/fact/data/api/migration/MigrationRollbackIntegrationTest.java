@@ -117,7 +117,23 @@ class MigrationRollbackIntegrationTest {
         @Primary
         LegacyFactClient failingLegacyFactClient() {
             LegacyExportResponse response = new LegacyExportResponse(
-                List.of(buildLegacyCourt()),
+                List.of(new CourtDto(
+                    123L,
+                    "Court",
+                    "court",
+                    true,
+                    1,
+                    List.of(new CourtServiceAreaDto(1, "LOCAL", List.of(1))),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false
+                )),
                 List.of(new LocalAuthorityTypeDto(1, "LA")),
                 List.of(new ServiceAreaDto(
                     1,
@@ -145,18 +161,6 @@ class MigrationRollbackIntegrationTest {
             LegacyFactClient client = mock(LegacyFactClient.class);
             when(client.fetchExport()).thenReturn(response);
             return client;
-        }
-
-        private CourtDto buildLegacyCourt() {
-            CourtDto dto = new CourtDto();
-            dto.setId(123L);
-            dto.setName("Court");
-            dto.setSlug("court");
-            dto.setOpen(true);
-            dto.setRegionId(1);
-            dto.setCourtServiceAreas(List.of(new CourtServiceAreaDto(1, "LOCAL", List.of(1))));
-            dto.setIsServiceCentre(false);
-            return dto;
         }
     }
 }
