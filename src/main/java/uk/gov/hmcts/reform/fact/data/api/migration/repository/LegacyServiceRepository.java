@@ -7,9 +7,6 @@ import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyService;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Repository used exclusively by the migration helper to persist legacy service data.
- */
 @Repository
 public interface LegacyServiceRepository extends JpaRepository<LegacyService, UUID> {
     Optional<LegacyService> findByName(String name);

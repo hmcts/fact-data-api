@@ -12,11 +12,6 @@ import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationSummary;
 import uk.gov.hmcts.reform.fact.data.api.migration.service.MigrationService;
 
-/**
- * REST endpoint used to trigger a one-off import of data from the legacy FaCT service.
- * The endpoint is intentionally segregated from the public API surface and is expected
- * to be invoked by internal tooling only.
- */
 @RestController
 @RequestMapping("/migration")
 @Tag(name = "Migration", description = "Endpoints supporting one-off migrations from the legacy FaCT system")

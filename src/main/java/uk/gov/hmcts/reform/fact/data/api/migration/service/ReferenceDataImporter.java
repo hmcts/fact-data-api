@@ -31,11 +31,6 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
 
-/**
- * Handles one-off reference data mapping before the court entities are persisted. This keeps the
- * main migration service focused on orchestration while this helper deals with translating legacy
- * IDs into the UUIDs generated in the new schema.
- */
 class ReferenceDataImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceDataImporter.class);

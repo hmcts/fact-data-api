@@ -43,11 +43,6 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
 
-/**
- * Responsible for migrating each court plus its related child entities (service areas, SPOEs,
- * codes, etc.). Keeps the primary migration service small by grouping the relationship logic in
- * one place.
- */
 class CourtMigrationHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(CourtMigrationHelper.class);
