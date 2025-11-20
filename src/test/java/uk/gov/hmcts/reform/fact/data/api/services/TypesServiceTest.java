@@ -133,7 +133,6 @@ class TypesServiceTest {
         assertThat(result).isEmpty();
     }
 
-
     @Test
     void getCourtTypesReturnsCourtTypesWhenFound() {
         when(courtTypeRepository.findAll()).thenReturn(courtTypes);

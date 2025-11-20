@@ -44,7 +44,6 @@ public class CourtAreasOfLawService {
             );
     }
 
-
     /**
      * Get a map of areas of law types and their status for a court.
      *
@@ -63,7 +62,6 @@ public class CourtAreasOfLawService {
                 areaOfLawType -> courtAreasOfLawIds.contains(areaOfLawType.getId())
             ));
     }
-
 
     /**
      * Set an areas of law record for a court.
