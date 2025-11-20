@@ -82,3 +82,7 @@ testingSupport:
 clients:
   cath:
     url: ${CATH_API_URL:}
+  slack:
+    token: ${SLACK_TOKEN:}
+    channel-id: ${SLACK_CHANNEL_ID:}
+

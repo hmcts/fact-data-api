@@ -4,9 +4,11 @@ import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.clients.CathClient;
+import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -24,12 +26,14 @@ public class CourtService {
     private final CourtRepository courtRepository;
     private final RegionService regionService;
     private final CathClient cathClient;
+    private final SlackClient slackClient;
 
     public CourtService(CourtRepository courtRepository, RegionService regionService,
-                        CathClient cathClient) {
+                        CathClient cathClient, SlackClient slackClient) {
         this.courtRepository = courtRepository;
         this.regionService = regionService;
         this.cathClient = cathClient;
+        this.slackClient = slackClient;
     }
 
     /**
@@ -220,6 +224,22 @@ public class CourtService {
                     Map.of("isOpen", Boolean.TRUE.equals(court.getOpen()))
                 );
             } catch (FeignException ex) {
+                slackClient.sendSlackMessage(String.format(
+                    """
+                        :rotating_light: *FaCT notification to CaTH failed* :rotating_light:
+                        *Court name:* %s
+                        *Court ID:* `%s`
+                        *MRD ID:* `%s`
+                        *Status code:* %s
+                        *Error message:* `%s`
+
+                        <!subteam^S09TS4ASQ7R|@fact-bsp-devs> please investigate""",
+                    court.getName(),
+                    court.getId(),
+                    court.getMrdId(),
+                    HttpStatus.resolve(ex.status()),
+                    ex.getMessage()
+                ));
                 log.error("Error notifying CaTH. MRD ID: {}, Error: {}", court.getMrdId(), ex.getMessage());
             }
         }
