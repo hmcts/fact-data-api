@@ -4,15 +4,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.reform.fact.data.api.clients.CathClient;
+import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
+
+import feign.FeignException;
+import feign.Request;
+import feign.RequestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -26,6 +32,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +48,9 @@ class CourtServiceTest {
 
     @Mock
     private CathClient cathClient;
+
+    @Mock
+    private SlackClient slackClient;
 
     @InjectMocks
     private CourtService courtService;
@@ -268,6 +278,59 @@ class CourtServiceTest {
         courtService.updateCourt(courtId, updated);
 
         verify(cathClient).notifyCourtStatusChange("MRD123", Map.of("isOpen", false));
+    }
+
+    @Test
+    void updateCourtShouldSendSlackMessageWhenCathNotificationFails() {
+        UUID courtId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
+        Region region = new Region();
+        region.setId(regionId);
+
+        Court existing = new Court();
+        existing.setId(courtId);
+        existing.setName("Existing Name");
+        existing.setSlug("existing-name");
+        existing.setOpen(Boolean.TRUE);
+        existing.setRegionId(regionId);
+        existing.setRegion(region);
+        existing.setOpenOnCath(Boolean.TRUE);
+        existing.setMrdId("MRD123");
+
+        Court updated = new Court();
+        updated.setName("Existing Name");
+        updated.setRegionId(regionId);
+        updated.setOpen(Boolean.FALSE);
+
+        when(courtRepository.findById(courtId)).thenReturn(Optional.of(existing));
+        when(regionService.getRegionById(regionId)).thenReturn(region);
+        when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        FeignException feignException = FeignException.errorStatus(
+            "notifyCourtStatusChange",
+            feign.Response.builder()
+                .status(500)
+                .reason("Internal Server Error")
+                .request(
+                    Request.create(
+                        Request.HttpMethod.POST,
+                        "/cath",
+                        Map.of(),
+                        new byte[]{},
+                        null,
+                        new RequestTemplate()
+                    )
+                )
+                .build()
+        );
+
+        doThrow(feignException).when(cathClient).notifyCourtStatusChange(anyString(), anyMap());
+
+        courtService.updateCourt(courtId, updated);
+
+        ArgumentCaptor<String> slackMessageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(slackClient).sendSlackMessage(slackMessageCaptor.capture());
+        assertThat(slackMessageCaptor.getValue()).contains("<!subteam^S09TS4ASQ7R|");
     }
 
     @Test
