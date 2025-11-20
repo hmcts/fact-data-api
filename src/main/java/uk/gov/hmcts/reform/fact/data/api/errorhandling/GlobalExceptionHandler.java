@@ -44,9 +44,18 @@ public class GlobalExceptionHandler {
 
         String message = ex.getConstraintViolations().stream()
             .findFirst()
-            .map(v -> v.getConstraintDescriptor().getAnnotation() instanceof ValidUUID
-                ? "Invalid UUID supplied: " + v.getInvalidValue()
-                : v.getMessage() + ": " + v.getInvalidValue())
+            .map(v -> {
+                if (v.getConstraintDescriptor().getAnnotation() instanceof ValidUUID) {
+                    return "Invalid UUID supplied: " + v.getInvalidValue();
+                }
+
+                Object invalidValue = v.getInvalidValue();
+                String invalidValueText = invalidValue == null ? "" : invalidValue.toString();
+
+                return invalidValueText.isBlank()
+                    ? v.getMessage()
+                    : v.getMessage() + ": " + invalidValueText;
+            })
             .orElse("Invalid input");
 
         return generateExceptionResponse(message);
@@ -116,4 +125,3 @@ public class GlobalExceptionHandler {
         return response;
     }
 }
-

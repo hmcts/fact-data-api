@@ -1,26 +1,39 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import feign.FeignException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uk.gov.hmcts.reform.fact.data.api.clients.CathClient;
+import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class CourtService {
 
     private final CourtRepository courtRepository;
     private final RegionService regionService;
+    private final CathClient cathClient;
+    private final SlackClient slackClient;
 
-    public CourtService(CourtRepository courtRepository, RegionService regionService) {
+    public CourtService(CourtRepository courtRepository, RegionService regionService,
+                        CathClient cathClient, SlackClient slackClient) {
         this.courtRepository = courtRepository;
         this.regionService = regionService;
+        this.cathClient = cathClient;
+        this.slackClient = slackClient;
     }
 
     /**
@@ -81,6 +94,7 @@ public class CourtService {
 
     /**
      * Updates an existing court.
+     * if the open status changes and the court is linked to CaTH, notifies CaTH of the change.
      *
      * @param courtId The id of the court to update.
      * @param court The court entity with updated values.
@@ -89,6 +103,7 @@ public class CourtService {
      */
     public Court updateCourt(UUID courtId, Court court) {
         Court existingCourt = getCourtById(courtId);
+        final Boolean previousOpenStatus = existingCourt.getOpen();
         Region foundRegion = regionService.getRegionById(court.getRegionId());
 
         if (!existingCourt.getName().equalsIgnoreCase(court.getName())) {
@@ -101,7 +116,11 @@ public class CourtService {
         existingCourt.setRegionId(foundRegion.getId());
         existingCourt.setWarningNotice(court.getWarningNotice());
 
-        return courtRepository.save(existingCourt);
+        Court updatedCourt = courtRepository.save(existingCourt);
+
+        handleCathNotification(previousOpenStatus, updatedCourt);
+
+        return updatedCourt;
     }
 
     /**
@@ -120,6 +139,46 @@ public class CourtService {
 
         courtRepository.deleteAllInBatch(courtsToDelete);
         return courtsToDelete.size();
+    }
+
+    /**
+     * Marks courts received from CaTH as open and records which MRD IDs could not be matched.
+     *
+     * @param mrdIds the MRD IDs supplied by CaTH.
+     * @return the matched and unmatched MRD IDs.
+     */
+    public Map<String, Object> linkCathCourtsToFact(List<String> mrdIds) {
+        List<Map<String, Object>> matchedLocations = new ArrayList<>();
+        List<String> unmatchedIds = new ArrayList<>();
+
+        mrdIds.forEach(mrdId -> {
+            courtRepository.findByMrdId(mrdId).ifPresentOrElse(court -> {
+                court.setOpenOnCath(true);
+                courtRepository.save(court);
+                matchedLocations.add(Map.of(
+                    "mrdId", mrdId,
+                    "isOpen", court.getOpen()
+                ));
+            }, () -> unmatchedIds.add(mrdId));
+        });
+
+        return Map.of(
+            "matchedLocations", matchedLocations,
+            "unmatchedLocations", unmatchedIds
+        );
+    }
+
+    /**
+     * Marks the court as closed on CaTH when its link has been deleted.
+     *
+     * @param mrdId the MRD ID supplied by CaTH.
+     */
+    @Transactional
+    public void handleCathCourtDeletion(String mrdId) {
+        Court court = courtRepository.findByMrdId(mrdId)
+            .orElseThrow(() -> new NotFoundException("Court not found, MRD ID: " + mrdId));
+        court.setOpenOnCath(Boolean.FALSE);
+        courtRepository.save(court);
     }
 
     /**
@@ -142,5 +201,47 @@ public class CourtService {
         }
 
         return slug;
+    }
+
+    /**
+     * Handles notification to CaTH when a court's open status changes and it is linked to CaTH.
+     *
+     * @param previousOpen the previous open status of the court.
+     * @param court the up-to-date court entity.
+     */
+    private void handleCathNotification(Boolean previousOpen, Court court) {
+        boolean shouldNotify =
+            Boolean.TRUE.equals(previousOpen) != Boolean.TRUE.equals(court.getOpen())
+                && court.getMrdId() != null
+                && !court.getMrdId().isBlank()
+                && Boolean.TRUE.equals(court.getOpenOnCath());
+
+        if (shouldNotify) {
+            try {
+                log.info("Notifying CaTH {}", court.getMrdId());
+                cathClient.notifyCourtStatusChange(
+                    court.getMrdId(),
+                    Map.of("isOpen", Boolean.TRUE.equals(court.getOpen()))
+                );
+            } catch (FeignException ex) {
+                slackClient.sendSlackMessage(String.format(
+                    """
+                        :rotating_light: *FaCT notification to CaTH failed* :rotating_light:
+                        *Court name:* %s
+                        *Court ID:* `%s`
+                        *MRD ID:* `%s`
+                        *Status code:* %s
+                        *Error message:* `%s`
+
+                        <!subteam^S09TS4ASQ7R|@fact-bsp-devs> please investigate""",
+                    court.getName(),
+                    court.getId(),
+                    court.getMrdId(),
+                    HttpStatus.resolve(ex.status()),
+                    ex.getMessage()
+                ));
+                log.error("Error notifying CaTH. MRD ID: {}, Error: {}", court.getMrdId(), ex.getMessage());
+            }
+        }
     }
 }
