@@ -18,6 +18,12 @@ java:
           alias: DB_USER
         - name: data-api-POSTGRES-HOST
           alias: DB_HOST
+        - name: cath-api-url
+          alias: CATH_API_URL
+        - name: slack-token
+          alias: SLACK_TOKEN
+        - name: slack-channel-id
+          alias: SLACK_CHANNEL_ID
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: false
     AZURE_MANAGED_IDENTITY_ENABLED: true
