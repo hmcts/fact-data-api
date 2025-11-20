@@ -179,6 +179,20 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void testHandleConstraintViolationExceptionWithNullInvalidValue() {
+        ConstraintViolation<?> violation = createConstraintViolation(
+            mock(Annotation.class), null, "Value cannot be null"
+        );
+
+        ConstraintViolationException ex =
+            new ConstraintViolationException(TEST_MESSAGE, Set.of(violation));
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo("Value cannot be null");
+    }
+
+    @Test
     void testHandleMethodArgumentTypeMismatchException() {
         MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
             "abc", Boolean.class, "includeClosed", null, new IllegalArgumentException("invalid boolean")
@@ -193,4 +207,5 @@ class GlobalExceptionHandlerTest {
             .contains("Boolean");
         assertThat(response.getTimestamp()).isNotNull();
     }
+
 }
