@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import feign.FeignException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class CourtService {
 
     private final CourtRepository courtRepository;
@@ -88,6 +90,7 @@ public class CourtService {
 
     /**
      * Updates an existing court.
+     * if the open status changes and the court is linked to CaTH, notifies CaTH of the change.
      *
      * @param courtId The id of the court to update.
      * @param court The court entity with updated values.
@@ -111,9 +114,7 @@ public class CourtService {
 
         Court updatedCourt = courtRepository.save(existingCourt);
 
-        if (shouldNotifyCath(previousOpenStatus, court.getOpen(), updatedCourt)) {
-            notifyCath(updatedCourt);
-        }
+        handleCathNotification(previousOpenStatus, updatedCourt);
 
         return updatedCourt;
     }
@@ -198,22 +199,29 @@ public class CourtService {
         return slug;
     }
 
-    private boolean shouldNotifyCath(Boolean previousOpen, Boolean newOpen, Court court) {
-        boolean statusChanged = Boolean.TRUE.equals(previousOpen) != Boolean.TRUE.equals(newOpen);
-        boolean hasMrdId = court.getMrdId() != null && !court.getMrdId().isBlank();
-        boolean isLinkedToCath = Boolean.TRUE.equals(court.getOpenOnCath());
+    /**
+     * Handles notification to CaTH when a court's open status changes and it is linked to CaTH.
+     *
+     * @param previousOpen the previous open status of the court.
+     * @param court the up-to-date court entity.
+     */
+    private void handleCathNotification(Boolean previousOpen, Court court) {
+        boolean shouldNotify =
+            Boolean.TRUE.equals(previousOpen) != Boolean.TRUE.equals(court.getOpen())
+                && court.getMrdId() != null
+                && !court.getMrdId().isBlank()
+                && Boolean.TRUE.equals(court.getOpenOnCath());
 
-        return statusChanged && hasMrdId && isLinkedToCath;
-    }
-
-    private void notifyCath(Court court) {
-        try {
-            cathClient.notifyCourtStatusChange(
-                court.getMrdId(),
-                Map.of("isOpen", Boolean.TRUE.equals(court.getOpen()))
-            );
-        } catch (FeignException exception) {
-            throw exception;
+        if (shouldNotify) {
+            try {
+                log.info("Notifying CaTH {}", court.getMrdId());
+                cathClient.notifyCourtStatusChange(
+                    court.getMrdId(),
+                    Map.of("isOpen", Boolean.TRUE.equals(court.getOpen()))
+                );
+            } catch (FeignException ex) {
+                log.error("Error notifying CaTH. MRD ID: {}, Error: {}", court.getMrdId(), ex.getMessage());
+            }
         }
     }
 }

@@ -12,9 +12,9 @@ public class CathClientConfiguration {
     @Bean
     public Retryer cathRetryer() {
         return new Retryer.Default(
-            TimeUnit.MILLISECONDS.toMillis(100),
-            TimeUnit.SECONDS.toMillis(1),
-            3
+            TimeUnit.MILLISECONDS.toMillis(500),
+            TimeUnit.SECONDS.toMillis(10),
+            5
         );
     }
 }
