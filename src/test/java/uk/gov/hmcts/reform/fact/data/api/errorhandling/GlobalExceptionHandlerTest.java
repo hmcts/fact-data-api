@@ -1,6 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.metadata.ConstraintDescriptor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -14,9 +16,12 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
+import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -61,6 +66,64 @@ class GlobalExceptionHandlerTest {
         assertThat(response).isNotNull();
         assertThat(response.getMessage()).isEqualTo("Invalid input");
         assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleConstraintViolationExceptionWithValidUuidAnnotation() {
+        ConstraintViolation<?> violation = createConstraintViolation(
+            mock(ValidUUID.class), "bad-uuid", null
+        );
+
+        ConstraintViolationException ex =
+            new ConstraintViolationException(TEST_MESSAGE, Set.of(violation));
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo("Invalid UUID supplied: bad-uuid");
+    }
+
+    @Test
+    void testHandleConstraintViolationExceptionWithBlankInvalidValue() {
+        ConstraintViolation<?> violation = createConstraintViolation(
+            mock(Annotation.class), "   ", "Value is mandatory"
+        );
+
+        ConstraintViolationException ex =
+            new ConstraintViolationException(TEST_MESSAGE, Set.of(violation));
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo("Value is mandatory");
+    }
+
+    @Test
+    void testHandleConstraintViolationExceptionWithNonBlankInvalidValue() {
+        ConstraintViolation<?> violation = createConstraintViolation(
+            mock(Annotation.class), "ABC123", "Invalid format"
+        );
+
+        ConstraintViolationException ex =
+            new ConstraintViolationException(TEST_MESSAGE, Set.of(violation));
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo("Invalid format: ABC123");
+    }
+
+    @SuppressWarnings("unchecked")
+    private ConstraintViolation<?> createConstraintViolation(
+        Annotation annotation, Object invalidValue, String message) {
+
+        ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+        ConstraintDescriptor<Annotation> descriptor =
+            (ConstraintDescriptor<Annotation>) mock(ConstraintDescriptor.class);
+        when(violation.getConstraintDescriptor()).thenReturn((ConstraintDescriptor) descriptor);
+        when(descriptor.getAnnotation()).thenReturn(annotation);
+        when(violation.getInvalidValue()).thenReturn(invalidValue);
+        if (message != null) {
+            when(violation.getMessage()).thenReturn(message);
+        }
+        return violation;
     }
 
     @Test

@@ -365,6 +365,98 @@ class CourtServiceTest {
     }
 
     @Test
+    void updateCourtShouldNotNotifyCathWhenOpenStatusUnchanged() {
+        UUID courtId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
+        Region region = new Region();
+        region.setId(regionId);
+
+        Court existing = new Court();
+        existing.setId(courtId);
+        existing.setName("Existing Name");
+        existing.setSlug("existing-name");
+        existing.setOpen(Boolean.TRUE);
+        existing.setRegionId(regionId);
+        existing.setRegion(region);
+        existing.setOpenOnCath(Boolean.TRUE);
+        existing.setMrdId("MRD123");
+
+        Court updated = new Court();
+        updated.setName("Existing Name");
+        updated.setRegionId(regionId);
+        updated.setOpen(Boolean.TRUE);
+
+        when(courtRepository.findById(courtId)).thenReturn(Optional.of(existing));
+        when(regionService.getRegionById(regionId)).thenReturn(region);
+        when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        courtService.updateCourt(courtId, updated);
+
+        verify(cathClient, never()).notifyCourtStatusChange(anyString(), anyMap());
+    }
+
+    @Test
+    void updateCourtShouldNotNotifyCathWhenMrdIdMissing() {
+        UUID courtId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
+        Region region = new Region();
+        region.setId(regionId);
+
+        Court existing = new Court();
+        existing.setId(courtId);
+        existing.setName("Existing Name");
+        existing.setSlug("existing-name");
+        existing.setOpen(Boolean.TRUE);
+        existing.setRegionId(regionId);
+        existing.setRegion(region);
+        existing.setOpenOnCath(Boolean.TRUE);
+
+        Court updated = new Court();
+        updated.setName("Existing Name");
+        updated.setRegionId(regionId);
+        updated.setOpen(Boolean.FALSE);
+
+        when(courtRepository.findById(courtId)).thenReturn(Optional.of(existing));
+        when(regionService.getRegionById(regionId)).thenReturn(region);
+        when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        courtService.updateCourt(courtId, updated);
+
+        verify(cathClient, never()).notifyCourtStatusChange(anyString(), anyMap());
+    }
+
+    @Test
+    void updateCourtShouldNotNotifyCathWhenMrdIdBlank() {
+        UUID courtId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
+        Region region = new Region();
+        region.setId(regionId);
+
+        Court existing = new Court();
+        existing.setId(courtId);
+        existing.setName("Existing Name");
+        existing.setSlug("existing-name");
+        existing.setOpen(Boolean.TRUE);
+        existing.setRegionId(regionId);
+        existing.setRegion(region);
+        existing.setOpenOnCath(Boolean.TRUE);
+        existing.setMrdId("   ");
+
+        Court updated = new Court();
+        updated.setName("Existing Name");
+        updated.setRegionId(regionId);
+        updated.setOpen(Boolean.FALSE);
+
+        when(courtRepository.findById(courtId)).thenReturn(Optional.of(existing));
+        when(regionService.getRegionById(regionId)).thenReturn(region);
+        when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        courtService.updateCourt(courtId, updated);
+
+        verify(cathClient, never()).notifyCourtStatusChange(anyString(), anyMap());
+    }
+
+    @Test
     void linkCaTHCourtsToFaCTShouldReturnMatchedAndUnmatchedIds() {
         Court court = new Court();
         court.setMrdId("MRD123");

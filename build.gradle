@@ -240,3 +240,10 @@ rootProject.tasks.named("processFunctionalTestResources") {
 wrapper {
   distributionType = Wrapper.DistributionType.ALL
 }
+
+dependencyManagement {
+  dependencies {
+    // CVE-2025-48976
+    dependency group: 'commons-fileupload', name: 'commons-fileupload', version: '1.6.0'
+  }
+}
