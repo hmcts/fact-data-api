@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -42,7 +43,8 @@ class CourtAreasOfLawControllerTest {
 
         when(courtAreasOfLawService.getAreasOfLawStatusByCourtId(COURT_ID)).thenReturn(areasOfLaw);
 
-        var response = courtAreasOfLawController.getAreasOfLawByCourtId(COURT_ID.toString());
+        ResponseEntity<Map<AreaOfLawType, Boolean>> response = courtAreasOfLawController
+            .getAreasOfLawByCourtId(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(areasOfLaw);
@@ -74,7 +76,8 @@ class CourtAreasOfLawControllerTest {
 
         when(courtAreasOfLawService.setCourtAreasOfLaw(COURT_ID, areasOfLaw)).thenReturn(areasOfLaw);
 
-        var response = courtAreasOfLawController.setAreasOfLawServices(COURT_ID.toString(), areasOfLaw);
+        ResponseEntity<CourtAreasOfLaw> response = courtAreasOfLawController
+            .setAreasOfLawServices(COURT_ID.toString(), areasOfLaw);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(areasOfLaw);
