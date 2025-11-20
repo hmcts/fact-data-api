@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.validation.validator.ImageValidator;
 
@@ -15,8 +16,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ImageValidatorTest {
@@ -29,6 +33,11 @@ class ImageValidatorTest {
     @BeforeEach
     void setUp() {
         imageValidator = new ImageValidator();
+    }
+
+    @Test
+    void shouldInitialiseWithoutThrowing() {
+        assertDoesNotThrow(() -> imageValidator.initialize(null));
     }
 
     @Test
@@ -71,6 +80,15 @@ class ImageValidatorTest {
         );
     }
 
+    @Test
+    void shouldThrowWhenFileCannotBeRead() throws IOException {
+        MultipartFile unreadableFile = mock(MultipartFile.class);
+        when(unreadableFile.isEmpty()).thenReturn(false);
+        when(unreadableFile.getBytes()).thenThrow(new IOException("Cannot read"));
+
+        assertThrows(InvalidFileException.class, () -> imageValidator.isValid(unreadableFile, context));
+    }
+
     private byte[] createImageBytes(String format) throws IOException {
         BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
         image.setRGB(0, 0, 0xFFFFFF);
@@ -81,4 +99,3 @@ class ImageValidatorTest {
         }
     }
 }
-
