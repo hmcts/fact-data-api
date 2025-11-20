@@ -53,4 +53,5 @@ public class CourtAreasOfLaw {
     @Type(ListArrayType.class)
     @Column(columnDefinition = "uuid[]")
     private List<UUID> areasOfLaw;
+
 }

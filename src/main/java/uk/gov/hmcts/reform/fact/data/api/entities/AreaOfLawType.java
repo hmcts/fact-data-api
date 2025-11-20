@@ -38,4 +38,5 @@ public class AreaOfLawType {
     @Schema(description = "The Welsh language name")
     @NotBlank(message = "The Welsh language name must be specified")
     private String nameCy;
+
 }
