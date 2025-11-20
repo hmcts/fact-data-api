@@ -42,7 +42,6 @@ public class CourtAreasOfLawController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved Areas Of Law"),
-        @ApiResponse(responseCode = "204", description = "No areas Of Law found for the court"),
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })

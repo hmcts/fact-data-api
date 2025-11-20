@@ -76,8 +76,13 @@ public class CourtAreasOfLawService {
         log.info("Setting areas of law for court id: {}", courtId);
         Court foundCourt = courtService.getCourtById(courtId);
 
+        List<UUID> validAreasOfLawTypeIds = typesService.getAllAreasOfLawTypesByIds(courtAreasOfLaw.getAreasOfLaw())
+                .stream().map(AreaOfLawType::getId)
+                .toList();
+
         courtAreasOfLaw.setCourt(foundCourt);
         courtAreasOfLaw.setCourtId(courtId);
+        courtAreasOfLaw.setAreasOfLaw(validAreasOfLawTypeIds);
 
         courtAreasOfLawRepository.findByCourtId(courtId).ifPresent(
             existing -> courtAreasOfLaw.setId(existing.getId())

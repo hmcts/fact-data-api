@@ -24,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @Feature("Court Areas Of Law Controller")
 @DisplayName("Court Areas Of Law Controller")
@@ -69,8 +70,7 @@ class CourtAreasOfLawControllerTest {
         mockMvc.perform(get("/courts/{courtId}/v1/areas-of-law", courtId)
                             .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$['" + civilId + "']").value(true))
-            .andExpect(jsonPath("$['" + crimeId + "']").value(false));
+            .andExpect(content().json(objectMapper.writeValueAsString(areasOfLaw)));
     }
 
     @Test
