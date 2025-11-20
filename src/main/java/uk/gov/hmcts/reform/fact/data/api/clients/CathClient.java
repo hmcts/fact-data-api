@@ -11,7 +11,7 @@ import java.util.Map;
 
 @FeignClient(
     name = "cathClient",
-    url = "${cath.api.url}",
+    url = "${clients.cath.url}",
     configuration = CathClientConfiguration.class
 )
 public interface CathClient {

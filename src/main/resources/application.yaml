@@ -65,8 +65,6 @@ spring:
         blob:
           container-name: photos
           connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
-    compatibility-verifier:
-      enabled: false
   servlet:
     multipart:
       max-file-size: 2MB
@@ -81,6 +79,6 @@ dbMigration:
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}
 
-cath:
-  api:
-    url: ${CATH_API_URL:http://localhost:8080}
+clients:
+  cath:
+    url: ${CATH_API_URL:}

@@ -2,10 +2,7 @@ spring:
   datasource:
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
     url: jdbc:tc:postgresql:16:///fact
-  cloud:
-    compatibility-verifier:
-      enabled: false
 
-cath:
-  api:
+clients:
+  cath:
     url: http://localhost:8080
