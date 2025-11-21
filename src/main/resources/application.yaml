@@ -76,5 +76,8 @@ spring:
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
 
+user:
+  retention-period: 365
+  
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}
