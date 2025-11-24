@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Payload;
 import jakarta.validation.metadata.ConstraintDescriptor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -70,12 +72,14 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void testHandleConstraintViolationExceptionWithValidUuidAnnotation() {
-        ConstraintViolation<?> violation = createConstraintViolation(
-            mock(ValidUUID.class), "bad-uuid", null
-        );
+        ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+        ConstraintDescriptor<?> descriptor = mock(ConstraintDescriptor.class);
+        doReturn(descriptor).when(violation).getConstraintDescriptor();
+        when(descriptor.getAnnotation()).thenReturn(validUuidAnnotation());
+        when(violation.getInvalidValue()).thenReturn("bad-uuid");
 
         ConstraintViolationException ex =
-            new ConstraintViolationException(TEST_MESSAGE, Set.of(violation));
+            new ConstraintViolationException("invalid", Set.of(violation));
 
         ExceptionResponse response = handler.handle(ex);
 
@@ -143,6 +147,20 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void testHandleMethodArgumentNotValidExceptionWithDuplicateFieldsRetainsFirstMessage() {
+        BeanPropertyBindingResult bindingResult =
+            new BeanPropertyBindingResult(new Object(), "object");
+        bindingResult.addError(new FieldError("object", "field", "first"));
+        bindingResult.addError(new FieldError("object", "field", "second"));
+        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
+        when(ex.getBindingResult()).thenReturn(bindingResult);
+
+        Map<String, String> response = handler.handle(ex);
+
+        assertThat(response.get("field")).isEqualTo("first");
+    }
+
+    @Test
     void testHandleHttpMessageNotReadableException() {
         String exceptionMessage =
             "Cannot deserialize value of type `java.util.UUID` from String \"hello\"";
@@ -207,5 +225,4 @@ class GlobalExceptionHandlerTest {
             .contains("Boolean");
         assertThat(response.getTimestamp()).isNotNull();
     }
-
 }
