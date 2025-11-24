@@ -114,6 +114,36 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getMessage()).isEqualTo("Invalid format: ABC123");
     }
 
+    private ValidUUID validUuidAnnotation() {
+        return new ValidUUID() {
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return ValidUUID.class;
+            }
+
+            @Override
+            public String message() {
+                return "Invalid UUID format";
+            }
+
+            @Override
+            public Class<?>[] groups() {
+                return new Class<?>[0];
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public Class<? extends Payload>[] payload() {
+                return new Class[0];
+            }
+
+            @Override
+            public boolean allowNull() {
+                return false;
+            }
+        };
+    }
+
     @SuppressWarnings("unchecked")
     private ConstraintViolation<?> createConstraintViolation(
         Annotation annotation, Object invalidValue, String message) {

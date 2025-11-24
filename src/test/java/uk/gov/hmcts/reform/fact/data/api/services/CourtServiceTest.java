@@ -547,11 +547,15 @@ class CourtServiceTest {
     void handleCaTHCourtDeletionShouldThrowWhenCourtMissing() {
         when(courtRepository.findByMrdId("MRD123")).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(NotFoundException.class, () ->
-            courtService.handleCathCourtDeletion("MRD123")
+        NotFoundException exception = assertThrows(
+            NotFoundException.class, () ->
+                courtService.handleCathCourtDeletion("MRD123")
         );
 
         assertThat(exception.getMessage()).isEqualTo("Court not found, MRD ID: MRD123");
+    }
+
+    @Test
     void deleteCourtsByNamePrefixShouldReturnZeroWhenNoMatchesFound() {
         when(courtRepository.findByNameStartingWithIgnoreCase("Missing")).thenReturn(Collections.emptyList());
 
