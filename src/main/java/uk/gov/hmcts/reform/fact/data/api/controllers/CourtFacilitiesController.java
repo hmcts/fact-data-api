@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,7 +51,8 @@ public class CourtFacilitiesController {
         return ResponseEntity.ok(courtFacilitiesService.getFacilitiesByCourtId(UUID.fromString(courtId)));
     }
 
-    @PostMapping("/v1/building-facilities")
+    @PostMapping(value = "/v1/building-facilities",
+        consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
         summary = "Create or update building facilities for a court",
         description = "Creates a new building facilities for a court or updates the existing one."

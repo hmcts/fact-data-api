@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Feature("Court Translation Controller")
+@DisplayName("Court Translation Controller")
 @WebMvcTest(CourtTranslationController.class)
 class CourtTranslationControllerTest {
 
