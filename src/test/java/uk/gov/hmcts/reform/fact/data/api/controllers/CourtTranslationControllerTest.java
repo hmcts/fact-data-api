@@ -42,7 +42,8 @@ class CourtTranslationControllerTest {
 
         when(courtTranslationService.getTranslationByCourtId(COURT_ID)).thenReturn(translation);
 
-        ResponseEntity<CourtTranslation> response = courtTranslationController.getTranslationServicesByCourtId(COURT_ID.toString());
+        ResponseEntity<CourtTranslation> response =
+            courtTranslationController.getTranslationServicesByCourtId(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(translation);
@@ -83,7 +84,8 @@ class CourtTranslationControllerTest {
 
         when(courtTranslationService.setTranslation(COURT_ID, translation)).thenReturn(translation);
 
-        ResponseEntity<CourtTranslation> response = courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
+        ResponseEntity<CourtTranslation> response =
+            courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(translation);
@@ -97,7 +99,8 @@ class CourtTranslationControllerTest {
 
         when(courtTranslationService.setTranslation(COURT_ID, translation)).thenReturn(translation);
 
-        ResponseEntity<CourtTranslation> response = courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
+        ResponseEntity<CourtTranslation> response =
+            courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(translation);
