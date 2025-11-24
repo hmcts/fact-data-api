@@ -52,8 +52,10 @@ class CourtTranslationControllerTest {
         when(courtTranslationService.getTranslationByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new TranslationNotFoundException("No translation services found"));
 
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+
         assertThrows(TranslationNotFoundException.class, () ->
-            courtTranslationController.getTranslationServicesByCourtId(UNKNOWN_COURT_ID.toString())
+            courtTranslationController.getTranslationServicesByCourtId(unknownCourtId)
         );
     }
 
@@ -62,8 +64,10 @@ class CourtTranslationControllerTest {
         when(courtTranslationService.getTranslationByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new NotFoundException("Court not found"));
 
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+
         assertThrows(NotFoundException.class, () ->
-            courtTranslationController.getTranslationServicesByCourtId(UNKNOWN_COURT_ID.toString())
+            courtTranslationController.getTranslationServicesByCourtId(unknownCourtId)
         );
     }
 
@@ -110,8 +114,10 @@ class CourtTranslationControllerTest {
         when(courtTranslationService.setTranslation(UNKNOWN_COURT_ID, translation))
             .thenThrow(new NotFoundException("Court not found"));
 
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+
         assertThrows(NotFoundException.class, () ->
-            courtTranslationController.setTranslationServices(UNKNOWN_COURT_ID.toString(), translation)
+            courtTranslationController.setTranslationServices(unknownCourtId, translation)
         );
     }
 

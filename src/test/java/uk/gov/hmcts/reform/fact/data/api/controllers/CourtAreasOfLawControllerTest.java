@@ -55,9 +55,11 @@ class CourtAreasOfLawControllerTest {
         when(courtAreasOfLawService.getAreasOfLawStatusByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new NotFoundException("Court not found"));
 
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+
         assertThrows(
             NotFoundException.class, () ->
-                courtAreasOfLawController.getAreasOfLawByCourtId(UNKNOWN_COURT_ID.toString())
+                courtAreasOfLawController.getAreasOfLawByCourtId(unknownCourtId)
         );
     }
 
@@ -91,9 +93,11 @@ class CourtAreasOfLawControllerTest {
         when(courtAreasOfLawService.setCourtAreasOfLaw(UNKNOWN_COURT_ID, areasOfLaw))
             .thenThrow(new NotFoundException("Court not found"));
 
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+
         assertThrows(
             NotFoundException.class, () ->
-                courtAreasOfLawController.setAreasOfLawServices(UNKNOWN_COURT_ID.toString(), areasOfLaw)
+                courtAreasOfLawController.setAreasOfLawServices(unknownCourtId, areasOfLaw)
         );
     }
 
