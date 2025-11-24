@@ -99,6 +99,7 @@ class CourtAccessibilityOptionsControllerTest {
             .court(null)
             .accessibleEntrance(true)
             .accessibleParking(false)
+            .hearingEnhancementEquipment("Equipment")
             .lift(true)
             .quietRoom(true)
             .build();
@@ -127,6 +128,7 @@ class CourtAccessibilityOptionsControllerTest {
             .court(null)
             .accessibleEntrance(true)
             .accessibleParking(false)
+            .hearingEnhancementEquipment("Equipment")
             .lift(true)
             .quietRoom(true)
             .build();
@@ -155,6 +157,116 @@ class CourtAccessibilityOptionsControllerTest {
             .build();
 
         mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", "invalid-uuid")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(accessibilityOptions)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/accessibility-options returns 400 for null required fields")
+    void postAccessibilityOptionsNullRequiredFields() throws Exception {
+        CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
+            .id(courtId)
+            .courtId(courtId)
+            .accessibleEntrance(null)
+            .build();
+
+        mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(accessibilityOptions)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/accessibility-options returns 400 for oversized text fields")
+    void postAccessibilityOptionsOversizedFields() throws Exception {
+        String oversizedText = "a".repeat(1001);
+        CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
+            .id(courtId)
+            .courtId(courtId)
+            .hearingEnhancementEquipment(oversizedText)
+            .build();
+
+        mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(accessibilityOptions)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/accessibility-options returns 400 for invalid phone number format")
+    void postAccessibilityOptionsInvalidPhoneFormat() throws Exception {
+        CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
+            .id(courtId)
+            .courtId(courtId)
+            .accessibleParkingPhoneNumber("invalid-phone")
+            .accessibleEntrancePhoneNumber("invalid-phone")
+            .build();
+
+        mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(accessibilityOptions)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/accessibility-options returns 400 for oversized phone numbers")
+    void postAccessibilityOptionsOversizedPhoneNumber() throws Exception {
+        String oversizedPhone = "1".repeat(51);
+        CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
+            .id(courtId)
+            .courtId(courtId)
+            .accessibleParkingPhoneNumber(oversizedPhone)
+            .build();
+
+        mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(accessibilityOptions)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/accessibility-options returns 400 for invalid lift door width")
+    void postAccessibilityOptionsInvalidLiftDoorWidth() throws Exception {
+        CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
+            .id(courtId)
+            .courtId(courtId)
+            .liftDoorWidth(49)
+            .build();
+
+        mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(accessibilityOptions)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/accessibility-options returns 400 for invalid lift weight limits")
+    void postAccessibilityOptionsInvalidLiftWeightLimits() throws Exception {
+        CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
+            .id(courtId)
+            .courtId(courtId)
+            .liftDoorLimit(3001)
+            .build();
+
+        mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(accessibilityOptions)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/accessibility-options returns 400 for oversized toilet descriptions")
+    void postAccessibilityOptionsOversizedToiletDescription() throws Exception {
+        String oversizedDescription = "a".repeat(256);
+        CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
+            .id(courtId)
+            .courtId(courtId)
+            .accessibleToiletDescription(oversizedDescription)
+            .accessibleToiletDescriptionCy(oversizedDescription)
+            .build();
+
+        mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(accessibilityOptions)))
             .andExpect(status().isBadRequest());

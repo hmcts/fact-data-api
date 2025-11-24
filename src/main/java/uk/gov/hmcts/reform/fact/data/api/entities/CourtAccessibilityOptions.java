@@ -62,9 +62,11 @@ public class CourtAccessibilityOptions {
     private String accessibleParkingPhoneNumber;
 
     @Schema(description = "Details of available accessible toilets")
+    @Size(max = 255, message = "Accessible toilet description must not exceed 255 characters")
     private String accessibleToiletDescription;
 
     @Schema(description = "Welsh language details of available accessible toilets")
+    @Size(max = 255, message = "Welsh accessible toilet description must not exceed 255 characters")
     private String accessibleToiletDescriptionCy;
 
     @Schema(description = "The accessible entrance status")
@@ -77,6 +79,7 @@ public class CourtAccessibilityOptions {
     private String accessibleEntrancePhoneNumber;
 
     @Schema(description = "Details of available hearing enhancement equipment")
+    @NotNull
     private String hearingEnhancementEquipment;
 
     @Schema(description = "Lift availability status")
@@ -84,7 +87,7 @@ public class CourtAccessibilityOptions {
     private Boolean lift;
 
     @Schema(description = "Lift door width (in cm)")
-    @Min(value = 100, message = "Lift door width needs to be over 100cm")
+    @Min(value = 50, message = "Lift door width needs to be over 50cm")
     private Integer liftDoorWidth;
 
     @Schema(description = "Lift weight limit (in kg)")
