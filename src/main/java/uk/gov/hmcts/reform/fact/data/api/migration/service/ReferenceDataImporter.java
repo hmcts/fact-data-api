@@ -116,11 +116,12 @@ class ReferenceDataImporter {
         }
 
         for (uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto dto : areaOfLawTypes) {
-            AreaOfLawType entity = areaOfLawTypeRepository.findByNameIgnoreCase(dto.getName())
-                .orElseThrow(() -> new MigrationClientException(
-                    "Area of law '%s' was not found in the target database".formatted(dto.getName())
-                ));
-            ids.put(dto.getId(), entity.getId());
+            Optional<AreaOfLawType> entity = areaOfLawTypeRepository.findByNameIgnoreCase(dto.getName());
+            if (entity.isEmpty()) {
+                LOG.warn("Area of law '{}' was not found in the target database", dto.getName());
+                continue;
+            }
+            ids.put(dto.getId(), entity.get().getId());
         }
     }
 

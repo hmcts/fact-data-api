@@ -46,7 +46,7 @@ import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMapping
 class CourtMigrationHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(CourtMigrationHelper.class);
-    private static final Pattern COURT_NAME_PATTERN = Pattern.compile(ValidationConstants.COURT_NAME_REGEX);
+    private static final Pattern COURT_NAME_PATTERN = Pattern.compile("^[A-Za-z&'(),\\- ]+$");
     private static final Pattern GENERIC_DESCRIPTION_PATTERN =
         Pattern.compile(ValidationConstants.GENERIC_DESCRIPTION_REGEX);
 

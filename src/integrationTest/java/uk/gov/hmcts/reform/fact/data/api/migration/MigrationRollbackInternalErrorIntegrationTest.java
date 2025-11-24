@@ -94,23 +94,7 @@ class MigrationRollbackInternalErrorIntegrationTest {
         @Primary
         LegacyFactClient successfulLegacyFactClient() {
             LegacyExportResponse response = new LegacyExportResponse(
-                List.of(new CourtDto(
-                    1L,
-                    "Example Court",
-                    "example-court",
-                    true,
-                    1,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    false
-                )),
+                List.of(buildCourt()),
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Collections.emptyList(),
@@ -124,6 +108,17 @@ class MigrationRollbackInternalErrorIntegrationTest {
             LegacyFactClient client = Mockito.mock(LegacyFactClient.class);
             Mockito.when(client.fetchExport()).thenReturn(response);
             return client;
+        }
+
+        private CourtDto buildCourt() {
+            CourtDto dto = new CourtDto();
+            dto.setId(1L);
+            dto.setName("Example Court");
+            dto.setSlug("example-court");
+            dto.setOpen(true);
+            dto.setRegionId(1);
+            dto.setIsServiceCentre(false);
+            return dto;
         }
     }
 

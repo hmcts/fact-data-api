@@ -10,7 +10,7 @@ def component = "data-api"
 GradleBuilder builder = new GradleBuilder(this, product)
 
 withPipeline(type, product, component) {
-  env.FACT_MIGRATION_SOURCE_BASE_URL = 'https://fact-data-api.aat.platform.hmcts.net'
+  env.FACT_MIGRATION_SOURCE_BASE_URL = 'http://fact-api-aat.service.core-compute-aat.internal'
 
   enableDbMigration('fact-kv')
 

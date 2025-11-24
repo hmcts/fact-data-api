@@ -27,13 +27,6 @@ public class MigrationController {
         this.photoMigrationService = photoMigrationService;
     }
 
-    /**
-     * Executes the migration by fetching from the legacy export endpoint and persisting the
-     * payload into the new schema. A POST verb is used rather than GET because the operation
-     * is non-idempotent (it mutates state, can only run once, and has side-effects).
-     *
-     * @return summary of the records that were migrated.
-     */
     @PostMapping("/import")
     @Operation(
         summary = "Execute legacy data migration",
@@ -48,11 +41,10 @@ public class MigrationController {
     })
     public ResponseEntity<MigrationResponse> importLegacyData() {
         MigrationSummary summary = migrationService.migrate();
-        MigrationResponse response = new MigrationResponse(
+        return ResponseEntity.ok(new MigrationResponse(
             "Migration completed successfully",
             summary.getResult()
-        );
-        return ResponseEntity.ok(response);
+        ));
     }
 
     @PostMapping("/photos")
