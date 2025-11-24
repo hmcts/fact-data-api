@@ -34,13 +34,15 @@ public final class TestDataHelper {
      *
      * @param http the HTTP client
      * @param courtName the name for the test court
+     * @param isOpen whether the court is open
      * @return the created court's UUID
      */
-    public static UUID createCourt(final HttpClient http, final String courtName) {
+    public static UUID createCourt(final HttpClient http, final String courtName, boolean isOpen) {
         final Court court = new Court();
         court.setName(courtName);
         court.setRegionId(UUID.fromString(getRegionId(http)));
         court.setIsServiceCentre(true);
+        court.setOpen(isOpen);
 
         final Response createResponse = http.doPost("/courts/v1", court);
         assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
