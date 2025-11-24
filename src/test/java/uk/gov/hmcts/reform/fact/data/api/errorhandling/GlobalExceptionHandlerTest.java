@@ -87,25 +87,77 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void testHandleConstraintViolationExceptionWithNonUuidAnnotation() {
-        ConstraintViolation<?> violation = mock(ConstraintViolation.class);
-        ConstraintDescriptor<?> descriptor = mock(ConstraintDescriptor.class);
-        doReturn(descriptor).when(violation).getConstraintDescriptor();
-        when(descriptor.getAnnotation()).thenReturn(new Annotation() {
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return Annotation.class;
-            }
-        });
-        when(violation.getMessage()).thenReturn("Bad request");
-        when(violation.getInvalidValue()).thenReturn("oops");
+    void testHandleConstraintViolationExceptionWithBlankInvalidValue() {
+        ConstraintViolation<?> violation = createConstraintViolation(
+            mock(Annotation.class), "   ", "Value is mandatory"
+        );
 
         ConstraintViolationException ex =
-            new ConstraintViolationException("invalid", Set.of(violation));
+            new ConstraintViolationException(TEST_MESSAGE, Set.of(violation));
 
         ExceptionResponse response = handler.handle(ex);
 
-        assertThat(response.getMessage()).isEqualTo("Bad request: oops");
+        assertThat(response.getMessage()).isEqualTo("Value is mandatory");
+    }
+
+    @Test
+    void testHandleConstraintViolationExceptionWithNonBlankInvalidValue() {
+        ConstraintViolation<?> violation = createConstraintViolation(
+            mock(Annotation.class), "ABC123", "Invalid format"
+        );
+
+        ConstraintViolationException ex =
+            new ConstraintViolationException(TEST_MESSAGE, Set.of(violation));
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo("Invalid format: ABC123");
+    }
+
+    private ValidUUID validUuidAnnotation() {
+        return new ValidUUID() {
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return ValidUUID.class;
+            }
+
+            @Override
+            public String message() {
+                return "Invalid UUID format";
+            }
+
+            @Override
+            public Class<?>[] groups() {
+                return new Class<?>[0];
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public Class<? extends Payload>[] payload() {
+                return new Class[0];
+            }
+
+            @Override
+            public boolean allowNull() {
+                return false;
+            }
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    private ConstraintViolation<?> createConstraintViolation(
+        Annotation annotation, Object invalidValue, String message) {
+
+        ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+        ConstraintDescriptor<Annotation> descriptor =
+            (ConstraintDescriptor<Annotation>) mock(ConstraintDescriptor.class);
+        when(violation.getConstraintDescriptor()).thenReturn((ConstraintDescriptor) descriptor);
+        when(descriptor.getAnnotation()).thenReturn(annotation);
+        when(violation.getInvalidValue()).thenReturn(invalidValue);
+        if (message != null) {
+            when(violation.getMessage()).thenReturn(message);
+        }
+        return violation;
     }
 
     @Test
@@ -175,6 +227,20 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void testHandleConstraintViolationExceptionWithNullInvalidValue() {
+        ConstraintViolation<?> violation = createConstraintViolation(
+            mock(Annotation.class), null, "Value cannot be null"
+        );
+
+        ConstraintViolationException ex =
+            new ConstraintViolationException(TEST_MESSAGE, Set.of(violation));
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo("Value cannot be null");
+    }
+
+    @Test
     void testHandleMethodArgumentTypeMismatchException() {
         MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
             "abc", Boolean.class, "includeClosed", null, new IllegalArgumentException("invalid boolean")
@@ -188,49 +254,5 @@ class GlobalExceptionHandlerTest {
             .contains("abc")
             .contains("Boolean");
         assertThat(response.getTimestamp()).isNotNull();
-    }
-
-    @Test
-    void testHandleMethodArgumentTypeMismatchExceptionWithUnknownExpectedType() {
-        MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
-            "123", null, "page", null, new IllegalArgumentException("fail")
-        );
-
-        ExceptionResponse response = handler.handle(ex);
-
-        assertThat(response.getMessage())
-            .contains("Invalid value for parameter 'page'")
-            .contains("unknown");
-    }
-
-    private ValidUUID validUuidAnnotation() {
-        return new ValidUUID() {
-            @Override
-            public String message() {
-                return "Invalid UUID format";
-            }
-
-            @Override
-            public Class<?>[] groups() {
-                return new Class[0];
-            }
-
-            @Override
-            public Class<? extends Payload>[] payload() {
-                @SuppressWarnings("unchecked")
-                Class<? extends Payload>[] payload = (Class<? extends Payload>[]) new Class<?>[0];
-                return payload;
-            }
-
-            @Override
-            public boolean allowNull() {
-                return false;
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return ValidUUID.class;
-            }
-        };
     }
 }

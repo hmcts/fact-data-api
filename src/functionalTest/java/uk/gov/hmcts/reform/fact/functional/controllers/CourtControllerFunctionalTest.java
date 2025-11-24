@@ -38,6 +38,7 @@ public final class CourtControllerFunctionalTest {
         court.setName("Test Court Create Valid");
         court.setRegionId(UUID.fromString(regionId));
         court.setIsServiceCentre(true);
+        court.setOpen(false);
 
         final Response createResponse = http.doPost("/courts/v1", court);
 
@@ -61,6 +62,7 @@ public final class CourtControllerFunctionalTest {
         court.setName("Test Court Invalid Region");
         court.setRegionId(UUID.randomUUID());
         court.setIsServiceCentre(true);
+        court.setOpen(false);
 
         final Response response = http.doPost("/courts/v1", court);
 
@@ -98,12 +100,13 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1 updates existing court and verifies changes")
     void shouldUpdateExistingCourt() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Original");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Original", false);
 
         final Court updatedCourt = new Court();
         updatedCourt.setName("Test Court Updated");
         updatedCourt.setRegionId(UUID.fromString(regionId));
         updatedCourt.setIsServiceCentre(true);
+        updatedCourt.setOpen(false);
 
         final Response updateResponse = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
 
@@ -124,6 +127,7 @@ public final class CourtControllerFunctionalTest {
         updatedCourt.setName("Test Court Non-Existent court ID");
         updatedCourt.setRegionId(UUID.fromString(regionId));
         updatedCourt.setIsServiceCentre(true);
+        updatedCourt.setOpen(false);
 
         final Response response = http.doPut("/courts/" + nonExistentCourtId + "/v1", updatedCourt);
 
@@ -135,12 +139,13 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1 update fails with non-existent regionId")
     void shouldFailToUpdateCourtWithNonExistentRegionId() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Update Non-Existent Region ID");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Update Non-Existent Region ID", false);
 
         final Court updatedCourt = new Court();
         updatedCourt.setName("Test Court Non-Existent Region ID Updated");
         updatedCourt.setRegionId(UUID.randomUUID());
         updatedCourt.setIsServiceCentre(true);
+        updatedCourt.setOpen(false);
 
         final Response response = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
 
@@ -163,7 +168,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 with filters returns created court in list")
     void shouldReturnCreatedCourtInFilteredList() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court for List Retrieval");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court for List Retrieval", false);
 
         final Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=200&includeClosed=true");
 
@@ -173,7 +178,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 with includeClosed=false returns only open courts")
     void shouldReturnOnlyActiveCourts() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Open");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Open", false);
 
         final Court updatedCourt = new Court();
         updatedCourt.setName("Test Court Open");
@@ -194,7 +199,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 filtered only by valid region id")
     void shouldReturnCourtsFilteredByValidRegionId() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court for regionId filtering");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court for regionId filtering", false);
 
         final Response listResponse = http.doGet(
             "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId
@@ -206,7 +211,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 filtered by partialCourtName")
     void shouldReturnCourtsFilteredByPartialCourtName() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Birmingham");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Birmingham", false);
 
         final Response listResponse = http.doGet(
             "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&partialCourtName=Birmingham"
@@ -218,7 +223,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 filtered by combined filters (regionId + partialCourtName + includeClosed)")
     void shouldReturnCourtsFilteredByCombinedFilters() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Manchester");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Manchester", false);
 
         final Response listResponse = http.doGet(
             "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId
