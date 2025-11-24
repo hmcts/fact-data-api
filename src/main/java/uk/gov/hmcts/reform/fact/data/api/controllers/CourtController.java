@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -93,7 +94,8 @@ public class CourtController {
     }
 
 
-    @PostMapping("/v1")
+    @PostMapping(value = "/v1",
+        consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
         summary = "Create a new court",
         description = "Creates a new court record."
@@ -107,7 +109,8 @@ public class CourtController {
         return ResponseEntity.status(HttpStatus.CREATED).body(courtService.createCourt(court));
     }
 
-    @PutMapping("/{courtId}/v1")
+    @PutMapping(value = "/{courtId}/v1",
+        consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
         summary = "Update an existing court",
         description = "Updates the details of an existing court."

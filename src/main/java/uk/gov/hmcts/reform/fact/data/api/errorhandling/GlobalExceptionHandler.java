@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import jakarta.servlet.http.HttpServletRequest;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -28,6 +30,22 @@ public class GlobalExceptionHandler {
     public ExceptionResponse handle(NotFoundException ex) {
         log.trace("404, unable to find entity. Details: {}", ex.getMessage());
         return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+    public ExceptionResponse handle(MultipartException ex, HttpServletRequest request) {
+        String provided = request != null && request.getContentType() != null
+            ? request.getContentType()
+            : "unknown";
+        log.error("415, multipart handling error. Provided Content-Type: {}. Details: {}", provided, ex.getMessage());
+
+        String message = String.format(
+            "Unsupported or malformed Content-Type '%s'. If uploading a file, use 'multipart/form-data'. "
+                + "If sending JSON, use 'application/json'.",
+            provided
+        );
+        return generateExceptionResponse(message);
     }
 
     @ExceptionHandler(CourtResourceNotFoundException.class)

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -49,7 +50,8 @@ public class CourtTranslationController {
         return ResponseEntity.ok(courtTranslationService.getTranslationByCourtId(UUID.fromString(courtId)));
     }
 
-    @PostMapping("/v1/translation-services")
+    @PostMapping(value = "/v1/translation-services",
+        consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
         summary = "Create or update translation services for a court",
         description = "Creates a new translation service for a court or updates the existing one."
