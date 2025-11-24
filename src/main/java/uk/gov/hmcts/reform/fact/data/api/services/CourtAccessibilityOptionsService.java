@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOptions;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAccessibilityOptionsRepository;
 
@@ -32,7 +33,7 @@ public class CourtAccessibilityOptionsService {
     public CourtAccessibilityOptions getAccessibilityOptionsByCourtId(UUID courtId) {
         return courtAccessibilityOptionsRepository.findByCourtId(courtService.getCourtById(courtId).getId())
                 .orElseThrow(() -> new
-                    NotFoundException("No Accessibility Options found for court id: " + courtId)
+                    CourtResourceNotFoundException("No Accessibility Options found for court id: " + courtId)
                 );
     }
 

@@ -16,7 +16,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.lang.annotation.Annotation;
@@ -51,7 +51,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void testHandleTranslationNotFoundException() {
-        TranslationNotFoundException ex = new TranslationNotFoundException(TEST_MESSAGE);
+        CourtResourceNotFoundException ex = new CourtResourceNotFoundException(TEST_MESSAGE);
         ExceptionResponse response = handler.handle(ex);
 
         assertThat(response).isNotNull();

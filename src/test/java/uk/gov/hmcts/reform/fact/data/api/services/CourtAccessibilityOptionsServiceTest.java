@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOptions;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAccessibilityOptionsRepository;
 
@@ -63,7 +64,8 @@ class CourtAccessibilityOptionsServiceTest {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(courtAccessibilityOptionsRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(NotFoundException.class, () ->
+        CourtResourceNotFoundException exception = assertThrows(
+            CourtResourceNotFoundException.class, () ->
             courtAccessibilityOptionsService.getAccessibilityOptionsByCourtId(courtId)
         );
 

@@ -12,7 +12,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.time.LocalDateTime;
@@ -30,10 +30,10 @@ public class GlobalExceptionHandler {
         return generateExceptionResponse(ex.getMessage());
     }
 
-    @ExceptionHandler(TranslationNotFoundException.class)
+    @ExceptionHandler(CourtResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ExceptionResponse handle(TranslationNotFoundException ex) {
-        log.trace("204, no translation services for a court. Details: {}", ex.getMessage());
+    public ExceptionResponse handle(CourtResourceNotFoundException ex) {
+        log.trace("204, unable to find court resource. Details: {}", ex.getMessage());
         return generateExceptionResponse(ex.getMessage());
     }
 
