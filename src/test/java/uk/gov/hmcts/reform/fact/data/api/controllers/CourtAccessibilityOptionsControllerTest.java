@@ -21,6 +21,7 @@ class CourtAccessibilityOptionsControllerTest {
 
     private static final UUID COURT_ID = UUID.randomUUID();
     private static final UUID UNKNOWN_COURT_ID = UUID.randomUUID();
+    private static final String UNKNOWN_COURT_ID_STRING = UNKNOWN_COURT_ID.toString();
     private static final String INVALID_UUID = "abcde";
 
     private static final String RESPONSE_STATUS_MESSAGE = "Response status does not match";
@@ -54,7 +55,7 @@ class CourtAccessibilityOptionsControllerTest {
             .thenThrow(new NotFoundException("No Accessibility Options services found"));
 
         assertThrows(NotFoundException.class, () ->
-            courtAccessibilityOptionsController.getAccessibilityOptionsServicesByCourtId(UNKNOWN_COURT_ID.toString())
+            courtAccessibilityOptionsController.getAccessibilityOptionsServicesByCourtId(UNKNOWN_COURT_ID_STRING)
         );
     }
 
@@ -64,7 +65,7 @@ class CourtAccessibilityOptionsControllerTest {
             .thenThrow(new NotFoundException("Court not found"));
 
         assertThrows(NotFoundException.class, () ->
-            courtAccessibilityOptionsController.getAccessibilityOptionsServicesByCourtId(UNKNOWN_COURT_ID.toString())
+            courtAccessibilityOptionsController.getAccessibilityOptionsServicesByCourtId(UNKNOWN_COURT_ID_STRING)
         );
     }
 
@@ -102,7 +103,7 @@ class CourtAccessibilityOptionsControllerTest {
 
         assertThrows(NotFoundException.class, () ->
             courtAccessibilityOptionsController
-                .setAccessibilityOptionsServices(UNKNOWN_COURT_ID.toString(), accessibilityOptions)
+                .setAccessibilityOptionsServices(UNKNOWN_COURT_ID_STRING, accessibilityOptions)
         );
     }
 

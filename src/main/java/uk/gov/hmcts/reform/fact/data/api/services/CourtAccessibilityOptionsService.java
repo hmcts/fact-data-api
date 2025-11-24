@@ -1,8 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOptions;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -11,7 +9,6 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAccessibilityOptionsR
 import java.util.UUID;
 
 @Service
-@Slf4j
 public class CourtAccessibilityOptionsService {
 
     private final CourtAccessibilityOptionsRepository courtAccessibilityOptionsRepository;
@@ -46,10 +43,9 @@ public class CourtAccessibilityOptionsService {
      */
     public CourtAccessibilityOptions setAccessibilityOptions(
         UUID courtId, CourtAccessibilityOptions courtAccessibilityOptions) {
-        log.info("Setting Accessibility Options for court id: {}", courtId);
-        Court foundCourt = courtService.getCourtById(courtId);
-        courtAccessibilityOptions.setCourt(foundCourt);
+        courtAccessibilityOptions.setCourt(courtService.getCourtById(courtId));
         courtAccessibilityOptions.setCourtId(courtId);
+
         courtAccessibilityOptionsRepository.findByCourtId(courtId).ifPresent(
                 existing -> courtAccessibilityOptions.setId(existing.getId())
         );
