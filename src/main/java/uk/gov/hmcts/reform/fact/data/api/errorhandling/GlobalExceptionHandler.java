@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String UNKNOWN = "unknown";
+
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ExceptionResponse handle(NotFoundException ex) {
@@ -37,7 +39,7 @@ public class GlobalExceptionHandler {
     public ExceptionResponse handle(MultipartException ex, HttpServletRequest request) {
         String provided = request != null && request.getContentType() != null
             ? request.getContentType()
-            : "unknown";
+            : UNKNOWN;
         log.error("415, multipart handling error. Provided Content-Type: {}. Details: {}", provided, ex.getMessage());
 
         String message = String.format(
@@ -114,9 +116,9 @@ public class GlobalExceptionHandler {
     public ExceptionResponse handle(MethodArgumentTypeMismatchException ex) {
         log.error("400, invalid parameter type. Parameter: {}, Value: {}, Expected type: {}",
                   ex.getName(), ex.getValue(), ex.getRequiredType()
-                      != null ? ex.getRequiredType().getSimpleName() : "unknown");
+                      != null ? ex.getRequiredType().getSimpleName() : UNKNOWN);
 
-        String expectedType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
+        String expectedType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : UNKNOWN;
         String message = String.format(
             "Invalid value for parameter '%s': '%s'. Expected type: %s.",
             ex.getName(),
