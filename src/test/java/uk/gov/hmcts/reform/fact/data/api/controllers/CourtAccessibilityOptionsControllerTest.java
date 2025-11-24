@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOptions;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtAccessibilityOptionsService;
@@ -42,7 +43,7 @@ class CourtAccessibilityOptionsControllerTest {
         when(courtAccessibilityOptionsService.getAccessibilityOptionsByCourtId(COURT_ID))
             .thenReturn(accessibilityOptions);
 
-        var response = courtAccessibilityOptionsController
+        ResponseEntity<CourtAccessibilityOptions> response = courtAccessibilityOptionsController
             .getAccessibilityOptionsServicesByCourtId(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
@@ -85,7 +86,7 @@ class CourtAccessibilityOptionsControllerTest {
         when(courtAccessibilityOptionsService.setAccessibilityOptions(COURT_ID, accessibilityOptions))
             .thenReturn(accessibilityOptions);
 
-        var response = courtAccessibilityOptionsController
+        ResponseEntity<CourtAccessibilityOptions> response = courtAccessibilityOptionsController
             .setAccessibilityOptionsServices(COURT_ID.toString(), accessibilityOptions);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
