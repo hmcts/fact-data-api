@@ -40,12 +40,15 @@ public class CourtOpeningHoursService {
      * Get a list of opening hours by court ID.
      *
      * @param courtId The court ID to find the opening hours for.
-     * @return The list of opening hours record or an empty list if the court has no opening hours.
-     * @throws CourtResourceNotFoundException  if no opening hours record exists for the court.
+     * @return The list of opening hours.
+     * @throws CourtResourceNotFoundException if no opening hours record exists for the court or the list is empty.
      */
     public List<CourtOpeningHours> getOpeningHoursByCourtId(UUID courtId) {
-        return courtOpeningHoursRepository.findByCourtId(courtService.getCourtById(courtId).getId())
-            .orElseThrow(() -> new CourtResourceNotFoundException("No opening hours found for court ID: " + courtId));
+        return courtOpeningHoursRepository
+            .findByCourtId(courtService.getCourtById(courtId).getId())
+            .filter(list -> !list.isEmpty())
+            .orElseThrow(() -> new CourtResourceNotFoundException(
+                "No opening hours found for court ID: " + courtId));
     }
 
     /**
@@ -53,7 +56,7 @@ public class CourtOpeningHoursService {
      *
      * @param courtId The court ID to find the opening hours type for.
      * @param openingHourTypeId The type ID for the opening hours type to find.
-     * @return The opening hours record or an empty list if none exist for the court.
+     * @return The opening hours record.
      * @throws CourtResourceNotFoundException if no opening hours record of this type exists for the court.
      */
     public List<CourtOpeningHours> getOpeningHoursByTypeId(UUID courtId, UUID openingHourTypeId) {
@@ -61,6 +64,7 @@ public class CourtOpeningHoursService {
             .findByCourtIdAndOpeningHourTypeId(
                 courtService.getCourtById(courtId).getId(),
                 openingHoursTypeService.getOpeningHourTypeById(openingHourTypeId).getId())
+            .filter(list -> !list.isEmpty())
             .orElseThrow(
                 () -> new CourtResourceNotFoundException(
                 "No opening hour found for court ID: " + courtId + " with type ID: " + openingHourTypeId));
@@ -71,12 +75,13 @@ public class CourtOpeningHoursService {
      * A court will only ever have zero or one counter-service opening hours record.
      *
      * @param courtId The court ID to find the counter-service opening hours for.
-     * @return The counter-service opening hours record or an empty list if none exist for the court.
+     * @return The counter-service opening hours record.
      * @throws CourtResourceNotFoundException if no counter-service opening hours record exists for the court.
      */
     public List<CourtCounterServiceOpeningHours> getCounterServiceOpeningHoursByCourtId(UUID courtId) {
         return courtCounterServiceOpeningHoursRepository
             .findByCourtId(courtService.getCourtById(courtId).getId())
+            .filter(list -> !list.isEmpty())
             .orElseThrow(
                 () -> new CourtResourceNotFoundException(
                     "No counter service opening hours found for court ID: " + courtId));
