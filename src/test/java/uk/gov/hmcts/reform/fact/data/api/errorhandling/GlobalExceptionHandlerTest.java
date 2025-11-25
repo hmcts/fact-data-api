@@ -14,15 +14,17 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
@@ -50,8 +52,8 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void testHandleTranslationNotFoundException() {
-        TranslationNotFoundException ex = new TranslationNotFoundException(TEST_MESSAGE);
+    void testHandleCourtResourceNotFoundException() {
+        CourtResourceNotFoundException ex = new CourtResourceNotFoundException(TEST_MESSAGE);
         ExceptionResponse response = handler.handle(ex);
 
         assertThat(response).isNotNull();
@@ -75,7 +77,7 @@ class GlobalExceptionHandlerTest {
         ConstraintViolation<?> violation = mock(ConstraintViolation.class);
         ConstraintDescriptor<?> descriptor = mock(ConstraintDescriptor.class);
         doReturn(descriptor).when(violation).getConstraintDescriptor();
-        when(descriptor.getAnnotation()).thenReturn(validUuidAnnotation());
+        doReturn(validUuidAnnotation()).when(descriptor).getAnnotation();
         when(violation.getInvalidValue()).thenReturn("bad-uuid");
 
         ConstraintViolationException ex =
@@ -91,12 +93,12 @@ class GlobalExceptionHandlerTest {
         ConstraintViolation<?> violation = mock(ConstraintViolation.class);
         ConstraintDescriptor<?> descriptor = mock(ConstraintDescriptor.class);
         doReturn(descriptor).when(violation).getConstraintDescriptor();
-        when(descriptor.getAnnotation()).thenReturn(new Annotation() {
+        doReturn(new Annotation() {
             @Override
             public Class<? extends Annotation> annotationType() {
                 return Annotation.class;
             }
-        });
+        }).when(descriptor).getAnnotation();
         when(violation.getMessage()).thenReturn("Bad request");
         when(violation.getInvalidValue()).thenReturn("oops");
 
@@ -201,6 +203,38 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getMessage())
             .contains("Invalid value for parameter 'page'")
             .contains("unknown");
+    }
+
+    @Test
+    void testHandleMultipartExceptionWithProvidedContentType() {
+        MultipartException ex = new MultipartException("Missing multipart boundary");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getContentType()).thenReturn("multipart/form-data");
+
+        ExceptionResponse response = handler.handle(ex, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage())
+            .contains("Unsupported or malformed Content-Type 'multipart/form-data'")
+            .contains("use 'multipart/form-data'")
+            .contains("use 'application/json'");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleMultipartExceptionWithUnknownContentType() {
+        MultipartException ex = new MultipartException("Not a multipart request");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getContentType()).thenReturn(null);
+
+        ExceptionResponse response = handler.handle(ex, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage())
+            .contains("Unsupported or malformed Content-Type 'unknown'")
+            .contains("use 'multipart/form-data'")
+            .contains("use 'application/json'");
+        assertThat(response.getTimestamp()).isNotNull();
     }
 
     private ValidUUID validUuidAnnotation() {
