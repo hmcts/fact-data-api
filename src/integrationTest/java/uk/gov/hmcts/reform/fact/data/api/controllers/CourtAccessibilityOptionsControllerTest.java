@@ -169,6 +169,11 @@ class CourtAccessibilityOptionsControllerTest {
             .id(courtId)
             .courtId(courtId)
             .accessibleEntrance(null)
+            .court(null)
+            .accessibleParking(false)
+            .hearingEnhancementEquipment("Equipment")
+            .lift(true)
+            .quietRoom(true)
             .build();
 
         mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
@@ -184,6 +189,11 @@ class CourtAccessibilityOptionsControllerTest {
         CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
             .id(courtId)
             .courtId(courtId)
+            .court(null)
+            .accessibleEntrance(true)
+            .accessibleParking(false)
+            .lift(true)
+            .quietRoom(true)
             .hearingEnhancementEquipment(oversizedText)
             .build();
 
@@ -199,6 +209,12 @@ class CourtAccessibilityOptionsControllerTest {
         CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
             .id(courtId)
             .courtId(courtId)
+            .court(null)
+            .accessibleEntrance(true)
+            .accessibleParking(false)
+            .hearingEnhancementEquipment("Equipment")
+            .lift(true)
+            .quietRoom(true)
             .accessibleParkingPhoneNumber("invalid-phone")
             .accessibleEntrancePhoneNumber("invalid-phone")
             .build();
@@ -216,6 +232,12 @@ class CourtAccessibilityOptionsControllerTest {
         CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
             .id(courtId)
             .courtId(courtId)
+            .court(null)
+            .accessibleEntrance(true)
+            .accessibleParking(false)
+            .hearingEnhancementEquipment("Equipment")
+            .lift(true)
+            .quietRoom(true)
             .accessibleParkingPhoneNumber(oversizedPhone)
             .build();
 
@@ -231,7 +253,13 @@ class CourtAccessibilityOptionsControllerTest {
         CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
             .id(courtId)
             .courtId(courtId)
-            .liftDoorWidth(49)
+            .court(null)
+            .accessibleEntrance(true)
+            .accessibleParking(false)
+            .hearingEnhancementEquipment("Equipment")
+            .lift(true)
+            .quietRoom(true)
+            .liftDoorWidth(1001)
             .build();
 
         mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
@@ -246,7 +274,13 @@ class CourtAccessibilityOptionsControllerTest {
         CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
             .id(courtId)
             .courtId(courtId)
-            .liftDoorLimit(3001)
+            .court(null)
+            .accessibleEntrance(true)
+            .accessibleParking(false)
+            .hearingEnhancementEquipment("Equipment")
+            .lift(true)
+            .quietRoom(true)
+            .liftDoorLimit(10001)
             .build();
 
         mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
@@ -262,6 +296,12 @@ class CourtAccessibilityOptionsControllerTest {
         CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
             .id(courtId)
             .courtId(courtId)
+            .court(null)
+            .accessibleEntrance(true)
+            .accessibleParking(false)
+            .hearingEnhancementEquipment("Equipment")
+            .lift(true)
+            .quietRoom(true)
             .accessibleToiletDescription(oversizedDescription)
             .accessibleToiletDescriptionCy(oversizedDescription)
             .build();

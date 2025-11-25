@@ -87,12 +87,13 @@ public class CourtAccessibilityOptions {
     private Boolean lift;
 
     @Schema(description = "Lift door width (in cm)")
-    @Min(value = 50, message = "Lift door width needs to be over 50cm")
+    @Min(value = 1, message = "Lift door width needs to be over 1cm")
+    @Max(value = 1000, message = "Lift door width needs to be under 1000cm")
     private Integer liftDoorWidth;
 
     @Schema(description = "Lift weight limit (in kg)")
-    @Min(value = 150, message = "Lift weight limit should be at least 150kg")
-    @Max(value = 3000, message = "Lift weight limit should be at most 3000kg")
+    @Min(value = 1, message = "Lift weight limit should be at least 1kg")
+    @Max(value = 10000, message = "Lift weight limit should be at most 10000kg")
     private Integer liftDoorLimit;
 
     @Schema(description = "Quiet room availability status")
