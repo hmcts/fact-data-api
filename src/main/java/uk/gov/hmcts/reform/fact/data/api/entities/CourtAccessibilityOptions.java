@@ -80,6 +80,7 @@ public class CourtAccessibilityOptions {
 
     @Schema(description = "Details of available hearing enhancement equipment")
     @NotNull
+    @Size(max = 255, message = "Hearing Enhancement Equipment must not exceed 255 characters")
     private String hearingEnhancementEquipment;
 
     @Schema(description = "Lift availability status")
