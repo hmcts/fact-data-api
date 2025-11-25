@@ -1,11 +1,35 @@
 # Note to security: This is not used in any environment, only locally for development purposes.
 services:
+
+  # simple standalone redis instance
+  redis:
+    image: redis:7.4-alpine
+    hostname: redis
+    # user will remain as "default" though doesn't need to be specified
+    command: >
+      redis-server --requirepass redispass
+    ports:
+      - "6379:6379"
+
+  # redis-insight instance for visibility (localhost:5540)
+  redis-insight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    environment:
+      RI_REDIS_HOST: redis
+      RI_REDIS_PORT: 6379
+      RI_REDIS_PASSWORD: redispass
+
   fact-data-api:
     build: .
     ports:
       - "8989:8989"
     depends_on:
       - fact-database
+      - redis
     environment:
       - DB_HOST=fact-database
       - DB_PORT=5432
@@ -16,6 +40,7 @@ services:
       - AZURE_STORAGE_ACCOUNT_NAME=${AZURE_STORAGE_ACCOUNT_NAME}
       - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
       - TESTING_SUPPORT_ENABLE_API=${TESTING_SUPPORT_ENABLE_API}
+
   fact-database:
     image: hmctspublic.azurecr.io/imported/postgres:16-alpine
     environment:
@@ -26,5 +51,6 @@ services:
       - "5999:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+
 volumes:
   db-data:

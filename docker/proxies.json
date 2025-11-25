@@ -1,0 +1,32 @@
+[
+  {
+    "name": "redis1",
+    "listen": "0.0.0.0:26381",
+    "upstream": "redis-node-1:6379"
+  },
+  {
+    "name": "redis2",
+    "listen": "0.0.0.0:26382",
+    "upstream": "redis-node-2:6379"
+  },
+  {
+    "name": "redis3",
+    "listen": "0.0.0.0:26383",
+    "upstream": "redis-node-3:6379"
+  },
+  {
+    "name": "redis4",
+    "listen": "0.0.0.0:26384",
+    "upstream": "redis-node-4:6379"
+  },
+  {
+    "name": "redis5",
+    "listen": "0.0.0.0:26385",
+    "upstream": "redis-node-5:6379"
+  },
+  {
+    "name": "redis6",
+    "listen": "0.0.0.0:26386",
+    "upstream": "redis-node-6:6379"
+  }
+]

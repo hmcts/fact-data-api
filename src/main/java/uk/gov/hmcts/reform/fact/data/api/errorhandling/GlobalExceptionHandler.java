@@ -1,5 +1,16 @@
 package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.RateLimitExceededException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -10,14 +21,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
-
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -107,6 +110,16 @@ public class GlobalExceptionHandler {
         );
 
         return generateExceptionResponse(message);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public ExceptionResponse handle(RateLimitExceededException ex, HttpServletResponse response) {
+        log.error("429, rate-limit exceeded. wait seconds: {}, Details: {}", ex.getWaitSeconds(), ex.getMessage());
+        if (ex.getWaitSeconds() > 0) {
+            response.addHeader("Retry-After", String.valueOf(ex.getWaitSeconds()));
+        }
+        return generateExceptionResponse("Too Many Requests.");
     }
 
     private ExceptionResponse generateExceptionResponse(String message) {

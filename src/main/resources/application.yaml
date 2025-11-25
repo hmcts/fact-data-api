@@ -72,9 +72,48 @@ spring:
     web:
       pageable:
         serialization-mode: via_dto
+    # redis configuration
+    redis:
+      # redis thinks it's a jpa provider now...
+      repositories:
+        enabled: false
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  # We have to add this as there are two caching providers on the classpath
+  cache:
+    jcache:
+      provider: org.redisson.jcache.JCachingProvider
 
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
 
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}
+
+fact:
+  data-api:
+    rate-limit:
+
+      # configuration for bucket4j solution:
+
+      # default-bucket is used when no explicit bucket is specified
+      # the values below are the defaults for reference. This config
+      # for the default bucket can be omitted
+      default-bucket:
+        capacity: 1
+        interval-seconds: 10
+        timeout-seconds: 3
+        per-session: false
+      # configuration for custom buckets with arbitrary names
+      buckets:
+        admin:
+          capacity: 5
+          interval-seconds: 10
+          timeout-seconds: 10
+          per-session: true
+        public:
+          capacity: 10
+          interval-seconds: 60
+          timeout-seconds: 3
+          per-session: true

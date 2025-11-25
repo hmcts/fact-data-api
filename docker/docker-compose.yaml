@@ -1,0 +1,175 @@
+# Note to security: This is not used in any environment, only locally for development purposes.
+services:
+
+  # --- API Database ---
+  fact-database:
+    image: hmctspublic.azurecr.io/imported/postgres:16-alpine
+    hostname: fact-database
+    environment:
+      POSTGRES_DB: fact
+      POSTGRES_USER: fact
+      POSTGRES_PASSWORD: fact
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app-net
+
+  # --- Redis Cluster Nodes ---
+  redis-node-1:
+    image: redis:7.4-alpine
+    hostname: redis-node-1
+    command: [ "redis-server", "--cluster-enabled", "yes", "--cluster-config-file", "/data/nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes" ]
+    networks:
+      - app-net
+
+  redis-node-2:
+    extends:
+      service: redis-node-1
+    hostname: redis-node-2
+
+  redis-node-3:
+    extends:
+      service: redis-node-1
+    hostname: redis-node-3
+
+  redis-node-4:
+    extends:
+      service: redis-node-1
+    hostname: redis-node-4
+
+  redis-node-5:
+    extends:
+      service: redis-node-1
+    hostname: redis-node-5
+
+  redis-node-6:
+    extends:
+      service: redis-node-1
+    hostname: redis-node-6
+
+  redis-cluster-init:
+    image: redis:7.4-alpine
+    hostname: redis-cluster
+    depends_on:
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
+      - redis-node-5
+      - redis-node-6
+    command: >
+      redis-cli --cluster create
+      redis-node-1:6379 redis-node-2:6379 redis-node-3:6379
+      redis-node-4:6379 redis-node-5:6379 redis-node-6:6379
+      --cluster-replicas 1 --cluster-yes
+    networks:
+      - app-net
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    environment:
+      RI_REDIS_HOST: redis-node-1
+      RI_REDIS_PORT: 6379
+    networks:
+      - app-net
+
+  # --- API Services ---
+  api-service-1:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+    hostname: api-service-1
+    depends_on:
+      - fact-database
+    environment:
+      DB_HOST: fact-database
+      DB_PORT: 5432
+      DB_NAME: fact
+      DB_USER: fact
+      DB_PASSWORD: fact
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      AZURE_STORAGE_ACCOUNT_NAME: ${AZURE_STORAGE_ACCOUNT_NAME:-dev}
+      TESTING_SUPPORT_ENABLE_API: ${TESTING_SUPPORT_ENABLE_API:-false}
+      # you'll need a .env file with this one in
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID}
+      # This one is optional, but if you set it, it needs to be valid
+      AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING}
+    networks:
+      - app-net
+
+  api-service-2:
+    extends:
+      service: api-service-1
+    hostname: api-service-2
+
+  api-service-3:
+    extends:
+      service: api-service-1
+    hostname: api-service-3
+
+  # --- Envoy Proxy ---
+  envoy:
+    image: envoyproxy/envoy:v1.29-latest
+    ports:
+      - "8989:8080"
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
+    depends_on:
+      - api-service-1
+      - api-service-2
+      - api-service-3
+#    environment:
+#      loglevel: debug
+    networks:
+      - app-net
+
+# The cluster doesn't start if I put the toxiproxy in the way, and it also can't be
+# connected to by redis insights frontend if I only use is as a proxy for connections
+# once it's up, so for now, I'll deal with it some other way - likely just killing
+# off servers
+
+#  # --- Toxiproxy with Preconfigured Proxies for the redis nodes ---
+#  toxiproxy:
+#    image: ghcr.io/shopify/toxiproxy
+#    hostname: toxiproxy
+##    ports:
+##      - "8474:8474" # Toxiproxy API
+#    depends_on:
+#      - redis-node-1
+#      - redis-node-2
+#      - redis-node-3
+#      - redis-node-4
+#      - redis-node-5
+#      - redis-node-6
+#    volumes:
+#      - ./proxies.json:/proxies.json
+#    command:
+#      - -host=0.0.0.0
+#      - -config=/proxies.json
+#    networks:
+#      - app-net
+#
+#  toxiproxy-ui:
+#    image: buckle/toxiproxy-frontend
+#    depends_on:
+#      - toxiproxy
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      TOXIPROXY_URL: 'http://toxiproxy:8474'
+#      # fix from https://github.com/buckle/toxiproxy-frontend/issues/37
+#      SPRING_AUTOCONFIGURE_EXCLUDE: >
+#        org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration,
+#        org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+#    networks:
+#      - app-net
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  db-data:
+    name: "rl-test-db-data"
