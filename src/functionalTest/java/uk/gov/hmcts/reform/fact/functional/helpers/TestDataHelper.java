@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.functional.helpers;
 
 import io.restassured.response.Response;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.util.UUID;
@@ -46,5 +47,27 @@ public final class TestDataHelper {
         assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
 
         return UUID.fromString(createResponse.jsonPath().getString("id"));
+    }
+
+    /**
+     * Builds a CourtFacilities object with all fields set to true by default.
+     *
+     * @param courtId the court ID
+     * @return a CourtFacilities object with all facility fields set to true
+     */
+    public static CourtFacilities buildFacilities(final UUID courtId) {
+        final CourtFacilities facilities = new CourtFacilities();
+        facilities.setCourtId(courtId);
+        facilities.setParking(true);
+        facilities.setFreeWaterDispensers(true);
+        facilities.setSnackVendingMachines(true);
+        facilities.setDrinkVendingMachines(true);
+        facilities.setCafeteria(true);
+        facilities.setWaitingArea(true);
+        facilities.setWaitingAreaChildren(true);
+        facilities.setQuietRoom(true);
+        facilities.setBabyChanging(true);
+        facilities.setWifi(true);
+        return facilities;
     }
 }
