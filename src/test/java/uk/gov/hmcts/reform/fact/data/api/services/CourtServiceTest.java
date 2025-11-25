@@ -193,6 +193,41 @@ class CourtServiceTest {
     }
 
     @Test
+    void getFilteredAndPaginatedCourtsShouldDefaultNameFilterWhenPartialNameIsNull() {
+        Pageable pageable = Pageable.unpaged();
+        Region region = new Region();
+        region.setId(UUID.randomUUID());
+
+        when(regionService.getAllRegions()).thenReturn(List.of(region));
+        when(courtRepository.findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
+            anyList(), eq(""), eq(pageable))
+        ).thenReturn(Page.empty());
+
+        courtService.getFilteredAndPaginatedCourts(pageable, null, null, null);
+
+        verify(courtRepository).findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
+            anyList(), eq(""), eq(pageable)
+        );
+    }
+
+    @Test
+    void getFilteredAndPaginatedCourtsShouldTreatBlankRegionIdAsAllRegions() {
+        Pageable pageable = Pageable.unpaged();
+        Region region = new Region();
+        region.setId(UUID.randomUUID());
+
+        when(regionService.getAllRegions()).thenReturn(List.of(region));
+        when(courtRepository.findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
+            anyList(), anyString(), eq(pageable))
+        ).thenReturn(Page.empty());
+
+        courtService.getFilteredAndPaginatedCourts(pageable, null, "   ", "Name");
+
+        verify(regionService).getAllRegions();
+        verify(regionService, never()).getRegionById(any());
+    }
+
+    @Test
     void createCourtShouldSetRegionSlugAndOpenFalse() {
         UUID regionId = UUID.randomUUID();
         Region region = new Region();
@@ -287,5 +322,28 @@ class CourtServiceTest {
 
         assertThat(result.getSlug()).isEqualTo("same-name");
         verify(courtRepository, never()).existsBySlug(anyString());
+    }
+
+    @Test
+    void deleteCourtsByNamePrefixShouldReturnZeroWhenNoMatchesFound() {
+        when(courtRepository.findByNameStartingWithIgnoreCase("Missing")).thenReturn(Collections.emptyList());
+
+        long deleted = courtService.deleteCourtsByNamePrefix("Missing");
+
+        assertThat(deleted).isZero();
+        verify(courtRepository, never()).deleteAllInBatch(anyList());
+    }
+
+    @Test
+    void deleteCourtsByNamePrefixShouldTrimInputAndDeleteMatches() {
+        Court court = new Court();
+        List<Court> courts = List.of(court);
+        when(courtRepository.findByNameStartingWithIgnoreCase("Example")).thenReturn(courts);
+
+        long deleted = courtService.deleteCourtsByNamePrefix("  Example ");
+
+        assertThat(deleted).isEqualTo(1);
+        verify(courtRepository).findByNameStartingWithIgnoreCase("Example");
+        verify(courtRepository).deleteAllInBatch(courts);
     }
 }
