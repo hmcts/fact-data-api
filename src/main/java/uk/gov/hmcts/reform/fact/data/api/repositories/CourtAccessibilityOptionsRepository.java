@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.repositories;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOptions;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,4 +10,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CourtAccessibilityOptionsRepository extends JpaRepository<CourtAccessibilityOptions, UUID> {
+    Optional<CourtAccessibilityOptions> findByCourtId(UUID courtId);
 }
