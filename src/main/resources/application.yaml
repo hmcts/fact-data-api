@@ -78,6 +78,9 @@ dbMigration:
 
 user:
   retention-period: 365
+
+courtLock:
+  timeout-minutes: 60
   
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}
