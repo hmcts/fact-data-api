@@ -31,6 +31,19 @@ public final class TestDataHelper {
     }
 
     /**
+     * Fetches a specific opening hour type ID by index from the opening hour types endpoint.
+     * Valid indices are 0-8 for the 9 available opening hour types.
+     *
+     * @param http the HTTP client
+     * @param index the index of the opening hour type (0-8)
+     * @return the opening hour type ID at the specified index as a UUID
+     */
+    public static UUID getOpeningHourTypeId(final HttpClient http, final int index) {
+        final Response response = http.doGet("/types/v1/opening-hours-types");
+        return UUID.fromString(response.jsonPath().getString("[" + index + "].id"));
+    }
+
+    /**
      * Creates a test court with the given name.
      *
      * @param http the HTTP client
