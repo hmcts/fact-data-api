@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -32,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Feature("Court Controller")
 @DisplayName("Court Controller")
 @WebMvcTest(CourtController.class)
+@ActiveProfiles("test")
 class CourtControllerTest {
 
     private static final UUID COURT_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");

@@ -29,6 +29,13 @@ There are two supported ways to deploy the application locally
    ```
 5. The application should now be running and accessible at `http://localhost:8989`.
 
+## Legacy data migration
+
+The `migration` sub-module exposes a helper endpoint that imports data from the legacy FaCT application.
+
+- Configure the legacy API base URL via the `FACT_MIGRATION_SOURCE_BASE_URL` environment variable (defaults to `http://localhost:8080`). Values can be stored in a local `.env` file.
+- Execute the migration by calling `POST /migration/import`. The endpoint deserialises the legacy export payload and stores it through the new JPA entities.
+- The migration is designed to run once. Subsequent calls return `409 Conflict`, ensuring the legacy endpoint is not invoked again unless the database is reset manually.
+
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
-
