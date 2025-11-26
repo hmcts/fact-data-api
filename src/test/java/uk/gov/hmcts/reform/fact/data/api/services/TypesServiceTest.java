@@ -114,6 +114,26 @@ class TypesServiceTest {
     }
 
     @Test
+    void getAllAreasOfLawTypesByIdsReturnsAreasOfLawTypesWhenFound() {
+        List<UUID> ids = List.of(areaOfLawTypes.get(0).getId());
+        when(areaOfLawTypeRepository.findAllById(ids)).thenReturn(areaOfLawTypes);
+
+        List<AreaOfLawType> result = typesService.getAllAreasOfLawTypesByIds(ids);
+
+        assertThat(result).isEqualTo(areaOfLawTypes);
+    }
+
+    @Test
+    void getAllAreasOfLawTypesByIdsReturnsEmptyListWhenNoneFound() {
+        List<UUID> ids = List.of(UUID.randomUUID());
+        when(areaOfLawTypeRepository.findAllById(ids)).thenReturn(List.of());
+
+        List<AreaOfLawType> result = typesService.getAllAreasOfLawTypesByIds(ids);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void getCourtTypesReturnsCourtTypesWhenFound() {
         when(courtTypeRepository.findAll()).thenReturn(courtTypes);
 
