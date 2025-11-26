@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Entity
 @Table(name = "court_facilities")
-public class CourtFacility {
+public class CourtFacilities {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
