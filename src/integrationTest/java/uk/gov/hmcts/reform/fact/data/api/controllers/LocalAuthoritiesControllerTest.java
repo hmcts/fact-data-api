@@ -150,6 +150,26 @@ class LocalAuthoritiesControllerTest {
     }
 
     @Test
+    @DisplayName("PUT /courts/{courtId}/v1/local-authorities returns 400 when required areas are missing in payload")
+    void putLocalAuthoritiesReturnsBadRequestWhenMissingAreaUpdates() throws Exception {
+        List<CourtLocalAuthorityDto> request = List.of(CourtLocalAuthorityDto.builder()
+            .areaOfLawId(areaOfLawId)
+            .localAuthorities(List.of(LocalAuthoritySelectionDto.builder()
+                .id(localAuthorityId)
+                .selected(true)
+                .build()))
+            .build());
+
+        doThrow(new IllegalArgumentException("Missing update for area of law: Divorce")).when(localAuthoritiesService)
+            .setCourtLocalAuthorities(courtId, request);
+
+        mockMvc.perform(put("/courts/{courtId}/v1/local-authorities", courtId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("PUT /courts/{courtId}/v1/local-authorities returns 400 for invalid UUID")
     void putLocalAuthoritiesInvalidUuid() throws Exception {
         List<CourtLocalAuthorityDto> request = List.of(CourtLocalAuthorityDto.builder()

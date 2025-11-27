@@ -106,7 +106,9 @@ class LocalAuthoritiesServiceTest {
         assertThat(adoptionResult.getLocalAuthorities().get(0).getSelected()).isTrue();
 
         CourtLocalAuthorityDto childrenResult = findResultByAreaId(result, CHILDREN_ID);
-        assertThat(childrenResult.getLocalAuthorities()).allMatch(la -> Boolean.FALSE.equals(la.getSelected()));
+        List<LocalAuthoritySelectionDto> childrenAuthorities = childrenResult.getLocalAuthorities();
+        assertThat(childrenAuthorities).isNotEmpty();
+        assertThat(childrenAuthorities).allMatch(la -> Boolean.FALSE.equals(la.getSelected()));
     }
 
     @Test

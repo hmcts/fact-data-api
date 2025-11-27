@@ -79,8 +79,10 @@ class LocalAuthoritiesControllerTest {
         when(localAuthoritiesService.getCourtLocalAuthorities(COURT_ID))
             .thenThrow(new NotFoundException("Court not found"));
 
+        String courtId = COURT_ID.toString();
+
         assertThrows(NotFoundException.class,
-            () -> localAuthoritiesController.getCourtLocalAuthorities(COURT_ID.toString()));
+            () -> localAuthoritiesController.getCourtLocalAuthorities(courtId));
     }
 
     @Test
@@ -88,8 +90,10 @@ class LocalAuthoritiesControllerTest {
         when(localAuthoritiesService.getCourtLocalAuthorities(COURT_ID))
             .thenThrow(new CourtResourceNotFoundException("No areas of law"));
 
+        String courtId = COURT_ID.toString();
+
         assertThrows(CourtResourceNotFoundException.class,
-            () -> localAuthoritiesController.getCourtLocalAuthorities(COURT_ID.toString()));
+            () -> localAuthoritiesController.getCourtLocalAuthorities(courtId));
     }
 
     @Test
@@ -102,8 +106,10 @@ class LocalAuthoritiesControllerTest {
         doThrow(new IllegalArgumentException("Missing area of law")).when(localAuthoritiesService)
             .setCourtLocalAuthorities(COURT_ID, request);
 
+        String courtId = COURT_ID.toString();
+
         assertThrows(IllegalArgumentException.class, () ->
-            localAuthoritiesController.updateCourtLocalAuthorities(COURT_ID.toString(), request));
+            localAuthoritiesController.updateCourtLocalAuthorities(courtId, request));
     }
 
     @Test
