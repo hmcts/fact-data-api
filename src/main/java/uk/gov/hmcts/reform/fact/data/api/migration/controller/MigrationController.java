@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationSummary;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.PhotoMigrationResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.service.MigrationService;
+import uk.gov.hmcts.reform.fact.data.api.migration.service.PhotoMigrationService;
 
 @RestController
 @RequestMapping("/migration")
@@ -18,9 +20,11 @@ import uk.gov.hmcts.reform.fact.data.api.migration.service.MigrationService;
 public class MigrationController {
 
     private final MigrationService migrationService;
+    private final PhotoMigrationService photoMigrationService;
 
-    public MigrationController(MigrationService migrationService) {
+    public MigrationController(MigrationService migrationService, PhotoMigrationService photoMigrationService) {
         this.migrationService = migrationService;
+        this.photoMigrationService = photoMigrationService;
     }
 
     @PostMapping("/import")
@@ -41,5 +45,15 @@ public class MigrationController {
             "Migration completed successfully",
             summary.getResult()
         ));
+    }
+
+    @PostMapping("/photos")
+    @Operation(
+        summary = "Migrate court photos from legacy FaCT system",
+        description = "Fetches court photos from the legacy FaCT private migration endpoint "
+            + "and persists them into the new database and storage account."
+    )
+    public ResponseEntity<PhotoMigrationResponse> importCourtPhotos() {
+        return ResponseEntity.ok(photoMigrationService.migratePhotos());
     }
 }
