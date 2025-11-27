@@ -37,11 +37,12 @@ public class LocalAuthoritiesController {
     @GetMapping(value = "/v1/local-authorities", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
         summary = "Get local authorities for a court",
-        description = "Fetch all allowed areas of law enabled for the court with their associated local authorities"
+        description = "Fetch allowed areas of law enabled for the court and the local authorities."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved court local authorities"),
-        @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or area of law not enabled"),
+        @ApiResponse(responseCode = "204", description = "No local authority configuration found for the court"),
+        @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
     public ResponseEntity<List<CourtLocalAuthorityDto>> getCourtLocalAuthorities(
@@ -56,11 +57,13 @@ public class LocalAuthoritiesController {
     )
     @Operation(
         summary = "Update local authorities for a court",
-        description = "Update the local authorities mapped to the allowed areas of law for a given court"
+        description = "Update the local authorities mapped to the allowed areas of law (adoption, children, civil "
+            + "partnership, divorce) for a given court."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully updated local authorities"),
-        @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or area of law not enabled"),
+        @ApiResponse(responseCode = "204", description = "No local authority configuration found for the court"),
+        @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or request validation failed"),
         @ApiResponse(responseCode = "404", description = "Court or local authority not found")
     })
     public ResponseEntity<String> updateCourtLocalAuthorities(
