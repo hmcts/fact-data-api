@@ -95,6 +95,13 @@ public class GlobalExceptionHandler {
         return generateExceptionResponse(message);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(IllegalArgumentException ex) {
+        log.error("400, illegal argument supplied. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
+    }
+
     @ExceptionHandler(InvalidFileException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidFileException ex) {
@@ -136,4 +143,3 @@ public class GlobalExceptionHandler {
         return response;
     }
 }
-
