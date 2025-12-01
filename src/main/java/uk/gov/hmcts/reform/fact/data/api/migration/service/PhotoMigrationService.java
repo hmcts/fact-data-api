@@ -74,16 +74,16 @@ public class PhotoMigrationService {
 
         List<PhotoMigrationResponse.Failure> failedMigrations = new ArrayList<>();
 
-        legacyData.courts().stream().filter(c -> c.courtPhoto() != null).forEach(court -> {
-            UUID newCourtId = courtIdMap.get(court.id());
-            CourtPhotoDto courtPhotoDto = court.courtPhoto();
+        legacyData.getCourts().stream().filter(c -> c.getCourtPhoto() != null).forEach(court -> {
+            UUID newCourtId = courtIdMap.get(court.getId());
+            CourtPhotoDto courtPhotoDto = court.getCourtPhoto();
 
             try {
-                MultipartFile currentPhoto = getCurrentPhoto(courtPhotoDto.imagePath());
+                MultipartFile currentPhoto = getCurrentPhoto(courtPhotoDto.getImagePath());
                 courtPhotoService.setCourtPhoto(newCourtId, currentPhoto);
             } catch (Exception ex) {
                 failedMigrations.add(
-                    new PhotoMigrationResponse.Failure(court.name(), newCourtId, ex.getMessage())
+                    new PhotoMigrationResponse.Failure(court.getName(), newCourtId, ex.getMessage())
                 );
             }
         });
