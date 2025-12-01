@@ -11,7 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceN
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
-import uk.gov.hmcts.reform.fact.data.api.services.LocalAuthoritiesService;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtLocalAuthoritiesService;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class LocalAuthoritiesControllerTest {
+class CourtLocalAuthoritiesControllerTest {
 
     private static final UUID COURT_ID = UUID.randomUUID();
     private static final String INVALID_UUID = "invalid-uuid";
@@ -34,10 +34,10 @@ class LocalAuthoritiesControllerTest {
     private static final String RESPONSE_BODY_MESSAGE = "Response body does not match";
 
     @Mock
-    private LocalAuthoritiesService localAuthoritiesService;
+    private CourtLocalAuthoritiesService courtLocalAuthoritiesService;
 
     @InjectMocks
-    private LocalAuthoritiesController localAuthoritiesController;
+    private CourtLocalAuthoritiesController courtLocalAuthoritiesController;
 
     @Test
     void shouldReturnLocalAuthorities() {
@@ -49,10 +49,10 @@ class LocalAuthoritiesControllerTest {
                 .build()))
             .build();
 
-        when(localAuthoritiesService.getCourtLocalAuthorities(COURT_ID)).thenReturn(List.of(response));
+        when(courtLocalAuthoritiesService.getCourtLocalAuthorities(COURT_ID)).thenReturn(List.of(response));
 
         ResponseEntity<List<CourtLocalAuthorityDto>> result =
-            localAuthoritiesController.getCourtLocalAuthorities(COURT_ID.toString());
+            courtLocalAuthoritiesController.getCourtLocalAuthorities(COURT_ID.toString());
 
         assertThat(result.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).as(RESPONSE_BODY_MESSAGE).containsExactly(response);
@@ -66,9 +66,9 @@ class LocalAuthoritiesControllerTest {
             .build());
 
         ResponseEntity<String> result =
-            localAuthoritiesController.updateCourtLocalAuthorities(COURT_ID.toString(), request);
+            courtLocalAuthoritiesController.updateCourtLocalAuthorities(COURT_ID.toString(), request);
 
-        verify(localAuthoritiesService).setCourtLocalAuthorities(COURT_ID, request);
+        verify(courtLocalAuthoritiesService).setCourtLocalAuthorities(COURT_ID, request);
         assertThat(result.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).as(RESPONSE_BODY_MESSAGE)
             .isEqualTo("Update successful for court ID " + COURT_ID);
@@ -76,24 +76,24 @@ class LocalAuthoritiesControllerTest {
 
     @Test
     void shouldThrowNotFoundFromService() {
-        when(localAuthoritiesService.getCourtLocalAuthorities(COURT_ID))
+        when(courtLocalAuthoritiesService.getCourtLocalAuthorities(COURT_ID))
             .thenThrow(new NotFoundException("Court not found"));
 
         String courtId = COURT_ID.toString();
 
         assertThrows(NotFoundException.class,
-            () -> localAuthoritiesController.getCourtLocalAuthorities(courtId));
+            () -> courtLocalAuthoritiesController.getCourtLocalAuthorities(courtId));
     }
 
     @Test
     void shouldThrowCourtResourceNotFoundFromService() {
-        when(localAuthoritiesService.getCourtLocalAuthorities(COURT_ID))
+        when(courtLocalAuthoritiesService.getCourtLocalAuthorities(COURT_ID))
             .thenThrow(new CourtResourceNotFoundException("No areas of law"));
 
         String courtId = COURT_ID.toString();
 
         assertThrows(CourtResourceNotFoundException.class,
-            () -> localAuthoritiesController.getCourtLocalAuthorities(courtId));
+            () -> courtLocalAuthoritiesController.getCourtLocalAuthorities(courtId));
     }
 
     @Test
@@ -103,18 +103,18 @@ class LocalAuthoritiesControllerTest {
             .localAuthorities(List.of())
             .build());
 
-        doThrow(new IllegalArgumentException("Missing area of law")).when(localAuthoritiesService)
+        doThrow(new IllegalArgumentException("Missing area of law")).when(courtLocalAuthoritiesService)
             .setCourtLocalAuthorities(COURT_ID, request);
 
         String courtId = COURT_ID.toString();
 
         assertThrows(IllegalArgumentException.class, () ->
-            localAuthoritiesController.updateCourtLocalAuthorities(courtId, request));
+            courtLocalAuthoritiesController.updateCourtLocalAuthorities(courtId, request));
     }
 
     @Test
     void shouldRejectInvalidCourtId() {
         assertThrows(IllegalArgumentException.class, () ->
-            localAuthoritiesController.getCourtLocalAuthorities(INVALID_UUID));
+            courtLocalAuthoritiesController.getCourtLocalAuthorities(INVALID_UUID));
     }
 }

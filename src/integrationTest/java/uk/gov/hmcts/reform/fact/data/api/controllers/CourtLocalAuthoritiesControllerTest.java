@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceN
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
-import uk.gov.hmcts.reform.fact.data.api.services.LocalAuthoritiesService;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtLocalAuthoritiesService;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,8 +26,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(LocalAuthoritiesController.class)
-class LocalAuthoritiesControllerTest {
+@Feature("Court Local Authorities Controller")
+@DisplayName("Court Local Authorities Controller")
+@WebMvcTest(CourtLocalAuthoritiesController.class)
+class CourtLocalAuthoritiesControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -35,7 +38,7 @@ class LocalAuthoritiesControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private LocalAuthoritiesService localAuthoritiesService;
+    private CourtLocalAuthoritiesService courtLocalAuthoritiesService;
 
     private final UUID courtId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
     private final UUID nonExistentCourtId = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -55,7 +58,7 @@ class LocalAuthoritiesControllerTest {
                 .build()))
             .build();
 
-        when(localAuthoritiesService.getCourtLocalAuthorities(courtId)).thenReturn(List.of(response));
+        when(courtLocalAuthoritiesService.getCourtLocalAuthorities(courtId)).thenReturn(List.of(response));
 
         mockMvc.perform(get("/courts/{courtId}/v1/local-authorities", courtId))
             .andExpect(status().isOk())
@@ -67,7 +70,7 @@ class LocalAuthoritiesControllerTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1/local-authorities returns 404 when court not found")
     void getLocalAuthoritiesReturnsNotFound() throws Exception {
-        when(localAuthoritiesService.getCourtLocalAuthorities(nonExistentCourtId))
+        when(courtLocalAuthoritiesService.getCourtLocalAuthorities(nonExistentCourtId))
             .thenThrow(new NotFoundException("Court not found"));
 
         mockMvc.perform(get("/courts/{courtId}/v1/local-authorities", nonExistentCourtId))
@@ -77,7 +80,7 @@ class LocalAuthoritiesControllerTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1/local-authorities returns 204 when areas not configured")
     void getLocalAuthoritiesReturnsNoContentWhenAreasMissing() throws Exception {
-        when(localAuthoritiesService.getCourtLocalAuthorities(courtId))
+        when(courtLocalAuthoritiesService.getCourtLocalAuthorities(courtId))
             .thenThrow(new CourtResourceNotFoundException("No areas of law"));
 
         mockMvc.perform(get("/courts/{courtId}/v1/local-authorities", courtId))
@@ -120,7 +123,7 @@ class LocalAuthoritiesControllerTest {
                 .build()))
             .build());
 
-        doThrow(new NotFoundException("Court not found")).when(localAuthoritiesService)
+        doThrow(new NotFoundException("Court not found")).when(courtLocalAuthoritiesService)
             .setCourtLocalAuthorities(nonExistentCourtId, request);
 
         mockMvc.perform(put("/courts/{courtId}/v1/local-authorities", nonExistentCourtId)
@@ -140,7 +143,7 @@ class LocalAuthoritiesControllerTest {
                 .build()))
             .build());
 
-        doThrow(new CourtResourceNotFoundException("No areas of law")).when(localAuthoritiesService)
+        doThrow(new CourtResourceNotFoundException("No areas of law")).when(courtLocalAuthoritiesService)
             .setCourtLocalAuthorities(courtId, request);
 
         mockMvc.perform(put("/courts/{courtId}/v1/local-authorities", courtId)
@@ -160,7 +163,8 @@ class LocalAuthoritiesControllerTest {
                 .build()))
             .build());
 
-        doThrow(new IllegalArgumentException("Missing update for area of law: Divorce")).when(localAuthoritiesService)
+        doThrow(new IllegalArgumentException("Missing update for area of law: Divorce")).when(
+                courtLocalAuthoritiesService)
             .setCourtLocalAuthorities(courtId, request);
 
         mockMvc.perform(put("/courts/{courtId}/v1/local-authorities", courtId)

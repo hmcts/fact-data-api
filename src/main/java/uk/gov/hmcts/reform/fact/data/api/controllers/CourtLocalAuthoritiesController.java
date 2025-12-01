@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
-import uk.gov.hmcts.reform.fact.data.api.services.LocalAuthoritiesService;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtLocalAuthoritiesService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
@@ -26,12 +26,12 @@ import java.util.UUID;
 @RestController
 @Validated
 @RequestMapping("/courts/{courtId}")
-public class LocalAuthoritiesController {
+public class CourtLocalAuthoritiesController {
 
-    private final LocalAuthoritiesService localAuthoritiesService;
+    private final CourtLocalAuthoritiesService courtLocalAuthoritiesService;
 
-    public LocalAuthoritiesController(LocalAuthoritiesService localAuthoritiesService) {
-        this.localAuthoritiesService = localAuthoritiesService;
+    public CourtLocalAuthoritiesController(CourtLocalAuthoritiesService courtLocalAuthoritiesService) {
+        this.courtLocalAuthoritiesService = courtLocalAuthoritiesService;
     }
 
     @GetMapping(value = "/v1/local-authorities", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -47,7 +47,7 @@ public class LocalAuthoritiesController {
     })
     public ResponseEntity<List<CourtLocalAuthorityDto>> getCourtLocalAuthorities(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
-        return ResponseEntity.ok(localAuthoritiesService.getCourtLocalAuthorities(UUID.fromString(courtId)));
+        return ResponseEntity.ok(courtLocalAuthoritiesService.getCourtLocalAuthorities(UUID.fromString(courtId)));
     }
 
     @PutMapping(
@@ -70,7 +70,7 @@ public class LocalAuthoritiesController {
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Local authority mappings to update", required = true)
         @Valid @RequestBody List<CourtLocalAuthorityDto> updates) {
-        localAuthoritiesService.setCourtLocalAuthorities(UUID.fromString(courtId), updates);
+        courtLocalAuthoritiesService.setCourtLocalAuthorities(UUID.fromString(courtId), updates);
         return ResponseEntity.ok("Update successful for court ID " + courtId);
     }
 }

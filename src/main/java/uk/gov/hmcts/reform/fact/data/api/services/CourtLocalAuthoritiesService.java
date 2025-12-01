@@ -25,7 +25,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepos
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 
 @Service
-public class LocalAuthoritiesService {
+public class CourtLocalAuthoritiesService {
 
     private final CourtService courtService;
     private final CourtAreasOfLawRepository courtAreasOfLawRepository;
@@ -33,7 +33,7 @@ public class LocalAuthoritiesService {
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private final AreaOfLawTypeRepository areaOfLawTypeRepository;
 
-    public LocalAuthoritiesService(
+    public CourtLocalAuthoritiesService(
         CourtService courtService,
         CourtAreasOfLawRepository courtAreasOfLawRepository,
         CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository,

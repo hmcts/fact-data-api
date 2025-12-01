@@ -32,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class LocalAuthoritiesServiceTest {
+class CourtLocalAuthoritiesServiceTest {
 
     private static final UUID COURT_ID = UUID.randomUUID();
     private static final UUID ADOPTION_ID = UUID.randomUUID();
@@ -54,7 +54,7 @@ class LocalAuthoritiesServiceTest {
     private AreaOfLawTypeRepository areaOfLawTypeRepository;
 
     @InjectMocks
-    private LocalAuthoritiesService localAuthoritiesService;
+    private CourtLocalAuthoritiesService courtLocalAuthoritiesService;
 
     private AreaOfLawType adoption;
     private AreaOfLawType children;
@@ -97,7 +97,7 @@ class LocalAuthoritiesServiceTest {
         when(courtLocalAuthoritiesRepository.findByCourtIdAndAreaOfLawId(COURT_ID, CHILDREN_ID))
             .thenReturn(Optional.empty());
 
-        List<CourtLocalAuthorityDto> result = localAuthoritiesService.getCourtLocalAuthorities(COURT_ID);
+        List<CourtLocalAuthorityDto> result = courtLocalAuthoritiesService.getCourtLocalAuthorities(COURT_ID);
 
         assertThat(result).hasSize(2);
         CourtLocalAuthorityDto adoptionResult = findResultByAreaId(result, ADOPTION_ID);
@@ -117,7 +117,7 @@ class LocalAuthoritiesServiceTest {
         when(courtAreasOfLawRepository.findByCourtId(COURT_ID)).thenReturn(Optional.empty());
 
         assertThrows(CourtResourceNotFoundException.class,
-                     () -> localAuthoritiesService.getCourtLocalAuthorities(COURT_ID));
+                     () -> courtLocalAuthoritiesService.getCourtLocalAuthorities(COURT_ID));
     }
 
     @Test
@@ -151,7 +151,7 @@ class LocalAuthoritiesServiceTest {
                 .build()
         );
 
-        localAuthoritiesService.setCourtLocalAuthorities(COURT_ID, updates);
+        courtLocalAuthoritiesService.setCourtLocalAuthorities(COURT_ID, updates);
 
         verify(courtLocalAuthoritiesRepository).deleteByCourtId(COURT_ID);
         verify(courtLocalAuthoritiesRepository).saveAll(argThat(
@@ -190,7 +190,7 @@ class LocalAuthoritiesServiceTest {
         );
 
         assertThrows(IllegalArgumentException.class, () ->
-            localAuthoritiesService.setCourtLocalAuthorities(COURT_ID, updates)
+            courtLocalAuthoritiesService.setCourtLocalAuthorities(COURT_ID, updates)
         );
 
         verify(courtLocalAuthoritiesRepository, never()).deleteByCourtId(COURT_ID);
@@ -213,7 +213,7 @@ class LocalAuthoritiesServiceTest {
         );
 
         assertThrows(IllegalStateException.class, () ->
-            localAuthoritiesService.setCourtLocalAuthorities(COURT_ID, updates)
+            courtLocalAuthoritiesService.setCourtLocalAuthorities(COURT_ID, updates)
         );
 
         verify(courtLocalAuthoritiesRepository, never()).deleteByCourtId(COURT_ID);
