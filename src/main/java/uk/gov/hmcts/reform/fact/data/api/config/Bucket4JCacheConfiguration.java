@@ -34,9 +34,23 @@ public class Bucket4JCacheConfiguration {
     private String redisPassword;
 
     @Bean
-    @Profile({"!dev & !test"})
+    // rldev is just for this rate limit test; It lets me specifically
+    // target the cluster config for testing without needing ssl enabled
+    @Profile({"!dev & !test & !rldev"})
     public Config redissonConfiguration() {
+        log.warn("Using PROD redisson configuration");
         String connectionString = "rediss://" + (redisPassword.isEmpty() ? "" : ":" + redisPassword + "@")
+            + redisHost + ":" + redisPort;
+        Config config = new Config();
+        config.useClusterServers().addNodeAddress(connectionString);
+        return config;
+    }
+
+    @Bean
+    @Profile({"rldev"})
+    public Config redissonConfigurationRlDev() {
+        log.warn("Using RLDEV redisson configuration");
+        String connectionString = "redis://" + (redisPassword.isEmpty() ? "" : ":" + redisPassword + "@")
             + redisHost + ":" + redisPort;
         Config config = new Config();
         config.useClusterServers().addNodeAddress(connectionString);
@@ -46,6 +60,7 @@ public class Bucket4JCacheConfiguration {
     @Bean
     @Profile({"dev", "test"})
     public Config redissonConfigurationDev() {
+        log.warn("Using DEV/TEST redisson configuration");
         // in production, use "rediss://"
         String connectionString = "redis://" + (redisPassword.isEmpty() ? "" : ":" + redisPassword + "@")
             + redisHost + ":" + redisPort;
