@@ -15,4 +15,4 @@ COPY docker/wait-for-it.sh /opt/app/
 RUN chmod +x /opt/app/wait-for-it.sh
 
 EXPOSE 8989
-CMD [ "/opt/app/wait-for-it.sh", "fact-database:5432", "-t", "180", "--", "java", "-jar", "/opt/app/fact-data-api.jar" ]
+CMD [ "/opt/app/wait-for-it.sh", "fact-database:5432", "-t", "180", "--", "/opt/app/wait-for-it.sh", "redis-node-1:6379", "-t", "180", "--", "java", "-jar", "/opt/app/fact-data-api.jar" ]
