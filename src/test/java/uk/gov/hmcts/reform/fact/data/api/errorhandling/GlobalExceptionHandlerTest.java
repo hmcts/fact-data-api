@@ -1,16 +1,9 @@
 package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
-import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.BeanPropertyBindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
@@ -18,16 +11,32 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNot
 import java.util.Collections;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import jakarta.validation.ConstraintViolationException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @ExtendWith(MockitoExtension.class)
 class GlobalExceptionHandlerTest {
 
     private static final String TEST_MESSAGE = "This is a test message";
 
-    private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
+    // Temp setup to allow tests to pass
+    @MockitoBean
+    private RateLimiterRegistry rateLimiterRegistry;
+
+    @InjectMocks
+    private GlobalExceptionHandler handler;
 
     @Mock
     MethodArgumentNotValidException methodArgumentNotValidException;

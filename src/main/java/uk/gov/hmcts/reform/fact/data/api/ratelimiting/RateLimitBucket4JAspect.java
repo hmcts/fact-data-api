@@ -32,8 +32,19 @@ public class RateLimitBucket4JAspect {
 
     private final ReentrantLock lock = new ReentrantLock();
 
+    @Around("@within(rateLimitAnnotation)")
+    public Object classRateLimit(ProceedingJoinPoint joinPoint, RateLimitBucket4J rateLimitAnnotation)
+        throws Throwable {
+        return rateLimit(joinPoint, rateLimitAnnotation);
+    }
+
     @Around("@annotation(rateLimitAnnotation)")
-    public Object rateLimit(ProceedingJoinPoint joinPoint, RateLimitBucket4J rateLimitAnnotation) throws Throwable {
+    public Object methodRateLimit(ProceedingJoinPoint joinPoint, RateLimitBucket4J rateLimitAnnotation)
+        throws Throwable {
+        return rateLimit(joinPoint, rateLimitAnnotation);
+    }
+
+    private Object rateLimit(ProceedingJoinPoint joinPoint, RateLimitBucket4J rateLimitAnnotation) throws Throwable {
         String bucketName = rateLimitAnnotation.bucket();
 
         log.info("Rate limiting a request for bucket: {}", bucketName);
@@ -49,7 +60,7 @@ public class RateLimitBucket4JAspect {
 
         // this is smart enough to ONLY block if there are no tokens and the
         // expected refill will have happened before the timeout, so if there
-        // are no tokens, a 5 second wait for a refill, and a 3 second timeout
+        // are no tokens, a 5-second wait for a refill, and a 3-second timeout
         // this will simply fail fast.
 
         // would we rather this acted as a throttle regardless?

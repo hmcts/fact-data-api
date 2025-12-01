@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,10 @@ class CourtPhotoControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    // Temp setup to allow tests to pass
+    @MockitoBean
+    private RateLimiterRegistry rateLimiterRegistry;
 
     @MockitoBean
     private CourtPhotoService courtPhotoService;

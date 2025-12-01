@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,10 @@ class CourtControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    // Temp setup to allow tests to pass
+    @MockitoBean
+    private RateLimiterRegistry rateLimiterRegistry;
 
     @MockitoBean
     private CourtService courtService;
