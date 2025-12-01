@@ -1,0 +1,10 @@
+package uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions;
+
+import lombok.experimental.StandardException;
+
+@StandardException
+public class InvalidPostcodeException extends RuntimeException {
+    public InvalidPostcodeException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}

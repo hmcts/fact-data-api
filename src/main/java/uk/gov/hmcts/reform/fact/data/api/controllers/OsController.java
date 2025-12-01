@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
+import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.services.OsService;
 
 @Tag(
@@ -36,10 +37,40 @@ public class OsController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved postcode data"),
     })
-    public ResponseEntity<OsData> getOsPostcodeData(
+    public ResponseEntity<OsLocationData> getOsPostcodeData(
         @RequestParam("postcode")
         @NotBlank(message = "Postcode must be provided") String postcode
     ) {
-        return ResponseEntity.ok(osPostcodeService.getPostcodeData(postcode));
+        return ResponseEntity.ok(osPostcodeService.getOsLocationData(postcode));
+    }
+
+    @GetMapping("/v1/addresses/full")
+    @Operation(
+        summary = "Get OS data for a postcode",
+        description = "Fetches Ordnance Survey data for the supplied postcode"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved postcode data"),
+    })
+    public ResponseEntity<OsData> getOsAddressesFull(
+        @RequestParam("postcode")
+        @NotBlank(message = "Postcode must be provided") String postcode
+    ) {
+        return ResponseEntity.ok(osPostcodeService.getOsAddressData(postcode));
+    }
+
+    @GetMapping("/v1/addresses/partial")
+    @Operation(
+        summary = "Get OS data for a postcode",
+        description = "Fetches Ordnance Survey data for the supplied postcode"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved postcode data"),
+    })
+    public ResponseEntity<OsData> getOsAddressesPartial(
+        @RequestParam("postcode")
+        @NotBlank(message = "Postcode must be provided") String postcode
+    ) {
+        return ResponseEntity.ok(osPostcodeService.getOsAddressData(postcode));
     }
 }
