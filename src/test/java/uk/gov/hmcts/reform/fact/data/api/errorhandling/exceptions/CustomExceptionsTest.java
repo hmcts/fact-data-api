@@ -17,7 +17,7 @@ class CustomExceptionsTest {
 
     @Test
     void testCreationOfTranslationNotFoundException() {
-        TranslationNotFoundException exception = new TranslationNotFoundException(TEST_MESSAGE);
+        CourtResourceNotFoundException exception = new CourtResourceNotFoundException(TEST_MESSAGE);
         assertEquals(TEST_MESSAGE, exception.getMessage(), ASSERTION_MESSAGE);
     }
 

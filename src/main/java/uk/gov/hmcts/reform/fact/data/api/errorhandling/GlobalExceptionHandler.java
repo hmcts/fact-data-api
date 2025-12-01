@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import jakarta.servlet.http.HttpServletRequest;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.time.LocalDateTime;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String UNKNOWN = "unknown";
+
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ExceptionResponse handle(NotFoundException ex) {
@@ -30,10 +34,26 @@ public class GlobalExceptionHandler {
         return generateExceptionResponse(ex.getMessage());
     }
 
-    @ExceptionHandler(TranslationNotFoundException.class)
+    @ExceptionHandler(MultipartException.class)
+    @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+    public ExceptionResponse handle(MultipartException ex, HttpServletRequest request) {
+        String provided = request != null && request.getContentType() != null
+            ? request.getContentType()
+            : UNKNOWN;
+        log.error("415, multipart handling error. Provided Content-Type: {}. Details: {}", provided, ex.getMessage());
+
+        String message = String.format(
+            "Unsupported or malformed Content-Type '%s'. If uploading a file, use 'multipart/form-data'. "
+                + "If sending JSON, use 'application/json'.",
+            provided
+        );
+        return generateExceptionResponse(message);
+    }
+
+    @ExceptionHandler(CourtResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ExceptionResponse handle(TranslationNotFoundException ex) {
-        log.trace("204, no translation services for a court. Details: {}", ex.getMessage());
+    public ExceptionResponse handle(CourtResourceNotFoundException ex) {
+        log.trace("204, unable to find court resource. Details: {}", ex.getMessage());
         return generateExceptionResponse(ex.getMessage());
     }
 
@@ -105,9 +125,9 @@ public class GlobalExceptionHandler {
     public ExceptionResponse handle(MethodArgumentTypeMismatchException ex) {
         log.error("400, invalid parameter type. Parameter: {}, Value: {}, Expected type: {}",
                   ex.getName(), ex.getValue(), ex.getRequiredType()
-                      != null ? ex.getRequiredType().getSimpleName() : "unknown");
+                      != null ? ex.getRequiredType().getSimpleName() : UNKNOWN);
 
-        String expectedType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
+        String expectedType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : UNKNOWN;
         String message = String.format(
             "Invalid value for parameter '%s': '%s'. Expected type: %s.",
             ex.getName(),
