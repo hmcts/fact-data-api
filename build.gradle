@@ -192,7 +192,7 @@ dependencies {
   implementation group: 'com.giffing.bucket4j.spring.boot.starter', name: 'bucket4j-spring-boot-starter', version: '0.13.0'
   // implementation group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '3.2.3'
   implementation group: 'com.github.ben-manes.caffeine', name: 'jcache', version: '3.2.3'
-
+  implementation group: 'io.github.resilience4j', name: 'resilience4j-spring-boot3', version: '2.3.0'
 
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test'
 

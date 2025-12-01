@@ -8,10 +8,15 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.internal.AtomicRateLimiter;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -24,7 +29,16 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    // NOTE: I don't think this is useful in reality, as the
+    //       rate limit config is only signalled via the message
+    //       in the thrown exception. For now, I'm using it to
+    //       get hold of the "admin" config regardless of the message
+    //       to show that it's potentially possible to add a
+    //       Retry-After header with a valid value
+    private final RateLimiterRegistry rateLimiterRegistry;
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -118,6 +132,25 @@ public class GlobalExceptionHandler {
         log.error("429, rate-limit exceeded. wait seconds: {}, Details: {}", ex.getWaitSeconds(), ex.getMessage());
         if (ex.getWaitSeconds() > 0) {
             response.addHeader("Retry-After", String.valueOf(ex.getWaitSeconds()));
+        }
+        return generateExceptionResponse("Too Many Requests.");
+    }
+
+    @ExceptionHandler({RequestNotPermitted.class})
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public ExceptionResponse handleRequestNotPermitted(RequestNotPermitted ex, HttpServletResponse response) {
+        log.error("429, rate-limit exceeded. Details: {}", ex.getMessage());
+        // The exception doesn't have a getter for the rate limiter, so we need to get it from the registry
+        // It also doesn't know which bucket it's from, so we might need to parse the error or only have a
+        // single configuration?
+        io.github.resilience4j.ratelimiter.RateLimiter adminLimiter = rateLimiterRegistry.rateLimiter("admin");
+        // it should have some metrics
+        io.github.resilience4j.ratelimiter.RateLimiter.Metrics metrics = adminLimiter.getMetrics();
+        // and they might be atomic metrics, which will allow us to get hold of the wait time
+        if (metrics instanceof AtomicRateLimiter.AtomicRateLimiterMetrics atomicRateLimiterMetrics) {
+            long waitSeconds = TimeUnit.NANOSECONDS.toSeconds(atomicRateLimiterMetrics.getNanosToWait());
+            log.error("429, rate-limit exceeded. wait seconds: {}", waitSeconds);
+            response.addHeader("Retry-After", String.valueOf(waitSeconds));
         }
         return generateExceptionResponse("Too Many Requests.");
     }

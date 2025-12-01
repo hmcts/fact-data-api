@@ -117,3 +117,32 @@ fact:
           interval-seconds: 60
           timeout-seconds: 3
           per-session: true
+
+# resilience4j rate limiter setup
+management.health.ratelimiters.enabled: true
+resilience4j.ratelimiter:
+  configs:
+    default:
+      # no configuration for refill setup so if you use
+      # the limit, you have to wait for the refresh period
+      # before another token is added
+      limit-for-period: 1
+      limit-refresh-period: PT10S
+      timeout-duration: PT3S
+      register-health-indicator: true
+  instances:
+    admin:
+      base-config: default
+      limit-for-period: 5
+      limit-refresh-period: PT10S
+      timeout-duration: PT10S
+    public:
+      base-config: default
+      limit-for-period: 10
+      limit-refresh-period: PT60S
+      # timeout-duration: PT3S
+
+# Adding logging for resilience4j to ensure it's working
+logging:
+  level:
+    io.github.resilience4j: trace

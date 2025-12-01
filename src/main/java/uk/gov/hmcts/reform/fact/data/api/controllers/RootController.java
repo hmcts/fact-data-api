@@ -1,13 +1,11 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import static org.springframework.http.ResponseEntity.ok;
+
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import static org.springframework.http.ResponseEntity.ok;
-
-import uk.gov.hmcts.reform.fact.data.api.ratelimiting.RateLimitBucket4J;
 
 /**
  * Default endpoints per application.
@@ -26,7 +24,6 @@ public class RootController {
      */
     @GetMapping("/")
     @Operation(summary = "The default root for the application")
-    @RateLimitBucket4J
     public ResponseEntity<String> welcome() {
         return ok("Welcome to fact-data-api");
     }
