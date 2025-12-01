@@ -31,7 +31,7 @@ public class CourtTranslationService {
     public CourtTranslation getTranslationByCourtId(UUID courtId) {
         return courtTranslationRepository.findByCourtId(courtService.getCourtById(courtId).getId())
                 .orElseThrow(() -> new
-                        CourtResourceNotFoundException("No translation found for court id: " + courtId)
+                    CourtResourceNotFoundException("No translation found for court id: " + courtId)
                 );
     }
 
