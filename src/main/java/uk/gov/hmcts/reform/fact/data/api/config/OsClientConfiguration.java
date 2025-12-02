@@ -11,7 +11,10 @@ public class OsClientConfiguration {
     private String key;
 
     @Bean
-    public RequestInterceptor mapitKeyInterceptor() {
-        return template -> template.header("key", key);
+    public RequestInterceptor osRequestInterceptor() {
+        return template -> {
+            template.query("key", key);
+            template.query("output_srs", "WGS84");
+        };
     }
 }

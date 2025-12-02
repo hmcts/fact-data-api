@@ -14,4 +14,10 @@ public interface OsFeignClient {
 
     @GetMapping("${os.endpoint.postcode-search}")
     OsData getOsPostcodeData(@RequestParam("postcode") String postcode);
+
+    @GetMapping("${os.endpoint.postcode-search}")
+    OsData getOsPostcodeDataWithMaxResultsLimit(
+        @RequestParam("postcode") String postcode,
+        @RequestParam("maxresults") int maxResults
+    );
 }

@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.os;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -58,13 +57,11 @@ public class OsData {
         @JsonProperty("POSTCODE")
         private String postcode;
 
-        @JsonProperty("X_COORDINATE")
-        @SuppressWarnings("checkstyle:MemberName")
-        private BigDecimal xCoordinate;
+        @JsonProperty("LNG")
+        private double lng;
 
-        @JsonProperty("Y_COORDINATE")
-        @SuppressWarnings("checkstyle:MemberName")
-        private BigDecimal yCoordinate;
+        @JsonProperty("LAT")
+        private double lat;
 
         @JsonProperty("LOCAL_CUSTODIAN_CODE")
         private Integer localCustodianCode;
