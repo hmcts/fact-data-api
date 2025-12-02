@@ -117,6 +117,10 @@ fact:
           interval-seconds: 60
           timeout-seconds: 3
           per-session: true
+    redis-servers:
+      - host: ${REDIS_HOST:localhost}
+        port: ${REDIS_PORT:6379}
+        password: ${REDIS_PASSWORD:}
 
 # resilience4j rate limiter setup
 management.health.ratelimiters.enabled: true

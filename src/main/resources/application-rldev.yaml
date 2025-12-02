@@ -1,0 +1,61 @@
+# Adding redisson logging
+logging:
+  level:
+    org.redisson: info
+
+fact:
+  data-api:
+    rate-limit:
+
+      # configuration for bucket4j solution:
+
+      # default-bucket is used when no explicit bucket is specified
+      # the values below are the defaults for reference. This config
+      # for the default bucket can be omitted
+      default-bucket:
+        capacity: 100
+        interval-seconds: 60
+        timeout-seconds: 5
+        per-session: false
+      # configuration for custom buckets with arbitrary name
+      buckets:
+        public:
+          # currently we have an average of around 50 calls per minute
+          # in total, and an average of 2.1 sessions per minute generating
+          # those requests (2m requests, 90k users, per 30-day period)
+          # These values are per-session, per minute, so 25 requests is
+          # about average. Catering for peaks and then adding significant
+          # headroom for higher usage I've gone wih ~4x.
+          capacity: 100
+          interval-seconds: 60
+          timeout-seconds: 2
+          per-session: true
+          # burst capacity and interval act as a throttle
+          burst-capacity: 30
+          burst-interval-seconds: 5
+        admin:
+          # admin traffic is negligible compared to traffic via the public
+          # frontend, though it happens in bursts of activity, rather than
+          # as an average over time. I've limited requests to half that of
+          # the public endpoint per minute, but we need more data to set
+          # good limits.
+          capacity: 50
+          interval-seconds: 60
+          timeout-seconds: 2
+          per-session: true
+          # burst capacity and interval act as a throttle
+          burst-capacity: 20
+          burst-interval-seconds: 5
+    redis-servers:
+      - host: redis-node-1
+        port: 6379
+      - host: redis-node-2
+        port: 6379
+      - host: redis-node-3
+        port: 6379
+      - host: redis-node-4
+        port: 6379
+      - host: redis-node-5
+        port: 6379
+      - host: redis-node-6
+        port: 6379

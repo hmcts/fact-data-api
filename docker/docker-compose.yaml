@@ -18,7 +18,11 @@ services:
   redis-node-1:
     image: redis:7.4-alpine
     hostname: redis-node-1
-    command: [ "redis-server", "--cluster-enabled", "yes", "--cluster-config-file", "/data/nodes.conf", "--cluster-node-timeout", "5000", "--appendonly", "yes" ]
+    command: >
+      redis-server --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
     networks:
       - app-net
 
@@ -59,9 +63,14 @@ services:
       - redis-node-6
     command: >
       redis-cli --cluster create
-      redis-node-1:6379 redis-node-2:6379 redis-node-3:6379
-      redis-node-4:6379 redis-node-5:6379 redis-node-6:6379
-      --cluster-replicas 1 --cluster-yes
+      redis-node-1:6379
+      redis-node-2:6379
+      redis-node-3:6379
+      redis-node-4:6379
+      redis-node-5:6379
+      redis-node-6:6379
+      --cluster-replicas 1
+      --cluster-yes
     networks:
       - app-net
 
@@ -89,13 +98,15 @@ services:
       DB_NAME: fact
       DB_USER: fact
       DB_PASSWORD: fact
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SPRING_PROFILES_ACTIVE: rldev
       AZURE_STORAGE_ACCOUNT_NAME: ${AZURE_STORAGE_ACCOUNT_NAME:-dev}
       TESTING_SUPPORT_ENABLE_API: ${TESTING_SUPPORT_ENABLE_API:-false}
       # you'll need a .env file with this one in
       AZURE_TENANT_ID: ${AZURE_TENANT_ID}
       # This one is optional, but if you set it, it needs to be valid
       AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING}
+      # redis setup
+      REDIS_HOST: redis-node-1
     networks:
       - app-net
 
@@ -112,6 +123,7 @@ services:
   # --- Envoy Proxy ---
   envoy:
     image: envoyproxy/envoy:v1.29-latest
+    hostname: envoy
     ports:
       - "8989:8080"
     volumes:
@@ -165,6 +177,17 @@ services:
 #        org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
 #    networks:
 #      - app-net
+
+  locust:
+    image: locustio/locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./locustfile.py:/mnt/locust/locustfile.py
+    command: >
+      -f /mnt/locust/locustfile.py
+    networks:
+      - app-net
 
 networks:
   app-net:

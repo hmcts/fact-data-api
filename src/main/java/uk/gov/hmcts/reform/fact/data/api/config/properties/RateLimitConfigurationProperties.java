@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.config.properties;
 
+import java.time.Duration;
 import java.util.Map;
 
 import lombok.Getter;
@@ -13,6 +14,11 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 public class RateLimitConfigurationProperties {
+
+    /**
+     * TTL for buckets that aren't being written to.
+     */
+    Duration bucketTTL = Duration.ofSeconds(60);
 
     /**
      * default bucket configuration.

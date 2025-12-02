@@ -17,6 +17,7 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -24,12 +25,13 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class Bucket4JConfiguration {
 
     public static final String CACHE_NAME = "fact-data-api-bucket-cache";
 
     private static final String DEFAULT_BUCKET_NAME = "__default__";
-    private static final String RL_ID_HEADER_FIELD = "Rate-Limit-Identifier";
+    public static final String RL_ID_HEADER_FIELD = "Rate-Limit-Identifier";
     private static final String KEY_FORMAT = "%s-%s";
 
     private final ProxyManager<String> buckets;
@@ -58,13 +60,24 @@ public class Bucket4JConfiguration {
     private Supplier<BucketConfiguration> getBucketConfiguration(
         RateLimitBucketConfigurationProperties bucketProperties) {
 
+        // standard bandwidth
         Bandwidth bandwidth = BandwidthBuilder.builder()
             .capacity(bucketProperties.getCapacity())
             .refillGreedy(bucketProperties.getCapacity(), Duration.ofSeconds(bucketProperties.getIntervalSeconds()))
             .build();
 
+        // burst bandwidth
+        Bandwidth burstBandwidth = BandwidthBuilder.builder()
+            .capacity(bucketProperties.getBurstCapacity())
+            .refillIntervally(
+                bucketProperties.getBurstCapacity(),
+                Duration.ofSeconds(bucketProperties.getBurstIntervalSeconds())
+            )
+            .build();
+
         return () -> (BucketConfiguration.builder()
             .addLimit(bandwidth)
+            .addLimit(burstBandwidth)
             .build());
     }
 

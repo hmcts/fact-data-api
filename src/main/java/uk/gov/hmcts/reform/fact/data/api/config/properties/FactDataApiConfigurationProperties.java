@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.config.properties;
 
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -19,4 +21,11 @@ public class FactDataApiConfigurationProperties {
      */
     @NestedConfigurationProperty
     RateLimitConfigurationProperties rateLimit;
+
+    /**
+     * Redis server configurations.
+     */
+    @NestedConfigurationProperty
+    List<RedisServerConfigurationProperties> redisServers;
+
 }

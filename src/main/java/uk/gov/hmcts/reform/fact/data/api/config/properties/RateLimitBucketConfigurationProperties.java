@@ -13,7 +13,7 @@ public class RateLimitBucketConfigurationProperties {
     /**
      * Capacity of the rate-limit bucket.
      */
-    int capacity = 100;
+    int capacity = 1000;
 
     /**
      * Refill interval of the rate-limit bucket.
@@ -23,10 +23,20 @@ public class RateLimitBucketConfigurationProperties {
     /**
      * Timeout in seconds for consume requests.
      */
-    int timeoutSeconds = 30;
+    int timeoutSeconds = 3;
+
+    /**
+     * Capacity for a single burst of activity.
+     */
+    int burstCapacity = 50;
+
+    /**
+     * Refill interval of the burst capacity.
+     */
+    int burstIntervalSeconds = 2;
 
     /**
      * If true, a per-session instance of this bucket will be created.
      */
-    boolean perSession = true;
+    boolean perSession = false;
 }
