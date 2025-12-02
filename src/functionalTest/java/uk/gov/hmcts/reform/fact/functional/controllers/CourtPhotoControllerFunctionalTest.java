@@ -38,7 +38,7 @@ public final class CourtPhotoControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/photo uploads valid JPEG")
     void shouldUploadValidJpegPhoto() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Upload JPEG");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Upload JPEG", true);
         courtsWithPhotos.add(courtId);
 
         final File testImage = new File("src/functionalTest/resources/test-images/test valid jpg 1.2 MB.jpg");
@@ -67,7 +67,7 @@ public final class CourtPhotoControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/photo uploads valid PNG")
     void shouldUploadValidPngPhoto() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Upload PNG");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Upload PNG", true);
         courtsWithPhotos.add(courtId);
 
         final File testImage = new File("src/functionalTest/resources/test-images/test valid png 1.4 MB.png");
@@ -113,7 +113,7 @@ public final class CourtPhotoControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/photo fails with invalid file format")
     void shouldFailToUploadInvalidFileFormat() {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Invalid Format");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Invalid Format", true);
         courtsWithPhotos.add(courtId);
 
         final File invalidFile = new File(
@@ -132,7 +132,7 @@ public final class CourtPhotoControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/photo fails with file too large")
     void shouldFailToUploadOversizedFile() {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Oversized");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Oversized", true);
         courtsWithPhotos.add(courtId);
 
         final File oversizedFile = new File(
@@ -151,7 +151,7 @@ public final class CourtPhotoControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1/photo retrieves photo metadata")
     void shouldRetrievePhotoMetadata() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Get Metadata");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Get Metadata", true);
         courtsWithPhotos.add(courtId);
 
         final File testImage = new File("src/functionalTest/resources/test-images/test valid jpg 1.2 MB.jpg");
@@ -178,7 +178,7 @@ public final class CourtPhotoControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1/photo fails when no photo exists")
     void shouldFailToRetrieveNonExistentPhoto() {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo No Photo");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo No Photo", true);
         courtsWithPhotos.add(courtId);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/photo");
@@ -191,7 +191,7 @@ public final class CourtPhotoControllerFunctionalTest {
     @Test
     @DisplayName("DELETE /courts/{courtId}/v1/photo deletes existing photo")
     void shouldDeleteExistingPhoto() {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Delete");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Delete", true);
         courtsWithPhotos.add(courtId);
 
         final File testImage = new File("src/functionalTest/resources/test-images/test valid jpg 1.2 MB.jpg");
@@ -213,7 +213,7 @@ public final class CourtPhotoControllerFunctionalTest {
     @Test
     @DisplayName("DELETE /courts/{courtId}/v1/photo fails when no photo exists")
     void shouldFailToDeleteNonExistentPhoto() {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Delete No Photo");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Delete No Photo", true);
         courtsWithPhotos.add(courtId);
 
         final Response deleteResponse = http.doDelete("/courts/" + courtId + "/v1/photo");

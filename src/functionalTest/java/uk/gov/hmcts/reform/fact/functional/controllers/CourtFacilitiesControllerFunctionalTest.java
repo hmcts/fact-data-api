@@ -33,7 +33,7 @@ public final class CourtFacilitiesControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/building-facilities with all valid fields")
     void shouldCreateFacilitiesWithAllValidFields() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Facilities Full");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Facilities Full", true);
 
         final CourtFacilities facilities = TestDataHelper.buildFacilities(courtId);
         facilities.setFreeWaterDispensers(false);
@@ -65,7 +65,7 @@ public final class CourtFacilitiesControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/building-facilities updates existing facilities")
     void shouldUpdateExistingFacilities() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Facilities Update");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Facilities Update", true);
 
         final CourtFacilities initialFacilities = TestDataHelper.buildFacilities(courtId);
 
@@ -124,7 +124,7 @@ public final class CourtFacilitiesControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/building-facilities fails with null parking field")
     void shouldFailWithNullParkingField() {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Facilities Null Parking");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Facilities Null Parking", true);
 
         final CourtFacilities facilities = TestDataHelper.buildFacilities(courtId);
         facilities.setParking(null);
@@ -152,7 +152,7 @@ public final class CourtFacilitiesControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1/building-facilities returns 204 when no facilities exist")
     void shouldReturn204WhenNoFacilities() {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court No Facilities");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court No Facilities", true);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/building-facilities");
         assertThat(getResponse.statusCode()).isEqualTo(NO_CONTENT.value());
