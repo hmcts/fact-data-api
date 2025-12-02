@@ -71,6 +71,7 @@ public class CourtService {
     public Court createCourt(Court court) {
         Region foundRegion = regionService.getRegionById(court.getRegionId());
         court.setRegion(foundRegion);
+
         court.setSlug(toUniqueSlug(court.getName()));
 
         // A court is closed on creation until an address is added.
