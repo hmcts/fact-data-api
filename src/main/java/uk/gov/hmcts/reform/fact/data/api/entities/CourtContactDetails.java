@@ -50,6 +50,7 @@ public class CourtContactDetails {
     private Court court;
 
     @Schema(description = "The ID of the associated Contact Description Type")
+    @NotNull
     @Column(name = "court_contact_description_id")
     private UUID courtContactDescriptionId;
 
