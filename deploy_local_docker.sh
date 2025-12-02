@@ -2,7 +2,7 @@
 set -e
 
 echo "Building Java application..."
-./gradlew build
+./gradlew clean build
 
 echo "Building Docker image and starting containers..."
 docker compose up --build -d

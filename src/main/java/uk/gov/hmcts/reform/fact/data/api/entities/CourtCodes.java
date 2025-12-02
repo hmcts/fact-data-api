@@ -13,7 +13,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,21 +50,29 @@ public class CourtCodes {
     private Court court;
 
     @Schema(description = "The Magistrate Court code")
+    @Digits(integer = 6, fraction = 0, message = "Magistrates' court code must be at most {integer} digits")
     private Integer magistrateCourtCode;
 
     @Schema(description = "The Family Court code")
+    @Digits(integer = 6, fraction = 0, message = "Family court code must be at most {integer} digits")
     private Integer familyCourtCode;
 
     @Schema(description = "The Tribunal Court code")
+    @Digits(integer = 6, fraction = 0, message = "Tribunal court code must be at most {integer} digits")
     private Integer tribunalCode;
 
     @Schema(description = "The County Court code")
+    @Digits(integer = 6, fraction = 0, message = "County court code must be at most {integer} digits")
     private Integer countyCourtCode;
 
     @Schema(description = "The Crown Court code")
+    @Digits(integer = 6, fraction = 0, message = "Crown court code must be at most {integer} digits")
     private Integer crownCourtCode;
 
     @Schema(description = "The GBS code")
-    private Integer gbs;
+    @Size(max = 10)
+    @Pattern(regexp = "^[A-Za-z0-9 ]*$", message = "GBS code contains invalid characters")
+    @Column(length = 10)
+    private String gbs;
 
 }
