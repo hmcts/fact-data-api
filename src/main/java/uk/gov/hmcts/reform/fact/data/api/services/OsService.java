@@ -21,7 +21,7 @@ public class OsService {
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private static final Pattern POSTCODE_PATTERN =
         Pattern.compile(
-            "^([A-Z]{1,2}[0-9][0-9A-Z]?)(?:\\s+([0-9][A-Z]{0,2}))?$",
+            "^([A-Z]{1,2}\\d[\\dA-Z]?)(?:\\s+(\\d[A-Z]{0,2}))?$",
             Pattern.CASE_INSENSITIVE
         );
 
