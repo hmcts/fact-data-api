@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class OsLocationData {
-
     private String postcode;
     private String authorityName;
     private double latitude;

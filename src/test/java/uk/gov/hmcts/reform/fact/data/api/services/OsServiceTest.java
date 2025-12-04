@@ -13,10 +13,13 @@ import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.OsProcessException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
+import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
+import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsFeignClient;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -140,6 +143,16 @@ class OsServiceTest {
     }
 
     @Test
+    void shouldThrowInvalidPostcodeWhenOsReturnsNullResults() {
+        OsData osData = OsData.builder().results(null).build();
+        when(osFeignClient.getOsPostcodeData("SW1A 1AA")).thenReturn(osData);
+
+        assertThatThrownBy(() -> osService.getOsAddressByFullPostcode("SW1A 1AA"))
+            .isInstanceOf(InvalidPostcodeException.class)
+            .hasMessageContaining("No address results returned from OS");
+    }
+
+    @Test
     void shouldThrowInvalidPostcodeWhenOsRejectsPostcode() {
         when(osFeignClient.getOsPostcodeData("SW1A 1AA"))
             .thenThrow(createFeignException(400));
@@ -160,15 +173,31 @@ class OsServiceTest {
     }
 
     @Test
+    void shouldHandleFeignExceptionWithStatusBelowFourHundred() {
+        when(osFeignClient.getOsPostcodeData("SW1A 1AA"))
+            .thenThrow(createFeignException(301));
+
+        assertThatThrownBy(() -> osService.getOsAddressByFullPostcode("SW1A 1AA"))
+            .isInstanceOf(OsProcessException.class)
+            .hasMessageContaining("Error calling Ordnance Survey");
+    }
+
+    @Test
+    void shouldHandleNullOrEmptyCustodianCodes() {
+        assertThat(invokeAreCustodianCodesTheSame(null)).isFalse();
+        assertThat(invokeAreCustodianCodesTheSame(Collections.emptyList())).isFalse();
+    }
+
+    @Test
     void shouldValidatePostcodesCorrectly() {
         assertTrue(osService.isValidOsPostcode("SW1A 1AA"));
         assertThat(osService.isValidOsPostcode("NOT-A-POSTCODE")).isFalse();
     }
 
     private OsData createOsData(List<Integer> custodianCodes, double lat, double lng) {
-        List<OsData.Result> results = custodianCodes.stream()
-            .map(code -> OsData.Result.builder()
-                .dpa(OsData.Dpa.builder()
+        List<OsResult> results = custodianCodes.stream()
+            .map(code -> OsResult.builder()
+                .dpa(OsDpa.builder()
                     .localCustodianCode(code)
                     .lat(lat)
                     .lng(lng)
@@ -179,6 +208,16 @@ class OsServiceTest {
         return OsData.builder()
             .results(results)
             .build();
+    }
+
+    private boolean invokeAreCustodianCodesTheSame(List<Integer> codes) {
+        try {
+            Method method = OsService.class.getDeclaredMethod("areCustodianCodesTheSame", List.class);
+            method.setAccessible(true);
+            return (boolean) method.invoke(osService, codes);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private FeignException createFeignException(int status) {

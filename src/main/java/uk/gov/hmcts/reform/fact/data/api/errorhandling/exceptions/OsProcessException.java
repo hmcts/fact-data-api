@@ -4,7 +4,4 @@ import lombok.experimental.StandardException;
 
 @StandardException
 public class OsProcessException extends RuntimeException {
-    public OsProcessException(String message, Throwable cause) {
-        super(message, cause);
-    }
 }

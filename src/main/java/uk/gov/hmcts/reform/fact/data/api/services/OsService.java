@@ -106,6 +106,7 @@ public class OsService {
 
     /**
      * Retrieve address data from OS based on the provided postcode.
+     *
      * @param postcode the postcode.
      * @param maxResultsRequired if we require a maxresults param.
      * @return the OsData object containing address information.
@@ -187,6 +188,7 @@ public class OsService {
     /**
      * Where we need to look up the authority for a single code, provide
      * a lookup based on our mapping from the GDS dataset.
+     *
      * @param code the custodian code.
      * @return the authority.
      */
@@ -203,6 +205,7 @@ public class OsService {
     /**
      * Determine if all authorities match; used for where we have multiple
      * custodian codes for a list of addresses.
+     *
      * @param authorities the authorities.
      * @return if they match or not.
      */
