@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.config.properties;
 
-import java.time.Duration;
 import java.util.Map;
 
 import lombok.Getter;
@@ -16,9 +15,9 @@ import org.springframework.stereotype.Component;
 public class RateLimitConfigurationProperties {
 
     /**
-     * TTL for buckets that aren't being written to.
+     * quick flag to allow postgres to be used as a bucket store.
      */
-    Duration bucketTTL = Duration.ofSeconds(60);
+    public boolean usePostgres = false;
 
     /**
      * default bucket configuration.

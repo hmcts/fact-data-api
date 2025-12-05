@@ -20,11 +20,15 @@ import javax.cache.event.CacheEntryExpiredListener;
 import javax.cache.event.CacheEntryListenerException;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ModifiedExpiryPolicy;
+import javax.sql.DataSource;
 
 import io.github.bucket4j.distributed.ExpirationAfterWriteStrategy;
+import io.github.bucket4j.distributed.jdbc.PrimaryKeyMapper;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import io.github.bucket4j.distributed.serialization.Mapper;
 import io.github.bucket4j.grid.jcache.JCacheProxyManager;
+import io.github.bucket4j.postgresql.Bucket4jPostgreSQL;
+import io.github.bucket4j.postgresql.PostgreSQLSelectForUpdateBasedProxyManager;
 import io.github.bucket4j.redis.redisson.Bucket4jRedisson;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +51,9 @@ public class Bucket4JCacheConfiguration {
     private final FactDataApiConfigurationProperties factDataApiConfigurationProperties;
 
     private final SimpleCacheEntryListener listener = new SimpleCacheEntryListener();
+
+    // -------------------------------------------------------------------
+    // Redis config
 
     @Bean
     // rldev is just for this rate limit test; It lets me specifically
@@ -114,6 +121,11 @@ public class Bucket4JCacheConfiguration {
         name = "provider",
         havingValue = "org.redisson.jcache.JCachingProvider",
         matchIfMissing = false)
+    @ConditionalOnProperty(
+        prefix = "fact.data-api.rate-limit",
+        name = "use-postgres",
+        havingValue = "false",
+        matchIfMissing = true)
     public RedissonClient redissonClient(Config redissonConfig) {
         return Redisson.create(redissonConfig);
     }
@@ -124,6 +136,11 @@ public class Bucket4JCacheConfiguration {
         name = "provider",
         havingValue = "org.redisson.jcache.JCachingProvider",
         matchIfMissing = false)
+    @ConditionalOnProperty(
+        prefix = "fact.data-api.rate-limit",
+        name = "use-postgres",
+        havingValue = "false",
+        matchIfMissing = true)
     public ProxyManager<String> proxyManagerRedis(RedissonClient redissonClient) {
         if (redissonClient instanceof Redisson r) {
             return Bucket4jRedisson.casBasedBuilder(r.getCommandExecutor())
@@ -135,12 +152,39 @@ public class Bucket4JCacheConfiguration {
         throw new IllegalStateException("RedissonClient is not instance of Redisson");
     }
 
+    // -------------------------------------------------------------------
+    // PostgresSQL config
+    @Bean
+    @ConditionalOnProperty(
+        prefix = "fact.data-api.rate-limit",
+        name = "use-postgres",
+        havingValue = "true",
+        matchIfMissing = false)
+    public ProxyManager<String> proxyManagerPostgreSQL(DataSource dataSource) {
+        Bucket4jPostgreSQL.PostgreSQLSelectForUpdateBasedProxyManagerBuilder<String> builder =
+            new Bucket4jPostgreSQL.PostgreSQLSelectForUpdateBasedProxyManagerBuilder<>(
+                dataSource,
+                PrimaryKeyMapper.STRING
+            );
+        builder.expirationAfterWrite(ExpirationAfterWriteStrategy.basedOnTimeForRefillingBucketUpToMax(
+            java.time.Duration.ofSeconds(10)));
+        return new PostgreSQLSelectForUpdateBasedProxyManager<>(builder);
+    }
+
+    // -------------------------------------------------------------------
+    // Local JCache config
+
     @Bean
     @ConditionalOnProperty(
         prefix = "spring.cache.jcache",
         name = "provider",
         havingValue = "com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider",
         matchIfMissing = false)
+    @ConditionalOnProperty(
+        prefix = "fact.data-api.rate-limit",
+        name = "use-postgres",
+        havingValue = "false",
+        matchIfMissing = true)
     public ProxyManager<String> proxyManagerCaffeine(CacheManager cacheManager) {
         com.github.benmanes.caffeine.jcache.configuration.CaffeineConfiguration<String, byte[]>
             caffeineConfiguration = new com.github.benmanes.caffeine.jcache.configuration.CaffeineConfiguration<>();
@@ -157,7 +201,7 @@ public class Bucket4JCacheConfiguration {
         config.setExpiryPolicyFactory(ModifiedExpiryPolicy.factoryOf(
             new Duration(
                 TimeUnit.SECONDS,
-                factDataApiConfigurationProperties.getRateLimit().getBucketTTL().toSeconds()
+                60
             )));
         config.addCacheEntryListenerConfiguration(new MutableCacheEntryListenerConfiguration<>(
             FactoryBuilder.factoryOf(this.listener), null, false, true)

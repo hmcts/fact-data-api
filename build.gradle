@@ -191,6 +191,7 @@ dependencies {
   implementation group: 'org.redisson', name: 'redisson-spring-boot-starter', version: '3.52.0'
   implementation group: 'com.giffing.bucket4j.spring.boot.starter', name: 'bucket4j-spring-boot-starter', version: '0.13.0'
   implementation group: 'com.bucket4j', name: 'bucket4j_jdk17-redisson', version: '8.15.0'
+  implementation group: 'com.bucket4j', name: 'bucket4j_jdk17-postgresql', version: '8.15.0'
   // implementation group: 'com.github.ben-manes.caffeine', name: 'caffeine', version: '3.2.3'
   implementation group: 'com.github.ben-manes.caffeine', name: 'jcache', version: '3.2.3'
   implementation group: 'io.github.resilience4j', name: 'resilience4j-spring-boot3', version: '2.3.0'
