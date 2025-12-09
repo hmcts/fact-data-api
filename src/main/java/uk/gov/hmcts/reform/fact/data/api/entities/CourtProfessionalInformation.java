@@ -13,13 +13,17 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -28,6 +32,9 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "court_professional_information")
 public class CourtProfessionalInformation {
+
+    private static final String INTERVIEW_ROOM_COUNT_MESSAGE =
+        "Interview room count must be between 1 and 150 when interview rooms are available; otherwise omit or set to 0";
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
@@ -52,10 +59,13 @@ public class CourtProfessionalInformation {
     private Boolean interviewRooms;
 
     @Schema(description = "Number of available interview rooms")
-    @Min(1)
+    @Min(0)
+    @Max(150)
     private Integer interviewRoomCount;
 
     @Column(name = "interview_phone_number", length = Integer.MAX_VALUE)
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
     private String interviewPhoneNumber;
 
     @Schema(description = "Video hearing capability status")
@@ -69,5 +79,4 @@ public class CourtProfessionalInformation {
     @Schema(description = "Access scheme status")
     @NotNull
     private Boolean accessScheme;
-
 }
