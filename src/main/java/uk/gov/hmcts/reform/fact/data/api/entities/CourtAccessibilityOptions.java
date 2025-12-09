@@ -34,12 +34,13 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional
 @Builder
 @Entity
 @ValidConditional(
-    selected = "accessibleParking", selectedValueForRequired = "true", required = "accessibleParkingPhoneNumber")
-@ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorWidth")
-@ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorLimit")
+    selected = "accessibleParking", selectedValueForRequired = "true", required = "accessibleParkingPhoneNumber"
+)
 @ValidConditional(
     selected = "accessibleEntrance", selectedValueForRequired = "true", required = "accessibleEntrancePhoneNumber"
 )
+@ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorWidth")
+@ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorLimit")
 @Table(name = "court_accessibility_options")
 public class CourtAccessibilityOptions {
 
