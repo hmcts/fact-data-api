@@ -21,8 +21,10 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.UUID;
 
-@Tag(name = "Court Accessibility Options",
-    description = "Operations related to Accessibility Options available for courts")
+@Tag(
+    name = "Court Accessibility Options",
+    description = "Operations related to Accessibility Options available for courts"
+)
 @RestController
 @Validated
 @RequestMapping("/courts/{courtId}")

@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 import java.util.UUID;
@@ -25,12 +26,20 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
+@ValidConditional(
+    selected = "accessibleParking", selectedValueForRequired = "true", required = "accessibleParkingPhoneNumber")
+@ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorWidth")
+@ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorLimit")
+@ValidConditional(
+    selected = "accessibleEntrance", selectedValueForRequired = "true", required = "accessibleEntrancePhoneNumber"
+)
 @Table(name = "court_accessibility_options")
 public class CourtAccessibilityOptions {
 
@@ -80,8 +89,7 @@ public class CourtAccessibilityOptions {
 
     @Schema(description = "Details of available hearing enhancement equipment")
     @NotNull
-    @Size(max = 255, message = "Hearing Enhancement Equipment must not exceed 255 characters")
-    private String hearingEnhancementEquipment;
+    private HearingEnhancementEquipment hearingEnhancementEquipment;
 
     @Schema(description = "Lift availability status")
     @NotNull

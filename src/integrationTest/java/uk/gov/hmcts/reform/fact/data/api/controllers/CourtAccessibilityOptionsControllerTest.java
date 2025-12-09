@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOptions;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtAccessibilityOptionsService;
 
@@ -98,9 +99,12 @@ class CourtAccessibilityOptionsControllerTest {
             .courtId(courtId)
             .court(null)
             .accessibleEntrance(true)
+            .accessibleEntrancePhoneNumber("01234567890")
             .accessibleParking(false)
-            .hearingEnhancementEquipment("Equipment")
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(true)
+            .liftDoorWidth(90)
+            .liftDoorLimit(10)
             .quietRoom(true)
             .build();
 
@@ -127,9 +131,12 @@ class CourtAccessibilityOptionsControllerTest {
             .courtId(nonExistentCourtId)
             .court(null)
             .accessibleEntrance(true)
+            .accessibleEntrancePhoneNumber("01234567890")
             .accessibleParking(false)
-            .hearingEnhancementEquipment("Equipment")
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(true)
+            .liftDoorWidth(90)
+            .liftDoorLimit(10)
             .quietRoom(true)
             .build();
 
@@ -171,7 +178,7 @@ class CourtAccessibilityOptionsControllerTest {
             .accessibleEntrance(null)
             .court(null)
             .accessibleParking(false)
-            .hearingEnhancementEquipment("Equipment")
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(true)
             .quietRoom(true)
             .build();
@@ -194,7 +201,7 @@ class CourtAccessibilityOptionsControllerTest {
             .accessibleParking(false)
             .lift(true)
             .quietRoom(true)
-            .hearingEnhancementEquipment(oversizedText)
+            .accessibleToiletDescription(oversizedText)
             .build();
 
         mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
@@ -212,7 +219,7 @@ class CourtAccessibilityOptionsControllerTest {
             .court(null)
             .accessibleEntrance(true)
             .accessibleParking(false)
-            .hearingEnhancementEquipment("Equipment")
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(true)
             .quietRoom(true)
             .accessibleParkingPhoneNumber("invalid-phone")
@@ -235,7 +242,7 @@ class CourtAccessibilityOptionsControllerTest {
             .court(null)
             .accessibleEntrance(true)
             .accessibleParking(false)
-            .hearingEnhancementEquipment("Equipment")
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(true)
             .quietRoom(true)
             .accessibleParkingPhoneNumber(oversizedPhone)
@@ -256,10 +263,31 @@ class CourtAccessibilityOptionsControllerTest {
             .court(null)
             .accessibleEntrance(true)
             .accessibleParking(false)
-            .hearingEnhancementEquipment("Equipment")
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(true)
             .quietRoom(true)
             .liftDoorWidth(1001)
+            .build();
+
+        mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(accessibilityOptions)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName(
+        "POST /courts/{courtId}/v1/accessibility-options returns 400 when lift is true and liftDoorWidth is null")
+    void postAccessibilityOptionsLiftTrueWidthNull() throws Exception {
+        CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
+            .id(courtId)
+            .courtId(courtId)
+            .court(null)
+            .accessibleEntrance(true)
+            .accessibleParking(false)
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
+            .lift(true)
+            .quietRoom(true)
             .build();
 
         mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
@@ -277,7 +305,7 @@ class CourtAccessibilityOptionsControllerTest {
             .court(null)
             .accessibleEntrance(true)
             .accessibleParking(false)
-            .hearingEnhancementEquipment("Equipment")
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(true)
             .quietRoom(true)
             .liftDoorLimit(10001)
@@ -299,7 +327,7 @@ class CourtAccessibilityOptionsControllerTest {
             .court(null)
             .accessibleEntrance(true)
             .accessibleParking(false)
-            .hearingEnhancementEquipment("Equipment")
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(true)
             .quietRoom(true)
             .accessibleToiletDescription(oversizedDescription)
