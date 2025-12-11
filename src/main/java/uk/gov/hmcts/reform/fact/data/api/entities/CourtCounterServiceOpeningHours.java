@@ -24,12 +24,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
+@ValidConditional(selected = "appointmentNeeded", selectedValueForRequired = "true", required = "appointmentContact")
 @Table(name = "court_counter_service_opening_hours")
 public class CourtCounterServiceOpeningHours {
 
@@ -81,9 +83,11 @@ public class CourtCounterServiceOpeningHours {
     private DayOfTheWeek dayOfWeek;
 
     @Schema(description = "Opening hour")
+    @NotNull
     private LocalTime openingHour;
 
     @Schema(description = "Closing hour")
+    @NotNull
     private LocalTime closingHour;
 
 }
