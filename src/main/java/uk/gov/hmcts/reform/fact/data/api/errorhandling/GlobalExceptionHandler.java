@@ -141,7 +141,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicatedListItemException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(DuplicatedListItemException ex) {
-        log.error("409, duplicated list item. Details: {}", ex.getMessage());
+        log.error("400, duplicated list item. Details: {}", ex.getMessage());
         return generateExceptionResponse(ex.getMessage());
     }
 
