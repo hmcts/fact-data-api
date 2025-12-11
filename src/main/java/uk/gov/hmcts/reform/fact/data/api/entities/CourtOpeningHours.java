@@ -23,12 +23,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidTimeOrder;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
+@ValidTimeOrder(start = "openingHour", end = "closingHour")
 @Table(name = "court_opening_hours")
 public class CourtOpeningHours {
 

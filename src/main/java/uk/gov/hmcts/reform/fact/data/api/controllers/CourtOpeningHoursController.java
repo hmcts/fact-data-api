@@ -19,6 +19,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHour
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtOpeningHoursService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
 
 import java.util.List;
 import java.util.UUID;
@@ -106,7 +107,7 @@ public class CourtOpeningHoursController {
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the opening hours type", required = true)
         @ValidUUID @PathVariable String openingHourTypeId,
-        @Valid @RequestBody List<CourtOpeningHours> courtOpeningHours) {
+        @UniqueOpeningDays @Valid @RequestBody List<CourtOpeningHours> courtOpeningHours) {
         return ResponseEntity.ok(
             courtOpeningHoursService.setOpeningHours(
                 UUID.fromString(courtId), UUID.fromString(openingHourTypeId), courtOpeningHours)
@@ -126,7 +127,7 @@ public class CourtOpeningHoursController {
     })
     public ResponseEntity<List<CourtCounterServiceOpeningHours>> setCounterServiceOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
-        @Valid @RequestBody List<CourtCounterServiceOpeningHours> courtCounterServiceOpeningHours) {
+        @UniqueOpeningDays @Valid @RequestBody List<CourtCounterServiceOpeningHours> courtCounterServiceOpeningHours) {
         return ResponseEntity.ok(
             courtOpeningHoursService.setCounterServiceOpeningHours(
                 UUID.fromString(courtId), courtCounterServiceOpeningHours)

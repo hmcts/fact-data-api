@@ -17,6 +17,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidTimeOrder;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -32,6 +34,7 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional
 @Builder
 @Entity
 @ValidConditional(selected = "appointmentNeeded", selectedValueForRequired = "true", required = "appointmentContact")
+@ValidTimeOrder(start = "openingHour", end = "closingHour")
 @Table(name = "court_counter_service_opening_hours")
 public class CourtCounterServiceOpeningHours {
 
@@ -75,6 +78,10 @@ public class CourtCounterServiceOpeningHours {
 
     @Schema(description = "Appointment arrangement contact details")
     @Size(max = 255, message = "Appointment contact details can be at most {max} characters")
+    @Pattern(
+        regexp = "^[A-Za-z0-9.,!?:;'\"()\\-/&@+\\s]+$",
+        message = "Warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)"
+    )
     private String appointmentContact;
 
     @Schema(description = "Day of the week")
