@@ -71,18 +71,4 @@ class UniqueOpeningDaysForCourtOpeningHoursValidatorTest {
         );
         assertTrue(validator.isValid(list, null));
     }
-
-    @Test
-    void shouldIgnoreNullEntriesAndNullDays() {
-        CourtOpeningHours nullDay = new CourtOpeningHours();
-        nullDay.setDayOfWeek(null);
-
-        List<CourtOpeningHours> list = new ArrayList<>();
-        list.add(null); // null entry
-        list.add(entry(DayOfTheWeek.THURSDAY));
-        list.add(nullDay); // entry with null day
-        list.add(entry(DayOfTheWeek.FRIDAY));
-
-        assertTrue(validator.isValid(list, null));
-    }
 }

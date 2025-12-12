@@ -18,7 +18,8 @@ import java.util.Set;
  * - Null values in the list or null days are ignored
  * - Empty or null lists are considered invalid
  */
-public class UniqueOpeningDaysForCourtOpeningHoursValidator implements ConstraintValidator<UniqueOpeningDays, List<CourtOpeningHours>> {
+public class UniqueOpeningDaysForCourtOpeningHoursValidator
+    implements ConstraintValidator<UniqueOpeningDays, List<CourtOpeningHours>> {
 
     @Override
     public boolean isValid(List<CourtOpeningHours> value, ConstraintValidatorContext context) {

@@ -1,6 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.validator;
 
 import jakarta.validation.ConstraintValidatorContext;
+import lombok.Getter;
+import lombok.Setter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,59 +40,35 @@ class TimeOrderValidatorTest {
     }
 
     private void prepareContextForViolation() {
-        // Set up constraint violation builder chain to avoid NPE during invalid cases
-        ConstraintValidatorContext.ConstraintViolationBuilder builder = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
+
+        ConstraintValidatorContext.ConstraintViolationBuilder builder
+            = mock(ConstraintValidatorContext.ConstraintViolationBuilder.class);
         ConstraintValidatorContext.ConstraintViolationBuilder.NodeBuilderCustomizableContext nodeBuilder =
             mock(ConstraintValidatorContext.ConstraintViolationBuilder.NodeBuilderCustomizableContext.class);
-        when(context.buildConstraintViolationWithTemplate(org.mockito.ArgumentMatchers.anyString())).thenReturn(builder);
+        when(
+            context.buildConstraintViolationWithTemplate(org.mockito.ArgumentMatchers.anyString())).thenReturn(builder);
         when(builder.addPropertyNode(org.mockito.ArgumentMatchers.anyString())).thenReturn(nodeBuilder);
         when(nodeBuilder.addConstraintViolation()).thenReturn(context);
     }
 
-    static class OpeningHoursBean {
-        private LocalTime openingHour;
-        private LocalTime closingHour;
-
-        OpeningHoursBean(LocalTime openingHour, LocalTime closingHour) {
-            this.openingHour = openingHour;
-            this.closingHour = closingHour;
-        }
-
-        public LocalTime getOpeningHour() { return openingHour; }
-        public LocalTime getClosingHour() { return closingHour; }
-    }
-
-    static class NonTimeBean {
-        private String openingHour;
-        private String closingHour;
-
-        NonTimeBean(String openingHour, String closingHour) {
-            this.openingHour = openingHour;
-            this.closingHour = closingHour;
-        }
-
-        public String getOpeningHour() { return openingHour; }
-        public String getClosingHour() { return closingHour; }
-    }
-
     @Test
     void shouldBeValidWhenStartBeforeEnd() {
-        OpeningHoursBean bean = new OpeningHoursBean(LocalTime.of(9, 0), LocalTime.of(17, 0));
-        assertTrue(validator.isValid(bean, context));
+        TestObject testObject = new TestObject(LocalTime.of(9, 0), LocalTime.of(17, 0));
+        assertTrue(validator.isValid(testObject, context));
     }
 
     @Test
     void shouldBeInvalidWhenStartEqualsEnd() {
         prepareContextForViolation();
-        OpeningHoursBean bean = new OpeningHoursBean(LocalTime.of(9, 0), LocalTime.of(9, 0));
-        assertFalse(validator.isValid(bean, context));
+        TestObject testObject = new TestObject(LocalTime.of(9, 0), LocalTime.of(9, 0));
+        assertFalse(validator.isValid(testObject, context));
     }
 
     @Test
     void shouldBeInvalidWhenStartAfterEnd() {
         prepareContextForViolation();
-        OpeningHoursBean bean = new OpeningHoursBean(LocalTime.of(18, 0), LocalTime.of(17, 0));
-        assertFalse(validator.isValid(bean, context));
+        TestObject testObject = new TestObject(LocalTime.of(18, 0), LocalTime.of(17, 0));
+        assertFalse(validator.isValid(testObject, context));
     }
 
     @Test
@@ -100,7 +78,31 @@ class TimeOrderValidatorTest {
 
     @Test
     void shouldReturnTrueWhenPropertiesAreNotLocalTime() {
-        NonTimeBean bean = new NonTimeBean("09:00", "17:00");
-        assertTrue(validator.isValid(bean, context));
+        NonTimeTestObject testObject = new NonTimeTestObject("09:00", "17:00");
+        assertTrue(validator.isValid(testObject, context));
+    }
+
+    @Getter
+    @Setter
+    private static class TestObject {
+        private LocalTime openingHour;
+        private LocalTime closingHour;
+
+        TestObject(LocalTime openingHour, LocalTime closingHour) {
+            this.openingHour = openingHour;
+            this.closingHour = closingHour;
+        }
+    }
+
+    @Getter
+    @Setter
+    private static class NonTimeTestObject {
+        private String openingHour;
+        private String closingHour;
+
+        NonTimeTestObject(String openingHour, String closingHour) {
+            this.openingHour = openingHour;
+            this.closingHour = closingHour;
+        }
     }
 }

@@ -21,9 +21,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface UniqueOpeningDays {
     String message() default
-        "Opening hours require at least one entry. " +
-        "Requests must be unique for each day of the week. " +
-        "Requests for EVERYDAY must be the only entry.";
+        "Opening hours require at least one entry. "
+            + "Requests must be unique for each day of the week. "
+            + "Requests for EVERYDAY must be the only entry.";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }
