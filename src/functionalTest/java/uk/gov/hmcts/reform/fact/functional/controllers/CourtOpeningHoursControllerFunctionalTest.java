@@ -413,7 +413,8 @@ public final class CourtOpeningHoursControllerFunctionalTest {
 
         http.doPut("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId, openingHoursList);
 
-        final Response getBeforeDelete = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId);
+        final Response getBeforeDelete = http.doGet("/courts/" + courtId + "/v1/opening-hours/"
+                                                        + openingHourTypeId);
         assertThat(getBeforeDelete.statusCode()).isEqualTo(OK.value());
 
         final Response deleteResponse = http.doDelete(
@@ -421,7 +422,8 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         );
         assertThat(deleteResponse.statusCode()).isEqualTo(OK.value());
 
-        final Response getAfterDelete = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId);
+        final Response getAfterDelete = http.doGet("/courts/" + courtId + "/v1/opening-hours/"
+                                                       + openingHourTypeId);
         assertThat(getAfterDelete.statusCode()).isEqualTo(NO_CONTENT.value());
     }
 
@@ -512,9 +514,10 @@ public final class CourtOpeningHoursControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} with EVERYDAY removes other days")
-    void shouldKeepOnlyEverydayWhenBothMondayAndEverydayProvided() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Everyday Override");
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} "
+        + "should return 400 when EVERYDAY is provided with other days")
+    void shouldReturn400WhenEverydayProvidedWithOtherDays() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Everyday Validation");
         final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 7);
 
         final List<CourtOpeningHours> openingHoursWithEveryday = List.of(
@@ -545,6 +548,33 @@ public final class CourtOpeningHoursControllerFunctionalTest {
             "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId,
             openingHoursWithEveryday
         );
+
+        assertThat(putResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
+        assertThat(putResponse.asString()).contains("Requests for EVERYDAY must be the only entry");
+    }
+
+    @Test
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} "
+        + "should successfully save when only EVERYDAY provided")
+    void shouldSuccessfullySaveWhenOnlyEverydayProvided() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Everyday Only");
+        final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 8);
+
+        final List<CourtOpeningHours> openingHoursEverydayOnly = List.of(
+            CourtOpeningHours.builder()
+                .courtId(courtId)
+                .openingHourTypeId(openingHourTypeId)
+                .dayOfWeek(DayOfTheWeek.EVERYDAY)
+                .openingHour(LocalTime.of(9, 0))
+                .closingHour(LocalTime.of(17, 0))
+                .build()
+        );
+
+        final Response putResponse = http.doPut(
+            "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId,
+            openingHoursEverydayOnly
+        );
+
         assertThat(putResponse.statusCode()).isEqualTo(OK.value());
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId);
@@ -557,12 +587,8 @@ public final class CourtOpeningHoursControllerFunctionalTest {
 
         assertThat(retrievedHours).hasSize(1);
         assertThat(retrievedHours.getFirst().getDayOfWeek()).isEqualTo(DayOfTheWeek.EVERYDAY);
-        assertThat(retrievedHours.getFirst().getOpeningHour()).isEqualTo(LocalTime.of(10, 0));
-        assertThat(retrievedHours.getFirst().getClosingHour()).isEqualTo(LocalTime.of(16, 0));
-        assertThat(retrievedHours).noneMatch(hour -> hour.getDayOfWeek()
-            .equals(DayOfTheWeek.MONDAY));
-        assertThat(retrievedHours).noneMatch(hour -> hour.getDayOfWeek()
-            .equals(DayOfTheWeek.TUESDAY));
+        assertThat(retrievedHours.getFirst().getOpeningHour()).isEqualTo(LocalTime.of(9, 0));
+        assertThat(retrievedHours.getFirst().getClosingHour()).isEqualTo(LocalTime.of(17, 0));
     }
 
     @AfterAll
