@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartException;
 import jakarta.servlet.http.HttpServletRequest;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeMigrationRequestException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -127,6 +128,13 @@ public class GlobalExceptionHandler {
         );
 
         return generateExceptionResponse(message);
+    }
+
+    @ExceptionHandler(InvalidPostcodeMigrationRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidPostcodeMigrationRequestException ex) {
+        log.error("400, Invalid postcode migration request. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
     }
 
     private ExceptionResponse generateExceptionResponse(String message) {
