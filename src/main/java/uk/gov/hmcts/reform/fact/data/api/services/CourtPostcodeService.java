@@ -25,11 +25,23 @@ public class CourtPostcodeService {
     private final CourtPostcodeRepository courtPostcodeRepository;
     private final CourtRepository courtRepository;
 
+    /**
+     * retrieves the set of {@link CourtPostcode}s currently assigned to a given court.
+     *
+     * @param courtId the ID of the Court.
+     * @return a {@link List} of {@link CourtPostcode}s assigned to the court.
+     */
     public List<CourtPostcode> getPostcodesByCourtId(final UUID courtId) {
         ensureCourts(courtId);
         return courtPostcodeRepository.getCourtPostcodeByCourtId(courtId);
     }
 
+    /**
+     * Adds a list of postcodes to a given court.
+     *
+     * @param courtPostcodes the list of postcodes to add to the Court.
+     * @param courtId        the ID of the Court.
+     */
     @Transactional
     public void addPostcodesToCourt(PostcodeListDto courtPostcodes, final UUID courtId) {
 
@@ -46,6 +58,12 @@ public class CourtPostcodeService {
         // No error when there are no postcodes to add. The request is technically complete
     }
 
+    /**
+     * Removes a list of postcodes from a given court.
+     *
+     * @param courtPostcodes the list of postcodes to remove
+     * @param courtId        the ID of the Court.
+     */
     @Transactional
     public void removePostcodesFromCourt(PostcodeListDto courtPostcodes, final UUID courtId) {
 
@@ -58,6 +76,11 @@ public class CourtPostcodeService {
         }
     }
 
+    /**
+     * Migrates a list of postcodes between courts.
+     *
+     * @param migrationData the {@link PostcodeMoveDto} request for the migration operation.
+     */
     @Transactional
     public void migratePostcodes(PostcodeMoveDto migrationData) {
         validatePostcodeMigrationData(migrationData);
