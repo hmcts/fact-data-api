@@ -183,7 +183,7 @@ dependencies {
 
   implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '6.0.0'
 
-  implementation group: 'io.hypersistence', name: 'hypersistence-utils-hibernate-63', version: '3.13.2'
+  implementation group: 'io.hypersistence', name: 'hypersistence-utils-hibernate-63', version: '3.13.3'
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '6.1.9'
 
