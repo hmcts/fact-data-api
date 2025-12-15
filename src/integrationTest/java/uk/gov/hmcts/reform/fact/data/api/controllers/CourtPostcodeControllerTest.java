@@ -26,6 +26,7 @@ import uk.gov.hmcts.reform.fact.data.api.models.PostcodeListDto;
 import uk.gov.hmcts.reform.fact.data.api.models.PostcodeMoveDto;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtPostcodeService;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -165,6 +166,21 @@ class CourtPostcodeControllerTest {
             );
 
             mockMvc.perform(post(BASE_URL, "not-a-uuid")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(body))
+                .andExpect(status().isBadRequest());
+
+            verifyNoInteractions(courtPostcodeService);
+        }
+
+        @Test
+        @DisplayName("returns 400 on invalid UUID")
+        void postReturnsBadRequestOnEmptyPostcodeList() throws Exception {
+            String body = objectMapper.writeValueAsString(
+                new PostcodeListDto(Collections.emptyList())
+            );
+
+            mockMvc.perform(post(BASE_URL, COURT_ID)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(body))
                 .andExpect(status().isBadRequest());
