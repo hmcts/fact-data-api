@@ -131,7 +131,7 @@ public class CourtPostcodeService {
     }
 
     private String normalisePostcode(String postcode) {
-        return postcode.replaceAll("(\\w+)\\s*(\\d[a-zA-Z]{2})", "$1 $2").toUpperCase();
+        return postcode.replaceAll("^([a-zA-Z]{1,2}\\d{1,2})\\s*?(|\\d[a-zA-Z]{2})$", "$1$2").toUpperCase();
     }
 
     // -- Validation --
@@ -146,7 +146,7 @@ public class CourtPostcodeService {
 
     private void validatePostcodeList(final PostcodeListDto courtPostcodes) {
         // duplicate check
-        if (courtPostcodes.getPostcodes().stream().map(String::toUpperCase).distinct().count()
+        if (courtPostcodes.getPostcodes().stream().map(this::normalisePostcode).distinct().count()
             != courtPostcodes.getPostcodes().size()) {
             throw new DuplicatedListItemException("Duplicated Postcode in payload list");
         }

@@ -24,7 +24,8 @@ public class PostcodeListDto {
     private List<
         @NotBlank(message = "The postcode must be specified")
         @Size(max = ValidationConstants.POSTCODE_MAX_LENGTH, message = ValidationConstants.POSTCODE_MAX_LENGTH_MESSAGE)
-        @Pattern(regexp = ValidationConstants.POSTCODE_REGEX, message = ValidationConstants.POSTCODE_REGEX_MESSAGE)
+        @Pattern(regexp = ValidationConstants.COURT_POSTCODE_REGEX,
+            message = ValidationConstants.COURT_POSTCODE_REGEX_MESSAGE)
             String
         > postcodes;
 }

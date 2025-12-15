@@ -23,6 +23,10 @@ public class ValidationConstants {
     public static final String POSTCODE_REGEX_MESSAGE =
         "Postcode must match the regex '^(|[a-zA-Z]{1,2}\\d{1,2}\\s*?\\d[a-zA-Z]{2})$'";
 
+    public static final String COURT_POSTCODE_REGEX = "^[a-zA-Z]{1,2}\\d{1,2}(\\s*?\\d[a-zA-Z]{2}){1}$";
+    public static final String COURT_POSTCODE_REGEX_MESSAGE =
+        "Postcode must match the regex '^[a-zA-Z]{1,2}\\d{1,2}(\\s*?\\d[a-zA-Z]{2}){1}$'";
+
     public static final int POSTCODE_MAX_LENGTH = 8;
     public static final String POSTCODE_MAX_LENGTH_MESSAGE = "Postcode should be no more than {max} characters";
 
