@@ -46,18 +46,14 @@ class CourtPostcodeControllerTest {
     private static final String COURT_ID_STR = UUID.randomUUID().toString();
     private static final UUID COURT_ID = UUID.fromString(COURT_ID_STR);
 
-    private static CourtPostcode cp(UUID courtId, String postcode) {
-        return CourtPostcode.builder().courtId(courtId).postcode(postcode).build();
-    }
-
     @Nested
     class GetCourtPostcodesTests {
 
         @Test
         void returnsOkWithBodyWhenListNotEmpty() {
             List<CourtPostcode> list = List.of(
-                cp(COURT_ID, "SW1 1AA"),
-                cp(COURT_ID, "EC1 1BB")
+                CourtPostcode.builder().courtId(COURT_ID).postcode("SW1 1AA").build(),
+                CourtPostcode.builder().courtId(COURT_ID).postcode("EC1 1BB").build()
             );
             when(courtPostcodeService.getPostcodesByCourtId(COURT_ID)).thenReturn(list);
 
