@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import jakarta.servlet.http.HttpServletRequest;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeMigrationRequestException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -134,6 +135,13 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidPostcodeMigrationRequestException ex) {
         log.error("400, Invalid postcode migration request. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicatedListItemException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(DuplicatedListItemException ex) {
+        log.error("400, Duplicated list item in request. Details: {}", ex.getMessage());
         return generateExceptionResponse(ex.getMessage());
     }
 

@@ -15,7 +15,10 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeMigrationRequestException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -234,6 +237,26 @@ class GlobalExceptionHandlerTest {
             .contains("Unsupported or malformed Content-Type 'unknown'")
             .contains("use 'multipart/form-data'")
             .contains("use 'application/json'");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testDuplicateListItemException() {
+        DuplicatedListItemException ex = new DuplicatedListItemException(TEST_MESSAGE);
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testInvalidPostcodeMigrationRequestException() {
+        InvalidPostcodeMigrationRequestException ex = new InvalidPostcodeMigrationRequestException(TEST_MESSAGE);
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
         assertThat(response.getTimestamp()).isNotNull();
     }
 

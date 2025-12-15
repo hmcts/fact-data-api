@@ -1,8 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
 
 class CustomExceptionsTest {
 
@@ -25,9 +25,23 @@ class CustomExceptionsTest {
     void testCreationOfPendingMigrationScriptException() {
         String scriptName = "V1__initial.sql";
         PendingMigrationScriptException exception = new PendingMigrationScriptException(scriptName);
-        assertEquals("Found a migration not yet applied: " + scriptName,
-                     exception.getMessage(),
-                     ASSERTION_MESSAGE);
+        assertEquals(
+            "Found a migration not yet applied: " + scriptName,
+            exception.getMessage(),
+            ASSERTION_MESSAGE
+        );
+    }
+
+    @Test
+    void testCreationOfDuplicateListItemException() {
+        DuplicatedListItemException exception = new DuplicatedListItemException(TEST_MESSAGE);
+        assertEquals(TEST_MESSAGE, exception.getMessage(), ASSERTION_MESSAGE);
+    }
+
+    @Test
+    void testCreationOfInvalidPostcodeMigrationRequestException() {
+        InvalidPostcodeMigrationRequestException exception = new InvalidPostcodeMigrationRequestException(TEST_MESSAGE);
+        assertEquals(TEST_MESSAGE, exception.getMessage(), ASSERTION_MESSAGE);
     }
 }
 
