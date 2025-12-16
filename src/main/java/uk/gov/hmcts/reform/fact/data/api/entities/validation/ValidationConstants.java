@@ -31,4 +31,3 @@ public class ValidationConstants {
     public static final String POSTCODE_MAX_LENGTH_MESSAGE = "Postcode should be no more than {max} characters";
 
 }
-
