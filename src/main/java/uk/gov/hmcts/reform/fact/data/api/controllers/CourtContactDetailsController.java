@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import uk.gov.hmcts.reform.fact.data.api.config.OpenAPIConfiguration;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtContactDetailsService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -28,6 +31,7 @@ import java.util.UUID;
 @RestController
 @Validated
 @RequestMapping("/courts/{courtId}")
+@SecurityRequirement(name = OpenAPIConfiguration.BEARER_AUTH_SECURITY_SCHEME)
 public class CourtContactDetailsController {
 
     private final CourtContactDetailsService courtContactDetailsService;
