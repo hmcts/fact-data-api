@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +40,7 @@ import java.util.UUID;
 @Validated
 @RequestMapping("/courts")
 @SecurityRequirement(name = OpenAPIConfiguration.BEARER_AUTH_SECURITY_SCHEME)
+@PreAuthorize("@authService.isViewer()")
 public class CourtController {
 
     private final CourtService courtService;
@@ -109,6 +111,7 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid court data supplied"),
         @ApiResponse(responseCode = "404", description = "Associated region not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Court> createCourt(@Valid @RequestBody Court court) {
         return ResponseEntity.status(HttpStatus.CREATED).body(courtService.createCourt(court));
     }
@@ -124,6 +127,7 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid court data supplied"),
         @ApiResponse(responseCode = "404", description = "Court or associated region not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Court> updateCourt(@ValidUUID @PathVariable String courtId, @Valid @RequestBody Court court) {
         return ResponseEntity.ok(courtService.updateCourt(UUID.fromString(courtId), court));
     }
