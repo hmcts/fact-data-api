@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -132,13 +131,6 @@ public class GlobalExceptionHandler {
         );
 
         return generateExceptionResponse(message);
-    }
-
-    @ExceptionHandler(AuthenticationException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ExceptionResponse handle(AuthenticationException ex) {
-        log.error("401 Unauthorized. Details: {}", ex.getMessage());
-        return generateExceptionResponse(ex.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)

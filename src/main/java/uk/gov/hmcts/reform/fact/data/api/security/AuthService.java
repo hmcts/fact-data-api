@@ -12,9 +12,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class AuthService {
 
-    private static final String PREFIX = "APPROLE_";
-    private static final String ROLE_ADMIN = "Role.Fact.Admin";
-    private static final String ROLE_VIEWER = "Role.Fact.Viewer";
+    static final String PREFIX = "APPROLE_";
+    static final String ROLE_ADMIN = "Role.Fact.Admin";
+    static final String ROLE_VIEWER = "Role.Fact.Viewer";
 
     public boolean isViewer() {
         log.info("Checking if viewer is enabled");
@@ -27,11 +27,6 @@ public class AuthService {
         log.info("Checking if admin is enabled");
         return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
             .map(this::findAdminRole)
-            .isPresent();
-    }
-
-    public boolean isAuthenticated() {
-        return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
             .isPresent();
     }
 
