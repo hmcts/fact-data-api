@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +33,7 @@ import java.util.UUID;
 @Validated
 @RequestMapping("/courts/{courtId}")
 @SecurityRequirement(name = OpenAPIConfiguration.BEARER_AUTH_SECURITY_SCHEME)
+@PreAuthorize("@authService.isViewer()")
 public class CourtContactDetailsController {
 
     private final CourtContactDetailsService courtContactDetailsService;
@@ -90,6 +92,7 @@ public class CourtContactDetailsController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Court or contact description type not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtContactDetails> createContactDetail(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Contact detail to create", required = true)
@@ -111,6 +114,7 @@ public class CourtContactDetailsController {
             description = "Invalid court ID or contact ID supplied, or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Contact detail, court, or contact description type not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtContactDetails> updateContactDetail(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the contact", required = true) @ValidUUID @PathVariable String contactId,
@@ -136,6 +140,7 @@ public class CourtContactDetailsController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID or contact ID supplied"),
         @ApiResponse(responseCode = "404", description = "Contact detail or court not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteContactDetail(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the contact", required = true) @ValidUUID @PathVariable String contactId

@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +31,7 @@ import java.util.UUID;
 @Validated
 @RequestMapping("/courts/{courtId}")
 @SecurityRequirement(name = OpenAPIConfiguration.BEARER_AUTH_SECURITY_SCHEME)
+@PreAuthorize("@authService.isViewer()")
 public class CourtTranslationController {
 
     private final CourtTranslationService courtTranslationService;
@@ -65,6 +67,7 @@ public class CourtTranslationController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtTranslation> setTranslationServices(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Translation object to create or update", required = true)

@@ -1,6 +1,9 @@
 package uk.gov.hmcts.reform.fact.data.api.config;
 
+import uk.gov.hmcts.reform.fact.data.api.security.AuthService;
+
 import com.azure.spring.cloud.autoconfigure.implementation.aad.security.AadResourceServerHttpSecurityConfigurer;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -12,7 +15,10 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SpringSecurityConfig {
+
+    private final AuthService authService;
 
     @Bean
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -20,4 +26,5 @@ public class SpringSecurityConfig {
             //.csrf(AbstractHttpConfigurer::disable)
             .build();
     }
+    
 }

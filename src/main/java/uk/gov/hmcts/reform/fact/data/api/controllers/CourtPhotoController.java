@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +32,7 @@ import java.util.UUID;
 @Validated
 @RequestMapping("/courts/{courtId}")
 @SecurityRequirement(name = OpenAPIConfiguration.BEARER_AUTH_SECURITY_SCHEME)
+@PreAuthorize("@authService.isViewer()")
 public class CourtPhotoController {
 
     private final CourtPhotoService courtPhotoService;
@@ -64,6 +66,7 @@ public class CourtPhotoController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or invalid file"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtPhoto> setCourtPhotoByCourtId(
         @Parameter(description = "UUID of the court", required = true)
         @ValidUUID @PathVariable String courtId, @ValidImage @RequestPart("file") MultipartFile file) {
@@ -81,6 +84,7 @@ public class CourtPhotoController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court or court photo not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteCourtPhotoByCourtId(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
         courtPhotoService.deleteCourtPhotoByCourtId(UUID.fromString(courtId));
