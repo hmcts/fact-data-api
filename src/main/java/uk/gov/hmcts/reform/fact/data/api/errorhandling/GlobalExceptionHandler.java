@@ -1,17 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
-import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import org.springframework.web.multipart.MultipartException;
-import jakarta.servlet.http.HttpServletRequest;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -20,6 +8,21 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 @Slf4j
 @RestControllerAdvice
@@ -114,9 +117,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(MethodArgumentTypeMismatchException ex) {
-        log.error("400, invalid parameter type. Parameter: {}, Value: {}, Expected type: {}",
-                  ex.getName(), ex.getValue(), ex.getRequiredType()
-                      != null ? ex.getRequiredType().getSimpleName() : UNKNOWN);
+        log.error(
+            "400, invalid parameter type. Parameter: {}, Value: {}, Expected type: {}",
+            ex.getName(), ex.getValue(), ex.getRequiredType()
+                != null ? ex.getRequiredType().getSimpleName() : UNKNOWN
+        );
 
         String expectedType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : UNKNOWN;
         String message = String.format(
@@ -127,6 +132,20 @@ public class GlobalExceptionHandler {
         );
 
         return generateExceptionResponse(message);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ExceptionResponse handle(AuthenticationException ex) {
+        log.error("401 Unauthorized. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ExceptionResponse handle(AccessDeniedException ex) {
+        log.error("403 Forbidden. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
     }
 
     private ExceptionResponse generateExceptionResponse(String message) {

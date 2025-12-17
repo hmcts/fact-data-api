@@ -1,10 +1,16 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.security.AuthorisedRestController;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
+
+import java.util.UUID;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -26,21 +32,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import uk.gov.hmcts.reform.fact.data.api.config.OpenAPIConfiguration;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
-
-import java.util.UUID;
 
 @Tag(name = "Court", description = "Operations related to courts")
-@RestController
 @Validated
 @RequestMapping("/courts")
-@SecurityRequirement(name = OpenAPIConfiguration.BEARER_AUTH_SECURITY_SCHEME)
-@PreAuthorize("@authService.isViewer()")
+@AuthorisedRestController
 public class CourtController {
 
     private final CourtService courtService;
@@ -60,7 +56,7 @@ public class CourtController {
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
     public ResponseEntity<Court> getCourtById(@Parameter(description = "UUID of the court", required = true)
-                                                  @ValidUUID @PathVariable String courtId) {
+                                              @ValidUUID @PathVariable String courtId) {
         return ResponseEntity.ok(courtService.getCourtById(UUID.fromString(courtId)));
     }
 
