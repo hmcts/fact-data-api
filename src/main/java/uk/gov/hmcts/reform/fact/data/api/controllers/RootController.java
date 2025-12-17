@@ -1,16 +1,17 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import static org.springframework.http.ResponseEntity.ok;
+
+import uk.gov.hmcts.reform.fact.data.api.security.AuthorisedRestController;
+
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import static org.springframework.http.ResponseEntity.ok;
 
 /**
  * Default endpoints per application.
  */
-@RestController
+@AuthorisedRestController
 public class RootController {
 
     /**

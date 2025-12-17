@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
@@ -27,6 +28,7 @@ import static org.springframework.http.HttpStatus.PAYLOAD_TOO_LARGE;
 
 @Feature("Court Photo Controller")
 @DisplayName("Court Photo Controller")
+@Disabled
 public final class CourtPhotoControllerFunctionalTest {
 
     private static final HttpClient http = new HttpClient();

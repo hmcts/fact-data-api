@@ -1,5 +1,13 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtContactDetails;
+import uk.gov.hmcts.reform.fact.data.api.security.AuthorisedRestController;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtContactDetailsService;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
+
+import java.util.List;
+import java.util.UUID;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -8,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,18 +25,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtContactDetails;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtContactDetailsService;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
-
-import java.util.List;
-import java.util.UUID;
 
 @Tag(name = "Court Contact Details", description = "Operations related to contact details available for courts")
-@RestController
 @Validated
 @RequestMapping("/courts/{courtId}")
+@AuthorisedRestController
 public class CourtContactDetailsController {
 
     private final CourtContactDetailsService courtContactDetailsService;
@@ -86,6 +88,7 @@ public class CourtContactDetailsController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Court or contact description type not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtContactDetails> createContactDetail(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Contact detail to create", required = true)
@@ -107,6 +110,7 @@ public class CourtContactDetailsController {
             description = "Invalid court ID or contact ID supplied, or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Contact detail, court, or contact description type not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtContactDetails> updateContactDetail(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the contact", required = true) @ValidUUID @PathVariable String contactId,
@@ -132,6 +136,7 @@ public class CourtContactDetailsController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID or contact ID supplied"),
         @ApiResponse(responseCode = "404", description = "Contact detail or court not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteContactDetail(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the contact", required = true) @ValidUUID @PathVariable String contactId

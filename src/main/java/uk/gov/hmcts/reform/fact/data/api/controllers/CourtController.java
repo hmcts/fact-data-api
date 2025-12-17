@@ -1,5 +1,12 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.security.AuthorisedRestController;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
+
+import java.util.UUID;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,17 +32,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
-
-import java.util.UUID;
 
 @Tag(name = "Court", description = "Operations related to courts")
-@RestController
 @Validated
 @RequestMapping("/courts")
+@AuthorisedRestController
 public class CourtController {
 
     private final CourtService courtService;
@@ -54,7 +56,7 @@ public class CourtController {
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
     public ResponseEntity<Court> getCourtById(@Parameter(description = "UUID of the court", required = true)
-                                                  @ValidUUID @PathVariable String courtId) {
+                                              @ValidUUID @PathVariable String courtId) {
         return ResponseEntity.ok(courtService.getCourtById(UUID.fromString(courtId)));
     }
 
@@ -105,6 +107,7 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid court data supplied"),
         @ApiResponse(responseCode = "404", description = "Associated region not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Court> createCourt(@Valid @RequestBody Court court) {
         return ResponseEntity.status(HttpStatus.CREATED).body(courtService.createCourt(court));
     }
@@ -120,6 +123,7 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid court data supplied"),
         @ApiResponse(responseCode = "404", description = "Court or associated region not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Court> updateCourt(@ValidUUID @PathVariable String courtId, @Valid @RequestBody Court court) {
         return ResponseEntity.ok(courtService.updateCourt(UUID.fromString(courtId), court));
     }
