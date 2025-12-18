@@ -22,12 +22,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @SecuredFactRestController(
-    path = "/courts/{courtId}/",
     name = "Court Opening Hours",
     description = "Operations related to opening hours for courts"
 )
+@RequestMapping("/courts/{courtId}/")
 public class CourtOpeningHoursController {
 
     private final CourtOpeningHoursService courtOpeningHoursService;

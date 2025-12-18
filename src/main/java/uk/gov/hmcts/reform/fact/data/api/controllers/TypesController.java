@@ -16,12 +16,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @SecuredFactRestController(
-    path = "/types",
     name = "Types",
     description = "Operations related to types required for the functionality of both the admin portal and frontend"
 )
+@RequestMapping("/types")
 public class TypesController {
 
     private final TypesService typesService;

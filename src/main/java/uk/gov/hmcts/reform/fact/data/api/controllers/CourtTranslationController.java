@@ -20,12 +20,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @SecuredFactRestController(
-    path = "/courts/{courtId}",
     name = "Court Translation",
     description = "Operations related to translation services available for courts"
 )
+@RequestMapping("/courts/{courtId}")
 public class CourtTranslationController {
 
     private final CourtTranslationService courtTranslationService;
