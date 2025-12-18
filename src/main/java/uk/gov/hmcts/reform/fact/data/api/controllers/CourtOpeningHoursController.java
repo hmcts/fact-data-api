@@ -2,7 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
-import uk.gov.hmcts.reform.fact.data.api.security.AuthorisedRestController;
+import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtOpeningHoursService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -14,22 +14,20 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 
-@Tag(name = "Court Opening Hours", description = "Operations related to opening hours for courts")
-@Validated
-@RequestMapping("/courts/{courtId}/")
-@AuthorisedRestController
+@SecuredFactRestController(
+    path = "/courts/{courtId}/",
+    name = "Court Opening Hours",
+    description = "Operations related to opening hours for courts"
+)
 public class CourtOpeningHoursController {
 
     private final CourtOpeningHoursService courtOpeningHoursService;

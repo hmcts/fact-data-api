@@ -2,7 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import static org.springframework.http.ResponseEntity.ok;
 
-import uk.gov.hmcts.reform.fact.data.api.security.AuthorisedRestController;
+import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 /**
  * Default endpoints per application.
  */
-@AuthorisedRestController
+@SecuredFactRestController(name = "Root")
 public class RootController {
 
     /**

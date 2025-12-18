@@ -9,7 +9,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.core.annotation.AliasFor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -19,8 +23,19 @@ import org.springframework.web.bind.annotation.RestController;
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+@Tag(name = "")
+@RequestMapping
 @SecurityRequirement(name = OpenAPIConfiguration.BEARER_AUTH_SECURITY_SCHEME)
 @PreAuthorize("@authService.isViewer()")
+@Validated
 @RestController
-public @interface AuthorisedRestController {
+public @interface SecuredFactRestController {
+    @AliasFor(annotation = RequestMapping.class, attribute = "path")
+    String[] path() default {};
+
+    @AliasFor(annotation = Tag.class, attribute = "name")
+    String name();
+
+    @AliasFor(annotation = Tag.class, attribute = "description")
+    String description() default "";
 }

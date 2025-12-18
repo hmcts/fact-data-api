@@ -73,6 +73,7 @@ spring:
         profile:
           tenant-id: ${AZURE_TENANT_ID}
         app-id-uri: ${APP_REG_ID}
+
   servlet:
     multipart:
       max-file-size: 2MB
