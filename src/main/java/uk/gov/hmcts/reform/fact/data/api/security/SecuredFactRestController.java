@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Retention(RetentionPolicy.RUNTIME)
 @Tag(name = "")
 @SecurityRequirement(name = OpenAPIConfiguration.BEARER_AUTH_SECURITY_SCHEME)
-@PreAuthorize("@authService.isViewer()")
+@PreAuthorize("@authService.canView()")
 @Validated
 @RestController
 public @interface SecuredFactRestController {

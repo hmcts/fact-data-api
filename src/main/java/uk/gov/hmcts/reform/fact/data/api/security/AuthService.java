@@ -16,15 +16,13 @@ public class AuthService {
     static final String ROLE_ADMIN = "Role.Fact.Admin";
     static final String ROLE_VIEWER = "Role.Fact.Viewer";
 
-    public boolean isViewer() {
-        log.info("Checking if viewer is enabled");
+    public boolean canView() {
         return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
            .map(this::findViewerRole)
            .isPresent();
     }
 
     public boolean isAdmin() {
-        log.info("Checking if admin is enabled");
         return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
             .map(this::findAdminRole)
             .isPresent();

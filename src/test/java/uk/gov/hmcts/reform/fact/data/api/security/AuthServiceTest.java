@@ -25,7 +25,7 @@ class AuthServiceTest {
             AuthService.PREFIX + AuthService.ROLE_VIEWER
         ));
 
-        assertThat(authService.isViewer()).isTrue();
+        assertThat(authService.canView()).isTrue();
     }
 
     @Test
@@ -35,7 +35,7 @@ class AuthServiceTest {
             "test"
         ));
 
-        assertThat(authService.isViewer()).isFalse();
+        assertThat(authService.canView()).isFalse();
     }
 
     @Test
@@ -45,7 +45,7 @@ class AuthServiceTest {
             "test",
             AuthService.PREFIX + AuthService.ROLE_ADMIN
         ));
-        assertThat(authService.isViewer()).isTrue();
+        assertThat(authService.canView()).isTrue();
     }
 
     @Test
@@ -56,7 +56,7 @@ class AuthServiceTest {
             AuthService.PREFIX + AuthService.ROLE_ADMIN,
             AuthService.PREFIX + AuthService.ROLE_VIEWER
         ));
-        assertThat(authService.isViewer()).isTrue();
+        assertThat(authService.canView()).isTrue();
     }
 
     @Test
@@ -89,7 +89,7 @@ class AuthServiceTest {
             "APPROLE_Role.Made.Up.Nonsense"
         ));
 
-        assertThat(authService.isViewer()).isFalse();
+        assertThat(authService.canView()).isFalse();
         assertThat(authService.isAdmin()).isFalse();
     }
 }

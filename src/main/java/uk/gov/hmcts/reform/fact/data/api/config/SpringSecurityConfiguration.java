@@ -5,7 +5,6 @@ import uk.gov.hmcts.reform.fact.data.api.security.AuthService;
 import com.azure.spring.cloud.autoconfigure.implementation.aad.security.AadResourceServerHttpSecurityConfigurer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -23,12 +22,8 @@ public class SpringSecurityConfiguration {
 
     private final AuthService authService;
 
-    @Value("${spring.cloud.azure.active-directory.app-id-uri}")
-    private String appId;
-
     @Bean
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
-        log.info("app id = {}", appId);
         return http.with(AadResourceServerHttpSecurityConfigurer.aadResourceServer(), Customizer.withDefaults())
             // ensure that there is at least a bearer token
             .authorizeHttpRequests(auth -> auth
