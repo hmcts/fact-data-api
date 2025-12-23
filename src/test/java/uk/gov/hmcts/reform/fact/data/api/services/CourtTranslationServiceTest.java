@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository;
@@ -60,7 +61,7 @@ class CourtTranslationServiceTest {
     }
 
     @Test
-    void getTranslationByCourtIdThrowsTranslationNotFoundWhenNotFound() {
+    void getTranslationByCourtIdThrowsCourtResourceNotFoundWhenNotFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(courtTranslationRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
 
@@ -118,4 +119,3 @@ class CourtTranslationServiceTest {
         );
     }
 }
-
