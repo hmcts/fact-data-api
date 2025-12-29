@@ -57,7 +57,7 @@ public class SearchCourtController {
 
         if (action != null && (serviceArea == null || serviceArea.isBlank())) {
             return ResponseEntity.badRequest()
-                .body("action requires serviceArea");
+                .body("Action provided but serviceArea is missing");
         }
 
         // * Required: postcode
