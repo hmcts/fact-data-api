@@ -45,6 +45,11 @@ public class PostcodeValidator implements ConstraintValidator<ValidPostcode, Str
             return fail(context, "Postcode region is not supported");
         }
 
+        if (!postcode.contains(" ")) {
+            return fail(context, "Postcode must contain "
+                + "a space between inward and outward codes for OS lookup");
+        }
+
         return true;
     }
 

@@ -14,14 +14,25 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.services.SearchCourtService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
+
+import java.util.List;
 
 @Tag(name = "Court Search", description = "Operations related to the searching of courts")
 @RestController
 @Validated
 @RequestMapping("/search/courts")
 public class SearchCourtController {
+
+    private final SearchCourtService searchCourtService;
+
+    public SearchCourtController(SearchCourtService searchCourtService) {
+        this.searchCourtService = searchCourtService;
+    }
 
     @GetMapping("/postcode")
     @Operation(
@@ -34,7 +45,7 @@ public class SearchCourtController {
         @ApiResponse(responseCode = "404", description = "Information not found. "
             + "For example, service area provided but not valid.")
     })
-    public ResponseEntity<String> getCourtsByPostcode(
+    public ResponseEntity<List<CourtWithDistance>> getCourtsByPostcode(
         @Parameter(description = "Postcode")
         @ValidPostcode
         @NotBlank
@@ -55,21 +66,13 @@ public class SearchCourtController {
         @Max(50)
         Integer limit) {
 
-        if (action != null && (serviceArea == null || serviceArea.isBlank())) {
-            return ResponseEntity.badRequest()
-                .body("Action provided but serviceArea is missing");
+        boolean serviceAreaEmpty = serviceArea == null || serviceArea.isBlank();
+        if (action != null && serviceAreaEmpty || action == null && !serviceAreaEmpty) {
+            throw new NotFoundException("If service area is empty, action is required and vice versa.");
         }
 
-        // * Required: postcode
-        // * Optional: serviceArea
-        // * Optional: action ∈ {NEAREST, DOCUMENTS, UPDATE}
-        // * Optional: limit (default 10, max MAX)
-
-        System.out.println(postcode);
-        System.out.println(serviceArea);
-        System.out.println(action);
-        System.out.println(limit);
-
-        return ResponseEntity.ok("Testy test");
+        return ResponseEntity.ok(serviceAreaEmpty
+                ? searchCourtService.searchPostcodeOnly(postcode, limit)
+                : searchCourtService.searchWithServiceArea(postcode, serviceArea, action, limit));
     }
 }
