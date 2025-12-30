@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
@@ -101,7 +102,7 @@ public class SearchCourtService {
                 return CIVIL_POSTCODE_PREFERENCE;
             }
             case FAMILY -> {
-                if (serviceArea.getCatchmentMethod().equals(LOCAL_AUTHORITY)
+                if (LOCAL_AUTHORITY.equals(serviceArea.getCatchmentMethod())
                     && !authorityName.isEmpty()) {
                     return courtServiceAreasRepository.findByServiceAreaId(serviceArea.getId())
                         .stream()
