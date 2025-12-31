@@ -8,14 +8,18 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import org.apache.coyote.BadRequestException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.SearchCourtService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
@@ -52,7 +56,7 @@ public class SearchCourtController {
         @RequestParam(value = "postcode")
         String postcode,
 
-        @Parameter(description = "Service area slug")
+        @Parameter(description = "Service area name")
         @RequestParam(value = "serviceArea", required = false)
         String serviceArea,
 
@@ -67,8 +71,10 @@ public class SearchCourtController {
         Integer limit) {
 
         boolean serviceAreaEmpty = serviceArea == null || serviceArea.isBlank();
-        if (action != null && serviceAreaEmpty || action == null && !serviceAreaEmpty) {
-            throw new NotFoundException("If service area is empty, action is required and vice versa.");
+        if (action == null ^ serviceAreaEmpty) {
+            throw new InvalidParameterCombinationException(
+                "Both 'serviceArea' and 'action' must be provided together if one is present."
+            );
         }
 
         return ResponseEntity.ok(serviceAreaEmpty

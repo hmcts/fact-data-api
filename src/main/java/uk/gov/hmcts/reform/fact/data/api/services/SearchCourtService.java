@@ -3,8 +3,8 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
+import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
@@ -12,8 +12,12 @@ import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod.LOCAL_AUTHORITY;
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType.REGIONAL;
@@ -32,18 +36,21 @@ public class SearchCourtService {
     private final CourtAddressRepository courtAddressRepository;
     private final CourtServiceAreasRepository courtServiceAreasRepository;
     private final CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
+    private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private static final String CHILDCARE_SERVICE_AREA = "Childcare arrangements if you separate from your partner";
 
     public SearchCourtService(OsService osService,
                               ServiceAreaService serviceAreaService,
                               CourtAddressRepository courtAddressRepository,
                               CourtServiceAreasRepository courtServiceAreasRepository,
-                              CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository) {
+                              CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository,
+                              LocalAuthorityTypeRepository localAuthorityTypeRepository) {
         this.osService = osService;
         this.serviceAreaService = serviceAreaService;
         this.courtAddressRepository = courtAddressRepository;
         this.courtServiceAreasRepository = courtServiceAreasRepository;
         this.courtSinglePointsOfEntryRepository = courtSinglePointsOfEntryRepository;
+        this.localAuthorityTypeRepository = localAuthorityTypeRepository;
     }
 
     public List<CourtWithDistance> searchPostcodeOnly(String postcode, Integer limit) {
@@ -77,7 +84,15 @@ public class SearchCourtService {
 
         log.info(String.valueOf(searchStrategy));
 
-        return null;
+        List<CourtWithDistance> courtWithDistances = executeSearchStrategy(
+            osLocationData,
+            serviceAreaFound,
+            searchStrategy,
+            action,
+            limit
+        );
+        log.info(String.valueOf(courtWithDistances));
+        return courtWithDistances;
     }
 
     /**
@@ -114,7 +129,80 @@ public class SearchCourtService {
         return DEFAULT_AOL_DISTANCE;
     }
 
+    public List<CourtWithDistance> executeSearchStrategy(OsLocationData osLocationData, ServiceArea serviceArea,
+                                                         SearchStrategy searchStrategy, SearchAction action,
+                                                         int limit) {
+        final double lat = osLocationData.getLatitude();
+        final double lon = osLocationData.getLongitude();
+        final UUID aolId = serviceArea.getAreaOfLawId();
+
+        switch (searchStrategy) {
+            case DEFAULT_AOL_DISTANCE: {
+                return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
+            }
+
+            case CIVIL_POSTCODE_PREFERENCE: {
+
+            }
+            case FAMILY_REGIONAL: {
+                UUID serviceAreaId = serviceArea.getId();
+                return getAuthorityID(osLocationData)
+                    .map(LocalAuthorityType::getId)
+                    .map(laId -> courtAddressRepository.findFamilyRegionalByLocalAuthority(
+                        serviceAreaId, lat, lon, aolId, laId
+                    ))
+                    .filter(list -> !list.isEmpty())
+                    .orElseGet(() -> {
+                        List<CourtWithDistance> byAol =
+                            courtAddressRepository.findFamilyRegionalByAol(serviceAreaId, lat, lon, aolId);
+
+                        if (!byAol.isEmpty()) {
+                            return byAol;
+                        }
+                        return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, 1);
+                    });
+            }
+            case FAMILY_NON_REGIONAL: {
+                Optional<List<CourtWithDistance>> byLaOpt = getAuthorityID(osLocationData)
+                    .map(LocalAuthorityType::getId)
+                    .map(laId -> {
+                        log.info(
+                            "Searching for family non-regional by local authority for {}",
+                            osLocationData.getPostcode()
+                        );
+                        return courtAddressRepository.findFamilyNonRegionalByLocalAuthority(
+                            lat, lon, aolId, laId, limit
+                        );
+                    })
+                    .filter(results -> !results.isEmpty());
+
+                if (byLaOpt.isPresent()) {
+                    return byLaOpt.get();
+                }
+            }
+            default: {
+                log.info(
+                    "Default fallback search (if no results found for above search strategy) "
+                        + "for {}, {}, {}", searchStrategy, action, osLocationData.getPostcode()
+                );
+                return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
+            }
+        }
+    }
+
     public List<CourtWithDistance> getChildcareCourtsSpoe(double latitude, double longitude) {
         return courtSinglePointsOfEntryRepository.findNearestCourtBySpoeAndChildrenAreaOfLaw(latitude, longitude);
+    }
+
+    private static String stripTrailingCouncil(String name) {
+        if (name == null) return null;
+        String suffix = " Council";
+        return name.endsWith(suffix) ? name.substring(0, name.length() - suffix.length()) : name;
+    }
+
+    private Optional<LocalAuthorityType> getAuthorityID(OsLocationData osLocationData) {
+        return localAuthorityTypeRepository
+            .findIdByNameIgnoreCase(osLocationData.getAuthorityName()).or(() -> localAuthorityTypeRepository
+                .findIdByNameIgnoreCase(stripTrailingCouncil(osLocationData.getAuthorityName())));
     }
 }

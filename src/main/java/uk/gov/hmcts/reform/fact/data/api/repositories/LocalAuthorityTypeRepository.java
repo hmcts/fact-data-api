@@ -27,4 +27,6 @@ public interface LocalAuthorityTypeRepository extends JpaRepository<LocalAuthori
         nativeQuery = true
     )
     Optional<LocalAuthorityType> findParentOrChildNameByCustodianCode(int code);
+
+    Optional<LocalAuthorityType> findIdByNameIgnoreCase(String name);
 }
