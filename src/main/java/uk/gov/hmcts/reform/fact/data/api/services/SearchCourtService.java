@@ -13,8 +13,10 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.services.search.PostcodeLadder;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -82,17 +84,15 @@ public class SearchCourtService {
             serviceAreaFound
         );
 
-        log.info(String.valueOf(searchStrategy));
+        log.info("searchStrategy: {}", searchStrategy);
 
-        List<CourtWithDistance> courtWithDistances = executeSearchStrategy(
+        return executeSearchStrategy(
             osLocationData,
             serviceAreaFound,
             searchStrategy,
             action,
             limit
         );
-        log.info(String.valueOf(courtWithDistances));
-        return courtWithDistances;
     }
 
     /**
@@ -106,6 +106,9 @@ public class SearchCourtService {
     public SearchStrategy selectSearchStrategy(SearchAction action,
                                                String authorityName,
                                                ServiceArea serviceArea) {
+        log.info("authorityName: {}", authorityName);
+        log.info("serviceArea: {}", serviceArea);
+
         if (action == NEAREST) {
             // Note that DOCUMENTS and UPDATE don't affect business rules here
             // they are only used for sorting logic
@@ -126,6 +129,7 @@ public class SearchCourtService {
                 }
             }
         }
+        log.info("Setting search strategy to default");
         return DEFAULT_AOL_DISTANCE;
     }
 
@@ -138,11 +142,27 @@ public class SearchCourtService {
 
         switch (searchStrategy) {
             case DEFAULT_AOL_DISTANCE: {
+                log.info("running default aol distance");
                 return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
             }
-
             case CIVIL_POSTCODE_PREFERENCE: {
+                log.info("running CIVIL_POSTCODE_PREFERENCE");
+                log.info("osLocationData Postcode: {}", osLocationData.getPostcode());
+                PostcodeLadder ladder = PostcodeLadder.fromPartialPostcode(osLocationData.getPostcode());
+                log.info("ladder: {}", ladder);
+                List<CourtWithDistance> results = courtAddressRepository.findCivilByPartialPostcodeBestTier(
+                    serviceArea.getId(),
+                    lat, lon,
+                    ladder.minusUnitNoSpace(),
+                    ladder.outcodeNoSpace(),
+                    ladder.areacodeNoSpace(),
+                    limit
+                );
+                log.info("results: {}", results);
 
+                return !results.isEmpty()
+                    ? results
+                    : courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
             }
             case FAMILY_REGIONAL: {
                 UUID serviceAreaId = serviceArea.getId();
@@ -153,13 +173,15 @@ public class SearchCourtService {
                     ))
                     .filter(list -> !list.isEmpty())
                     .orElseGet(() -> {
+                        log.info("Finding family regional");
                         List<CourtWithDistance> byAol =
                             courtAddressRepository.findFamilyRegionalByAol(serviceAreaId, lat, lon, aolId);
-
+                        log.info(String.valueOf(byAol));
                         if (!byAol.isEmpty()) {
                             return byAol;
                         }
-                        return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, 1);
+                        log.info("Finding family regional fallback");
+                        return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
                     });
             }
             case FAMILY_NON_REGIONAL: {
@@ -167,8 +189,8 @@ public class SearchCourtService {
                     .map(LocalAuthorityType::getId)
                     .map(laId -> {
                         log.info(
-                            "Searching for family non-regional by local authority for {}",
-                            osLocationData.getPostcode()
+                            "Searching for family non-regional by local authority ({}) for {}",
+                            serviceArea.getAreaOfLaw().getName(), osLocationData.getPostcode()
                         );
                         return courtAddressRepository.findFamilyNonRegionalByLocalAuthority(
                             lat, lon, aolId, laId, limit

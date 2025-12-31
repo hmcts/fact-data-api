@@ -38,7 +38,7 @@ public class SearchCourtController {
         this.searchCourtService = searchCourtService;
     }
 
-    @GetMapping("/postcode")
+    @GetMapping("/v1/postcode")
     @Operation(
         summary = "Search courts by postcode based on various business rules.",
         description = "Retrieve courts based on postcode, service area and action."

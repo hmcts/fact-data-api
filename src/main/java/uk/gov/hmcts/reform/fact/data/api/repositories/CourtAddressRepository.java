@@ -68,91 +68,93 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
     );
 
     @Query(value = """
-        WITH aol AS (
-            SELECT sa.area_of_law_id AS aol_id
-            FROM service_area sa
-            WHERE sa.id = CAST(:serviceAreaId AS uuid)
-            LIMIT 1
-        ),
-        base AS (
-            SELECT
-                c.id   AS courtId,
-                c.name AS courtName,
-                c.slug AS courtSlug,
-                (
-                  point(CAST(ca.lon AS float8), CAST(ca.lat AS float8))
-                  <@>
-                  point(CAST(:lon AS float8), CAST(:lat AS float8))
-                ) AS distance,
-                UPPER(REPLACE(COALESCE(ca.postcode,''), ' ', '')) AS ca_postcode_nospace
-            FROM court c
-            JOIN court_address ca
-              ON ca.court_id = c.id
-            JOIN court_areas_of_law coa
-              ON coa.court_id = c.id
-            JOIN aol
-              ON aol.aol_id = ANY(coa.areas_of_law)
-            WHERE c.open = true
-              AND ca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
-              AND ca.lat IS NOT NULL
-              AND ca.lon IS NOT NULL
-              AND ca.postcode IS NOT NULL
-        ),
-        tiered AS (
-            -- Tier 1: full postcode exact match (no spaces)
+    WITH aol AS (
+        SELECT sa.area_of_law_id AS aol_id
+        FROM service_area sa
+        WHERE sa.id = CAST(:serviceAreaId AS uuid)
+        LIMIT 1
+    ),
+    base AS (
+        SELECT
+            c.id   AS courtId,
+            c.name AS courtName,
+            c.slug AS courtSlug,
+            (
+              point(CAST(ca.lon AS float8), CAST(ca.lat AS float8))
+              <@>
+              point(CAST(:lon AS float8), CAST(:lat AS float8))
+            ) AS distance,
+            UPPER(REPLACE(COALESCE(ca.postcode,''), ' ', '')) AS ca_postcode_nospace
+        FROM court c
+        JOIN court_address ca
+          ON ca.court_id = c.id
+        JOIN court_areas_of_law coa
+          ON coa.court_id = c.id
+        JOIN aol
+          ON aol.aol_id = ANY(coa.areas_of_law)
+        WHERE c.open = true
+          AND ca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
+          AND ca.lat IS NOT NULL
+          AND ca.lon IS NOT NULL
+          AND ca.postcode IS NOT NULL
+    ),
+    tiered AS (
+        -- Tier 1: partial
+        SELECT *
+        FROM (
             SELECT DISTINCT ON (courtId)
                 courtId, courtName, courtSlug, distance, 1 AS tier
             FROM base
-            WHERE ca_postcode_nospace = :fullNoSpace
+            WHERE ca_postcode_nospace LIKE (:partialNoSpace || '%')
             ORDER BY courtId, distance
+        ) t1
 
-            UNION ALL
+        UNION ALL
 
-            -- Tier 2: minus-unit prefix match (e.g. SW1A1)
+        -- Tier 2: outcode (e.g. PL12)
+        SELECT *
+        FROM (
             SELECT DISTINCT ON (courtId)
                 courtId, courtName, courtSlug, distance, 2 AS tier
             FROM base
-            WHERE ca_postcode_nospace LIKE (:minusUnitNoSpace || '%')
+            WHERE ca_postcode_nospace LIKE (:outcodeNoSpace || '%')
             ORDER BY courtId, distance
+        ) t2
 
-            UNION ALL
+        UNION ALL
 
-            -- Tier 3: outcode prefix match (e.g. SW1A)
+        -- Tier 3: area code (e.g. PL)
+        SELECT *
+        FROM (
             SELECT DISTINCT ON (courtId)
                 courtId, courtName, courtSlug, distance, 3 AS tier
             FROM base
-            WHERE ca_postcode_nospace LIKE (:outcodeNoSpace || '%')
-            ORDER BY courtId, distance
-
-            UNION ALL
-
-            -- Tier 4: area code prefix match (e.g. SW)
-            SELECT DISTINCT ON (courtId)
-                courtId, courtName, courtSlug, distance, 4 AS tier
-            FROM base
             WHERE ca_postcode_nospace LIKE (:areacodeNoSpace || '%')
             ORDER BY courtId, distance
-        ),
-        best AS (
-            SELECT MIN(tier) AS best_tier
-            FROM tiered
-        )
-        SELECT courtId, courtName, courtSlug, distance
+        ) t3
+    ),
+    best AS (
+        SELECT MIN(tier) AS best_tier
         FROM tiered
-        WHERE tier = (SELECT best_tier FROM best)
-        ORDER BY distance, courtName
-        LIMIT :limit
-    """, nativeQuery = true)
-    List<CourtWithDistance> findCivilByPostcodeLadderBestTier(
+    )
+    SELECT courtId, courtName, courtSlug, distance
+    FROM tiered
+    WHERE tier = (SELECT best_tier FROM best)
+    ORDER BY distance, courtName
+    LIMIT :limit
+""", nativeQuery = true)
+    List<CourtWithDistance> findCivilByPartialPostcodeBestTier(
         @Param("serviceAreaId") UUID serviceAreaId,
         @Param("lat") double lat,
         @Param("lon") double lon,
-        @Param("fullNoSpace") String fullNoSpace,
-        @Param("minusUnitNoSpace") String minusUnitNoSpace,
+        @Param("partialNoSpace") String partialNoSpace,
         @Param("outcodeNoSpace") String outcodeNoSpace,
         @Param("areacodeNoSpace") String areacodeNoSpace,
         @Param("limit") int limit
     );
+
+
+
 
     @Query(value = """
         SELECT DISTINCT ON (c.id)

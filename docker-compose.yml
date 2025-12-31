@@ -18,6 +18,7 @@ services:
       - TESTING_SUPPORT_ENABLE_API=${TESTING_SUPPORT_ENABLE_API}
       - OS_KEY=${OS_KEY}
   fact-database:
+    # TODO: add migration stuff here instead
     image: hmctspublic.azurecr.io/imported/postgres:16-alpine
     environment:
       POSTGRES_DB: fact
