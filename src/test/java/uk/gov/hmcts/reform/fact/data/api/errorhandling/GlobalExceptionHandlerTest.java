@@ -122,8 +122,8 @@ class GlobalExceptionHandlerTest {
         Map<String, String> response = handler.handle(methodArgumentNotValidException);
 
         assertThat(response).isNotNull();
-        assertThat(response).containsKey("field");
-        assertThat(response.get("field")).isEqualTo(TEST_MESSAGE);
+        assertThat(response).containsEntry("field", TEST_MESSAGE);
+        assertThat(response).containsKey("timestamp");
     }
 
     @Test
