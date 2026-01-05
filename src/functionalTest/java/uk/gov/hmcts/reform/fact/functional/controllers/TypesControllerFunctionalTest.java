@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.fact.functional.controllers;
 
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
@@ -13,7 +12,6 @@ import static org.springframework.http.HttpStatus.OK;
 
 @Feature("Types Controller")
 @DisplayName("Types Controller")
-@Disabled
 public final class TypesControllerFunctionalTest {
 
     private static final String TYPES_BASE_PATH = "/types/v1";
