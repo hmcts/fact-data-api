@@ -15,7 +15,6 @@ def secrets = [
     secret('testing-tenant-id', 'AZURE_TENANT_ID'),
     secret('testing-client-app-id', 'CLIENT_APP_REG_ID'),
     secret('testing-client-secret', 'AZURE_CLIENT_SECRET')
-
   ]
 ]
 
