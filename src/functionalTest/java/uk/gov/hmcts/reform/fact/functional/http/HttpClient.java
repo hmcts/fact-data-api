@@ -17,10 +17,12 @@ import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Simple HTTP wrapper for functional tests.
  */
+@Slf4j
 public final class HttpClient {
 
     private final String baseUrl;
@@ -35,10 +37,16 @@ public final class HttpClient {
             if (factAdminBearerToken.get() == null) {
                 // Load the custom properties from the environment.
                 // AZURE_TENANT_ID and AZURE_CLIENT_SECRET will be used directly from the environment
-                String clientAppRegId = Optional.ofNullable(System.getenv("CLIENT_APP_REG_ID"))
+                final String clientAppRegId = Optional.ofNullable(System.getenv("CLIENT_APP_REG_ID"))
                     .orElseThrow(() -> new IllegalStateException("No CLIENT_APP_REG_ID environment set"));
-                String appRegId = Optional.ofNullable(System.getenv("APP_REG_ID"))
+                final String appRegId = Optional.ofNullable(System.getenv("APP_REG_ID"))
                     .orElseThrow(() -> new IllegalStateException("No APP_REG_ID environment set"));
+                Optional.ofNullable(System.getenv("AZURE_TENANT_ID"))
+                    .orElseThrow(() -> new IllegalStateException("No AZURE_TENANT_ID environment set"));
+                Optional.ofNullable(System.getenv("AZURE_CLIENT_SECRET"))
+                    .orElseThrow(() -> new IllegalStateException("No AZURE_CLIENT_SECRET environment set"));
+
+                log.info("All authentication env variables set");
 
                 // set the scope up for the destination app
                 TokenRequestContext requestContext = new TokenRequestContext();
