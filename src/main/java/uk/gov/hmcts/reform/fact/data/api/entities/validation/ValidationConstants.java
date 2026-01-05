@@ -30,4 +30,7 @@ public class ValidationConstants {
     public static final int POSTCODE_MAX_LENGTH = 8;
     public static final String POSTCODE_MAX_LENGTH_MESSAGE = "Postcode should be no more than {max} characters";
 
+    public static final String GENERIC_DESCRIPTION_REGEX = "^[A-Za-z0-9 ()':,-]+$";
+    public static final String GENERIC_DESCRIPTION_REGEX_MESSAGE = "Value contains invalid characters";
+
 }

@@ -44,4 +44,3 @@ class CustomExceptionsTest {
         assertEquals(TEST_MESSAGE, exception.getMessage(), ASSERTION_MESSAGE);
     }
 }
-
