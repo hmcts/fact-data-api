@@ -30,4 +30,3 @@ class CustomExceptionsTest {
                      ASSERTION_MESSAGE);
     }
 }
-

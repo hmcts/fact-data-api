@@ -18,8 +18,8 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -77,12 +77,14 @@ public class GlobalExceptionHandler {
     public Map<String, String> handle(MethodArgumentNotValidException ex) {
         log.error("400, error while validating request body. Details: {}", ex.getMessage());
 
-        return ex.getBindingResult().getFieldErrors().stream()
-            .collect(Collectors.toMap(
-                fieldError -> fieldError.getField(),
-                fieldError -> fieldError.getDefaultMessage(),
-                (existing, replacement) -> existing
-            ));
+        LinkedHashMap<String, String> errors = new LinkedHashMap<>();
+
+        ex.getBindingResult().getFieldErrors().forEach(fieldError ->
+            errors.putIfAbsent(fieldError.getField(), fieldError.getDefaultMessage())
+        );
+
+        errors.put("timestamp", LocalDateTime.now().toString());
+        return errors;
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -136,4 +138,3 @@ public class GlobalExceptionHandler {
         return response;
     }
 }
-
