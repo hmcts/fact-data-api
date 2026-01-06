@@ -1,4 +1,4 @@
-package uk.gov.hmcts.reform.fact.data.api.controllers;
+package uk.gov.hmcts.reform.fact.data.api.controllers.search;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -8,25 +8,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import org.apache.coyote.BadRequestException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.SearchCourtService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
 
 import java.util.List;
 
-@Tag(name = "Court Search", description = "Operations related to the searching of courts")
+@Tag(name = "Search Court", description = "Operations related to the searching of courts")
 @RestController
 @Validated
 @RequestMapping("/search/courts")
@@ -40,7 +35,7 @@ public class SearchCourtController {
 
     @GetMapping("/v1/postcode")
     @Operation(
-        summary = "Search courts by postcode based on various business rules.",
+        summary = "Search courts by postcode, plus optional fields based on various business rules.",
         description = "Retrieve courts based on postcode, service area and action."
     )
     @ApiResponses(value = {
@@ -70,15 +65,7 @@ public class SearchCourtController {
         @Max(50)
         Integer limit) {
 
-        boolean serviceAreaEmpty = serviceArea == null || serviceArea.isBlank();
-        if (action == null ^ serviceAreaEmpty) {
-            throw new InvalidParameterCombinationException(
-                "Both 'serviceArea' and 'action' must be provided together if one is present."
-            );
-        }
-
-        return ResponseEntity.ok(serviceAreaEmpty
-                ? searchCourtService.searchPostcodeOnly(postcode, limit)
-                : searchCourtService.searchWithServiceArea(postcode, serviceArea, action, limit));
+        return ResponseEntity.ok(
+            searchCourtService.getCourtsBySearchParameters(postcode, serviceArea, action, limit));
     }
 }

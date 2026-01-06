@@ -1,11 +1,13 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchExecuter;
@@ -46,6 +48,30 @@ public class SearchCourtService {
         this.searchExecuter = searchExecuter;
     }
 
+    /**
+     * Determine whether we do a search by postcode itself
+     * or with the service area and action included.
+     * Based on the result, filter based on
+     *
+     * @param postcode The postcode provided
+     * @param serviceArea The service area provided, for example money claims
+     * @param action The action, for example documents
+     * @param limit The amount of rows to return
+     * @return A list of CourtWithDistance objects
+     */
+    public List<CourtWithDistance> getCourtsBySearchParameters(String postcode, String serviceArea,
+                                                       SearchAction action, Integer limit) {
+        boolean serviceAreaEmpty = serviceArea == null || serviceArea.isBlank();
+        if (action == null ^ serviceAreaEmpty) {
+            throw new InvalidParameterCombinationException(
+                "Both 'serviceArea' and 'action' must be provided together if one is present."
+            );
+        }
+        return serviceAreaEmpty
+            ? searchPostcodeOnly(postcode, limit)
+            : searchWithServiceArea(postcode, serviceArea, action, limit);
+    }
+
     public List<CourtWithDistance> searchPostcodeOnly(String postcode, Integer limit) {
         OsDpa osData = osService.getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
         return courtAddressService.findCourtWithDistanceByOsData(osData.getLat(), osData.getLng(), limit);
@@ -54,7 +80,7 @@ public class SearchCourtService {
     /**
      * Where we are not searching simply by nearest based on postcodes.
      * This will be where we have both a Service Area and Search Action provided.
-     * The SearchStrategy will be found and executed according to business rule logic.
+     * The SearchStrategy will be found and executed according to the logic of business rules.
      *
      * @param postcode The postcode provided by the user
      * @param serviceArea The service area, for example money claims

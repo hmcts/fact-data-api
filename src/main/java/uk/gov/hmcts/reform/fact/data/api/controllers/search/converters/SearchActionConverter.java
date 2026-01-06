@@ -1,4 +1,4 @@
-package uk.gov.hmcts.reform.fact.data.api.controllers.converters;
+package uk.gov.hmcts.reform.fact.data.api.controllers.search.converters;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;

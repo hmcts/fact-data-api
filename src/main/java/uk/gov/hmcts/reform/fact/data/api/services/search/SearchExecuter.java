@@ -47,7 +47,6 @@ public class SearchExecuter {
 
         switch (searchStrategy) {
             case DEFAULT_AOL_DISTANCE: {
-                log.info("running default aol distance");
                 return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
             }
             case CIVIL_POSTCODE_PREFERENCE: {
@@ -104,7 +103,7 @@ public class SearchExecuter {
                 }
             }
             default: {
-                log.info(
+                log.debug(
                     "Default fallback search (if no results found for determined search strategy) "
                         + "for {}, {}, {}", searchStrategy, action, osLocationData.getPostcode()
                 );
