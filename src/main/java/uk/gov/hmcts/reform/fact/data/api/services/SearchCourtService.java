@@ -3,23 +3,14 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
-import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
-import uk.gov.hmcts.reform.fact.data.api.services.search.PostcodeLadder;
+import uk.gov.hmcts.reform.fact.data.api.services.search.SearchExecuter;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
 
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod.LOCAL_AUTHORITY;
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType.REGIONAL;
@@ -35,61 +26,60 @@ public class SearchCourtService {
 
     private final OsService osService;
     private final ServiceAreaService serviceAreaService;
-    private final CourtAddressRepository courtAddressRepository;
-    private final CourtServiceAreasRepository courtServiceAreasRepository;
-    private final CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
-    private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
+    private final CourtSinglePointOfEntryService courtSinglePointOfEntryService;
+    private final CourtServiceAreaService courtServiceAreaService;
+    private final CourtAddressService courtAddressService;
+    private final SearchExecuter searchExecuter;
     private static final String CHILDCARE_SERVICE_AREA = "Childcare arrangements if you separate from your partner";
 
     public SearchCourtService(OsService osService,
                               ServiceAreaService serviceAreaService,
-                              CourtAddressRepository courtAddressRepository,
-                              CourtServiceAreasRepository courtServiceAreasRepository,
-                              CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository,
-                              LocalAuthorityTypeRepository localAuthorityTypeRepository) {
+                              CourtSinglePointOfEntryService courtSinglePointOfEntryService,
+                              CourtServiceAreaService courtServiceAreaService,
+                              CourtAddressService courtAddressService,
+                              SearchExecuter searchExecuter) {
         this.osService = osService;
         this.serviceAreaService = serviceAreaService;
-        this.courtAddressRepository = courtAddressRepository;
-        this.courtServiceAreasRepository = courtServiceAreasRepository;
-        this.courtSinglePointsOfEntryRepository = courtSinglePointsOfEntryRepository;
-        this.localAuthorityTypeRepository = localAuthorityTypeRepository;
+        this.courtSinglePointOfEntryService = courtSinglePointOfEntryService;
+        this.courtServiceAreaService = courtServiceAreaService;
+        this.courtAddressService = courtAddressService;
+        this.searchExecuter = searchExecuter;
     }
 
     public List<CourtWithDistance> searchPostcodeOnly(String postcode, Integer limit) {
-        log.info("searchPostcodeOnly");
         OsDpa osData = osService.getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
-        return courtAddressRepository.findNearestCourts(osData.getLat(), osData.getLng(), limit);
+        return courtAddressService.findCourtWithDistanceByOsData(osData.getLat(), osData.getLng(), limit);
     }
 
+    /**
+     * Where we are not searching simply by nearest based on postcodes.
+     * This will be where we have both a Service Area and Search Action provided.
+     * The SearchStrategy will be found and executed according to business rule logic.
+     *
+     * @param postcode The postcode provided by the user
+     * @param serviceArea The service area, for example money claims
+     * @param action The action, for example documents
+     * @param limit The amount of rows returned
+     * @return A list of CourtWithDistances
+     */
     public List<CourtWithDistance> searchWithServiceArea(String postcode, String serviceArea,
                                                          SearchAction action, Integer limit) {
-        log.info("searchWithServiceArea");
-        log.info("postcode: {}", postcode);
-        log.info("serviceArea: {}", serviceArea);
-        log.info("action: {}", action);
-
         OsLocationData osLocationData = osService.getOsLonLatDistrictByPartial(postcode);
         ServiceArea serviceAreaFound = serviceAreaService.getServiceAreaByName(serviceArea);
 
-        log.info("serviceAreaFound: {}", serviceAreaFound);
-
         if (serviceArea.equalsIgnoreCase(CHILDCARE_SERVICE_AREA)) {
-            log.info("Found childcare service");
-            return getChildcareCourtsSpoe(osLocationData.getLatitude(), osLocationData.getLongitude());
+            return courtSinglePointOfEntryService
+                .getChildcareCourtsSpoe(osLocationData.getLatitude(), osLocationData.getLongitude());
         }
 
-        SearchStrategy searchStrategy = selectSearchStrategy(
-            action,
-            osLocationData.getAuthorityName(),
-            serviceAreaFound
-        );
-
-        log.info("searchStrategy: {}", searchStrategy);
-
-        return executeSearchStrategy(
+        return searchExecuter.executeSearchStrategy(
             osLocationData,
             serviceAreaFound,
-            searchStrategy,
+            selectSearchStrategy(
+                action,
+                osLocationData.getAuthorityName(),
+                serviceAreaFound
+            ),
             action,
             limit
         );
@@ -106,9 +96,6 @@ public class SearchCourtService {
     public SearchStrategy selectSearchStrategy(SearchAction action,
                                                String authorityName,
                                                ServiceArea serviceArea) {
-        log.info("authorityName: {}", authorityName);
-        log.info("serviceArea: {}", serviceArea);
-
         if (action == NEAREST) {
             // Note that DOCUMENTS and UPDATE don't affect business rules here
             // they are only used for sorting logic
@@ -122,109 +109,15 @@ public class SearchCourtService {
             case FAMILY -> {
                 if (LOCAL_AUTHORITY.equals(serviceArea.getCatchmentMethod())
                     && !authorityName.isEmpty()) {
-                    return courtServiceAreasRepository.findByServiceAreaId(serviceArea.getId())
+                    return courtServiceAreaService.findByServiceAreaId(serviceArea.getId())
                         .stream()
                         .anyMatch(courtService -> courtService.getCatchmentType().equals(REGIONAL))
                         ? FAMILY_REGIONAL : FAMILY_NON_REGIONAL;
                 }
             }
         }
-        log.info("Setting search strategy to default");
+        log.debug("Setting search strategy to default for {}, {}, {}",
+                  action, serviceArea, authorityName);
         return DEFAULT_AOL_DISTANCE;
-    }
-
-    public List<CourtWithDistance> executeSearchStrategy(OsLocationData osLocationData, ServiceArea serviceArea,
-                                                         SearchStrategy searchStrategy, SearchAction action,
-                                                         int limit) {
-        final double lat = osLocationData.getLatitude();
-        final double lon = osLocationData.getLongitude();
-        final UUID aolId = serviceArea.getAreaOfLawId();
-
-        switch (searchStrategy) {
-            case DEFAULT_AOL_DISTANCE: {
-                log.info("running default aol distance");
-                return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
-            }
-            case CIVIL_POSTCODE_PREFERENCE: {
-                log.info("running CIVIL_POSTCODE_PREFERENCE");
-                log.info("osLocationData Postcode: {}", osLocationData.getPostcode());
-                PostcodeLadder ladder = PostcodeLadder.fromPartialPostcode(osLocationData.getPostcode());
-                log.info("ladder: {}", ladder);
-                List<CourtWithDistance> results = courtAddressRepository.findCivilByPartialPostcodeBestTier(
-                    serviceArea.getId(),
-                    lat, lon,
-                    ladder.minusUnitNoSpace(),
-                    ladder.outcodeNoSpace(),
-                    ladder.areacodeNoSpace(),
-                    limit
-                );
-                log.info("results: {}", results);
-
-                return !results.isEmpty()
-                    ? results
-                    : courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
-            }
-            case FAMILY_REGIONAL: {
-                UUID serviceAreaId = serviceArea.getId();
-                return getAuthorityID(osLocationData)
-                    .map(LocalAuthorityType::getId)
-                    .map(laId -> courtAddressRepository.findFamilyRegionalByLocalAuthority(
-                        serviceAreaId, lat, lon, aolId, laId
-                    ))
-                    .filter(list -> !list.isEmpty())
-                    .orElseGet(() -> {
-                        log.info("Finding family regional");
-                        List<CourtWithDistance> byAol =
-                            courtAddressRepository.findFamilyRegionalByAol(serviceAreaId, lat, lon, aolId);
-                        log.info(String.valueOf(byAol));
-                        if (!byAol.isEmpty()) {
-                            return byAol;
-                        }
-                        log.info("Finding family regional fallback");
-                        return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
-                    });
-            }
-            case FAMILY_NON_REGIONAL: {
-                Optional<List<CourtWithDistance>> byLaOpt = getAuthorityID(osLocationData)
-                    .map(LocalAuthorityType::getId)
-                    .map(laId -> {
-                        log.info(
-                            "Searching for family non-regional by local authority ({}) for {}",
-                            serviceArea.getAreaOfLaw().getName(), osLocationData.getPostcode()
-                        );
-                        return courtAddressRepository.findFamilyNonRegionalByLocalAuthority(
-                            lat, lon, aolId, laId, limit
-                        );
-                    })
-                    .filter(results -> !results.isEmpty());
-
-                if (byLaOpt.isPresent()) {
-                    return byLaOpt.get();
-                }
-            }
-            default: {
-                log.info(
-                    "Default fallback search (if no results found for above search strategy) "
-                        + "for {}, {}, {}", searchStrategy, action, osLocationData.getPostcode()
-                );
-                return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
-            }
-        }
-    }
-
-    public List<CourtWithDistance> getChildcareCourtsSpoe(double latitude, double longitude) {
-        return courtSinglePointsOfEntryRepository.findNearestCourtBySpoeAndChildrenAreaOfLaw(latitude, longitude);
-    }
-
-    private static String stripTrailingCouncil(String name) {
-        if (name == null) return null;
-        String suffix = " Council";
-        return name.endsWith(suffix) ? name.substring(0, name.length() - suffix.length()) : name;
-    }
-
-    private Optional<LocalAuthorityType> getAuthorityID(OsLocationData osLocationData) {
-        return localAuthorityTypeRepository
-            .findIdByNameIgnoreCase(osLocationData.getAuthorityName()).or(() -> localAuthorityTypeRepository
-                .findIdByNameIgnoreCase(stripTrailingCouncil(osLocationData.getAuthorityName())));
     }
 }
