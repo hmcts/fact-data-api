@@ -27,6 +27,8 @@ public class SpringSecurityConfiguration {
         return http.with(AadResourceServerHttpSecurityConfigurer.aadResourceServer(), Customizer.withDefaults())
             // ensure that there is at least a bearer token
             .authorizeHttpRequests(auth -> auth
+                // expose the root to allows Azure's "Always On" functionality to work
+                .requestMatchers("/").permitAll()
                 // expose the openapi testing UI internally
                 .requestMatchers("/swagger-ui/*", "/v3/api-docs", "/v3/api-docs/*").permitAll()
                 // health endpoints are required by

@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @Feature("OpenAPI Publisher")
 @DisplayName("OpenAPI Publisher")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest()
+@SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class OpenAPIPublisherTest {
