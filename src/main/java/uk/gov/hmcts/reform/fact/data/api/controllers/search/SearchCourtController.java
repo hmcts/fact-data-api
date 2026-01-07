@@ -56,21 +56,21 @@ public class SearchCourtController {
         @ValidPostcode
         @NotBlank
         @RequestParam(value = "postcode")
-        String postcode,
+        final String postcode,
 
         @Parameter(description = "Service area name")
         @RequestParam(value = "serviceArea", required = false)
-        String serviceArea,
+        final String serviceArea,
 
         @Parameter(description = "Action to perform")
         @RequestParam(value = "action", required = false)
-        SearchAction action,
+        final SearchAction action,
 
         @Parameter(description = "Maximum number of results (default 10)")
         @RequestParam(value = "limit", required = false, defaultValue = "10")
         @Min(1)
         @Max(50)
-        Integer limit) {
+        final Integer limit) {
 
         return ResponseEntity.ok(
             searchCourtService.getCourtsBySearchParameters(postcode, serviceArea, action, limit));

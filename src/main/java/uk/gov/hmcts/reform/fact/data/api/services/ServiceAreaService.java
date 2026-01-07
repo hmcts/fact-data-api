@@ -6,6 +6,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 @Service
 public class ServiceAreaService {
@@ -20,8 +21,17 @@ public class ServiceAreaService {
         return serviceAreaRepository.findByNameIgnoreCase(serviceArea.trim())
             .orElseThrow(() -> new NotFoundException(
                 MessageFormat.format(
-                    "Service area {0} not found",
-                    serviceArea
-                )));
+                    "Service area {0} not found", serviceArea
+                 )));
+    }
+
+    public List<ServiceArea> getAllServiceAreasForService(String serviceName) {
+        List<ServiceArea> areas =
+            serviceAreaRepository.findAllByServiceName(serviceName.trim());
+
+        if (areas.isEmpty()) {
+            throw new NotFoundException("No service areas found for service " + serviceName);
+        }
+        return areas;
     }
 }
