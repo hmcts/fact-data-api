@@ -47,21 +47,7 @@ public final class CourtAreasOfLawControllerFunctionalTest {
     void shouldSetAdoptionToTrue() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Areas Of Law Adoption");
 
-        final CourtAreasOfLaw initialAreasOfLaw = new CourtAreasOfLaw();
-        initialAreasOfLaw.setCourtId(courtId);
-        initialAreasOfLaw.setAreasOfLaw(List.of());
-
-        final Response initialPutResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
-                                                       initialAreasOfLaw);
-        assertThat(initialPutResponse.statusCode()).isEqualTo(CREATED.value());
-
-        final Response initialGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
-        assertThat(initialGetResponse.statusCode()).isEqualTo(OK.value());
-
-        final Map<String, Boolean> initialAreasMap = mapper.readValue(
-            initialGetResponse.asString(),
-            new TypeReference<Map<String, Boolean>>() {}
-        );
+        final Map<String, Boolean> initialAreasMap = initializeCourtAreasOfLaw(courtId);
 
         final UUID adoptionId = TestDataHelper.extractAreaOfLawTypeIdByName(initialAreasMap, "Adoption");
 
@@ -92,21 +78,7 @@ public final class CourtAreasOfLawControllerFunctionalTest {
     void shouldReplaceAreasOfLawOnUpdate() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Areas Of Law Replace");
 
-        final CourtAreasOfLaw initialAreasOfLaw = new CourtAreasOfLaw();
-        initialAreasOfLaw.setCourtId(courtId);
-        initialAreasOfLaw.setAreasOfLaw(List.of());
-
-        final Response initialPutResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
-                                                       initialAreasOfLaw);
-        assertThat(initialPutResponse.statusCode()).isEqualTo(CREATED.value());
-
-        final Response initialGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
-        assertThat(initialGetResponse.statusCode()).isEqualTo(OK.value());
-
-        final Map<String, Boolean> initialAreasMap = mapper.readValue(
-            initialGetResponse.asString(),
-            new TypeReference<Map<String, Boolean>>() {}
-        );
+        final Map<String, Boolean> initialAreasMap = initializeCourtAreasOfLaw(courtId);
 
         final UUID adoptionId = TestDataHelper.extractAreaOfLawTypeIdByName(initialAreasMap, "Adoption");
         final UUID divorceId = TestDataHelper.extractAreaOfLawTypeIdByName(initialAreasMap, "Divorce");
@@ -121,6 +93,8 @@ public final class CourtAreasOfLawControllerFunctionalTest {
         assertThat(firstUpdateResponse.statusCode()).isEqualTo(CREATED.value());
 
         final Response firstGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
+        assertThat(firstGetResponse.statusCode()).isEqualTo(OK.value());
+
         final Map<String, Boolean> firstAreasMap = mapper.readValue(
             firstGetResponse.asString(),
             new TypeReference<Map<String, Boolean>>() {}
@@ -145,6 +119,8 @@ public final class CourtAreasOfLawControllerFunctionalTest {
         assertThat(secondUpdateResponse.statusCode()).isEqualTo(CREATED.value());
 
         final Response secondGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
+        assertThat(secondGetResponse.statusCode()).isEqualTo(OK.value());
+
         final Map<String, Boolean> secondAreasMap = mapper.readValue(
             secondGetResponse.asString(),
             new TypeReference<Map<String, Boolean>>() {}
@@ -188,6 +164,30 @@ public final class CourtAreasOfLawControllerFunctionalTest {
         assertThat(putResponse.statusCode()).isEqualTo(404);
         assertThat(putResponse.jsonPath().getString("message"))
             .contains("Court not found, ID: " + nonExistentCourtId);
+    }
+
+    /**
+     * Initializes a court with an empty areas of law list and returns all available areas.
+     *
+     * @param courtId the court ID to initialize
+     * @return map of all areas of law with their availability status
+     */
+    private static Map<String, Boolean> initializeCourtAreasOfLaw(final UUID courtId) throws Exception {
+        final CourtAreasOfLaw initialAreasOfLaw = new CourtAreasOfLaw();
+        initialAreasOfLaw.setCourtId(courtId);
+        initialAreasOfLaw.setAreasOfLaw(List.of());
+
+        final Response initialPutResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
+                                                       initialAreasOfLaw);
+        assertThat(initialPutResponse.statusCode()).isEqualTo(CREATED.value());
+
+        final Response initialGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
+        assertThat(initialGetResponse.statusCode()).isEqualTo(OK.value());
+
+        return mapper.readValue(
+            initialGetResponse.asString(),
+            new TypeReference<Map<String, Boolean>>() {}
+        );
     }
 
     @AfterAll

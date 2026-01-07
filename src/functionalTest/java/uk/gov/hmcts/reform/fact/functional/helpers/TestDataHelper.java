@@ -99,7 +99,7 @@ public final class TestDataHelper {
      */
     public static UUID extractAreaOfLawTypeIdByName(final Map<String, Boolean> areasOfLawMap, final String name) {
         for (String key : areasOfLawMap.keySet()) {
-            if (key.matches(".*name=" + name + "[,)].*")) {
+            if (matchesAreaOfLawName(key, name)) {
                 final Matcher matcher = AREA_OF_LAW_ID_PATTERN.matcher(key);
                 if (matcher.find()) {
                     return UUID.fromString(matcher.group(1));
@@ -107,7 +107,10 @@ public final class TestDataHelper {
             }
         }
 
-        throw new IllegalStateException("Area of law name not found in response: " + name);
+        throw new IllegalStateException(
+            String.format("Area of law name not found in response: %s. Available keys: %s",
+                          name, areasOfLawMap.keySet())
+        );
     }
 
     /**
@@ -119,11 +122,26 @@ public final class TestDataHelper {
      */
     public static boolean isAreaOfLawSelectedByName(final Map<String, Boolean> areasOfLawMap, final String name) {
         for (Map.Entry<String, Boolean> entry : areasOfLawMap.entrySet()) {
-            if (entry.getKey().matches(".*name=" + name + "[,)].*")) {
+            if (matchesAreaOfLawName(entry.getKey(), name)) {
                 return entry.getValue();
             }
         }
 
-        throw new IllegalStateException("Area of law name not found in response: " + name);
+        throw new IllegalStateException(
+            String.format("Area of law name not found in response: %s. Available keys: %s",
+                          name, areasOfLawMap.keySet())
+        );
+    }
+
+    /**
+     * Checks if a map key matches the specified area of law name.
+     *
+     * @param key the map key to check
+     * @param name the area of law name to match
+     * @return true if the key contains the specified name
+     */
+    private static boolean matchesAreaOfLawName(final String key, final String name) {
+        final Pattern namePattern = Pattern.compile(".*name=" + name + "[,)].*");
+        return namePattern.matcher(key).matches();
     }
 }
