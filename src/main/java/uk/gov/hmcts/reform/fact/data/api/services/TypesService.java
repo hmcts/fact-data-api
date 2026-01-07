@@ -15,6 +15,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class TypesService {
@@ -51,12 +52,32 @@ public class TypesService {
     }
 
     /**
+     * Get multiple areas of law types by their IDs.
+     *
+     * @param areaOfLawTypeIds List of areas of law type IDs to retrieve.
+     * @return List of areas of law types matching the provided IDs.
+     */
+    public List<AreaOfLawType> getAllAreasOfLawTypesByIds(List<UUID> areaOfLawTypeIds) {
+        return areaOfLawTypeRepository.findAllById(areaOfLawTypeIds);
+    }
+
+    /**
      * Get all court types.
      *
      * @return The court types.
      */
     public List<CourtType> getCourtTypes() {
         return courtTypeRepository.findAll();
+    }
+
+    /**
+     * Get multiple court types by their IDs.
+     *
+     * @param courtTypeIds List court type IDs to retrieve.
+     * @return List court types matching the provided IDs.
+     */
+    public List<CourtType> getAllCourtTypesByIds(List<UUID> courtTypeIds) {
+        return courtTypeRepository.findAllById(courtTypeIds);
     }
 
     /**
