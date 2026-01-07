@@ -121,9 +121,9 @@ public final class TestDataHelper {
      * @return true if selected, false if not selected
      */
     public static boolean isAreaOfLawSelectedByName(final Map<String, Boolean> areasOfLawMap, final String name) {
-        for (Map.Entry<String, Boolean> entry : areasOfLawMap.entrySet()) {
-            if (matchesAreaOfLawName(entry.getKey(), name)) {
-                return entry.getValue();
+        for (String key : areasOfLawMap.keySet()) {
+            if (matchesAreaOfLawName(key, name)) {
+                return areasOfLawMap.get(key);
             }
         }
 
@@ -141,7 +141,6 @@ public final class TestDataHelper {
      * @return true if the key contains the specified name
      */
     private static boolean matchesAreaOfLawName(final String key, final String name) {
-        final Pattern namePattern = Pattern.compile(".*name=" + name + "[,)].*");
-        return namePattern.matcher(key).matches();
+        return key.contains("name=" + name);
     }
 }
