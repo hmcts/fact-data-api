@@ -24,6 +24,14 @@ public class CourtServiceAreaService {
         return courtServiceAreasRepository.findByServiceAreaId(id);
     }
 
+    /**
+     * Return the court service area details which includes the court_id on the frontend.
+     * We can then call a service centre endpoint from the frontend if the
+     * catchment type is NATIONAL.
+     *
+     * @param serviceAreaName The name of the service area.
+     * @return A list of courts that link to the service area.
+     */
     public List<CourtServiceAreas> findByServiceAreaName(String serviceAreaName) {
         return courtServiceAreasRepository.findByServiceAreaId(
             serviceAreaService.getServiceAreaByName(serviceAreaName).getId());

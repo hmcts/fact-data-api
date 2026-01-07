@@ -29,4 +29,6 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
     boolean existsBySlug(String slug);
 
     List<Court> findByNameStartingWithIgnoreCase(String namePrefix);
+    List<Court> findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(String prefix, boolean active);
+
 }

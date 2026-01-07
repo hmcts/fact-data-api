@@ -9,8 +9,11 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class CourtService {
@@ -102,6 +105,19 @@ public class CourtService {
         existingCourt.setWarningNotice(court.getWarningNotice());
 
         return courtRepository.save(existingCourt);
+    }
+
+    /**
+     * Return a list of courts based on a provided prefix.
+     *
+     * @param prefix The prefix.
+     * @return A list of courts based on the provided prefix.
+     */
+    public List<Court> getCourtsByPrefixAndActiveSearch(String prefix) {
+        return new ArrayList<>(courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(
+            prefix,
+            true
+        ));
     }
 
     /**
