@@ -5,7 +5,10 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
@@ -14,6 +17,9 @@ import static org.springframework.http.HttpStatus.CREATED;
  * Helper methods for fetching test data via API endpoints.
  */
 public final class TestDataHelper {
+
+    private static final Pattern AREA_OF_LAW_ID_PATTERN =
+        Pattern.compile("id=([0-9a-fA-F-]{36})");
 
     private TestDataHelper() {
         // Utility class
@@ -82,5 +88,42 @@ public final class TestDataHelper {
         facilities.setBabyChanging(true);
         facilities.setWifi(true);
         return facilities;
+    }
+
+    /**
+     * Extracts a single area of law type ID by name from the response map keys.
+     *
+     * @param areasOfLawMap the map returned by GET /courts/{courtId}/v1/areas-of-law
+     * @param name the exact area of law name to match
+     * @return the UUID for the requested area of law name
+     */
+    public static UUID extractAreaOfLawTypeIdByName(final Map<String, Boolean> areasOfLawMap, final String name) {
+        for (String key : areasOfLawMap.keySet()) {
+            if (key.matches(".*name=" + name + "[,)].*")) {
+                final Matcher matcher = AREA_OF_LAW_ID_PATTERN.matcher(key);
+                if (matcher.find()) {
+                    return UUID.fromString(matcher.group(1));
+                }
+            }
+        }
+
+        throw new IllegalStateException("Area of law name not found in response: " + name);
+    }
+
+    /**
+     * Finds the selected status for an area of law by name.
+     *
+     * @param areasOfLawMap the map returned by GET /courts/{courtId}/v1/areas-of-law
+     * @param name the exact area of law name to match
+     * @return true if selected, false if not selected
+     */
+    public static boolean isAreaOfLawSelectedByName(final Map<String, Boolean> areasOfLawMap, final String name) {
+        for (Map.Entry<String, Boolean> entry : areasOfLawMap.entrySet()) {
+            if (entry.getKey().matches(".*name=" + name + "[,)].*")) {
+                return entry.getValue();
+            }
+        }
+
+        throw new IllegalStateException("Area of law name not found in response: " + name);
     }
 }
