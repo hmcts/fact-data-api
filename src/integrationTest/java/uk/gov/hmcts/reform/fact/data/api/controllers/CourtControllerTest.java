@@ -12,11 +12,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -51,7 +53,7 @@ class CourtControllerTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1 returns court details")
     void getCourtByIdReturnsCourt() throws Exception {
-        CourtDetails courtDetails = buildCourtDetails(COURT_ID);
+        CourtDetails courtDetails = buildCourtDetails(COURT_ID, "Test Court");
 
         when(courtService.getCourtDetailsById(COURT_ID)).thenReturn(courtDetails);
 
@@ -240,6 +242,37 @@ class CourtControllerTest {
             .andExpect(status().isBadRequest());
     }
 
+    @Test
+    @DisplayName("GET /courts/all/v1 return 200 and the complete list of CourtDetails")
+    void getAllCourtsReturns200() throws Exception {
+        List<CourtDetails> courtDetailsList = new ArrayList<>();
+
+        for (int i = 0; i < 5; i++) {
+            courtDetailsList.add(buildCourtDetails(
+                UUID.randomUUID(),
+                String.format("Test Court %s", (char) (i + 0x41))
+            ));
+        }
+
+        when(courtService.getAllCourtDetails()).thenReturn(courtDetailsList);
+
+        mockMvc.perform(get("/courts/all/v1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(courtDetailsList.size()))
+            .andExpect(jsonPath("$[0].id").value(courtDetailsList.getFirst().getId().toString()))
+            .andExpect(jsonPath("$[0].name").value(courtDetailsList.getFirst().getName()))
+            .andExpect(jsonPath("$[0].regionId").value(courtDetailsList.getFirst().getRegionId().toString()))
+            .andExpect(jsonPath("$[1].id").value(courtDetailsList.get(1).getId().toString()))
+            .andExpect(jsonPath("$[1].name").value(courtDetailsList.get(1).getName()))
+            .andExpect(jsonPath("$[2].id").value(courtDetailsList.get(2).getId().toString()))
+            .andExpect(jsonPath("$[2].name").value(courtDetailsList.get(2).getName()))
+            .andExpect(jsonPath("$[3].id").value(courtDetailsList.get(3).getId().toString()))
+            .andExpect(jsonPath("$[3].name").value(courtDetailsList.get(3).getName()))
+            .andExpect(jsonPath("$[4].id").value(courtDetailsList.getLast().getId().toString()))
+            .andExpect(jsonPath("$[4].name").value(courtDetailsList.getLast().getName()));
+    }
+
+
     private Court buildCourt(UUID id) {
         return Court.builder()
             .id(id)
@@ -254,11 +287,14 @@ class CourtControllerTest {
             .build();
     }
 
-    private CourtDetails buildCourtDetails(UUID id) {
+    private CourtDetails buildCourtDetails(UUID id, String name) {
         return CourtDetails.builder()
             .id(id)
-            .name("Test Court")
-            .slug("test-court")
+            .name(name)
+            .slug(name.toLowerCase()
+                      .replaceAll("[^a-z\\s-]", "")
+                      .replaceAll("[\\s-]+", "-")
+                      .replaceAll("(^-)|(-$)", ""))
             .open(Boolean.TRUE)
             .warningNotice("Notice")
             .regionId(REGION_ID)
