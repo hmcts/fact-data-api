@@ -8,8 +8,13 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.os.OsData;
+import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
+import uk.gov.hmcts.reform.fact.data.api.os.OsFeignClient;
 
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,13 +25,16 @@ public class CourtAddressesService {
     private final CourtAddressRepository courtAddressRepository;
     private final CourtService courtService;
     private final TypesService typesService;
+    private final OsFeignClient osFeignClient;
 
     public CourtAddressesService(CourtAddressRepository courtAddressRepository,
                                  CourtService courtService,
-                                 TypesService typesService) {
+                                 TypesService typesService,
+                                 OsFeignClient osFeignClient) {
         this.courtAddressRepository = courtAddressRepository;
         this.courtService = courtService;
         this.typesService = typesService;
+        this.osFeignClient = osFeignClient;
     }
 
     /**
@@ -76,6 +84,15 @@ public class CourtAddressesService {
         request.setAreasOfLaw(getValidatedAreasOfLawTypeIds(request.getAreasOfLaw()));
         request.setCourtTypes(getValidatedCourtTypeIds(request.getCourtTypes()));
 
+        if (request.getPostcode() != null) {
+            OsData osData = osFeignClient.getOsPostcodeData(request.getPostcode());
+            if (osData != null && osData.getResults() != null && !osData.getResults().isEmpty()) {
+                OsDpa dpa = osData.getResults().getFirst().getDpa();
+                request.setLat(BigDecimal.valueOf(dpa.getLat()));
+                request.setLon(BigDecimal.valueOf(dpa.getLng()));
+            }
+        }
+
         log.info("Creating address for court {}", courtId);
         return courtAddressRepository.save(request);
     }
@@ -99,11 +116,18 @@ public class CourtAddressesService {
         existing.setCounty(request.getCounty());
         existing.setPostcode(request.getPostcode());
         existing.setEpimId(request.getEpimId());
-        existing.setLat(request.getLat());
-        existing.setLon(request.getLon());
         existing.setAddressType(request.getAddressType());
         existing.setAreasOfLaw(getValidatedAreasOfLawTypeIds(request.getAreasOfLaw()));
         existing.setCourtTypes(getValidatedCourtTypeIds(request.getCourtTypes()));
+
+        if (request.getPostcode() != null) {
+            OsData osData = osFeignClient.getOsPostcodeData(request.getPostcode());
+            if (osData != null && osData.getResults() != null && !osData.getResults().isEmpty()) {
+                OsDpa dpa = osData.getResults().getFirst().getDpa();
+                existing.setLat(BigDecimal.valueOf(dpa.getLat()));
+                existing.setLon(BigDecimal.valueOf(dpa.getLng()));
+            }
+        }
 
         log.info("Updating address {} for court {}", addressId, courtId);
         return courtAddressRepository.save(existing);

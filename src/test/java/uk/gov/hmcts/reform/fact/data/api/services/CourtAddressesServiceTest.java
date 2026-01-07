@@ -12,6 +12,10 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.os.OsData;
+import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
+import uk.gov.hmcts.reform.fact.data.api.os.OsFeignClient;
+import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 
 import java.util.UUID;
@@ -21,6 +25,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +41,9 @@ class CourtAddressesServiceTest {
 
     @Mock
     private TypesService typesService;
+
+    @Mock
+    private OsFeignClient osFeignClient;
 
     @InjectMocks
     private CourtAddressesService courtAddressesService;
@@ -61,6 +70,18 @@ class CourtAddressesServiceTest {
             .postcode("TE1 1ST")
             .addressType(AddressType.VISIT_US)
             .build();
+
+        OsDpa osDpa = OsDpa.builder()
+            .lat(51.5)
+            .lng(-0.1)
+            .build();
+        OsResult osResult = OsResult.builder()
+            .dpa(osDpa)
+            .build();
+        OsData osData = OsData.builder()
+            .results(List.of(osResult))
+            .build();
+        lenient().when(osFeignClient.getOsPostcodeData(anyString())).thenReturn(osData);
     }
 
     @Test
@@ -134,7 +155,7 @@ class CourtAddressesServiceTest {
             .addressLine2("Suite 2")
             .townCity("Updated City")
             .county("Updated County")
-            .postcode("UP1 2ED")
+            .postcode("NE1 2ST")
             .addressType(AddressType.VISIT_US)
             .areasOfLaw(areaIds)
             .courtTypes(courtTypeIds)
@@ -165,7 +186,12 @@ class CourtAddressesServiceTest {
         when(courtAddressRepository.save(any(CourtAddress.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
         when(typesService.getAllAreasOfLawTypesByIds(areasOfLawIds))
-            .thenReturn(List.of(new AreaOfLawType(){ { setId(validAreaOfLawId); setName("name"); }}));
+            .thenReturn(List.of(new AreaOfLawType() {
+                {
+                    setId(validAreaOfLawId);
+                    setName("name");
+                }
+            }));
 
         CourtAddress result = courtAddressesService.createAddress(courtId, newAddress);
 
