@@ -1,5 +1,13 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtOverview;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
+
+import java.util.List;
+import java.util.UUID;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -10,6 +18,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,23 +34,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
-
-import java.util.UUID;
 
 @Tag(name = "Court", description = "Operations related to courts")
 @RestController
 @Validated
 @RequestMapping("/courts")
+@RequiredArgsConstructor
 public class CourtController {
 
     private final CourtService courtService;
-
-    public CourtController(CourtService courtService) {
-        this.courtService = courtService;
-    }
 
     @GetMapping("/{courtId}/v1")
     @Operation(
@@ -54,7 +55,7 @@ public class CourtController {
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
     public ResponseEntity<Court> getCourtById(@Parameter(description = "UUID of the court", required = true)
-                                                  @ValidUUID @PathVariable String courtId) {
+                                              @ValidUUID @PathVariable String courtId) {
         return ResponseEntity.ok(courtService.getCourtById(UUID.fromString(courtId)));
     }
 
@@ -122,5 +123,32 @@ public class CourtController {
     })
     public ResponseEntity<Court> updateCourt(@ValidUUID @PathVariable String courtId, @Valid @RequestBody Court court) {
         return ResponseEntity.ok(courtService.updateCourt(UUID.fromString(courtId), court));
+    }
+
+    @GetMapping("/overview/{courtId}/v1")
+    @Operation(
+        summary = "Get court overview by ID",
+        description = "Fetch exhaustive court information for a given court ID."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court overview"),
+        @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
+        @ApiResponse(responseCode = "404", description = "Court not found")
+    })
+    public ResponseEntity<CourtOverview> getCourtOverview(@Parameter(description = "UUID of the court", required = true)
+                                                          @ValidUUID @PathVariable String courtId) {
+        return ResponseEntity.ok(courtService.getCourtOverviewById(UUID.fromString(courtId)));
+    }
+
+    @GetMapping("/overview/all/v1")
+    @Operation(
+        summary = "Get all court overviews",
+        description = "Fetch exhaustive court information for all courts."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court overviews")
+    })
+    public ResponseEntity<List<CourtOverview>> getAllCourtOverviews() {
+        return ResponseEntity.ok(courtService.getAllCourtOverviews());
     }
 }

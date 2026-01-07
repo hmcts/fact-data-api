@@ -1,27 +1,28 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtOverview;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtOverviewRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
 import java.util.List;
 import java.util.UUID;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
+@RequiredArgsConstructor
 public class CourtService {
 
     private final CourtRepository courtRepository;
+    private final CourtOverviewRepository courtOverviewRepository;
     private final RegionService regionService;
-
-    public CourtService(CourtRepository courtRepository, RegionService regionService) {
-        this.courtRepository = courtRepository;
-        this.regionService = regionService;
-    }
 
     /**
      * Get a court by id.
@@ -33,15 +34,15 @@ public class CourtService {
     public Court getCourtById(UUID courtId) {
         return courtRepository.findById(courtId)
             .orElseThrow(() -> new NotFoundException("Court not found, ID: " + courtId)
-        );
+            );
     }
 
     /**
      * Get a paginated list of courts with optional filters.
      *
-     * @param pageable The pagination information.
-     * @param includeClosed Whether to include closed courts.
-     * @param regionId The region ID to filter by.
+     * @param pageable         The pagination information.
+     * @param includeClosed    Whether to include closed courts.
+     * @param regionId         The region ID to filter by.
      * @param partialCourtName A partial court name to filter by.
      * @return A paginated list of courts.
      */
@@ -70,7 +71,7 @@ public class CourtService {
      */
     public Court createCourt(Court court) {
         Region foundRegion = regionService.getRegionById(court.getRegionId());
-        court.setRegion(foundRegion);
+        court.setRegionId(foundRegion.getId());
         court.setSlug(toUniqueSlug(court.getName()));
 
         // A court is closed on creation until an address is added.
@@ -83,7 +84,7 @@ public class CourtService {
      * Updates an existing court.
      *
      * @param courtId The id of the court to update.
-     * @param court The court entity with updated values.
+     * @param court   The court entity with updated values.
      * @return The updated court.
      * @throws NotFoundException if the court is not found.
      */
@@ -97,7 +98,6 @@ public class CourtService {
         }
 
         existingCourt.setOpen(court.getOpen());
-        existingCourt.setRegion(foundRegion);
         existingCourt.setRegionId(foundRegion.getId());
         existingCourt.setWarningNotice(court.getWarningNotice());
 
@@ -121,6 +121,34 @@ public class CourtService {
         courtRepository.deleteAllInBatch(courtsToDelete);
         return courtsToDelete.size();
     }
+
+
+    // -- Court Overview --
+
+    /**
+     * Get a court overview by id.
+     *
+     * @param courtId The ID of the court overview to get.
+     * @return The court overview entity.
+     * @throws NotFoundException if the court overview is not found.
+     */
+    public CourtOverview getCourtOverviewById(UUID courtId) {
+        return courtOverviewRepository.findById(courtId)
+            .orElseThrow(() -> new NotFoundException("Court overview not found, ID: " + courtId)
+            );
+    }
+
+
+    /**
+     * Get all court overviews.
+     *
+     * @return The list of court overview entities.
+     */
+    public List<CourtOverview> getAllCourtOverviews() {
+        return courtOverviewRepository.findAll();
+    }
+
+    // -- Utilities --
 
     /**
      * Converts a court name to a unique slug.

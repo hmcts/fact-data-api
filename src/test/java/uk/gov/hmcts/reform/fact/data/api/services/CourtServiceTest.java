@@ -189,7 +189,7 @@ class CourtServiceTest {
         Court saved = courtService.createCourt(input);
 
         assertThat(saved.getOpen()).isFalse();
-        assertThat(saved.getRegion()).isEqualTo(region);
+        assertThat(saved.getRegionId()).isEqualTo(region.getId());
         assertThat(saved.getSlug()).isEqualTo("my-test-court");
         verify(courtRepository).save(saved);
     }
