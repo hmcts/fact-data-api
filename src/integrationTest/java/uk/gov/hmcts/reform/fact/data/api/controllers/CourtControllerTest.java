@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
@@ -50,9 +51,9 @@ class CourtControllerTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1 returns court details")
     void getCourtByIdReturnsCourt() throws Exception {
-        Court court = buildCourt(COURT_ID);
+        CourtDetails courtDetails = buildCourtDetails(COURT_ID);
 
-        when(courtService.getCourtById(COURT_ID)).thenReturn(court);
+        when(courtService.getCourtDetailsById(COURT_ID)).thenReturn(courtDetails);
 
         mockMvc.perform(get("/courts/{courtId}/v1", COURT_ID))
             .andExpect(status().isOk())
@@ -63,8 +64,8 @@ class CourtControllerTest {
 
     @Test
     @DisplayName("GET /courts/{courtId}/v1 returns 404 when court missing")
-    void getCourtByIdReturnsNotFound() throws Exception {
-        when(courtService.getCourtById(UNKNOWN_COURT_ID)).thenThrow(new NotFoundException("Court not found"));
+    void getCourtDetailsByIdReturnsNotFound() throws Exception {
+        when(courtService.getCourtDetailsById(UNKNOWN_COURT_ID)).thenThrow(new NotFoundException("Court not found"));
 
         mockMvc.perform(get("/courts/{courtId}/v1", UNKNOWN_COURT_ID))
             .andExpect(status().isNotFound());
@@ -241,6 +242,20 @@ class CourtControllerTest {
 
     private Court buildCourt(UUID id) {
         return Court.builder()
+            .id(id)
+            .name("Test Court")
+            .slug("test-court")
+            .open(Boolean.TRUE)
+            .warningNotice("Notice")
+            .regionId(REGION_ID)
+            .isServiceCentre(Boolean.TRUE)
+            .openOnCath(Boolean.TRUE)
+            .mrdId("MRD123")
+            .build();
+    }
+
+    private CourtDetails buildCourtDetails(UUID id) {
+        return CourtDetails.builder()
             .id(id)
             .name("Test Court")
             .slug("test-court")

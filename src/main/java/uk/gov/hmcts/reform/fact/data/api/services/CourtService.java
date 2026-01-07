@@ -1,10 +1,10 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtOverview;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtOverviewRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
 import java.util.List;
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CourtService {
 
     private final CourtRepository courtRepository;
-    private final CourtOverviewRepository courtOverviewRepository;
+    private final CourtDetailsRepository courtDetailsRepository;
     private final RegionService regionService;
 
     /**
@@ -123,29 +123,29 @@ public class CourtService {
     }
 
 
-    // -- Court Overview --
+    // -- Court Details --
 
     /**
-     * Get a court overview by id.
+     * Get a court details by id.
      *
-     * @param courtId The ID of the court overview to get.
-     * @return The court overview entity.
-     * @throws NotFoundException if the court overview is not found.
+     * @param courtId The ID of the court details to get.
+     * @return The court details entity.
+     * @throws NotFoundException if the court details is not found.
      */
-    public CourtOverview getCourtOverviewById(UUID courtId) {
-        return courtOverviewRepository.findById(courtId)
-            .orElseThrow(() -> new NotFoundException("Court overview not found, ID: " + courtId)
+    public CourtDetails getCourtDetailsById(UUID courtId) {
+        return courtDetailsRepository.findById(courtId)
+            .orElseThrow(() -> new NotFoundException("Court not found, ID: " + courtId)
             );
     }
 
 
     /**
-     * Get all court overviews.
+     * Get all court details.
      *
-     * @return The list of court overview entities.
+     * @return The list of court details entities.
      */
-    public List<CourtOverview> getAllCourtOverviews() {
-        return courtOverviewRepository.findAll();
+    public List<CourtDetails> getAllCourtDetails() {
+        return courtDetailsRepository.findAll();
     }
 
     // -- Utilities --

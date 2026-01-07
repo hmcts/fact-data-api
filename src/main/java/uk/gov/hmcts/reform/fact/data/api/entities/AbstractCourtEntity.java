@@ -28,7 +28,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @SuperBuilder
 @MappedSuperclass
 @NoArgsConstructor
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public abstract class AbstractCourtEntity {
 
     @Schema(

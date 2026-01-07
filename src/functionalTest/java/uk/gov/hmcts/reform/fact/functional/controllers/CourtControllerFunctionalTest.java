@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
@@ -48,7 +49,7 @@ public final class CourtControllerFunctionalTest {
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1");
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
-        final Court fetchedCourt = mapper.readValue(getResponse.getBody().asString(), Court.class);
+        final CourtDetails fetchedCourt = mapper.readValue(getResponse.getBody().asString(), CourtDetails.class);
         assertThat(fetchedCourt.getName()).isEqualTo("Test Court Create Valid");
         assertThat(fetchedCourt.getRegionId()).isEqualTo(UUID.fromString(regionId));
         assertThat(fetchedCourt.getIsServiceCentre()).isTrue();
@@ -110,7 +111,7 @@ public final class CourtControllerFunctionalTest {
         assertThat(updateResponse.statusCode()).isEqualTo(OK.value());
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1");
-        final Court fetchedCourt = mapper.readValue(getResponse.getBody().asString(), Court.class);
+        final CourtDetails fetchedCourt = mapper.readValue(getResponse.getBody().asString(), CourtDetails.class);
         assertThat(fetchedCourt.getName()).isEqualTo("Test Court Updated");
         assertThat(fetchedCourt.getIsServiceCentre()).isTrue();
     }
