@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Feature;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
@@ -256,20 +258,16 @@ class CourtControllerTest {
 
         when(courtService.getAllCourtDetails()).thenReturn(courtDetailsList);
 
-        mockMvc.perform(get("/courts/all/v1"))
+        MvcResult result = mockMvc.perform(get("/courts/all/v1"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.length()").value(courtDetailsList.size()))
-            .andExpect(jsonPath("$[0].id").value(courtDetailsList.getFirst().getId().toString()))
-            .andExpect(jsonPath("$[0].name").value(courtDetailsList.getFirst().getName()))
-            .andExpect(jsonPath("$[0].regionId").value(courtDetailsList.getFirst().getRegionId().toString()))
-            .andExpect(jsonPath("$[1].id").value(courtDetailsList.get(1).getId().toString()))
-            .andExpect(jsonPath("$[1].name").value(courtDetailsList.get(1).getName()))
-            .andExpect(jsonPath("$[2].id").value(courtDetailsList.get(2).getId().toString()))
-            .andExpect(jsonPath("$[2].name").value(courtDetailsList.get(2).getName()))
-            .andExpect(jsonPath("$[3].id").value(courtDetailsList.get(3).getId().toString()))
-            .andExpect(jsonPath("$[3].name").value(courtDetailsList.get(3).getName()))
-            .andExpect(jsonPath("$[4].id").value(courtDetailsList.getLast().getId().toString()))
-            .andExpect(jsonPath("$[4].name").value(courtDetailsList.getLast().getName()));
+            .andReturn();
+
+        List<CourtDetails> responseList = List.of(objectMapper.readValue(
+            result.getResponse().getContentAsString(),
+            CourtDetails[].class
+        ));
+
+        Assertions.assertThat(responseList).isEqualTo(courtDetailsList);
     }
 
 
@@ -291,10 +289,7 @@ class CourtControllerTest {
         return CourtDetails.builder()
             .id(id)
             .name(name)
-            .slug(name.toLowerCase()
-                      .replaceAll("[^a-z\\s-]", "")
-                      .replaceAll("[\\s-]+", "-")
-                      .replaceAll("(^-)|(-$)", ""))
+            .slug(courtService.toSlugFormat(name))
             .open(Boolean.TRUE)
             .warningNotice("Notice")
             .regionId(REGION_ID)
