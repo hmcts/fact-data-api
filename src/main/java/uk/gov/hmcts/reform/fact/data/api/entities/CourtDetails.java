@@ -33,38 +33,58 @@ public class CourtDetails extends AbstractCourtEntity {
     @JoinColumn(name = "region_id", insertable = false, updatable = false)
     private Region region;
 
+    @Schema(description = "The Dx Code for the Court")
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "court_id", unique = true, insertable = false, updatable = false)
+    private List<CourtDxCode> courtDxCodes;
+
+    @Schema(description = "The Court Codes for the Court")
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "court_id", insertable = false, updatable = false)
+    private List<CourtCodes> courtCodes;
+
+    @Schema(description = "The Fax Numbers for the Court")
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "court_id", insertable = false, updatable = false)
+    private List<CourtFax> courtFaxNumbers;
+
     @Schema(description = "The Addresses for the Court")
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
-    List<CourtAddress> courtAddresses;
+    private List<CourtAddress> courtAddresses;
 
     @Schema(description = "The Opening Hours for the Court")
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
-    List<CourtOpeningHours> courtOpeningHours;
+    private List<CourtOpeningHours> courtOpeningHours;
+
+    @Schema(description = "The Counter Service Opening Hours for the Court")
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "court_id", insertable = false, updatable = false)
+    private List<CourtCounterServiceOpeningHours> courtCounterServiceOpeningHours;
 
     @Schema(description = "The Contact Details for the Court")
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
-    List<CourtContactDetails> courtContactDetails;
+    private List<CourtContactDetails> courtContactDetails;
 
     @Schema(description = "The Translation Services available at the Court")
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
-    List<CourtTranslation> courtTranslations;
+    private List<CourtTranslation> courtTranslations;
 
     @Schema(description = "The Accessibility Options available at the Court")
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
-    List<CourtAccessibilityOptions> courtAccessibilityOptions;
+    private List<CourtAccessibilityOptions> courtAccessibilityOptions;
 
     @Schema(description = "The Facilities available at the Court")
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
-    List<CourtFacilities> courtFacilities;
+    private List<CourtFacilities> courtFacilities;
 
     @Schema(description = "The Profession Information for the Court")
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
-    List<CourtProfessionalInformation> courtProfessionalInformation;
+    private List<CourtProfessionalInformation> courtProfessionalInformation;
 }
