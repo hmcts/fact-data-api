@@ -14,7 +14,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
-import uk.gov.hmcts.reform.fact.data.api.os.OsFeignClient;
 import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 
@@ -43,7 +42,7 @@ class CourtAddressesServiceTest {
     private TypesService typesService;
 
     @Mock
-    private OsFeignClient osFeignClient;
+    private OsService osService;
 
     @InjectMocks
     private CourtAddressesService courtAddressesService;
@@ -81,7 +80,7 @@ class CourtAddressesServiceTest {
         OsData osData = OsData.builder()
             .results(List.of(osResult))
             .build();
-        lenient().when(osFeignClient.getOsPostcodeData(anyString())).thenReturn(osData);
+        lenient().when(osService.getOsAddressByFullPostcode(anyString())).thenReturn(osData);
     }
 
     @Test

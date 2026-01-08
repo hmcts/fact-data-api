@@ -11,8 +11,6 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
-import uk.gov.hmcts.reform.fact.data.api.os.OsFeignClient;
-
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -25,16 +23,16 @@ public class CourtAddressesService {
     private final CourtAddressRepository courtAddressRepository;
     private final CourtService courtService;
     private final TypesService typesService;
-    private final OsFeignClient osFeignClient;
+    private final OsService osService;
 
     public CourtAddressesService(CourtAddressRepository courtAddressRepository,
                                  CourtService courtService,
                                  TypesService typesService,
-                                 OsFeignClient osFeignClient) {
+                                 OsService osService) {
         this.courtAddressRepository = courtAddressRepository;
         this.courtService = courtService;
         this.typesService = typesService;
-        this.osFeignClient = osFeignClient;
+        this.osService = osService;
     }
 
     /**
@@ -85,7 +83,7 @@ public class CourtAddressesService {
         request.setCourtTypes(getValidatedCourtTypeIds(request.getCourtTypes()));
 
         if (request.getPostcode() != null) {
-            OsData osData = osFeignClient.getOsPostcodeData(request.getPostcode());
+            OsData osData = osService.getOsAddressByFullPostcode(request.getPostcode());
             if (osData != null && osData.getResults() != null && !osData.getResults().isEmpty()) {
                 OsDpa dpa = osData.getResults().getFirst().getDpa();
                 request.setLat(BigDecimal.valueOf(dpa.getLat()));
@@ -121,7 +119,7 @@ public class CourtAddressesService {
         existing.setCourtTypes(getValidatedCourtTypeIds(request.getCourtTypes()));
 
         if (request.getPostcode() != null) {
-            OsData osData = osFeignClient.getOsPostcodeData(request.getPostcode());
+            OsData osData = osService.getOsAddressByFullPostcode(request.getPostcode());
             if (osData != null && osData.getResults() != null && !osData.getResults().isEmpty()) {
                 OsDpa dpa = osData.getResults().getFirst().getDpa();
                 existing.setLat(BigDecimal.valueOf(dpa.getLat()));
