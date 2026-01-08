@@ -157,10 +157,7 @@ public class CourtService {
      * @return A unique slug.
      */
     private String toUniqueSlug(String name) {
-        String baseSlug = name.toLowerCase()
-            .replaceAll("[^a-z\\s-]", "")
-            .replaceAll("[\\s-]+", "-")
-            .replaceAll("(^-)|(-$)", "");
+        String baseSlug = toSlugFormat(name);
 
         String slug = baseSlug;
         int counter = 1;
@@ -170,5 +167,21 @@ public class CourtService {
         }
 
         return slug;
+    }
+
+    /**
+     * Util method to convert Court name to slug format.
+     *
+     * <p>
+     * Further checks need to be made to ensure the value is unique before assigning to a court entity.
+     *
+     * @param name the court name
+     * @return the slug representation of the name
+     */
+    public String toSlugFormat(String name) {
+        return name.toLowerCase()
+            .replaceAll("[^a-z\\s-]", "")
+            .replaceAll("[\\s-]+", "-")
+            .replaceAll("(^-)|(-$)", "");
     }
 }
