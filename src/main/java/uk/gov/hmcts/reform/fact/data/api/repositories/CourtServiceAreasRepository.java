@@ -20,29 +20,32 @@ public interface CourtServiceAreasRepository extends JpaRepository<CourtServiceA
     )
     List<CourtServiceAreas> findByServiceAreaId(UUID id);
 
-    @Query(value = """
-        SELECT
-            c.id   AS courtId,
-            c.name AS courtName,
-            c.slug AS courtSlug,
-            (
-              point(CAST(ca.lon AS float8), CAST(ca.lat AS float8))
-              <@>
-              point(CAST(:lon AS float8), CAST(:lat AS float8))
-            ) AS distance
-        FROM court_service_areas csa
-        JOIN court c
-          ON c.id = csa.court_id
-        JOIN court_address ca
-          ON ca.court_id = c.id
-        WHERE CAST(:serviceAreaId AS uuid) = ANY(csa.service_area_id)
-          AND c.open = true
-          AND ca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
-          AND ca.lat IS NOT NULL
-          AND ca.lon IS NOT NULL
-        ORDER BY distance, c.name
-        LIMIT :limit
-    """, nativeQuery = true)
+    @Query(
+        value = """
+            SELECT
+                c.id   AS courtId,
+                c.name AS courtName,
+                c.slug AS courtSlug,
+                (
+                  point(CAST(ca.lon AS float8), CAST(ca.lat AS float8))
+                  <@>
+                  point(CAST(:lon AS float8), CAST(:lat AS float8))
+                ) AS distance
+            FROM court_service_areas csa
+            JOIN court c
+              ON c.id = csa.court_id
+            JOIN court_address ca
+              ON ca.court_id = c.id
+            WHERE CAST(:serviceAreaId AS uuid) = ANY(csa.service_area_id)
+              AND c.open = true
+              AND ca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
+              AND ca.lat IS NOT NULL
+              AND ca.lon IS NOT NULL
+            ORDER BY distance, c.name
+            LIMIT :limit
+            """,
+        nativeQuery = true
+    )
     List<CourtWithDistance> findNearestByServiceAreaDistance(
         @Param("serviceAreaId") UUID serviceAreaId,
         @Param("lat") double lat,

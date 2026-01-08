@@ -29,7 +29,11 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
     boolean existsBySlug(String slug);
 
     List<Court> findByNameStartingWithIgnoreCase(String namePrefix);
-    List<Court> findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(String prefix, boolean active);
+
+    List<Court> findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(
+        String prefix,
+        boolean active
+    );
 
     @Query(
         value = """
@@ -42,8 +46,10 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
                        THEN 1 ELSE 0 END AS rank_postcode,
                   CASE WHEN c.name ILIKE CONCAT('%', :query, '%') THEN 1 ELSE 0 END AS rank_name,
                   CASE WHEN COALESCE(ca.town_city, '') ILIKE CONCAT('%', :query, '%') THEN 1 ELSE 0 END AS rank_town,
-                  CASE WHEN COALESCE(ca.address_line_1, '') ILIKE CONCAT('%', :query, '%') THEN 1 ELSE 0 END AS rank_addr1,
-                  CASE WHEN COALESCE(ca.address_line_2, '') ILIKE CONCAT('%', :query, '%') THEN 1 ELSE 0 END AS rank_addr2
+                  CASE WHEN COALESCE(ca.address_line_1, '') ILIKE CONCAT('%', :query, '%')
+                       THEN 1 ELSE 0 END AS rank_addr1,
+                  CASE WHEN COALESCE(ca.address_line_2, '') ILIKE CONCAT('%', :query, '%')
+                       THEN 1 ELSE 0 END AS rank_addr2
               FROM court c
               LEFT JOIN court_address ca
                 ON ca.court_id = c.id

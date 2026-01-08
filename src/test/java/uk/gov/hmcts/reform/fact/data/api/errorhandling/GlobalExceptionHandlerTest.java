@@ -16,6 +16,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -203,6 +204,30 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getMessage())
             .contains("Invalid value for parameter 'page'")
             .contains("unknown");
+    }
+
+    @Test
+    void testHandleInvalidParameterCombinationException() {
+        InvalidParameterCombinationException ex = new InvalidParameterCombinationException(TEST_MESSAGE);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/search/courts/v1/postcode");
+
+        ExceptionResponse response = handler.handle(ex, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleInvalidParameterCombinationExceptionWithNullRequest() {
+        InvalidParameterCombinationException ex = new InvalidParameterCombinationException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex, null);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
     }
 
     @Test

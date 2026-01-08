@@ -45,8 +45,7 @@ class PostcodeValidatorTest {
         "EC1A 1BB",
         "W1A 0AX",
         "M1 1AE",
-        "B33 8TH",
-        "SW1A1AA"
+        "B33 8TH"
     })
     void shouldAcceptValidPostcodes(String postcode) {
         assertTrue(validator.isValid(postcode, context));
@@ -95,5 +94,13 @@ class PostcodeValidatorTest {
     void shouldRejectChannelIslandsAndIsleOfManPostcodes(String postcode) {
         assertFalse(validator.isValid(postcode, context));
         verify(context).buildConstraintViolationWithTemplate("Postcode region is not supported");
+    }
+
+    @Test
+    void shouldRejectPostcodesMissingSpace() {
+        assertFalse(validator.isValid("SW1A1AA", context));
+        verify(context).buildConstraintViolationWithTemplate(
+            "Postcode must contain a space between inward and outward codes for OS lookup"
+        );
     }
 }

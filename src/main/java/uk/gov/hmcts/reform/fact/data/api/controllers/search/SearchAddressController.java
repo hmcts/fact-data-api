@@ -34,7 +34,8 @@ public class SearchAddressController {
         description = "Retrieve all services."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved address(es) based on provided postcode."),
+        @ApiResponse(responseCode = "200",
+            description = "Successfully retrieved address(es) based on provided postcode."),
         @ApiResponse(responseCode = "400", description = "Postcode is missing or is not valid."),
         @ApiResponse(responseCode = "500", description = "OS returned an error when attempting to "
             + "retrieve information about the provided postcode.")

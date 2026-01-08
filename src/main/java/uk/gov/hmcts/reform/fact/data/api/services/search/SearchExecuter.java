@@ -102,6 +102,7 @@ public class SearchExecuter {
                     return byLaOpt.get();
                 }
             }
+            // fall through
             default: {
                 log.debug(
                     "Default fallback search (if no results found for determined search strategy) "
@@ -132,7 +133,9 @@ public class SearchExecuter {
      * @return The stripped name
      */
     private static String stripTrailingCouncil(String name) {
-        if (name == null) return null;
+        if (name == null) {
+            return null;
+        }
         String suffix = " Council";
         return name.endsWith(suffix) ? name.substring(0, name.length() - suffix.length()) : name;
     }

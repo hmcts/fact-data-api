@@ -52,7 +52,8 @@ public class SearchServiceController {
         description = "Retrieve Service Areas based on provided name."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved service areas based on provided name."),
+        @ApiResponse(responseCode = "200",
+            description = "Successfully retrieved service areas based on provided name."),
         @ApiResponse(responseCode = "400", description = "Service name is missing or is not valid."),
         @ApiResponse(responseCode = "404", description = "Information not found for provided service name.")
     })

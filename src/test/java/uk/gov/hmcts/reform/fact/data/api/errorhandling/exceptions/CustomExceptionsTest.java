@@ -29,5 +29,10 @@ class CustomExceptionsTest {
                      exception.getMessage(),
                      ASSERTION_MESSAGE);
     }
-}
 
+    @Test
+    void testCreationOfInvalidParameterCombinationException() {
+        InvalidParameterCombinationException exception = new InvalidParameterCombinationException(TEST_MESSAGE);
+        assertEquals(TEST_MESSAGE, exception.getMessage(), ASSERTION_MESSAGE);
+    }
+}

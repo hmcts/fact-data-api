@@ -72,8 +72,12 @@ public final class PostcodeLadder {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof PostcodeLadder other)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof PostcodeLadder other)) {
+            return false;
+        }
         return minusUnitNoSpace.equals(other.minusUnitNoSpace)
             && outcodeNoSpace.equals(other.outcodeNoSpace)
             && areacodeNoSpace.equals(other.areacodeNoSpace);
@@ -86,11 +90,10 @@ public final class PostcodeLadder {
 
     @Override
     public String toString() {
-        return "PostcodeLadder[" +
-            "  minusUnitNoSpace=" + minusUnitNoSpace +
-            ", outcodeNoSpace=" + outcodeNoSpace +
-            ", areacodeNoSpace=" + areacodeNoSpace +
-            ']';
+        return "PostcodeLadder["
+            + "  minusUnitNoSpace=" + minusUnitNoSpace
+            + ", outcodeNoSpace=" + outcodeNoSpace
+            + ", areacodeNoSpace=" + areacodeNoSpace
+            + ']';
     }
 }
-

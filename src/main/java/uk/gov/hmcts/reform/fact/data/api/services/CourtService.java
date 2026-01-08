@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static java.util.stream.Collectors.toList;
 
 @Service
 public class CourtService {

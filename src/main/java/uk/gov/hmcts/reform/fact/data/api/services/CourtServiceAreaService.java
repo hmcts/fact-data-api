@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
-import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 
 import java.util.List;
