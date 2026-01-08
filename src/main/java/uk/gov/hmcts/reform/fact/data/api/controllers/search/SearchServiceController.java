@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import uk.gov.hmcts.reform.fact.data.api.entities.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.services.SearchService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceAreaService;
 
 import java.util.List;
@@ -22,10 +24,26 @@ import java.util.List;
 @RequestMapping("/search/services")
 public class SearchServiceController {
 
+    private final SearchService searchService;
     private final ServiceAreaService serviceAreaService;
 
-    public SearchServiceController(ServiceAreaService serviceAreaService) {
+    public SearchServiceController(SearchService searchService,
+                                   ServiceAreaService serviceAreaService) {
+        this.searchService = searchService;
         this.serviceAreaService = serviceAreaService;
+    }
+
+    @GetMapping("/v1")
+    @Operation(
+        summary = "Search for and return all services.",
+        description = "Retrieve all services."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200",
+            description = "Successfully retrieved service areas based on provided name.")
+    })
+    public ResponseEntity<List<Service>> getServices() {
+        return ResponseEntity.ok(searchService.getAllServices());
     }
 
     @GetMapping("/v1/{serviceName}/service-areas")

@@ -49,7 +49,9 @@ public class SearchCourtController {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved court(s) based on provided postcode."),
         @ApiResponse(responseCode = "400", description = "Postcode is missing or is not valid."),
         @ApiResponse(responseCode = "404", description = "Information not found. "
-            + "For example, service area provided but not valid.")
+            + "For example, service area provided but not valid."),
+        @ApiResponse(responseCode = "500", description = "OS returned an error when attempting to "
+            + "retrieve information about the provided postcode.")
     })
     public ResponseEntity<List<CourtWithDistance>> getCourtsByPostcode(
         @Parameter(description = "Postcode")
