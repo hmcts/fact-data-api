@@ -121,6 +121,17 @@ public class CourtService {
     }
 
     /**
+     * Search courts by a provided string query. Matches currently if the string
+     * matches in part an address or court name.
+     *
+     * @param query The query to search by.
+     * @return One or more courts that match.
+     */
+    public List<Court> searchOpenCourtsByNameOrAddress(String query) {
+        return courtRepository.searchOpenByNameOrAddress(query.trim());
+    }
+
+    /**
      * Deletes courts whose names start with the supplied prefix.
      *
      * @param courtNamePrefix the name prefix to match (case-insensitive).

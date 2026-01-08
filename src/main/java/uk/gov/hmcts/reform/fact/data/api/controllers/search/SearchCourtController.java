@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -96,5 +97,24 @@ public class SearchCourtController {
         final String prefix
     ) {
         return ResponseEntity.ok(courtService.getCourtsByPrefixAndActiveSearch(prefix));
+    }
+
+    @GetMapping("/v1/name")
+    @Operation(
+        summary = "Search courts by prefix.",
+        description = "Retrieve courts based on a provided prefix."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court(s) that match data from query."),
+        @ApiResponse(responseCode = "400", description = "Query is missing or invalid.")
+    })
+    public ResponseEntity<List<Court>> getCourtsByQuery(
+        @Parameter(description = "Query string to used to search for courts")
+        @NotBlank(message = "q must not be blank")
+        @Size(min = 3, message = "q must be at least 3 characters in length")
+        @RequestParam(value = "q")
+        final String query
+    ) {
+        return ResponseEntity.ok(courtService.searchOpenCourtsByNameOrAddress(query));
     }
 }
