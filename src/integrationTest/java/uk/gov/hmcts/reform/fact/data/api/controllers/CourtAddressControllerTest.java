@@ -54,6 +54,7 @@ class CourtAddressControllerTest {
             .courtId(courtId)
             .addressType(AddressType.VISIT_US)
             .addressLine1(ADDRESS_LINE_1)
+            .postcode("NE1 2ST")
             .build();
     }
 
