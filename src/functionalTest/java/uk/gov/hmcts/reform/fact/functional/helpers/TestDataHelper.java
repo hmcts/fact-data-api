@@ -5,7 +5,10 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
@@ -14,6 +17,9 @@ import static org.springframework.http.HttpStatus.CREATED;
  * Helper methods for fetching test data via API endpoints.
  */
 public final class TestDataHelper {
+
+    private static final Pattern AREA_OF_LAW_ID_PATTERN =
+        Pattern.compile("id=([0-9a-fA-F-]{36})");
 
     private TestDataHelper() {
         // Utility class
@@ -82,5 +88,59 @@ public final class TestDataHelper {
         facilities.setBabyChanging(true);
         facilities.setWifi(true);
         return facilities;
+    }
+
+    /**
+     * Extracts a single area of law type ID by name from the response map keys.
+     *
+     * @param areasOfLawMap the map returned by GET /courts/{courtId}/v1/areas-of-law
+     * @param name the exact area of law name to match
+     * @return the UUID for the requested area of law name
+     */
+    public static UUID extractAreaOfLawTypeIdByName(final Map<String, Boolean> areasOfLawMap, final String name) {
+        for (String key : areasOfLawMap.keySet()) {
+            if (matchesAreaOfLawName(key, name)) {
+                final Matcher matcher = AREA_OF_LAW_ID_PATTERN.matcher(key);
+                if (matcher.find()) {
+                    return UUID.fromString(matcher.group(1));
+                }
+            }
+        }
+
+        throw new IllegalStateException(
+            String.format("Area of law name not found in response: %s. Available keys: %s",
+                          name, areasOfLawMap.keySet())
+        );
+    }
+
+    /**
+     * Finds the selected status for an area of law by name.
+     *
+     * @param areasOfLawMap the map returned by GET /courts/{courtId}/v1/areas-of-law
+     * @param name the exact area of law name to match
+     * @return true if selected, false if not selected
+     */
+    public static boolean isAreaOfLawSelectedByName(final Map<String, Boolean> areasOfLawMap, final String name) {
+        for (String key : areasOfLawMap.keySet()) {
+            if (matchesAreaOfLawName(key, name)) {
+                return areasOfLawMap.get(key);
+            }
+        }
+
+        throw new IllegalStateException(
+            String.format("Area of law name not found in response: %s. Available keys: %s",
+                          name, areasOfLawMap.keySet())
+        );
+    }
+
+    /**
+     * Checks if a map key matches the specified area of law name.
+     *
+     * @param key the map key to check
+     * @param name the area of law name to match
+     * @return true if the key contains the specified name
+     */
+    private static boolean matchesAreaOfLawName(final String key, final String name) {
+        return key.contains("name=" + name);
     }
 }
