@@ -51,12 +51,8 @@ public final class CourtAreasOfLawControllerFunctionalTest {
 
         final UUID adoptionId = TestDataHelper.extractAreaOfLawTypeIdByName(initialAreasMap, "Adoption");
 
-        final CourtAreasOfLaw updatedAreasOfLaw = new CourtAreasOfLaw();
-        updatedAreasOfLaw.setCourtId(courtId);
-        updatedAreasOfLaw.setAreasOfLaw(List.of(adoptionId));
-
         final Response updatePutResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
-                                                      updatedAreasOfLaw);
+                                                      buildCourtAreasOfLaw(courtId, List.of(adoptionId)));
         assertThat(updatePutResponse.statusCode()).isEqualTo(CREATED.value());
 
         final Response updatedGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
@@ -84,12 +80,8 @@ public final class CourtAreasOfLawControllerFunctionalTest {
         final UUID divorceId = TestDataHelper.extractAreaOfLawTypeIdByName(initialAreasMap, "Divorce");
         final UUID immigrationId = TestDataHelper.extractAreaOfLawTypeIdByName(initialAreasMap, "Immigration");
 
-        final CourtAreasOfLaw firstUpdateAreasOfLaw = new CourtAreasOfLaw();
-        firstUpdateAreasOfLaw.setCourtId(courtId);
-        firstUpdateAreasOfLaw.setAreasOfLaw(List.of(adoptionId, divorceId));
-
         final Response firstUpdateResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
-                                                        firstUpdateAreasOfLaw);
+                                                        buildCourtAreasOfLaw(courtId, List.of(adoptionId, divorceId)));
         assertThat(firstUpdateResponse.statusCode()).isEqualTo(CREATED.value());
 
         final Response firstGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
@@ -110,12 +102,8 @@ public final class CourtAreasOfLawControllerFunctionalTest {
             .as("Immigration should not be selected after first update")
             .isFalse();
 
-        final CourtAreasOfLaw secondUpdateAreasOfLaw = new CourtAreasOfLaw();
-        secondUpdateAreasOfLaw.setCourtId(courtId);
-        secondUpdateAreasOfLaw.setAreasOfLaw(List.of(immigrationId));
-
         final Response secondUpdateResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
-                                                         secondUpdateAreasOfLaw);
+                                                         buildCourtAreasOfLaw(courtId, List.of(immigrationId)));
         assertThat(secondUpdateResponse.statusCode()).isEqualTo(CREATED.value());
 
         final Response secondGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
@@ -154,16 +142,26 @@ public final class CourtAreasOfLawControllerFunctionalTest {
     void shouldReturn404ForNonExistentCourtOnPut() {
         final UUID nonExistentCourtId = UUID.randomUUID();
 
-        final CourtAreasOfLaw courtAreasOfLaw = new CourtAreasOfLaw();
-        courtAreasOfLaw.setCourtId(nonExistentCourtId);
-        courtAreasOfLaw.setAreasOfLaw(List.of());
-
         final Response putResponse = http.doPut("/courts/" + nonExistentCourtId + "/v1/areas-of-law",
-                                                courtAreasOfLaw);
+                                                buildCourtAreasOfLaw(nonExistentCourtId, List.of()));
 
         assertThat(putResponse.statusCode()).isEqualTo(404);
         assertThat(putResponse.jsonPath().getString("message"))
             .contains("Court not found, ID: " + nonExistentCourtId);
+    }
+
+    /**
+     * Builds a CourtAreasOfLaw object with the given parameters.
+     *
+     * @param courtId the court ID
+     * @param areasOfLaw the list of area of law IDs
+     * @return a CourtAreasOfLaw object
+     */
+    private static CourtAreasOfLaw buildCourtAreasOfLaw(final UUID courtId, final List<UUID> areasOfLaw) {
+        final CourtAreasOfLaw courtAreasOfLaw = new CourtAreasOfLaw();
+        courtAreasOfLaw.setCourtId(courtId);
+        courtAreasOfLaw.setAreasOfLaw(areasOfLaw);
+        return courtAreasOfLaw;
     }
 
     /**
@@ -173,12 +171,8 @@ public final class CourtAreasOfLawControllerFunctionalTest {
      * @return map of all areas of law with their availability status
      */
     private static Map<String, Boolean> initializeCourtAreasOfLaw(final UUID courtId) throws Exception {
-        final CourtAreasOfLaw initialAreasOfLaw = new CourtAreasOfLaw();
-        initialAreasOfLaw.setCourtId(courtId);
-        initialAreasOfLaw.setAreasOfLaw(List.of());
-
         final Response initialPutResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
-                                                       initialAreasOfLaw);
+                                                       buildCourtAreasOfLaw(courtId, List.of()));
         assertThat(initialPutResponse.statusCode()).isEqualTo(CREATED.value());
 
         final Response initialGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
