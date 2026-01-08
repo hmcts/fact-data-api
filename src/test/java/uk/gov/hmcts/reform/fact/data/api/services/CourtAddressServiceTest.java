@@ -30,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CourtAddressesServiceTest {
+class CourtAddressServiceTest {
 
     @Mock
     private CourtAddressRepository courtAddressRepository;
@@ -45,7 +45,7 @@ class CourtAddressesServiceTest {
     private OsService osService;
 
     @InjectMocks
-    private CourtAddressesService courtAddressesService;
+    private CourtAddressService courtAddressService;
 
     private UUID courtId;
     private UUID addressId;
@@ -88,7 +88,7 @@ class CourtAddressesServiceTest {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(courtAddressRepository.findByCourtId(courtId)).thenReturn(List.of(address));
 
-        List<CourtAddress> result = courtAddressesService.getAddresses(courtId);
+        List<CourtAddress> result = courtAddressService.getAddresses(courtId);
 
         assertThat(result).containsExactly(address);
         verify(courtAddressRepository).findByCourtId(courtId);
@@ -100,7 +100,7 @@ class CourtAddressesServiceTest {
         when(courtAddressRepository.findByIdAndCourtId(addressId, courtId))
             .thenReturn(Optional.of(address));
 
-        CourtAddress result = courtAddressesService.getAddress(courtId, addressId);
+        CourtAddress result = courtAddressService.getAddress(courtId, addressId);
 
         assertThat(result).isEqualTo(address);
     }
@@ -112,7 +112,7 @@ class CourtAddressesServiceTest {
             .thenReturn(Optional.empty());
 
         NotFoundException exception = assertThrows(NotFoundException.class, () ->
-            courtAddressesService.getAddress(courtId, addressId)
+            courtAddressService.getAddress(courtId, addressId)
         );
 
         assertThat(exception.getMessage()).contains(addressId.toString());
@@ -137,7 +137,7 @@ class CourtAddressesServiceTest {
         when(courtAddressRepository.save(any(CourtAddress.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        CourtAddress result = courtAddressesService.createAddress(courtId, newAddress);
+        CourtAddress result = courtAddressService.createAddress(courtId, newAddress);
 
         assertThat(result.getCourtId()).isEqualTo(courtId);
         assertThat(result.getCourt()).isEqualTo(court);
@@ -164,7 +164,7 @@ class CourtAddressesServiceTest {
         when(courtAddressRepository.save(any(CourtAddress.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        CourtAddress result = courtAddressesService.createAddress(courtId, newAddress);
+        CourtAddress result = courtAddressService.createAddress(courtId, newAddress);
 
         assertThat(result.getCourtId()).isEqualTo(courtId);
         assertThat(result.getAddressLine1()).isNull();
@@ -192,7 +192,7 @@ class CourtAddressesServiceTest {
                 }
             }));
 
-        CourtAddress result = courtAddressesService.createAddress(courtId, newAddress);
+        CourtAddress result = courtAddressService.createAddress(courtId, newAddress);
 
         assertThat(result.getCourtId()).isEqualTo(courtId);
         assertThat((long) result.getAreasOfLaw().size()).isEqualTo(1);
@@ -223,7 +223,7 @@ class CourtAddressesServiceTest {
         when(typesService.getAllCourtTypesByIds(courtTypeIds)).thenReturn(List.of(new CourtType()));
         when(courtAddressRepository.save(address)).thenReturn(address);
 
-        CourtAddress result = courtAddressesService.updateAddress(courtId, addressId, update);
+        CourtAddress result = courtAddressService.updateAddress(courtId, addressId, update);
 
         assertThat(result.getAddressLine1()).isEqualTo("Updated Street");
         assertThat(result.getAddressLine2()).isEqualTo("Suite 2");
@@ -243,28 +243,34 @@ class CourtAddressesServiceTest {
             .thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () ->
-            courtAddressesService.updateAddress(courtId, addressId, update)
+            courtAddressService.updateAddress(courtId, addressId, update)
         );
     }
 
     @Test
     void deleteAddressRemovesEntry() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtAddressRepository.existsByIdAndCourtId(addressId, courtId)).thenReturn(true);
+        when(courtAddressRepository.findByIdAndCourtId(addressId, courtId)).thenReturn(Optional.of(address));
 
-        courtAddressesService.deleteAddress(courtId, addressId);
+        courtAddressService.deleteAddress(courtId, addressId);
 
         verify(courtAddressRepository).deleteByIdAndCourtId(addressId, courtId);
     }
 
     @Test
-    void deleteAddressThrowsWhenMissing() {
-        when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtAddressRepository.existsByIdAndCourtId(addressId, courtId)).thenReturn(false);
+    void setLatLonFromPostcodeHandlesNullOsData() {
+        CourtAddress newAddress = CourtAddress.builder()
+            .postcode("TE1 1ST")
+            .build();
 
-        assertThrows(
-            NotFoundException.class, () ->
-                courtAddressesService.deleteAddress(courtId, addressId)
-        );
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(osService.getOsAddressByFullPostcode("TE1 1ST")).thenReturn(null);
+        when(courtAddressRepository.save(any(CourtAddress.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        CourtAddress result = courtAddressService.createAddress(courtId, newAddress);
+
+        assertThat(result.getLat()).isNull();
+        assertThat(result.getLon()).isNull();
     }
 }

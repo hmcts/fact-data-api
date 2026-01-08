@@ -8,7 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtAddressesService;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtAddressService;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,25 +19,25 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CourtAddressesControllerTest {
+class CourtAddressControllerTest {
 
     private static final UUID COURT_ID = UUID.randomUUID();
     private static final UUID ADDRESS_ID = UUID.randomUUID();
     private static final String INVALID_UUID = "invalid";
 
     @Mock
-    private CourtAddressesService courtAddressesService;
+    private CourtAddressService courtAddressService;
 
     @InjectMocks
-    private CourtAddressesController courtAddressesController;
+    private CourtAddressController courtAddressController;
 
     @Test
     void getAddressesReturns200() {
         CourtAddress address = new CourtAddress();
-        when(courtAddressesService.getAddresses(COURT_ID)).thenReturn(List.of(address));
+        when(courtAddressService.getAddresses(COURT_ID)).thenReturn(List.of(address));
 
         ResponseEntity<List<CourtAddress>> response =
-            courtAddressesController.getAddresses(COURT_ID.toString());
+            courtAddressController.getAddresses(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).containsExactly(address);
@@ -47,16 +47,16 @@ class CourtAddressesControllerTest {
     void getAddressesThrowsIllegalArgumentExceptionForInvalidUUID() {
         assertThrows(
             IllegalArgumentException.class, () ->
-                courtAddressesController.getAddresses(INVALID_UUID)
+                courtAddressController.getAddresses(INVALID_UUID)
         );
     }
 
     @Test
     void getAddressReturns200() {
         CourtAddress address = new CourtAddress();
-        when(courtAddressesService.getAddress(COURT_ID, ADDRESS_ID)).thenReturn(address);
+        when(courtAddressService.getAddress(COURT_ID, ADDRESS_ID)).thenReturn(address);
 
-        ResponseEntity<CourtAddress> response = courtAddressesController.getAddress(
+        ResponseEntity<CourtAddress> response = courtAddressController.getAddress(
             COURT_ID.toString(),
             ADDRESS_ID.toString()
         );
@@ -69,17 +69,17 @@ class CourtAddressesControllerTest {
     void getAddressThrowsIllegalArgumentExceptionForInvalidUUID() {
         assertThrows(
             IllegalArgumentException.class, () ->
-                courtAddressesController.getAddress(INVALID_UUID, ADDRESS_ID.toString())
+                courtAddressController.getAddress(INVALID_UUID, ADDRESS_ID.toString())
         );
     }
 
     @Test
     void createAddressReturns201() {
         CourtAddress address = new CourtAddress();
-        when(courtAddressesService.createAddress(COURT_ID, address)).thenReturn(address);
+        when(courtAddressService.createAddress(COURT_ID, address)).thenReturn(address);
 
         ResponseEntity<CourtAddress> response =
-            courtAddressesController.createAddress(COURT_ID.toString(), address);
+            courtAddressController.createAddress(COURT_ID.toString(), address);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).isEqualTo(address);
@@ -91,17 +91,17 @@ class CourtAddressesControllerTest {
 
         assertThrows(
             IllegalArgumentException.class, () ->
-                courtAddressesController.createAddress(INVALID_UUID, address)
+                courtAddressController.createAddress(INVALID_UUID, address)
         );
     }
 
     @Test
     void updateCourtAddressReturns200() {
         CourtAddress address = new CourtAddress();
-        when(courtAddressesService.updateAddress(COURT_ID, ADDRESS_ID, address))
+        when(courtAddressService.updateAddress(COURT_ID, ADDRESS_ID, address))
             .thenReturn(address);
 
-        ResponseEntity<CourtAddress> response = courtAddressesController.updateCourtAddress(
+        ResponseEntity<CourtAddress> response = courtAddressController.updateCourtAddress(
             COURT_ID.toString(),
             ADDRESS_ID.toString(),
             address
@@ -117,26 +117,26 @@ class CourtAddressesControllerTest {
 
         assertThrows(
             IllegalArgumentException.class, () ->
-                courtAddressesController.updateCourtAddress(INVALID_UUID, ADDRESS_ID.toString(), address)
+                courtAddressController.updateCourtAddress(INVALID_UUID, ADDRESS_ID.toString(), address)
         );
     }
 
     @Test
     void deleteCourtAddressReturns204() {
-        ResponseEntity<Void> response = courtAddressesController.deleteCourtAddress(
+        ResponseEntity<Void> response = courtAddressController.deleteCourtAddress(
             COURT_ID.toString(),
             ADDRESS_ID.toString()
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        verify(courtAddressesService).deleteAddress(COURT_ID, ADDRESS_ID);
+        verify(courtAddressService).deleteAddress(COURT_ID, ADDRESS_ID);
     }
 
     @Test
     void deleteCourtAddressThrowsIllegalArgumentExceptionForInvalidUUID() {
         assertThrows(
             IllegalArgumentException.class, () ->
-                courtAddressesController.deleteCourtAddress(INVALID_UUID, ADDRESS_ID.toString())
+                courtAddressController.deleteCourtAddress(INVALID_UUID, ADDRESS_ID.toString())
         );
     }
 }

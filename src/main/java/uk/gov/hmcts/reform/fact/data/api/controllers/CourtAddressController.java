@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtAddressesService;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtAddressService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
@@ -28,15 +28,15 @@ import java.util.UUID;
 @RestController
 @Validated
 @RequestMapping("/courts/{courtId}")
-public class CourtAddressesController {
+public class CourtAddressController {
 
-    private final CourtAddressesService courtAddressesService;
+    private final CourtAddressService courtAddressService;
 
-    public CourtAddressesController(CourtAddressesService courtAddressesService) {
-        this.courtAddressesService = courtAddressesService;
+    public CourtAddressController(CourtAddressService courtAddressService) {
+        this.courtAddressService = courtAddressService;
     }
 
-    @GetMapping("/v1/addresses")
+    @GetMapping("/v1/address")
     @Operation(
         summary = "Get addresses for a court",
         description = "Fetch all addresses associated with the supplied court ID."
@@ -50,11 +50,11 @@ public class CourtAddressesController {
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId
     ) {
         return ResponseEntity.ok(
-            courtAddressesService.getAddresses(UUID.fromString(courtId))
+            courtAddressService.getAddresses(UUID.fromString(courtId))
         );
     }
 
-    @GetMapping("/v1/addresses/{addressId}")
+    @GetMapping("/v1/address/{addressId}")
     @Operation(
         summary = "Get a specific address for a court",
         description = "Fetch a single address by court and address identifier."
@@ -69,14 +69,14 @@ public class CourtAddressesController {
         @Parameter(description = "UUID of the address", required = true) @ValidUUID @PathVariable String addressId
     ) {
         return ResponseEntity.ok(
-            courtAddressesService.getAddress(
+            courtAddressService.getAddress(
                 UUID.fromString(courtId),
                 UUID.fromString(addressId)
             )
         );
     }
 
-    @PostMapping("/v1/addresses")
+    @PostMapping("/v1/address")
     @Operation(
         summary = "Create address for a court",
         description = "Create a new address entry for the supplied court."
@@ -93,10 +93,10 @@ public class CourtAddressesController {
     ) {
         return ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(courtAddressesService.createAddress(UUID.fromString(courtId), courtAddress));
+            .body(courtAddressService.createAddress(UUID.fromString(courtId), courtAddress));
     }
 
-    @PutMapping("/v1/addresses/{addressId}")
+    @PutMapping("/v1/address/{addressId}")
     @Operation(
         summary = "Update address for a court",
         description = "Update an existing address entry for the supplied court."
@@ -111,18 +111,18 @@ public class CourtAddressesController {
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the address", required = true) @ValidUUID @PathVariable String addressId,
         @Parameter(description = "Updated address", required = true)
-        @Valid @RequestBody CourtAddress courtAddresses
+        @Valid @RequestBody CourtAddress courtAddress
     ) {
         return ResponseEntity.ok(
-            courtAddressesService.updateAddress(
+            courtAddressService.updateAddress(
                 UUID.fromString(courtId),
                 UUID.fromString(addressId),
-                courtAddresses
+                courtAddress
             )
         );
     }
 
-    @DeleteMapping("/v1/addresses/{addressId}")
+    @DeleteMapping("/v1/address/{addressId}")
     @Operation(
         summary = "Delete address for a court",
         description = "Remove an existing address entry for the supplied court."
@@ -136,7 +136,7 @@ public class CourtAddressesController {
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the address", required = true) @ValidUUID @PathVariable String addressId
     ) {
-        courtAddressesService.deleteAddress(UUID.fromString(courtId), UUID.fromString(addressId));
+        courtAddressService.deleteAddress(UUID.fromString(courtId), UUID.fromString(addressId));
         return ResponseEntity.noContent().build();
     }
 }

@@ -11,7 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtAddressesService;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtAddressService;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,8 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-@WebMvcTest(CourtAddressesController.class)
-class CourtAddressesControllerTest {
+@WebMvcTest(CourtAddressController.class)
+class CourtAddressControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -38,10 +38,12 @@ class CourtAddressesControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private CourtAddressesService courtAddressesService;
+    private CourtAddressService courtAddressService;
 
-    private static final String ADDRESSES_V1_PATH = "/courts/{courtId}/v1/addresses";
-    private static final String ADDRESS_V1_PATH = "/courts/{courtId}/v1/addresses/{addressId}";
+    private static final String ADDRESSES_V1_PATH = "/courts/{courtId}/v1/address";
+    private static final String ADDRESS_V1_PATH = "/courts/{courtId}/v1/address/{addressId}";
+    private static final String ADDRESS_LINE_1 = "123 Test Street";
+    private static final String COURT_NOT_FOUND_MESSAGE = "Court not found";
 
     private final UUID courtId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
     private final UUID addressId = UUID.fromString("223e4567-e89b-12d3-a456-426614174111");
@@ -51,43 +53,44 @@ class CourtAddressesControllerTest {
             .id(addressId)
             .courtId(courtId)
             .addressType(AddressType.VISIT_US)
-            .addressLine1("123 Test Street")
+            .addressLine1(ADDRESS_LINE_1)
             .build();
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/addresses returns addresses successfully")
+    @DisplayName("GET /courts/{courtId}/v1/address returns addresses successfully")
     void getAddressesReturnsSuccessfully() throws Exception {
-        when(courtAddressesService.getAddresses(courtId))
+        when(courtAddressService.getAddresses(courtId))
             .thenReturn(List.of(buildAddress()));
 
         mockMvc.perform(get(ADDRESSES_V1_PATH, courtId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].id").value(addressId.toString()))
-            .andExpect(jsonPath("$[0].addressLine1").value("123 Test Street"));
+            .andExpect(jsonPath("$[0].addressLine1").value(ADDRESS_LINE_1));
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/addresses returns 404 when court not found")
+    @DisplayName("GET /courts/{courtId}/v1/address returns 404 when court not found")
     void getAddressesReturnsNotFoundForUnknownCourt() throws Exception {
-        when(courtAddressesService.getAddresses(courtId))
-            .thenThrow(new NotFoundException("Court not found"));
+        when(courtAddressService.getAddresses(courtId))
+            .thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
 
         mockMvc.perform(get(ADDRESSES_V1_PATH, courtId))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value(COURT_NOT_FOUND_MESSAGE));
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/addresses returns 400 for invalid court ID")
+    @DisplayName("GET /courts/{courtId}/v1/address returns 400 for invalid court ID")
     void getAddressesInvalidUUID() throws Exception {
         mockMvc.perform(get(ADDRESSES_V1_PATH, "invalid"))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/addresses/{addressId} returns address successfully")
+    @DisplayName("GET /courts/{courtId}/v1/address/{addressId} returns address successfully")
     void getAddressReturnsSuccessfully() throws Exception {
-        when(courtAddressesService.getAddress(courtId, addressId))
+        when(courtAddressService.getAddress(courtId, addressId))
             .thenReturn(buildAddress());
 
         mockMvc.perform(get(ADDRESS_V1_PATH, courtId, addressId))
@@ -96,57 +99,59 @@ class CourtAddressesControllerTest {
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/addresses/{addressId} returns 404 when not found")
+    @DisplayName("GET /courts/{courtId}/v1/address/{addressId} returns 404 when not found")
     void getAddressReturnsNotFound() throws Exception {
-        when(courtAddressesService.getAddress(courtId, addressId))
+        when(courtAddressService.getAddress(courtId, addressId))
             .thenThrow(new NotFoundException("Address not found"));
 
         mockMvc.perform(get(ADDRESS_V1_PATH, courtId, addressId))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value("Address not found"));
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/addresses/{addressId} returns 400 for invalid ID")
+    @DisplayName("GET /courts/{courtId}/v1/address/{addressId} returns 400 for invalid ID")
     void getAddressInvalidUUID() throws Exception {
         mockMvc.perform(get(ADDRESS_V1_PATH, "invalid", addressId))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/v1/addresses creates address successfully")
+    @DisplayName("POST /courts/{courtId}/v1/address creates address successfully")
     void createAddressReturnsCreated() throws Exception {
         CourtAddress request = buildAddress();
         request.setId(UUID.randomUUID());
 
-        when(courtAddressesService.createAddress(any(UUID.class), any(CourtAddress.class)))
+        when(courtAddressService.createAddress(any(UUID.class), any(CourtAddress.class)))
             .thenReturn(buildAddress());
 
         mockMvc.perform(post(ADDRESSES_V1_PATH, courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.addressLine1").value("123 Test Street"));
+            .andExpect(jsonPath("$.addressLine1").value(ADDRESS_LINE_1));
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/v1/addresses returns 404 when court not found")
+    @DisplayName("POST /courts/{courtId}/v1/address returns 404 when court not found")
     void createAddressReturnsNotFound() throws Exception {
         CourtAddress request = buildAddress();
         request.setId(null);
-        request.setAddressLine1("123 Test Street");
+        request.setAddressLine1(ADDRESS_LINE_1);
         request.setAddressType(AddressType.VISIT_US);
 
-        when(courtAddressesService.createAddress(any(UUID.class), any(CourtAddress.class)))
-            .thenThrow(new NotFoundException("Court not found"));
+        when(courtAddressService.createAddress(any(UUID.class), any(CourtAddress.class)))
+            .thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
 
         mockMvc.perform(post(ADDRESSES_V1_PATH, courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.message").value(COURT_NOT_FOUND_MESSAGE));
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/v1/addresses returns 400 for null address type")
+    @DisplayName("POST /courts/{courtId}/v1/address returns 400 for null address type")
     void createAddressNullAddressType() throws Exception {
         CourtAddress request = buildAddress();
         request.setId(null);
@@ -159,7 +164,7 @@ class CourtAddressesControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/v1/addresses returns 400 when address line is too long")
+    @DisplayName("POST /courts/{courtId}/v1/address returns 400 when address line is too long")
     void createAddressAddressLineTooLong() throws Exception {
         CourtAddress request = buildAddress();
         request.setId(null);
@@ -172,15 +177,15 @@ class CourtAddressesControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/addresses/{addressId} updates address successfully")
+    @DisplayName("PUT /courts/{courtId}/v1/address/{addressId} updates address successfully")
     void updateAddressReturnsOk() throws Exception {
         CourtAddress request = buildAddress();
         request.setAddressLine1("Updated address");
 
-        when(courtAddressesService.updateAddress(
-            any(UUID.class),
-            any(UUID.class),
-            any(CourtAddress.class)
+        when(courtAddressService.updateAddress(
+            courtId,
+            addressId,
+            request
         )).thenReturn(request);
 
         mockMvc.perform(put(ADDRESS_V1_PATH, courtId, addressId)
@@ -191,14 +196,14 @@ class CourtAddressesControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/addresses/{addressId} returns 404 when contact not found")
+    @DisplayName("PUT /courts/{courtId}/v1/address/{addressId} returns 404 when contact not found")
     void updateAddressReturnsNotFound() throws Exception {
         CourtAddress request = buildAddress();
 
-        when(courtAddressesService.updateAddress(
-            any(UUID.class),
-            any(UUID.class),
-            any(CourtAddress.class)
+        when(courtAddressService.updateAddress(
+            courtId,
+            addressId,
+            request
         )).thenThrow(new NotFoundException("Contact not found"));
 
         mockMvc.perform(put(ADDRESS_V1_PATH, courtId, addressId)
@@ -208,7 +213,7 @@ class CourtAddressesControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/addresses/{addressId} returns 400 for invalid postcode")
+    @DisplayName("PUT /courts/{courtId}/v1/address/{addressId} returns 400 for invalid postcode")
     void updateAddressInvalidPostcode() throws Exception {
         CourtAddress request = buildAddress();
         request.setPostcode("123 456 789");
@@ -220,26 +225,26 @@ class CourtAddressesControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /courts/{courtId}/v1/addresses/{addressId} deletes address successfully")
+    @DisplayName("DELETE /courts/{courtId}/v1/address/{addressId} deletes address successfully")
     void deleteAddressReturnsNoContent() throws Exception {
-        doNothing().when(courtAddressesService).deleteAddress(courtId, addressId);
+        doNothing().when(courtAddressService).deleteAddress(courtId, addressId);
 
         mockMvc.perform(delete(ADDRESS_V1_PATH, courtId, addressId))
             .andExpect(status().isNoContent());
     }
 
     @Test
-    @DisplayName("DELETE /courts/{courtId}/v1/addresses/{addressId} returns 404 when address not found")
+    @DisplayName("DELETE /courts/{courtId}/v1/address/{addressId} returns 404 when address not found")
     void deleteAddressReturnsNotFound() throws Exception {
         doThrow(new NotFoundException("Address not found"))
-            .when(courtAddressesService).deleteAddress(courtId, addressId);
+            .when(courtAddressService).deleteAddress(courtId, addressId);
 
         mockMvc.perform(delete(ADDRESS_V1_PATH, courtId, addressId))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("DELETE /courts/{courtId}/v1/addresses/{addressId} returns 400 for invalid UUID")
+    @DisplayName("DELETE /courts/{courtId}/v1/address/{addressId} returns 400 for invalid UUID")
     void deleteAddressInvalidUUID() throws Exception {
         mockMvc.perform(delete(ADDRESS_V1_PATH, "invalid", addressId))
             .andExpect(status().isBadRequest());

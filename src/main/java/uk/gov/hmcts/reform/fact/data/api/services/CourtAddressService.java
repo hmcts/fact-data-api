@@ -18,17 +18,17 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class CourtAddressesService {
+public class CourtAddressService {
 
     private final CourtAddressRepository courtAddressRepository;
     private final CourtService courtService;
     private final TypesService typesService;
     private final OsService osService;
 
-    public CourtAddressesService(CourtAddressRepository courtAddressRepository,
-                                 CourtService courtService,
-                                 TypesService typesService,
-                                 OsService osService) {
+    public CourtAddressService(CourtAddressRepository courtAddressRepository,
+                               CourtService courtService,
+                               TypesService typesService,
+                               OsService osService) {
         this.courtAddressRepository = courtAddressRepository;
         this.courtService = courtService;
         this.typesService = typesService;
@@ -68,31 +68,28 @@ public class CourtAddressesService {
      * Persist a new address for a court.
      *
      * @param courtId The court identifier.
-     * @param request The address to create.
+     * @param courtAddress The address to create.
      * @return Created address.
      * @throws NotFoundException if the court or supplied description type does not exist.
      */
     @Transactional
-    public CourtAddress createAddress(UUID courtId, CourtAddress request) {
+    public CourtAddress createAddress(UUID courtId, CourtAddress courtAddress) {
         Court court = courtService.getCourtById(courtId);
 
-        request.setId(null);
-        request.setCourtId(courtId);
-        request.setCourt(court);
-        request.setAreasOfLaw(getValidatedAreasOfLawTypeIds(request.getAreasOfLaw()));
-        request.setCourtTypes(getValidatedCourtTypeIds(request.getCourtTypes()));
-
-        if (request.getPostcode() != null) {
-            OsData osData = osService.getOsAddressByFullPostcode(request.getPostcode());
-            if (osData != null && osData.getResults() != null && !osData.getResults().isEmpty()) {
-                OsDpa dpa = osData.getResults().getFirst().getDpa();
-                request.setLat(BigDecimal.valueOf(dpa.getLat()));
-                request.setLon(BigDecimal.valueOf(dpa.getLng()));
-            }
+        courtAddress.setId(null);
+        courtAddress.setCourtId(courtId);
+        courtAddress.setCourt(court);
+        if (courtAddress.getAreasOfLaw() != null) {
+            courtAddress.setAreasOfLaw(getValidatedAreasOfLawTypeIds(courtAddress.getAreasOfLaw()));
         }
 
-        log.info("Creating address for court {}", courtId);
-        return courtAddressRepository.save(request);
+        if (courtAddress.getCourtTypes() != null) {
+            courtAddress.setCourtTypes(getValidatedCourtTypeIds(courtAddress.getCourtTypes()));
+        }
+
+        setLatLonFromPostcode(courtAddress);
+
+        return courtAddressRepository.save(courtAddress);
     }
 
     /**
@@ -100,34 +97,31 @@ public class CourtAddressesService {
      *
      * @param courtId   The court identifier.
      * @param addressId The address identifier.
-     * @param request   Updated address values.
+     * @param courtAddress   Updated address values.
      * @return Updated address.
      * @throws NotFoundException if the court or address does not exist.
      */
     @Transactional
-    public CourtAddress updateAddress(UUID courtId, UUID addressId, CourtAddress request) {
+    public CourtAddress updateAddress(UUID courtId, UUID addressId, CourtAddress courtAddress) {
         CourtAddress existing = getAddress(courtId, addressId);
 
-        existing.setAddressLine1(request.getAddressLine1());
-        existing.setAddressLine2(request.getAddressLine2());
-        existing.setTownCity(request.getTownCity());
-        existing.setCounty(request.getCounty());
-        existing.setPostcode(request.getPostcode());
-        existing.setEpimId(request.getEpimId());
-        existing.setAddressType(request.getAddressType());
-        existing.setAreasOfLaw(getValidatedAreasOfLawTypeIds(request.getAreasOfLaw()));
-        existing.setCourtTypes(getValidatedCourtTypeIds(request.getCourtTypes()));
-
-        if (request.getPostcode() != null) {
-            OsData osData = osService.getOsAddressByFullPostcode(request.getPostcode());
-            if (osData != null && osData.getResults() != null && !osData.getResults().isEmpty()) {
-                OsDpa dpa = osData.getResults().getFirst().getDpa();
-                existing.setLat(BigDecimal.valueOf(dpa.getLat()));
-                existing.setLon(BigDecimal.valueOf(dpa.getLng()));
-            }
+        existing.setAddressLine1(courtAddress.getAddressLine1());
+        existing.setAddressLine2(courtAddress.getAddressLine2());
+        existing.setTownCity(courtAddress.getTownCity());
+        existing.setCounty(courtAddress.getCounty());
+        existing.setEpimId(courtAddress.getEpimId());
+        existing.setAddressType(courtAddress.getAddressType());
+        if (courtAddress.getAreasOfLaw() != null) {
+            existing.setAreasOfLaw(getValidatedAreasOfLawTypeIds(courtAddress.getAreasOfLaw()));
         }
 
-        log.info("Updating address {} for court {}", addressId, courtId);
+        if (courtAddress.getCourtTypes() != null) {
+            existing.setCourtTypes(getValidatedCourtTypeIds(courtAddress.getCourtTypes()));
+        }
+
+        existing.setPostcode(courtAddress.getPostcode());
+        setLatLonFromPostcode(existing);
+
         return courtAddressRepository.save(existing);
     }
 
@@ -140,36 +134,55 @@ public class CourtAddressesService {
      */
     @Transactional
     public void deleteAddress(UUID courtId, UUID addressId) {
-        courtService.getCourtById(courtId);
-        if (!courtAddressRepository.existsByIdAndCourtId(addressId, courtId)) {
-            throw new NotFoundException(
-                "Court address not found, addressId: " + addressId + ", courtId: " + courtId
-            );
-        }
-
-        log.info("Deleting address {} for court {}", addressId, courtId);
-        courtAddressRepository.deleteByIdAndCourtId(addressId, courtId);
+        courtAddressRepository.deleteByIdAndCourtId(
+            this.getAddress(courtId, addressId).getId(),
+            courtService.getCourtById(courtId).getId());
     }
 
+    /**
+     * Validates and retrieves a list of areas of law type IDs.
+     * Takes a list of UUIDs representing area of law types and validates their existence.
+     * Only returns IDs that correspond to valid area of law types in the system.
+     *
+     * @param areasOfLawIds List of UUIDs to validate
+     * @return List of validated area of law type UUIDs
+     */
     private List<UUID> getValidatedAreasOfLawTypeIds(List<UUID> areasOfLawIds) {
-        if (areasOfLawIds == null) {
-            return null;
-        }
-
         return typesService.getAllAreasOfLawTypesByIds(areasOfLawIds)
             .stream()
             .map(AreaOfLawType::getId)
             .toList();
     }
 
+    /**
+     * Validates and retrieves a list of court type IDs.
+     * Takes a list of UUIDs representing court types and validates their existence.
+     * Only returns IDs that correspond to valid court types in the system.
+     *
+     * @param courtTypeIds List of UUIDs to validate
+     * @return List of validated court type UUIDs
+     */
     private List<UUID> getValidatedCourtTypeIds(List<UUID> courtTypeIds) {
-        if (courtTypeIds == null) {
-            return null;
-        }
-
         return typesService.getAllCourtTypesByIds(courtTypeIds)
             .stream()
             .map(CourtType::getId)
             .toList();
+    }
+
+    /**
+     * Updates the latitude and longitude coordinates for a court address based on its postcode.
+     * Uses the Ordnance Survey API to look up geographic coordinates from the postcode.
+     * If valid postcode data is found, updates the address with the corresponding lat/lon values.
+     * If postcode is null or no valid coordinates are found, the address remains unchanged.
+     *
+     * @param address The court address entity to update with geographic coordinates
+     */
+    private void setLatLonFromPostcode(CourtAddress address) {
+        OsData osData = osService.getOsAddressByFullPostcode(address.getPostcode());
+        if (osData != null && osData.getResults() != null && !osData.getResults().isEmpty()) {
+            OsDpa dpa = osData.getResults().getFirst().getDpa();
+            address.setLat(BigDecimal.valueOf(dpa.getLat()));
+            address.setLon(BigDecimal.valueOf(dpa.getLng()));
+        }
     }
 }
