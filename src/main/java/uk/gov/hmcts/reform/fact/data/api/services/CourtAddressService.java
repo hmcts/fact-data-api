@@ -104,23 +104,7 @@ public class CourtAddressService {
     @Transactional
     public CourtAddress updateAddress(UUID courtId, UUID addressId, CourtAddress courtAddress) {
         CourtAddress existing = getAddress(courtId, addressId);
-
-        existing.setAddressLine1(courtAddress.getAddressLine1());
-        existing.setAddressLine2(courtAddress.getAddressLine2());
-        existing.setTownCity(courtAddress.getTownCity());
-        existing.setCounty(courtAddress.getCounty());
-        existing.setEpimId(courtAddress.getEpimId());
-        existing.setAddressType(courtAddress.getAddressType());
-        if (courtAddress.getAreasOfLaw() != null) {
-            existing.setAreasOfLaw(getValidatedAreasOfLawTypeIds(courtAddress.getAreasOfLaw()));
-        }
-
-        if (courtAddress.getCourtTypes() != null) {
-            existing.setCourtTypes(getValidatedCourtTypeIds(courtAddress.getCourtTypes()));
-        }
-
-        existing.setPostcode(courtAddress.getPostcode());
-        setLatLonFromPostcode(existing);
+        setNewAddressFieldsOnExistingAddress(existing, courtAddress);
 
         return courtAddressRepository.save(existing);
     }
@@ -184,5 +168,25 @@ public class CourtAddressService {
             address.setLat(BigDecimal.valueOf(dpa.getLat()));
             address.setLon(BigDecimal.valueOf(dpa.getLng()));
         }
+    }
+
+    private void setNewAddressFieldsOnExistingAddress(CourtAddress existing, CourtAddress newAddress) {
+        existing.setAddressLine1(newAddress.getAddressLine1());
+        existing.setAddressLine2(newAddress.getAddressLine2());
+        existing.setTownCity(newAddress.getTownCity());
+        existing.setCounty(newAddress.getCounty());
+        existing.setPostcode(newAddress.getPostcode());
+        existing.setAddressType(newAddress.getAddressType());
+        existing.setEpimId(newAddress.getEpimId());
+
+        if (newAddress.getAreasOfLaw() != null) {
+            existing.setAreasOfLaw(getValidatedAreasOfLawTypeIds(newAddress.getAreasOfLaw()));
+        }
+
+        if (newAddress.getCourtTypes() != null) {
+            existing.setCourtTypes(getValidatedCourtTypeIds(newAddress.getCourtTypes()));
+        }
+
+        setLatLonFromPostcode(existing);
     }
 }
