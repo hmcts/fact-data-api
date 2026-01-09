@@ -5,6 +5,8 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -93,12 +95,11 @@ public final class TestDataHelper {
      */
     public static UUID getAreaOfLawIdByName(final HttpClient http, final String name) {
         final Response response = http.doGet("/types/v1/areas-of-law");
-        final int count = response.jsonPath().getInt("size()");
+        final List<Map<String, Object>> areas = response.jsonPath().getList("");
 
-        for (int i = 0; i < count; i++) {
-            final String areaName = response.jsonPath().getString("[" + i + "].name");
-            if (name.equals(areaName)) {
-                return UUID.fromString(response.jsonPath().getString("[" + i + "].id"));
+        for (Map<String, Object> area : areas) {
+            if (name.equals(area.get("name"))) {
+                return UUID.fromString((String) area.get("id"));
             }
         }
 
