@@ -44,7 +44,7 @@ class SearchCourtControllerTest {
     @DisplayName("GET /search/courts/v1/postcode returns courts by postcode")
     void getCourtsByPostcodeReturnsOk() throws Exception {
         List<CourtWithDistance> results = List.of(
-            new CourtWithDistanceDto(COURT_ID, "Test Court", "test-court", BigDecimal.valueOf(1.25))
+            buildCourtWithDistance(COURT_ID, "Test Court", "test-court", BigDecimal.valueOf(1.25))
         );
 
         when(searchCourtService.getCourtsBySearchParameters("SW1A 1AA", null, null, 10))
@@ -64,7 +64,7 @@ class SearchCourtControllerTest {
     @DisplayName("GET /search/courts/v1/postcode accepts lowercase action via converter")
     void getCourtsByPostcodeAcceptsLowercaseAction() throws Exception {
         List<CourtWithDistance> results = List.of(
-            new CourtWithDistanceDto(COURT_ID, "Test Court", "test-court", BigDecimal.valueOf(2.5))
+            buildCourtWithDistance(COURT_ID, "Test Court", "test-court", BigDecimal.valueOf(2.5))
         );
 
         when(searchCourtService.getCourtsBySearchParameters("SW1A 1AA", "Civil", SearchAction.NEAREST, 5))
@@ -159,37 +159,30 @@ class SearchCourtControllerTest {
             .andExpect(status().isBadRequest());
     }
 
-    private static final class CourtWithDistanceDto implements CourtWithDistance {
-        private final UUID courtId;
-        private final String courtName;
-        private final String courtSlug;
-        private final BigDecimal distance;
+    private CourtWithDistance buildCourtWithDistance(UUID courtId,
+                                                     String courtName,
+                                                     String courtSlug,
+                                                     BigDecimal distance) {
+        return new CourtWithDistance() {
+            @Override
+            public UUID getCourtId() {
+                return courtId;
+            }
 
-        private CourtWithDistanceDto(UUID courtId, String courtName, String courtSlug, BigDecimal distance) {
-            this.courtId = courtId;
-            this.courtName = courtName;
-            this.courtSlug = courtSlug;
-            this.distance = distance;
-        }
+            @Override
+            public String getCourtName() {
+                return courtName;
+            }
 
-        @Override
-        public UUID getCourtId() {
-            return courtId;
-        }
+            @Override
+            public String getCourtSlug() {
+                return courtSlug;
+            }
 
-        @Override
-        public String getCourtName() {
-            return courtName;
-        }
-
-        @Override
-        public String getCourtSlug() {
-            return courtSlug;
-        }
-
-        @Override
-        public BigDecimal getDistance() {
-            return distance;
-        }
+            @Override
+            public BigDecimal getDistance() {
+                return distance;
+            }
+        };
     }
 }
