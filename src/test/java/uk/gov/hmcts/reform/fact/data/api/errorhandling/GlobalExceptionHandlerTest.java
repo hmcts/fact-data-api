@@ -15,6 +15,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -123,8 +126,8 @@ class GlobalExceptionHandlerTest {
         Map<String, String> response = handler.handle(methodArgumentNotValidException);
 
         assertThat(response).isNotNull();
-        assertThat(response).containsKey("field");
-        assertThat(response.get("field")).isEqualTo(TEST_MESSAGE);
+        assertThat(response).containsEntry("field", TEST_MESSAGE);
+        assertThat(response).containsKey("timestamp");
     }
 
     @Test
@@ -259,6 +262,29 @@ class GlobalExceptionHandlerTest {
             .contains("Unsupported or malformed Content-Type 'unknown'")
             .contains("use 'multipart/form-data'")
             .contains("use 'application/json'");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleDuplicatedListItemException() {
+        DuplicatedListItemException ex = new DuplicatedListItemException("Duplicated list item");
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).contains("Duplicated list item");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleInvalidAreaOfLawTypeException() {
+        InvalidAreaOfLawException ex =
+            new InvalidAreaOfLawException("Invalid area of Law: Probate");
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).contains("Invalid area of Law: Probate");
         assertThat(response.getTimestamp()).isNotNull();
     }
 

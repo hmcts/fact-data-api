@@ -6,6 +6,7 @@ import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtSinglePointsOfEntry;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CourtSinglePointsOfEntryRepository extends JpaRepository<CourtSinglePointsOfEntry, UUID> {
+
     /**
      * Finds the nearest SPOE court for the Children area of law.
      *
@@ -62,4 +64,5 @@ public interface CourtSinglePointsOfEntryRepository extends JpaRepository<CourtS
         @Param("lat") double lat,
         @Param("lon") double lon
     );
+    Optional<CourtSinglePointsOfEntry> findByCourtId(UUID courtId);
 }
