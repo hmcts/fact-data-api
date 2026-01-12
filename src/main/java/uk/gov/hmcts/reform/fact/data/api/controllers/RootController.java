@@ -1,16 +1,21 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import static org.springframework.http.ResponseEntity.ok;
+
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import static org.springframework.http.ResponseEntity.ok;
 
 /**
  * Default endpoints per application.
  */
+
+@Tag(name = "Root")
 @RestController
+@RequestMapping
 public class RootController {
 
     /**

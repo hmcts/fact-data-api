@@ -5,6 +5,7 @@ import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -32,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Feature("Court Controller")
 @DisplayName("Court Controller")
 @WebMvcTest(CourtController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class CourtControllerTest {
 
     private static final UUID COURT_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
