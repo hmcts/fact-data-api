@@ -103,6 +103,7 @@ public class SearchExecuter {
                     return byLaOpt.get();
                 }
             }
+            // fall through
             default: {
                 log.debug(
                     "Default fallback search (if no results found for determined search strategy) "
