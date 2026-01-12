@@ -18,7 +18,6 @@ services:
       - TESTING_SUPPORT_ENABLE_API=${TESTING_SUPPORT_ENABLE_API}
       - OS_KEY=${OS_KEY}
   fact-database:
-    # TODO: add migration stuff here instead
     image: hmctspublic.azurecr.io/imported/postgres:16-alpine
     environment:
       POSTGRES_DB: fact
@@ -28,5 +27,6 @@ services:
       - "5999:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
 volumes:
   db-data:
