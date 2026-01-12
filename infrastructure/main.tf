@@ -42,7 +42,7 @@ module "postgresql" {
   admin_user_object_id = var.jenkins_AAD_objectId
   pgsql_server_configuration = [{
      name  = "azure.extensions"
-     value = "pgcrypto"
+     value = "pgcrypto,cube,earthdistance"
   }, {
     "name" : "backslash_quote",
     "value" : "on"

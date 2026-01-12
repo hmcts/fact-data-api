@@ -1,4 +1,4 @@
-package uk.gov.hmcts.reform.fact.data.api.services;
+package uk.gov.hmcts.reform.fact.data.api.services.search;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -9,7 +9,11 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
-import uk.gov.hmcts.reform.fact.data.api.services.search.SearchExecuter;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtAddressService;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtServiceAreaService;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtSinglePointOfEntryService;
+import uk.gov.hmcts.reform.fact.data.api.services.OsService;
+import uk.gov.hmcts.reform.fact.data.api.services.ServiceAreaService;
 
 import java.util.List;
 

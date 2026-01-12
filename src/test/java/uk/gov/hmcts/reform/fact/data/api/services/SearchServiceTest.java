@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.Service;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceRepository;
+import uk.gov.hmcts.reform.fact.data.api.services.search.SearchService;
 
 import java.util.List;
 

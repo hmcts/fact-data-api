@@ -12,7 +12,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
-import uk.gov.hmcts.reform.fact.data.api.services.SearchCourtService;
+import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
 
 import java.math.BigDecimal;
 import java.util.List;

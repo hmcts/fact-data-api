@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.entities.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
-import uk.gov.hmcts.reform.fact.data.api.services.SearchService;
+import uk.gov.hmcts.reform.fact.data.api.services.search.SearchService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceAreaService;
 
 import java.util.List;

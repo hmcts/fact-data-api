@@ -1,4 +1,4 @@
-package uk.gov.hmcts.reform.fact.data.api.services;
+package uk.gov.hmcts.reform.fact.data.api.services.search;
 
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceRepository;
