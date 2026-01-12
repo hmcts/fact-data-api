@@ -5,10 +5,9 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
@@ -17,9 +16,6 @@ import static org.springframework.http.HttpStatus.CREATED;
  * Helper methods for fetching test data via API endpoints.
  */
 public final class TestDataHelper {
-
-    private static final Pattern AREA_OF_LAW_ID_PATTERN =
-        Pattern.compile("id=([0-9a-fA-F-]{36})");
 
     private TestDataHelper() {
         // Utility class
@@ -91,56 +87,40 @@ public final class TestDataHelper {
     }
 
     /**
-     * Extracts a single area of law type ID by name from the response map keys.
+     * Fetches an area of law ID by name from the areas of law types endpoint.
      *
-     * @param areasOfLawMap the map returned by GET /courts/{courtId}/v1/areas-of-law
+     * @param http the HTTP client
      * @param name the exact area of law name to match
-     * @return the UUID for the requested area of law name
+     * @return the UUID for the requested area of law
      */
-    public static UUID extractAreaOfLawTypeIdByName(final Map<String, Boolean> areasOfLawMap, final String name) {
-        for (String key : areasOfLawMap.keySet()) {
-            if (matchesAreaOfLawName(key, name)) {
-                final Matcher matcher = AREA_OF_LAW_ID_PATTERN.matcher(key);
-                if (matcher.find()) {
-                    return UUID.fromString(matcher.group(1));
-                }
+    public static UUID getAreaOfLawIdByName(final HttpClient http, final String name) {
+        final Response response = http.doGet("/types/v1/areas-of-law");
+        final List<Map<String, Object>> areas = response.jsonPath().getList("");
+
+        for (Map<String, Object> area : areas) {
+            if (name.equals(area.get("name"))) {
+                return UUID.fromString((String) area.get("id"));
             }
         }
 
         throw new IllegalStateException(
-            String.format("Area of law name not found in response: %s. Available keys: %s",
-                          name, areasOfLawMap.keySet())
+            String.format("Area of law name not found: %s", name)
         );
     }
 
     /**
-     * Finds the selected status for an area of law by name.
+     * Builds a CourtAreasOfLaw object with the given parameters.
      *
-     * @param areasOfLawMap the map returned by GET /courts/{courtId}/v1/areas-of-law
-     * @param name the exact area of law name to match
-     * @return true if selected, false if not selected
+     * @param courtId the court ID
+     * @param areasOfLaw the list of area of law IDs
+     * @return a CourtAreasOfLaw object
      */
-    public static boolean isAreaOfLawSelectedByName(final Map<String, Boolean> areasOfLawMap, final String name) {
-        for (String key : areasOfLawMap.keySet()) {
-            if (matchesAreaOfLawName(key, name)) {
-                return areasOfLawMap.get(key);
-            }
-        }
-
-        throw new IllegalStateException(
-            String.format("Area of law name not found in response: %s. Available keys: %s",
-                          name, areasOfLawMap.keySet())
-        );
-    }
-
-    /**
-     * Checks if a map key matches the specified area of law name.
-     *
-     * @param key the map key to check
-     * @param name the area of law name to match
-     * @return true if the key contains the specified name
-     */
-    private static boolean matchesAreaOfLawName(final String key, final String name) {
-        return key.contains("name=" + name);
+    public static uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw buildCourtAreasOfLaw(
+        final UUID courtId, final java.util.List<UUID> areasOfLaw) {
+        final uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw courtAreasOfLaw =
+            new uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw();
+        courtAreasOfLaw.setCourtId(courtId);
+        courtAreasOfLaw.setAreasOfLaw(areasOfLaw);
+        return courtAreasOfLaw;
     }
 }
