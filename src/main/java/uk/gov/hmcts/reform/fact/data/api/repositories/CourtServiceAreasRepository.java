@@ -13,6 +13,12 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CourtServiceAreasRepository extends JpaRepository<CourtServiceAreas, UUID> {
+    /**
+     * Finds court service area links for a service area id.
+     *
+     * @param id the service area id
+     * @return matching court service areas
+     */
     // Note that @Type(ListArrayType.class) requires for this instance we use a native query
     @Query(
         value = "SELECT * FROM court_service_areas c WHERE :id = ANY(c.service_area_id)",
@@ -20,6 +26,15 @@ public interface CourtServiceAreasRepository extends JpaRepository<CourtServiceA
     )
     List<CourtServiceAreas> findByServiceAreaId(UUID id);
 
+    /**
+     * Finds nearest open courts for a service area by distance.
+     *
+     * @param serviceAreaId the service area id
+     * @param lat the latitude to search from
+     * @param lon the longitude to search from
+     * @param limit the maximum number of results
+     * @return matching courts with distance data
+     */
     @Query(
         value = """
             SELECT

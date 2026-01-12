@@ -71,6 +71,13 @@ public class SearchCourtService {
             : searchWithServiceArea(postcode, serviceArea, action, limit);
     }
 
+    /**
+     * Searches for the nearest courts using a postcode only.
+     *
+     * @param postcode the postcode to search by
+     * @param limit the maximum number of results
+     * @return the nearest courts with distance data
+     */
     public List<CourtWithDistance> searchPostcodeOnly(String postcode, Integer limit) {
         OsDpa osData = osService.getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
         return courtAddressService.findCourtWithDistanceByOsData(osData.getLat(), osData.getLng(), limit);

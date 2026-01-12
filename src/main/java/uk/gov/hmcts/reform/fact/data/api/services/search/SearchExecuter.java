@@ -12,6 +12,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -102,7 +103,6 @@ public class SearchExecuter {
                     return byLaOpt.get();
                 }
             }
-            // fall through
             default: {
                 log.debug(
                     "Default fallback search (if no results found for determined search strategy) "
@@ -133,10 +133,10 @@ public class SearchExecuter {
      * @return The stripped name
      */
     private static String stripTrailingCouncil(String name) {
-        if (name == null) {
-            return null;
-        }
+        String safeName = Objects.requireNonNullElse(name, "");
         String suffix = " Council";
-        return name.endsWith(suffix) ? name.substring(0, name.length() - suffix.length()) : name;
+        return safeName.endsWith(suffix)
+            ? safeName.substring(0, safeName.length() - suffix.length())
+            : safeName;
     }
 }

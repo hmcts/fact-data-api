@@ -14,6 +14,14 @@ import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 @Repository
 public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID> {
 
+    /**
+     * Finds the nearest open courts with geocoded visit addresses.
+     *
+     * @param lat the latitude to search from
+     * @param lon the longitude to search from
+     * @param limit the maximum number of results
+     * @return the nearest courts with distance data
+     */
     @Query(
         value = """
             SELECT
@@ -38,6 +46,15 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
         @Param("limit") int limit
     );
 
+    /**
+     * Finds the nearest open courts for a specified area of law.
+     *
+     * @param lat the latitude to search from
+     * @param lon the longitude to search from
+     * @param aolId the area of law id
+     * @param limit the maximum number of results
+     * @return the nearest courts with distance data
+     */
     @Query(
         value = """
             SELECT *
@@ -73,6 +90,18 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
         @Param("limit") int limit
     );
 
+    /**
+     * Finds civil courts using a postcode ladder and returns the best tier results.
+     *
+     * @param serviceAreaId the service area id
+     * @param lat the latitude to search from
+     * @param lon the longitude to search from
+     * @param partialNoSpace the postcode without unit, no spaces
+     * @param outcodeNoSpace the outcode without spaces
+     * @param areacodeNoSpace the area code without spaces
+     * @param limit the maximum number of results
+     * @return matching courts with distance data
+     */
     @Query(
         value = """
             WITH aol AS (
@@ -162,6 +191,16 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
         @Param("limit") int limit
     );
 
+    /**
+     * Finds family courts for a local authority with non-regional catchment.
+     *
+     * @param lat the latitude to search from
+     * @param lon the longitude to search from
+     * @param aolId the area of law id
+     * @param localAuthorityId the local authority id
+     * @param limit the maximum number of results
+     * @return matching courts with distance data
+     */
     @Query(
         value = """
             SELECT DISTINCT ON (c.id)
@@ -195,6 +234,16 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
         @Param("limit") int limit
     );
 
+    /**
+     * Finds a regional family court for a local authority and service area.
+     *
+     * @param serviceAreaId the service area id
+     * @param lat the latitude to search from
+     * @param lon the longitude to search from
+     * @param aolId the area of law id
+     * @param localAuthorityId the local authority id
+     * @return matching courts with distance data
+     */
     @Query(
         value = """
             SELECT DISTINCT ON (c.id)
@@ -231,6 +280,15 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
         @Param("localAuthorityId") UUID localAuthorityId
     );
 
+    /**
+     * Finds a regional family court for a service area and area of law.
+     *
+     * @param serviceAreaId the service area id
+     * @param lat the latitude to search from
+     * @param lon the longitude to search from
+     * @param aolId the area of law id
+     * @return matching courts with distance data
+     */
     @Query(
         value = """
             SELECT DISTINCT ON (c.id)

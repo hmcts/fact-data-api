@@ -19,6 +19,12 @@ public final class PostcodeLadder {
         this.areacodeNoSpace = areacodeNoSpace;
     }
 
+    /**
+     * Creates a ladder from a postcode for partial matching.
+     *
+     * @param fullPostcode the full postcode input
+     * @return the ladder representation
+     */
     public static PostcodeLadder fromPartialPostcode(String fullPostcode) {
         String full = normalizeNoSpace(fullPostcode);
 
@@ -46,18 +52,39 @@ public final class PostcodeLadder {
         );
     }
 
+    /**
+     * Returns the postcode without the unit (no spaces).
+     *
+     * @return the postcode without unit
+     */
     public String minusUnitNoSpace() {
         return minusUnitNoSpace;
     }
 
+    /**
+     * Returns the outcode (no spaces).
+     *
+     * @return the outcode
+     */
     public String outcodeNoSpace() {
         return outcodeNoSpace;
     }
 
+    /**
+     * Returns the area code (no spaces).
+     *
+     * @return the area code
+     */
     public String areacodeNoSpace() {
         return areacodeNoSpace;
     }
 
+    /**
+     * Extracts the leading area prefix from a normalized postcode.
+     *
+     * @param s the normalized postcode
+     * @return the area prefix
+     */
     private static String areaPrefix(String s) {
         int i = 0;
         while (i < s.length() && !Character.isDigit(s.charAt(i))) {
@@ -66,10 +93,22 @@ public final class PostcodeLadder {
         return i == 0 ? s : s.substring(0, i);
     }
 
+    /**
+     * Normalizes a postcode to uppercase without spaces.
+     *
+     * @param s the raw postcode
+     * @return the normalized postcode
+     */
     private static String normalizeNoSpace(String s) {
         return s == null ? "" : s.trim().toUpperCase(Locale.UK).replace(" ", "");
     }
 
+    /**
+     * Compares another object for equality.
+     *
+     * @param o the object to compare
+     * @return true if equal
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -83,11 +122,21 @@ public final class PostcodeLadder {
             && areacodeNoSpace.equals(other.areacodeNoSpace);
     }
 
+    /**
+     * Computes the hash code.
+     *
+     * @return the hash code
+     */
     @Override
     public int hashCode() {
         return Objects.hash(minusUnitNoSpace, outcodeNoSpace, areacodeNoSpace);
     }
 
+    /**
+     * Returns a string representation of the ladder.
+     *
+     * @return the string representation
+     */
     @Override
     public String toString() {
         return "PostcodeLadder["

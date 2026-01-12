@@ -17,6 +17,12 @@ public class ServiceAreaService {
         this.serviceAreaRepository = serviceAreaRepository;
     }
 
+    /**
+     * Retrieves a service area by name.
+     *
+     * @param serviceArea the service area name
+     * @return the matching service area
+     */
     public ServiceArea getServiceAreaByName(String serviceArea) {
         return serviceAreaRepository.findByNameIgnoreCase(serviceArea.trim())
             .orElseThrow(() -> new NotFoundException(
@@ -25,6 +31,12 @@ public class ServiceAreaService {
                  )));
     }
 
+    /**
+     * Retrieves all service areas for a service name.
+     *
+     * @param serviceName the service name
+     * @return the matching service areas
+     */
     public List<ServiceArea> getAllServiceAreasForService(String serviceName) {
         List<ServiceArea> areas =
             serviceAreaRepository.findAllByServiceName(serviceName.trim());

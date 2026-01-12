@@ -14,27 +14,68 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CourtRepository extends JpaRepository<Court, UUID> {
+    /**
+     * Finds courts by region ids and partial name, case-insensitive.
+     *
+     * @param regionIds the region identifiers to filter by
+     * @param name the name fragment to match
+     * @param pageable the pagination configuration
+     * @return the matching courts
+     */
     Page<Court> findByRegionIdInAndNameContainingIgnoreCase(
         List<UUID> regionIds,
         String name,
         Pageable pageable
     );
 
+    /**
+     * Finds open courts by region ids and partial name, case-insensitive.
+     *
+     * @param regionIds the region identifiers to filter by
+     * @param name the name fragment to match
+     * @param pageable the pagination configuration
+     * @return the matching courts
+     */
     Page<Court> findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
         List<UUID> regionIds,
         String name,
         Pageable pageable
     );
 
+    /**
+     * Checks whether a court slug already exists.
+     *
+     * @param slug the slug to check
+     * @return true if the slug exists
+     */
     boolean existsBySlug(String slug);
 
+    /**
+     * Finds courts whose names start with the provided prefix.
+     *
+     * @param namePrefix the name prefix
+     * @return matching courts
+     */
     List<Court> findByNameStartingWithIgnoreCase(String namePrefix);
 
+    /**
+     * Finds courts by name prefix and open flag ordered by name.
+     *
+     * @param prefix the name prefix
+     * @param active the open flag
+     * @return matching courts
+     */
     List<Court> findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(
         String prefix,
         boolean active
     );
 
+    /**
+     * Searches open courts by name or address with ranking.
+     *
+     * @param query the query string
+     * @return matching courts
+     */
     @Query(
         value = """
             SELECT  sub.*

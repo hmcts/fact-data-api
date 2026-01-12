@@ -14,10 +14,22 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ServiceAreaRepository extends JpaRepository<ServiceArea, UUID> {
+    /**
+     * Finds a service area by name, case-insensitive.
+     *
+     * @param name the service area name
+     * @return the matching service area, if found
+     */
     Optional<ServiceArea> findByNameIgnoreCase(
         @NotBlank(message = "The name must be specified") String name
     );
 
+    /**
+     * Finds service areas associated with a service name.
+     *
+     * @param serviceName the service name
+     * @return the matching service areas
+     */
     @Query(value = """
         select sa.*
         from service s

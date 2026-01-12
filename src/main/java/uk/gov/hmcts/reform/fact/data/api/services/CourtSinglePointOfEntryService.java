@@ -15,6 +15,13 @@ public class CourtSinglePointOfEntryService {
         this.courtSinglePointsOfEntryRepository = courtSinglePointsOfEntryRepository;
     }
 
+    /**
+     * Finds the nearest SPOE court for childcare arrangements.
+     *
+     * @param latitude the latitude to search from
+     * @param longitude the longitude to search from
+     * @return matching courts with distance data
+     */
     public List<CourtWithDistance> getChildcareCourtsSpoe(double latitude, double longitude) {
         return courtSinglePointsOfEntryRepository.findNearestCourtBySpoeAndChildrenAreaOfLaw(latitude, longitude);
     }

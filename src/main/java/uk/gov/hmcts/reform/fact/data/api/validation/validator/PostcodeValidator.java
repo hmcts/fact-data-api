@@ -21,10 +21,22 @@ public class PostcodeValidator implements ConstraintValidator<ValidPostcode, Str
     private static final String NI_PREFIX = "BT";
     private static final Pattern CI_IOM_AREA_REGEX = Pattern.compile("^(IM|JE|GY)", Pattern.CASE_INSENSITIVE);
 
+    /**
+     * Initializes the validator.
+     *
+     * @param constraintAnnotation the annotation instance
+     */
     @Override
     public void initialize(ValidPostcode constraintAnnotation) {
     }
 
+    /**
+     * Validates a postcode against supported formats and regions.
+     *
+     * @param rawPostcode the raw input postcode
+     * @param context the validation context
+     * @return true if valid and supported
+     */
     @Override
     public boolean isValid(String rawPostcode, ConstraintValidatorContext context) {
         String postcode = normalize(rawPostcode);
@@ -53,12 +65,25 @@ public class PostcodeValidator implements ConstraintValidator<ValidPostcode, Str
         return true;
     }
 
+    /**
+     * Adds a custom validation failure and returns false.
+     *
+     * @param context the validation context
+     * @param message the failure message
+     * @return false to indicate validation failure
+     */
     private static boolean fail(ConstraintValidatorContext context, String message) {
         context.disableDefaultConstraintViolation();
         context.buildConstraintViolationWithTemplate(message).addConstraintViolation();
         return false;
     }
 
+    /**
+     * Normalizes the postcode by trimming, uppercasing, and collapsing whitespace.
+     *
+     * @param s the raw postcode
+     * @return the normalized postcode
+     */
     private static String normalize(String s) {
         return s.trim().toUpperCase(Locale.UK).replaceAll("\\s+", " ");
     }

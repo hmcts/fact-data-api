@@ -13,6 +13,13 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CourtSinglePointsOfEntryRepository extends JpaRepository<CourtSinglePointsOfEntry, UUID> {
+    /**
+     * Finds the nearest SPOE court for the Children area of law.
+     *
+     * @param lat the latitude to search from
+     * @param lon the longitude to search from
+     * @return the nearest court with distance data
+     */
     @Query(
         value = """
             WITH children_aol AS (

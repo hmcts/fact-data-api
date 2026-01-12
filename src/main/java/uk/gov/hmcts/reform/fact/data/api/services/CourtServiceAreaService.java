@@ -19,6 +19,12 @@ public class CourtServiceAreaService {
         this.serviceAreaService = serviceAreaService;
     }
 
+    /**
+     * Finds court service area links by service area id.
+     *
+     * @param id the service area id
+     * @return matching court service areas
+     */
     public List<CourtServiceAreas> findByServiceAreaId(UUID id) {
         return courtServiceAreasRepository.findByServiceAreaId(id);
     }
