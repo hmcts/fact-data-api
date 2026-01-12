@@ -64,5 +64,6 @@ public interface CourtSinglePointsOfEntryRepository extends JpaRepository<CourtS
         @Param("lat") double lat,
         @Param("lon") double lon
     );
+
     Optional<CourtSinglePointsOfEntry> findByCourtId(UUID courtId);
 }
