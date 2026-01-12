@@ -3,10 +3,13 @@ package uk.gov.hmcts.reform.fact.data.api.repositories;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 
 import java.util.UUID;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AreaOfLawTypeRepository extends JpaRepository<AreaOfLawType, UUID> {
+
+    List<AreaOfLawType> findByNameIn(List<String> names);
 }

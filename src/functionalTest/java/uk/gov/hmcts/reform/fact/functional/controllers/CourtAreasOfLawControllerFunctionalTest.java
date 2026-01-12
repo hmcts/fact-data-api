@@ -9,7 +9,6 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
@@ -47,12 +46,10 @@ public final class CourtAreasOfLawControllerFunctionalTest {
     void shouldSetAdoptionToTrue() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Areas Of Law Adoption");
 
-        final Map<String, Boolean> initialAreasMap = initializeCourtAreasOfLaw(courtId);
-
-        final UUID adoptionId = TestDataHelper.extractAreaOfLawTypeIdByName(initialAreasMap, "Adoption");
+        final UUID adoptionId = TestDataHelper.getAreaOfLawIdByName(http, "Adoption");
 
         final Response updatePutResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
-                                                      buildCourtAreasOfLaw(courtId, List.of(adoptionId)));
+                                              TestDataHelper.buildCourtAreasOfLaw(courtId, List.of(adoptionId)));
         assertThat(updatePutResponse.statusCode()).isEqualTo(CREATED.value());
 
         final Response updatedGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
@@ -63,7 +60,7 @@ public final class CourtAreasOfLawControllerFunctionalTest {
             new TypeReference<Map<String, Boolean>>() {}
         );
 
-        final boolean adoptionSelected = TestDataHelper.isAreaOfLawSelectedByName(updatedAreasMap, "Adoption");
+        final boolean adoptionSelected = isAreaOfLawSelectedByName(updatedAreasMap, "Adoption");
         assertThat(adoptionSelected)
             .as("Adoption area of law should be selected")
             .isTrue();
@@ -74,14 +71,12 @@ public final class CourtAreasOfLawControllerFunctionalTest {
     void shouldReplaceAreasOfLawOnUpdate() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Areas Of Law Replace");
 
-        final Map<String, Boolean> initialAreasMap = initializeCourtAreasOfLaw(courtId);
-
-        final UUID adoptionId = TestDataHelper.extractAreaOfLawTypeIdByName(initialAreasMap, "Adoption");
-        final UUID divorceId = TestDataHelper.extractAreaOfLawTypeIdByName(initialAreasMap, "Divorce");
-        final UUID immigrationId = TestDataHelper.extractAreaOfLawTypeIdByName(initialAreasMap, "Immigration");
+        final UUID adoptionId = TestDataHelper.getAreaOfLawIdByName(http, "Adoption");
+        final UUID divorceId = TestDataHelper.getAreaOfLawIdByName(http, "Divorce");
+        final UUID immigrationId = TestDataHelper.getAreaOfLawIdByName(http, "Immigration");
 
         final Response firstUpdateResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
-                                                        buildCourtAreasOfLaw(courtId, List.of(adoptionId, divorceId)));
+                                    TestDataHelper.buildCourtAreasOfLaw(courtId, List.of(adoptionId, divorceId)));
         assertThat(firstUpdateResponse.statusCode()).isEqualTo(CREATED.value());
 
         final Response firstGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
@@ -92,18 +87,18 @@ public final class CourtAreasOfLawControllerFunctionalTest {
             new TypeReference<Map<String, Boolean>>() {}
         );
 
-        assertThat(TestDataHelper.isAreaOfLawSelectedByName(firstAreasMap, "Adoption"))
+        assertThat(isAreaOfLawSelectedByName(firstAreasMap, "Adoption"))
             .as("Adoption should be selected after first update")
             .isTrue();
-        assertThat(TestDataHelper.isAreaOfLawSelectedByName(firstAreasMap, "Divorce"))
+        assertThat(isAreaOfLawSelectedByName(firstAreasMap, "Divorce"))
             .as("Divorce should be selected after first update")
             .isTrue();
-        assertThat(TestDataHelper.isAreaOfLawSelectedByName(firstAreasMap, "Immigration"))
+        assertThat(isAreaOfLawSelectedByName(firstAreasMap, "Immigration"))
             .as("Immigration should not be selected after first update")
             .isFalse();
 
         final Response secondUpdateResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
-                                                         buildCourtAreasOfLaw(courtId, List.of(immigrationId)));
+                                                 TestDataHelper.buildCourtAreasOfLaw(courtId, List.of(immigrationId)));
         assertThat(secondUpdateResponse.statusCode()).isEqualTo(CREATED.value());
 
         final Response secondGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
@@ -114,13 +109,13 @@ public final class CourtAreasOfLawControllerFunctionalTest {
             new TypeReference<Map<String, Boolean>>() {}
         );
 
-        assertThat(TestDataHelper.isAreaOfLawSelectedByName(secondAreasMap, "Immigration"))
+        assertThat(isAreaOfLawSelectedByName(secondAreasMap, "Immigration"))
             .as("Immigration should be selected after second update")
             .isTrue();
-        assertThat(TestDataHelper.isAreaOfLawSelectedByName(secondAreasMap, "Adoption"))
+        assertThat(isAreaOfLawSelectedByName(secondAreasMap, "Adoption"))
             .as("Adoption should be deselected after second update")
             .isFalse();
-        assertThat(TestDataHelper.isAreaOfLawSelectedByName(secondAreasMap, "Divorce"))
+        assertThat(isAreaOfLawSelectedByName(secondAreasMap, "Divorce"))
             .as("Divorce should be deselected after second update")
             .isFalse();
     }
@@ -143,7 +138,7 @@ public final class CourtAreasOfLawControllerFunctionalTest {
         final UUID nonExistentCourtId = UUID.randomUUID();
 
         final Response putResponse = http.doPut("/courts/" + nonExistentCourtId + "/v1/areas-of-law",
-                                                buildCourtAreasOfLaw(nonExistentCourtId, List.of()));
+                                                TestDataHelper.buildCourtAreasOfLaw(nonExistentCourtId, List.of()));
 
         assertThat(putResponse.statusCode()).isEqualTo(404);
         assertThat(putResponse.jsonPath().getString("message"))
@@ -151,37 +146,34 @@ public final class CourtAreasOfLawControllerFunctionalTest {
     }
 
     /**
-     * Builds a CourtAreasOfLaw object with the given parameters.
+     * Finds the selected status for an area of law by name.
      *
-     * @param courtId the court ID
-     * @param areasOfLaw the list of area of law IDs
-     * @return a CourtAreasOfLaw object
+     * @param areasOfLawMap the map returned by GET /courts/{courtId}/v1/areas-of-law
+     * @param name the exact area of law name to match
+     * @return true if selected, false if not selected
      */
-    private static CourtAreasOfLaw buildCourtAreasOfLaw(final UUID courtId, final List<UUID> areasOfLaw) {
-        final CourtAreasOfLaw courtAreasOfLaw = new CourtAreasOfLaw();
-        courtAreasOfLaw.setCourtId(courtId);
-        courtAreasOfLaw.setAreasOfLaw(areasOfLaw);
-        return courtAreasOfLaw;
+    private static boolean isAreaOfLawSelectedByName(final Map<String, Boolean> areasOfLawMap, final String name) {
+        for (String key : areasOfLawMap.keySet()) {
+            if (matchesAreaOfLawName(key, name)) {
+                return areasOfLawMap.get(key);
+            }
+        }
+
+        throw new IllegalStateException(
+            String.format("Area of law name not found in response: %s. Available keys: %s",
+                          name, areasOfLawMap.keySet())
+        );
     }
 
     /**
-     * Initializes a court with an empty areas of law list and returns all available areas.
+     * Checks if a map key matches the specified area of law name.
      *
-     * @param courtId the court ID to initialize
-     * @return map of all areas of law with their availability status
+     * @param key the map key to check
+     * @param name the area of law name to match
+     * @return true if the key contains the specified name
      */
-    private static Map<String, Boolean> initializeCourtAreasOfLaw(final UUID courtId) throws Exception {
-        final Response initialPutResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
-                                                       buildCourtAreasOfLaw(courtId, List.of()));
-        assertThat(initialPutResponse.statusCode()).isEqualTo(CREATED.value());
-
-        final Response initialGetResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
-        assertThat(initialGetResponse.statusCode()).isEqualTo(OK.value());
-
-        return mapper.readValue(
-            initialGetResponse.asString(),
-            new TypeReference<Map<String, Boolean>>() {}
-        );
+    private static boolean matchesAreaOfLawName(final String key, final String name) {
+        return key.contains("name=" + name);
     }
 
     @AfterAll
