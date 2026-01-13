@@ -34,7 +34,9 @@ public final class UserControllerFunctionalTest {
 
     private static final String TEST_RUN_ID = String.valueOf(System.currentTimeMillis());
     private static final String COURT_SUFFIX = UUID.randomUUID()
-        .toString().replaceAll("[^a-zA-Z]", "").substring(0, 8);
+        .toString()
+        .replaceAll("[^a-zA-Z]", "")
+        .substring(0, 4);
 
     @Test
     @DisplayName("POST /user/v1 creates user and returns created user with ID")
