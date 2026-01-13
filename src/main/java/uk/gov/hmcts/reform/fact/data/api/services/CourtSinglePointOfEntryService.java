@@ -20,9 +20,14 @@ public class CourtSinglePointOfEntryService {
      *
      * @param latitude the latitude to search from
      * @param longitude the longitude to search from
+     * @param areaOfLaw the area of law to filter by
      * @return matching courts with distance data
      */
-    public List<CourtWithDistance> getChildcareCourtsSpoe(double latitude, double longitude) {
-        return courtSinglePointsOfEntryRepository.findNearestCourtBySpoeAndChildrenAreaOfLaw(latitude, longitude);
+    public List<CourtWithDistance> getCourtsSpoe(double latitude, double longitude, String areaOfLaw) {
+        return courtSinglePointsOfEntryRepository.findNearestCourtBySpoeAndChildrenAreaOfLaw(
+            latitude,
+            longitude,
+            areaOfLaw
+        );
     }
 }

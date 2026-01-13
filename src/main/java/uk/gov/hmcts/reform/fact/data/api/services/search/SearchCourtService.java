@@ -36,6 +36,7 @@ public class SearchCourtService {
     private final CourtAddressService courtAddressService;
     private final SearchExecuter searchExecuter;
     private static final String CHILDCARE_SERVICE_AREA = "Childcare arrangements if you separate from your partner";
+    private static final String CHILDCRE_AOL = "Children";
 
     public SearchCourtService(OsService osService,
                               ServiceAreaService serviceAreaService,
@@ -105,7 +106,7 @@ public class SearchCourtService {
 
         if (serviceArea.equalsIgnoreCase(CHILDCARE_SERVICE_AREA)) {
             return courtSinglePointOfEntryService
-                .getChildcareCourtsSpoe(osLocationData.getLatitude(), osLocationData.getLongitude());
+                .getCourtsSpoe(osLocationData.getLatitude(), osLocationData.getLongitude(), CHILDCRE_AOL);
         }
 
         return searchExecuter.executeSearchStrategy(
@@ -138,22 +139,31 @@ public class SearchCourtService {
             return DEFAULT_AOL_DISTANCE;
         }
 
-        switch (serviceArea.getType()) {
-            case CIVIL -> {
-                return CIVIL_POSTCODE_PREFERENCE;
-            }
-            case FAMILY -> {
-                if (LOCAL_AUTHORITY.equals(serviceArea.getCatchmentMethod())
-                    && !authorityName.isEmpty()) {
-                    return courtServiceAreaService.findByServiceAreaId(serviceArea.getId())
-                        .stream()
-                        .anyMatch(courtService -> courtService.getCatchmentType().equals(REGIONAL))
-                        ? FAMILY_REGIONAL : FAMILY_NON_REGIONAL;
-                }
-            }
+        return switch (serviceArea.getType()) {
+            case CIVIL -> CIVIL_POSTCODE_PREFERENCE;
+            case FAMILY -> getFamilyStrategy(action, serviceArea, authorityName);
+            case OTHER -> DEFAULT_AOL_DISTANCE;
+        };
+    }
+
+    /**
+     * Returns either regional or non-regional family search strategy.
+     *
+     * @param action the action
+     * @param serviceArea the service area
+     * @param authorityName the authority name
+     * @return The search strategy for family jurisdictions
+     */
+    private SearchStrategy getFamilyStrategy(SearchAction action, ServiceArea serviceArea, String authorityName) {
+        if (LOCAL_AUTHORITY.equals(serviceArea.getCatchmentMethod())
+                && !authorityName.isEmpty()) {
+            return courtServiceAreaService.findByServiceAreaId(serviceArea.getId())
+                    .stream()
+                    .anyMatch(courtService -> courtService.getCatchmentType().equals(REGIONAL))
+                    ? FAMILY_REGIONAL : FAMILY_NON_REGIONAL;
         }
         log.debug("Setting search strategy to default for {}, {}, {}",
-                  action, serviceArea, authorityName);
-        return DEFAULT_AOL_DISTANCE;
+                action, serviceArea, authorityName);
+        return FAMILY_NON_REGIONAL;
     }
 }

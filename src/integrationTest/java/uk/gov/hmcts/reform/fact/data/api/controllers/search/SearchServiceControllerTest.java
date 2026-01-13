@@ -10,7 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.services.search.SearchService;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceAreaService;
 
 import java.util.List;
@@ -29,7 +29,7 @@ class SearchServiceControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private SearchService searchService;
+    private ServiceRepository serviceRepository;
 
     @MockitoBean
     private ServiceAreaService serviceAreaService;
@@ -41,7 +41,7 @@ class SearchServiceControllerTest {
         service.setName("Civil");
         List<Service> services = List.of(service);
 
-        when(searchService.getAllServices()).thenReturn(services);
+        when(serviceRepository.findAll()).thenReturn(services);
 
         mockMvc.perform(get("/search/services/v1"))
             .andExpect(status().isOk())

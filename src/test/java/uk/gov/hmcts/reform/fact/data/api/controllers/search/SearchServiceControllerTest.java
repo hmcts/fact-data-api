@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
-import uk.gov.hmcts.reform.fact.data.api.services.search.SearchService;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceAreaService;
 
 import java.util.List;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class SearchServiceControllerTest {
 
     @Mock
-    private SearchService searchService;
+    private ServiceRepository serviceRepository;
 
     @Mock
     private ServiceAreaService serviceAreaService;
@@ -36,13 +36,13 @@ class SearchServiceControllerTest {
         service.setName("Money Claims");
         List<Service> services = List.of(service);
 
-        when(searchService.getAllServices()).thenReturn(services);
+        when(serviceRepository.findAll()).thenReturn(services);
 
         ResponseEntity<List<Service>> response = controller.getServices();
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(services);
-        verify(searchService).getAllServices();
+        verify(serviceRepository).findAll();
     }
 
     @Test

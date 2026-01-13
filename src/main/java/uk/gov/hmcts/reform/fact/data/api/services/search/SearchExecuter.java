@@ -33,10 +33,10 @@ public class SearchExecuter {
      * Based on the SearchStrategy determined, perform the relevant business logic.
      *
      * @param osLocationData The data returned from OS based on a postcode search.
-     * @param serviceArea The service area, for example money claims.
+     * @param serviceArea    The service area, for example money claims.
      * @param searchStrategy The Search Strategy.
-     * @param action The action, for example documents.
-     * @param limit the amount of rows to return for relevant queries.
+     * @param action         The action, for example documents.
+     * @param limit          the amount of rows to return for relevant queries.
      * @return A list of CourtWithDistance objects.
      */
     public List<CourtWithDistance> executeSearchStrategy(OsLocationData osLocationData, ServiceArea serviceArea,
@@ -45,73 +45,160 @@ public class SearchExecuter {
         final double lat = osLocationData.getLatitude();
         final double lon = osLocationData.getLongitude();
         final UUID aolId = serviceArea.getAreaOfLawId();
-
-        switch (searchStrategy) {
-            case DEFAULT_AOL_DISTANCE: {
-                return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
+        return switch (searchStrategy) {
+            case DEFAULT_AOL_DISTANCE -> courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
+            case CIVIL_POSTCODE_PREFERENCE -> executeCivilSearchStrategy(
+                osLocationData.getPostcode(),
+                lat,
+                lon,
+                serviceArea.getId(),
+                limit,
+                aolId
+            );
+            case FAMILY_REGIONAL -> executeFamilyRegionalSearchStrategy(
+                serviceArea,
+                osLocationData,
+                lat,
+                lon,
+                limit,
+                aolId
+            );
+            case FAMILY_NON_REGIONAL -> {
+                List<CourtWithDistance> results = executeFamilyNonRegionalSearchStrategy(
+                    osLocationData,
+                    serviceArea,
+                    lat,
+                    lon,
+                    limit,
+                    aolId
+                );
+                if (results.isEmpty()) {
+                    log.debug(
+                        "Default fallback search (if no results found for determined search strategy) "
+                            + "for {}, {}, {}",
+                        searchStrategy,
+                        action,
+                        osLocationData.getPostcode()
+                    );
+                }
+                yield results.isEmpty()
+                    ? courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit)
+                    : results;
             }
-            case CIVIL_POSTCODE_PREFERENCE: {
-                PostcodeLadder ladder = PostcodeLadder.fromPartialPostcode(osLocationData.getPostcode());
-                log.debug("Postcode ladder provided for CIVIl search: {}", ladder);
-                List<CourtWithDistance> results = courtAddressRepository.findCivilByPartialPostcodeBestTier(
-                    serviceArea.getId(),
-                    lat, lon,
-                    ladder.minusUnitNoSpace(),
-                    ladder.outcodeNoSpace(),
-                    ladder.areacodeNoSpace(),
+        };
+    }
+
+    /**
+     * Where we have a civil search strategy, execute it according to the following rules:
+     * The court area of law needs to be CIVIL.
+     * Court addresses need to have postcodes that match (obv), else it defaults to top 10 search.
+     * A postcode ladder is used so it starts from the full postcode and works its way down.
+     *
+     * @param postcode the postcode
+     * @param lat the latitude
+     * @param lon the longitude
+     * @param serviceAreaId the service area id
+     * @param limit the limit/amount of rows to be returned
+     * @param aolId the area of law id
+     * @return returns a list of court with distance objects
+     */
+    private List<CourtWithDistance> executeCivilSearchStrategy(String postcode, double lat, double lon,
+                                                               UUID serviceAreaId, int limit, UUID aolId) {
+        PostcodeLadder ladder = PostcodeLadder.fromPartialPostcode(postcode);
+        log.debug("Postcode ladder provided for CIVIl search: {}", ladder);
+        List<CourtWithDistance> results = courtAddressRepository.findCivilByPartialPostcodeBestTier(
+            serviceAreaId,
+            lat,
+            lon,
+            ladder.getMinusUnitNoSpace(),
+            ladder.getOutCodeNoSpace(),
+            ladder.getAreacodeNoSpace(),
+            limit
+        );
+
+        return !results.isEmpty()
+            ? results
+            : courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
+    }
+
+    /**
+     * Execute the family regional search strategy according to the following rules:
+     * One of the court service areas need to match a regional service area by ID.
+     * The area of law needs to be FAMILY.
+     * The catchment also needs to be local-authority.
+     *
+     * @param serviceArea The service area
+     * @param osLocationData The ordnance survey location data
+     * @param lat the latitude
+     * @param lon the longitude
+     * @param limit the limit
+     * @param aolId the area of law id
+     * @return a list of court with distance objects
+     */
+    private List<CourtWithDistance> executeFamilyRegionalSearchStrategy(ServiceArea serviceArea,
+                                                                        OsLocationData osLocationData, double lat,
+                                                                        double lon, int limit, UUID aolId) {
+        UUID serviceAreaId = serviceArea.getId();
+        return getAuthorityID(osLocationData)
+            .map(LocalAuthorityType::getId)
+            .map(localAuthorityId -> courtAddressRepository.findFamilyRegionalByLocalAuthority(
+                serviceAreaId,
+                lat,
+                lon,
+                aolId,
+                localAuthorityId
+            ))
+            .filter(list -> !list.isEmpty())
+            .orElseGet(() -> {
+                log.debug("Finding family regional for {}", serviceArea);
+                List<CourtWithDistance> byAol =
+                    courtAddressRepository.findFamilyRegionalByAol(serviceAreaId, lat, lon, aolId);
+                if (!byAol.isEmpty()) {
+                    return byAol;
+                }
+                log.debug("Finding family regional fallback for {}", serviceArea);
+                return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
+            });
+    }
+
+    /**
+     * Execute the non-regional search strategy.
+     * This will perform a search that requires the local authority to be present.
+     *
+     * @param osLocationData the ordnance survey location data.
+     * @param serviceArea the service area.
+     * @param lat the latitude.
+     * @param lon the longitude.
+     * @param limit the amount of rows to return.
+     * @param aolId the area of law id.
+     * @return a list of court with distance objects.
+     */
+    private List<CourtWithDistance> executeFamilyNonRegionalSearchStrategy(OsLocationData osLocationData,
+                                                                           ServiceArea serviceArea, double lat,
+                                                                           double lon, int limit, UUID aolId) {
+        Optional<List<CourtWithDistance>> byLaOpt = getAuthorityID(osLocationData)
+            .map(LocalAuthorityType::getId)
+            .map(localAuthorityId -> {
+                log.debug(
+                    "Searching for family non-regional by local authority ({}) for {}",
+                    serviceArea.getAreaOfLaw().getName(),
+                    osLocationData.getPostcode()
+                );
+                return courtAddressRepository.findFamilyNonRegionalByLocalAuthority(
+                    lat,
+                    lon,
+                    aolId,
+                    localAuthorityId,
                     limit
                 );
+            })
+            .filter(results -> !results.isEmpty());
 
-                return !results.isEmpty()
-                    ? results
-                    : courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
-            }
-            case FAMILY_REGIONAL: {
-                UUID serviceAreaId = serviceArea.getId();
-                return getAuthorityID(osLocationData)
-                    .map(LocalAuthorityType::getId)
-                    .map(laId -> courtAddressRepository.findFamilyRegionalByLocalAuthority(
-                        serviceAreaId, lat, lon, aolId, laId
-                    ))
-                    .filter(list -> !list.isEmpty())
-                    .orElseGet(() -> {
-                        log.debug("Finding family regional for {}", serviceArea);
-                        List<CourtWithDistance> byAol =
-                            courtAddressRepository.findFamilyRegionalByAol(serviceAreaId, lat, lon, aolId);
-                        if (!byAol.isEmpty()) {
-                            return byAol;
-                        }
-                        log.debug("Finding family regional fallback for {}", serviceArea);
-                        return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
-                    });
-            }
-            case FAMILY_NON_REGIONAL: {
-                Optional<List<CourtWithDistance>> byLaOpt = getAuthorityID(osLocationData)
-                    .map(LocalAuthorityType::getId)
-                    .map(laId -> {
-                        log.debug(
-                            "Searching for family non-regional by local authority ({}) for {}",
-                            serviceArea.getAreaOfLaw().getName(), osLocationData.getPostcode()
-                        );
-                        return courtAddressRepository.findFamilyNonRegionalByLocalAuthority(
-                            lat, lon, aolId, laId, limit
-                        );
-                    })
-                    .filter(results -> !results.isEmpty());
-
-                if (byLaOpt.isPresent()) {
-                    return byLaOpt.get();
-                }
-            }
-            // fall through
-            default: {
-                log.debug(
-                    "Default fallback search (if no results found for determined search strategy) "
-                        + "for {}, {}, {}", searchStrategy, action, osLocationData.getPostcode()
-                );
-                return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
-            }
+        if (byLaOpt.isPresent()) {
+            return byLaOpt.get();
         }
+        log.debug("Searching for family regional returned no results: {}", serviceArea);
+        return List.of();
     }
 
     /**
@@ -122,8 +209,10 @@ public class SearchExecuter {
      */
     private Optional<LocalAuthorityType> getAuthorityID(OsLocationData osLocationData) {
         return localAuthorityTypeRepository
-            .findIdByNameIgnoreCase(osLocationData.getAuthorityName()).or(() -> localAuthorityTypeRepository
-                .findIdByNameIgnoreCase(stripTrailingCouncil(osLocationData.getAuthorityName())));
+            .findIdByNameIgnoreCase(osLocationData.getAuthorityName())
+            .or(() -> localAuthorityTypeRepository.findIdByNameIgnoreCase(
+                stripTrailingCouncil(osLocationData.getAuthorityName())
+            ));
     }
 
     /**
@@ -137,7 +226,7 @@ public class SearchExecuter {
         String safeName = Objects.requireNonNullElse(name, "");
         String suffix = " Council";
         return safeName.endsWith(suffix)
-            ? safeName.substring(0, safeName.length() - suffix.length())
-            : safeName;
+                ? safeName.substring(0, safeName.length() - suffix.length())
+                : safeName;
     }
 }

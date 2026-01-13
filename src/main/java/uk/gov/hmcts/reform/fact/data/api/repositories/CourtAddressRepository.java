@@ -97,7 +97,7 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
      * @param lat the latitude to search from
      * @param lon the longitude to search from
      * @param partialNoSpace the postcode without unit, no spaces
-     * @param outcodeNoSpace the outcode without spaces
+     * @param outCodeNoSpace the outcode without spaces
      * @param areacodeNoSpace the area code without spaces
      * @param limit the maximum number of results
      * @return matching courts with distance data
@@ -153,7 +153,7 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
                     SELECT DISTINCT ON (courtId)
                         courtId, courtName, courtSlug, distance, 2 AS tier
                     FROM base
-                    WHERE ca_postcode_nospace LIKE (:outcodeNoSpace || '%')
+                    WHERE ca_postcode_nospace LIKE (:outCodeNoSpace || '%')
                     ORDER BY courtId, distance
                 ) t2
 
@@ -186,7 +186,7 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
         @Param("lat") double lat,
         @Param("lon") double lon,
         @Param("partialNoSpace") String partialNoSpace,
-        @Param("outcodeNoSpace") String outcodeNoSpace,
+        @Param("outCodeNoSpace") String outCodeNoSpace,
         @Param("areacodeNoSpace") String areacodeNoSpace,
         @Param("limit") int limit
     );

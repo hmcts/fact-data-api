@@ -27,7 +27,7 @@ public interface CourtSinglePointsOfEntryRepository extends JpaRepository<CourtS
             WITH children_aol AS (
               SELECT id
               FROM area_of_law_types
-              WHERE name = 'Children'
+              WHERE name = :areaOfLawName
               LIMIT 1
             ),
             spoe_courts AS (
@@ -62,7 +62,8 @@ public interface CourtSinglePointsOfEntryRepository extends JpaRepository<CourtS
     )
     List<CourtWithDistance> findNearestCourtBySpoeAndChildrenAreaOfLaw(
         @Param("lat") double lat,
-        @Param("lon") double lon
+        @Param("lon") double lon,
+        @Param("areaOfLawName") String areaOfLawName
     );
 
     Optional<CourtSinglePointsOfEntry> findByCourtId(UUID courtId);

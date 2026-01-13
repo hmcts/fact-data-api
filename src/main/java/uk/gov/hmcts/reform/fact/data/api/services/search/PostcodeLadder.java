@@ -1,29 +1,25 @@
 package uk.gov.hmcts.reform.fact.data.api.services.search;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import java.util.Locale;
-import java.util.Objects;
 
-public final class PostcodeLadder {
+@Value
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class PostcodeLadder {
 
-    private final String minusUnitNoSpace;
-    private final String outcodeNoSpace;
-    private final String areacodeNoSpace;
-
-    private PostcodeLadder(
-        String minusUnitNoSpace,
-        String outcodeNoSpace,
-        String areacodeNoSpace
-    ) {
-        this.minusUnitNoSpace = minusUnitNoSpace;
-        this.outcodeNoSpace = outcodeNoSpace;
-        this.areacodeNoSpace = areacodeNoSpace;
-    }
+    String minusUnitNoSpace;
+    String outCodeNoSpace;
+    String areacodeNoSpace;
 
     /**
-     * Creates a ladder from a postcode for partial matching.
+     * Creates a PostcodeLadder from a postcode for partial matching.
+     * The input postcode is normalised (trimmed, uppercased, spaces removed)
+     * and decomposed into useful partial-match components.
      *
-     * @param fullPostcode the full postcode input
-     * @return the ladder representation
+     * @param fullPostcode the full or partial postcode input
+     * @return a populated PostcodeLadder instance
      */
     public static PostcodeLadder fromPartialPostcode(String fullPostcode) {
         String full = normalizeNoSpace(fullPostcode);
@@ -36,8 +32,8 @@ public final class PostcodeLadder {
         String outcode;
 
         if (hasUnit) {
-            minusUnit = full.substring(0, full.length() - 2); // e.g. SW1A1A
-            outcode   = full.substring(0, full.length() - 3); // e.g. SW1A
+            minusUnit = full.substring(0, full.length() - 2);
+            outcode   = full.substring(0, full.length() - 3);
         } else {
             minusUnit = full;
             outcode = (!full.isEmpty() && Character.isDigit(full.charAt(full.length() - 1)))
@@ -53,37 +49,15 @@ public final class PostcodeLadder {
     }
 
     /**
-     * Returns the postcode without the unit (no spaces).
+     * Extracts the leading area prefix from a normalised postcode.
+     * The area prefix consists of the leading letters before the first digit.
+     * Examples:
+     * SW1A1AA -> SW
+     * B12CD   -> B
+     * EC1A    -> EC
      *
-     * @return the postcode without unit
-     */
-    public String minusUnitNoSpace() {
-        return minusUnitNoSpace;
-    }
-
-    /**
-     * Returns the outcode (no spaces).
-     *
-     * @return the outcode
-     */
-    public String outcodeNoSpace() {
-        return outcodeNoSpace;
-    }
-
-    /**
-     * Returns the area code (no spaces).
-     *
-     * @return the area code
-     */
-    public String areacodeNoSpace() {
-        return areacodeNoSpace;
-    }
-
-    /**
-     * Extracts the leading area prefix from a normalized postcode.
-     *
-     * @param s the normalized postcode
-     * @return the area prefix
+     * @param s the normalised postcode (uppercase, no spaces)
+     * @return the alphabetical area prefix
      */
     private static String areaPrefix(String s) {
         int i = 0;
@@ -93,56 +67,15 @@ public final class PostcodeLadder {
         return i == 0 ? s : s.substring(0, i);
     }
 
+
     /**
-     * Normalizes a postcode to uppercase without spaces.
+     * Normalises a postcode by trimming whitespace, converting to uppercase,
+     * and removing spaces.
      *
-     * @param s the raw postcode
-     * @return the normalized postcode
+     * @param s the raw postcode input (this may be null)
+     * @return a normalised postcode string, or empty string if input was null
      */
     private static String normalizeNoSpace(String s) {
         return s == null ? "" : s.trim().toUpperCase(Locale.UK).replace(" ", "");
-    }
-
-    /**
-     * Compares another object for equality.
-     *
-     * @param o the object to compare
-     * @return true if equal
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof PostcodeLadder other)) {
-            return false;
-        }
-        return minusUnitNoSpace.equals(other.minusUnitNoSpace)
-            && outcodeNoSpace.equals(other.outcodeNoSpace)
-            && areacodeNoSpace.equals(other.areacodeNoSpace);
-    }
-
-    /**
-     * Computes the hash code.
-     *
-     * @return the hash code
-     */
-    @Override
-    public int hashCode() {
-        return Objects.hash(minusUnitNoSpace, outcodeNoSpace, areacodeNoSpace);
-    }
-
-    /**
-     * Returns a string representation of the ladder.
-     *
-     * @return the string representation
-     */
-    @Override
-    public String toString() {
-        return "PostcodeLadder["
-            + "  minusUnitNoSpace=" + minusUnitNoSpace
-            + ", outcodeNoSpace=" + outcodeNoSpace
-            + ", areacodeNoSpace=" + areacodeNoSpace
-            + ']';
     }
 }

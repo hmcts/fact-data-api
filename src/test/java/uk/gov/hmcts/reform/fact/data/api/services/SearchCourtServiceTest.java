@@ -114,7 +114,7 @@ class SearchCourtServiceTest {
 
         when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
         when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
-        when(courtSinglePointOfEntryService.getChildcareCourtsSpoe(51.5, -0.1)).thenReturn(results);
+        when(courtSinglePointOfEntryService.getCourtsSpoe(51.5, -0.1, "Children")).thenReturn(results);
 
         List<CourtWithDistance> response = searchCourtService.searchWithServiceArea(
             "SW1A 1AA",
@@ -124,7 +124,7 @@ class SearchCourtServiceTest {
         );
 
         assertThat(response).isEqualTo(results);
-        verify(courtSinglePointOfEntryService).getChildcareCourtsSpoe(51.5, -0.1);
+        verify(courtSinglePointOfEntryService).getCourtsSpoe(51.5, -0.1, "Children");
         verify(searchExecuter, never()).executeSearchStrategy(any(), any(), any(), any(), anyInt());
     }
 
@@ -241,7 +241,7 @@ class SearchCourtServiceTest {
             area
         );
 
-        assertThat(strategy).isEqualTo(SearchStrategy.DEFAULT_AOL_DISTANCE);
+        assertThat(strategy).isEqualTo(SearchStrategy.FAMILY_NON_REGIONAL);
     }
 
     private OsData osDataWithLatLon(double lat, double lon) {

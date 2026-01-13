@@ -25,14 +25,18 @@ class CourtSinglePointOfEntryServiceTest {
     private CourtSinglePointOfEntryService courtSinglePointOfEntryService;
 
     @Test
-    void getChildcareCourtsSpoeShouldReturnResults() {
+    void getCourtsSpoeShouldReturnResults() {
         List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
-        when(courtSinglePointsOfEntryRepository.findNearestCourtBySpoeAndChildrenAreaOfLaw(51.5, -0.1))
+        when(courtSinglePointsOfEntryRepository.findNearestCourtBySpoeAndChildrenAreaOfLaw(51.5, -0.1, "Children"))
             .thenReturn(results);
 
-        List<CourtWithDistance> response = courtSinglePointOfEntryService.getChildcareCourtsSpoe(51.5, -0.1);
+        List<CourtWithDistance> response = courtSinglePointOfEntryService.getCourtsSpoe(
+            51.5,
+            -0.1,
+            "Children"
+        );
 
         assertThat(response).isEqualTo(results);
-        verify(courtSinglePointsOfEntryRepository).findNearestCourtBySpoeAndChildrenAreaOfLaw(51.5, -0.1);
+        verify(courtSinglePointsOfEntryRepository).findNearestCourtBySpoeAndChildrenAreaOfLaw(51.5, -0.1, "Children");
     }
 }

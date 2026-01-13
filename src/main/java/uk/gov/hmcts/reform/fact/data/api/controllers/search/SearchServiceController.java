@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.entities.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
-import uk.gov.hmcts.reform.fact.data.api.services.search.SearchService;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceAreaService;
 
 import java.util.List;
@@ -24,12 +24,12 @@ import java.util.List;
 @RequestMapping("/search/services")
 public class SearchServiceController {
 
-    private final SearchService searchService;
+    private final ServiceRepository serviceRepository;
     private final ServiceAreaService serviceAreaService;
 
-    public SearchServiceController(SearchService searchService,
+    public SearchServiceController(ServiceRepository serviceRepository,
                                    ServiceAreaService serviceAreaService) {
-        this.searchService = searchService;
+        this.serviceRepository = serviceRepository;
         this.serviceAreaService = serviceAreaService;
     }
 
@@ -43,7 +43,7 @@ public class SearchServiceController {
             description = "Successfully retrieved service areas based on provided name.")
     })
     public ResponseEntity<List<Service>> getServices() {
-        return ResponseEntity.ok(searchService.getAllServices());
+        return ResponseEntity.ok(serviceRepository.findAll());
     }
 
     @GetMapping("/v1/{serviceName}/service-areas")
