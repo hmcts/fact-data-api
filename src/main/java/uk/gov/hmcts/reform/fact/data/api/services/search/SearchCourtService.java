@@ -36,7 +36,7 @@ public class SearchCourtService {
     private final CourtAddressService courtAddressService;
     private final SearchExecuter searchExecuter;
     private static final String CHILDCARE_SERVICE_AREA = "Childcare arrangements if you separate from your partner";
-    private static final String CHILDCRE_AOL = "Children";
+    private static final String CHILDCARE_AOL = "Children";
 
     public SearchCourtService(OsService osService,
                               ServiceAreaService serviceAreaService,
@@ -106,7 +106,7 @@ public class SearchCourtService {
 
         if (serviceArea.equalsIgnoreCase(CHILDCARE_SERVICE_AREA)) {
             return courtSinglePointOfEntryService
-                .getCourtsSpoe(osLocationData.getLatitude(), osLocationData.getLongitude(), CHILDCRE_AOL);
+                .getCourtsSpoe(osLocationData.getLatitude(), osLocationData.getLongitude(), CHILDCARE_AOL);
         }
 
         return searchExecuter.executeSearchStrategy(
