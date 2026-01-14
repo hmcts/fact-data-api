@@ -162,7 +162,7 @@ repositories {
 }
 
 ext {
-  log4JVersion = '2.25.3'
+  log4J2.version = '2.25.3'
   logbackVersion = "1.5.19"
 }
 
