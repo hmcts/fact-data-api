@@ -9,6 +9,10 @@ public class ValidationConstants {
     public static final String EMAIL_REGEX_MESSAGE =
         "Email address must match the regex '^(|[A-Za-z0-9._+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$'";
 
+    public static final String JUSTICE_EMAIL_REGEX = "^(|[A-Za-z0-9._+-]+@justice\\.gov\\.uk)$";
+    public static final String JUSTICE_EMAIL_REGEX_MESSAGE =
+        "Justice email address must match the regex '^(|[A-Za-z0-9._+-]+@justice\\.gov\\.uk)$'";
+
     public static final int EMAIL_MAX_LENGTH = 254;
     public static final String EMAIL_MAX_LENGTH_MESSAGE = "Email address should be no more than {max} characters";
 

@@ -46,7 +46,8 @@ public class User {
     @Schema(description = "The User's email address", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 1)
     @NotBlank(message = "The User's email address must be specified")
     @Size(max = ValidationConstants.EMAIL_MAX_LENGTH, message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.EMAIL_REGEX, message = ValidationConstants.EMAIL_REGEX_MESSAGE)
+    @Pattern(regexp = ValidationConstants.JUSTICE_EMAIL_REGEX,
+        message = ValidationConstants.JUSTICE_EMAIL_REGEX_MESSAGE)
     private String email;
 
     @Schema(description = "The User's SSO ID", requiredMode = Schema.RequiredMode.REQUIRED)
