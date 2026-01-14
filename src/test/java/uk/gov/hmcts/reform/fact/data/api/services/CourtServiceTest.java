@@ -78,6 +78,61 @@ class CourtServiceTest {
     }
 
     @Test
+    void getAllCourtsByIdsReturnsMatchingCourts() {
+        UUID courtId1 = UUID.randomUUID();
+        UUID courtId2 = UUID.randomUUID();
+
+        Court court1 = new Court();
+        court1.setId(courtId1);
+        court1.setName("Test Court 1");
+
+        Court court2 = new Court();
+        court2.setId(courtId2);
+        court2.setName("Test Court 2");
+
+        List<UUID> courtIds = List.of(courtId1, courtId2);
+        List<Court> expectedCourts = List.of(court1, court2);
+
+        when(courtRepository.findAllById(courtIds)).thenReturn(expectedCourts);
+
+        List<Court> result = courtService.getAllCourtsByIds(courtIds);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactlyElementsOf(expectedCourts);
+    }
+
+    @Test
+    void getAllCourtsByIdsReturnsPartialResultsWhenSomeCourtsNotFound() {
+        UUID courtId1 = UUID.randomUUID();
+        UUID courtId2 = UUID.randomUUID();
+
+        Court court1 = new Court();
+        court1.setId(courtId1);
+        court1.setName("Test Court 1");
+
+        List<UUID> courtIds = List.of(courtId1, courtId2);
+        List<Court> expectedCourts = List.of(court1);
+
+        when(courtRepository.findAllById(courtIds)).thenReturn(expectedCourts);
+
+        List<Court> result = courtService.getAllCourtsByIds(courtIds);
+
+        assertThat(result).hasSize(1);
+        assertThat(result).containsExactly(court1);
+    }
+
+    @Test
+    void getAllCourtsByIdsReturnsEmptyListWhenInputIsEmpty() {
+        List<UUID> courtIds = Collections.emptyList();
+
+        when(courtRepository.findAllById(courtIds)).thenReturn(Collections.emptyList());
+
+        List<Court> result = courtService.getAllCourtsByIds(courtIds);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void getFilteredAndPaginatedCourtsShouldReturnOpenCourtsWhenIncludeClosedIsFalse() {
         final Pageable pageable = Pageable.unpaged();
         UUID regionId = UUID.randomUUID();
