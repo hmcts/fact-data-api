@@ -162,11 +162,12 @@ repositories {
 }
 
 ext {
-  ext['log4j2.version'] = '2.25.3'
+  log4JVersion = "2.25.3"
   logbackVersion = "1.5.19"
 }
 
 ext['snakeyaml.version'] = '2.0'
+ext['log4j2.version'] = '2.25.3' // CVE-2025-68161
 
 dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
