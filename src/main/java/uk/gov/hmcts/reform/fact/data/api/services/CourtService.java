@@ -39,6 +39,17 @@ public class CourtService {
     }
 
     /**
+     * Get multiple courts by their IDs.
+     *
+     * @param courtIds List of court IDs to retrieve.
+     * @return List of courts matching the provided IDs.
+     * @throws NotFoundException if a court is not found.
+     */
+    public List<Court> getAllCourtsByIds(List<UUID> courtIds) {
+        return courtRepository.findAllById(courtIds);
+    }
+
+    /**
      * Get a paginated list of courts with optional filters.
      *
      * @param pageable The pagination information.
