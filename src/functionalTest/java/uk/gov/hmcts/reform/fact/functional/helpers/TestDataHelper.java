@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.functional.helpers;
 import io.restassured.response.Response;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
+import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.util.List;
@@ -43,6 +44,28 @@ public final class TestDataHelper {
     public static UUID getOpeningHourTypeId(final HttpClient http, final int index) {
         final Response response = http.doGet("/types/v1/opening-hours-types");
         return UUID.fromString(response.jsonPath().getString("[" + index + "].id"));
+    }
+
+    /**
+     * Creates a test user with the given email prefix.
+     *
+     * @param http the HTTP client
+     * @param emailPrefix the email prefix for the test user
+     * @return the created user's UUID
+     */
+    public static UUID createUser(final HttpClient http, final String emailPrefix) {
+        final User user = User.builder()
+            .email(emailPrefix + "." + System.currentTimeMillis() + "@justice.gov.uk")
+            .ssoId(UUID.randomUUID())
+            .build();
+
+        final Response createResponse = http.doPost("/user/v1", user);
+
+        assertThat(createResponse.statusCode())
+            .as("Expected 201 CREATED when creating user")
+            .isEqualTo(CREATED.value());
+
+        return UUID.fromString(createResponse.jsonPath().getString("id"));
     }
 
     /**

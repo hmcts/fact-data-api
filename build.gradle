@@ -162,7 +162,7 @@ repositories {
 }
 
 ext {
-  ext['log4j2.version'] = '2.25.3' // CVE-2025-68161
+  log4JVersion = '2.25.3'
   logbackVersion = "1.5.19"
 }
 

@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.functional.controllers;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -16,6 +15,7 @@ import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
@@ -32,16 +32,13 @@ public final class UserControllerFunctionalTest {
         .registerModule(new JavaTimeModule())
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-    private static final String TEST_RUN_ID = String.valueOf(System.currentTimeMillis());
-    private static final String COURT_SUFFIX = UUID.randomUUID()
-        .toString()
-        .replaceAll("[^a-zA-Z]", "")
-        .substring(0, 4);
-
     @Test
     @DisplayName("POST /user/v1 creates user and returns created user with ID")
     void shouldReturnCreatedUserSuccessfully() throws Exception {
-        final User user = buildUser("test.user");
+        final User user = User.builder()
+            .email("test.user." + System.currentTimeMillis() + "@justice.gov.uk")
+            .ssoId(UUID.randomUUID())
+            .build();
 
         final Response createResponse = http.doPost("/user/v1", user);
 
@@ -72,20 +69,7 @@ public final class UserControllerFunctionalTest {
     @Test
     @DisplayName("POST /user/v1/{userId}/favourites adds two courts as favorites")
     void shouldReturnCreatedFavouritesSuccessfully() throws Exception {
-        final User user = buildUser("test.user.add.favourites");
-
-        final Response createUserResponse = http.doPost("/user/v1", user);
-
-        assertThat(createUserResponse.statusCode())
-            .as("Expected 201 CREATED when creating user")
-            .isEqualTo(CREATED.value());
-
-        assertThat(createUserResponse.contentType())
-            .as("Expected JSON content type when creating user")
-            .contains("json");
-
-        final User createdUser = mapper.readValue(createUserResponse.getBody().asString(), User.class);
-        final UUID userId = createdUser.getId();
+        final UUID userId = TestDataHelper.createUser(http, "test.user.add.favourites");
 
         final UUID court1Id = TestDataHelper
             .createCourt(http, generateUniqueCourtName("Test Court Favourite One"));
@@ -107,20 +91,7 @@ public final class UserControllerFunctionalTest {
     @Test
     @DisplayName("GET /user/v1/{userId}/favourites returns full Court objects")
     void shouldReturnFullCourtObjectsForFavouritesSuccessfully() throws Exception {
-        final User user = buildUser("test.user.favourites");
-
-        final Response createUserResponse = http.doPost("/user/v1", user);
-
-        assertThat(createUserResponse.statusCode())
-            .as("Expected 201 CREATED when creating user")
-            .isEqualTo(CREATED.value());
-
-        assertThat(createUserResponse.contentType())
-            .as("Expected JSON content type when creating user")
-            .contains("json");
-
-        final User createdUser = mapper.readValue(createUserResponse.getBody().asString(), User.class);
-        final UUID userId = createdUser.getId();
+        final UUID userId = TestDataHelper.createUser(http, "test.user.favourites");
 
         final UUID court1Id = TestDataHelper
             .createCourt(http, generateUniqueCourtName("Test Court Get Favourites One"));
@@ -148,10 +119,7 @@ public final class UserControllerFunctionalTest {
             .as("Expected JSON content type when getting favourites for user %s", userId)
             .contains("json");
 
-        final List<Court> favouriteCourts = mapper.readValue(
-            getFavouritesResponse.getBody().asString(),
-            new TypeReference<List<Court>>() {}
-        );
+        final List<Court> favouriteCourts = getFavouritesResponse.jsonPath().getList("", Court.class);
 
         assertThat(favouriteCourts)
             .as("Expected 2 favourite courts for user %s", userId)
@@ -219,20 +187,7 @@ public final class UserControllerFunctionalTest {
     @Test
     @DisplayName("DELETE /user/v1/{userId}/favourites/{favouriteId} removes favourite successfully")
     void shouldReturnNoContentWhenRemovingFavouriteSuccessfully() throws Exception {
-        final User user = buildUser("test.user.remove.favourite");
-
-        final Response createUserResponse = http.doPost("/user/v1", user);
-
-        assertThat(createUserResponse.statusCode())
-            .as("Expected 201 CREATED when creating user")
-            .isEqualTo(CREATED.value());
-
-        assertThat(createUserResponse.contentType())
-            .as("Expected JSON content type when creating user")
-            .contains("json");
-
-        final User createdUser = mapper.readValue(createUserResponse.getBody().asString(), User.class);
-        final UUID userId = createdUser.getId();
+        final UUID userId = TestDataHelper.createUser(http, "test.user.remove.favourite");
 
         final UUID court1Id = TestDataHelper
             .createCourt(http, generateUniqueCourtName("Test Court Remove Favourite One"));
@@ -268,10 +223,7 @@ public final class UserControllerFunctionalTest {
             .as("Expected JSON content type when getting favourites after removal")
             .contains("json");
 
-        final List<Court> remainingFavourites = mapper.readValue(
-            getFavouritesResponse.getBody().asString(),
-            new TypeReference<List<Court>>() {}
-        );
+        final List<Court> remainingFavourites = getFavouritesResponse.jsonPath().getList("", Court.class);
 
         assertThat(remainingFavourites)
             .as("Expected 1 favourite court remaining after removal")
@@ -309,20 +261,7 @@ public final class UserControllerFunctionalTest {
     @Test
     @DisplayName("DELETE /user/v1/{userId}/locks clears user locks successfully")
     void shouldReturnNoContentWhenClearingUserLocksSuccessfully() throws Exception {
-        final User user = buildUser("test.user.clear.locks");
-
-        final Response createUserResponse = http.doPost("/user/v1", user);
-
-        assertThat(createUserResponse.statusCode())
-            .as("Expected 201 CREATED when creating user")
-            .isEqualTo(CREATED.value());
-
-        assertThat(createUserResponse.contentType())
-            .as("Expected JSON content type when creating user")
-            .contains("json");
-
-        final User createdUser = mapper.readValue(createUserResponse.getBody().asString(), User.class);
-        final UUID userId = createdUser.getId();
+        final UUID userId = TestDataHelper.createUser(http, "test.user.clear.locks");
 
         final Response clearLocksResponse = http.doDelete("/user/v1/" + userId + "/locks");
 
@@ -344,20 +283,8 @@ public final class UserControllerFunctionalTest {
     @Test
     @DisplayName("End-to-end: Create user, add favourites, get favourites, remove one, verify remaining")
     void shouldReturnEndToEndFavouriteWorkflowSuccessfully() throws Exception {
-        final User user = buildUser("test.user.endtoend");
-
-        final Response createUserResponse = http.doPost("/user/v1", user);
-
-        assertThat(createUserResponse.statusCode())
-            .as("Expected 201 CREATED when creating user")
-            .isEqualTo(CREATED.value());
-
-        assertThat(createUserResponse.contentType())
-            .as("Expected JSON content type when creating user")
-            .contains("json");
-
-        final User createdUser = mapper.readValue(createUserResponse.getBody().asString(), User.class);
-        final UUID userId = createdUser.getId();
+        // Setup: Create test user and courts
+        final UUID userId = TestDataHelper.createUser(http, "test.user.endtoend");
 
         final UUID court1Id = TestDataHelper.createCourt(http, generateUniqueCourtName("Test Court One"));
         final UUID court2Id = TestDataHelper.createCourt(http, generateUniqueCourtName("Test Court Two"));
@@ -365,6 +292,7 @@ public final class UserControllerFunctionalTest {
 
         final List<UUID> courtIds = List.of(court1Id, court2Id, court3Id);
 
+        // Add 3 courts as favourites
         final Response addFavouritesResponse = http.doPost(
             "/user/v1/" + userId + "/favourites",
             courtIds
@@ -374,6 +302,7 @@ public final class UserControllerFunctionalTest {
             .as("Expected 201 CREATED when adding 3 favourite courts")
             .isEqualTo(CREATED.value());
 
+        // Verify all 3 favourites exist
         final Response getFavouritesResponse1 = http.doGet("/user/v1/" + userId + "/favourites");
 
         assertThat(getFavouritesResponse1.statusCode())
@@ -384,15 +313,13 @@ public final class UserControllerFunctionalTest {
             .as("Expected JSON content type when getting favourites")
             .contains("json");
 
-        final List<Court> initialFavourites = mapper.readValue(
-            getFavouritesResponse1.getBody().asString(),
-            new TypeReference<List<Court>>() {}
-        );
+        final List<Court> initialFavourites = getFavouritesResponse1.jsonPath().getList("", Court.class);
 
         assertThat(initialFavourites)
             .as("Expected 3 favourite courts after adding")
             .hasSize(3);
 
+        // Remove one favourite
         final Response deleteFavouriteResponse = http.doDelete(
             "/user/v1/" + userId + "/favourites/" + court2Id
         );
@@ -401,6 +328,7 @@ public final class UserControllerFunctionalTest {
             .as("Expected 204 NO CONTENT when removing favourite")
             .isEqualTo(NO_CONTENT.value());
 
+        // Verify only 2 favourites remain
         final Response getFavouritesResponse2 = http.doGet("/user/v1/" + userId + "/favourites");
 
         assertThat(getFavouritesResponse2.statusCode())
@@ -411,10 +339,7 @@ public final class UserControllerFunctionalTest {
             .as("Expected JSON content type when getting favourites after removal")
             .contains("json");
 
-        final List<Court> remainingFavourites = mapper.readValue(
-            getFavouritesResponse2.getBody().asString(),
-            new TypeReference<List<Court>>() {}
-        );
+        final List<Court> remainingFavourites = getFavouritesResponse2.jsonPath().getList("", Court.class);
 
         assertThat(remainingFavourites)
             .as("Expected 2 favourite courts after removing one")
@@ -427,29 +352,6 @@ public final class UserControllerFunctionalTest {
     }
 
     /**
-     * Builds a user with a unique email and random SSO ID.
-     *
-     * @param emailPrefix the email prefix
-     * @return user entity to send in requests
-     */
-    private static User buildUser(final String emailPrefix) {
-        return User.builder()
-            .email(generateUniqueEmail(emailPrefix))
-            .ssoId(UUID.randomUUID())
-            .build();
-    }
-
-    /**
-     * Generates a unique email address for test users.
-     *
-     * @param prefix the email prefix
-     * @return unique email address in format prefix.timestamp@justice.gov.uk
-     */
-    private static String generateUniqueEmail(final String prefix) {
-        return prefix + "." + TEST_RUN_ID + "@justice.gov.uk";
-    }
-
-    /**
      * Generates a unique court name for test courts.
      * Court names can only contain letters, spaces, apostrophes, hyphens, ampersands, and parentheses.
      *
@@ -457,7 +359,12 @@ public final class UserControllerFunctionalTest {
      * @return unique court name with letter-only suffix
      */
     private static String generateUniqueCourtName(final String baseName) {
-        return baseName + " " + COURT_SUFFIX;
+        final String alphabet = "abcdefghijklmnopqrstuvwxyz";
+        final StringBuilder suffix = new StringBuilder(4);
+        for (int i = 0; i < 4; i++) {
+            suffix.append(alphabet.charAt(ThreadLocalRandom.current().nextInt(26)));
+        }
+        return baseName + " " + suffix;
     }
 
     @AfterAll
