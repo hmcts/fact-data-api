@@ -82,5 +82,11 @@ user:
 courtLock:
   timeout-minutes: 60
   
+os:
+  key: ${OS_KEY}
+  url: https://api.os.uk
+  endpoint:
+    postcode-search: /search/places/v1/postcode
+
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}
