@@ -264,8 +264,10 @@ public final class UserControllerFunctionalTest {
     @DisplayName("DELETE /user/v1/{userId}/locks clears user locks successfully")
     void shouldReturnNoContentWhenClearingUserLocksSuccessfully() throws Exception {
         final UUID userId = TestDataHelper.createUser(http, "test.user.clear.locks");
-        final UUID court1Id = TestDataHelper.createCourt(http, generateUniqueCourtName("Test Court Clear Locks One"));
-        final UUID court2Id = TestDataHelper.createCourt(http, generateUniqueCourtName("Test Court Clear Locks Two"));
+        final UUID court1Id = TestDataHelper
+            .createCourt(http, generateUniqueCourtName("Test Court Clear Locks One"));
+        final UUID court2Id = TestDataHelper
+            .createCourt(http, generateUniqueCourtName("Test Court Clear Locks Two"));
 
         TestDataHelper.createCourtLock(http, court1Id, Page.COURT, userId);
         TestDataHelper.createCourtLock(http, court2Id, Page.COURT_ACCESSIBILITY, userId);
@@ -299,7 +301,8 @@ public final class UserControllerFunctionalTest {
             .as("Expected null response after clearing user locks")
             .isEqualTo("null");
 
-        final Response getLock2StatusResponse = http.doGet("/courts/" + court2Id + "/v1/locks/" + Page.COURT_ACCESSIBILITY);
+        final Response getLock2StatusResponse = http.doGet("/courts/"
+                                                               + court2Id + "/v1/locks/" + Page.COURT_ACCESSIBILITY);
 
         assertThat(getLock2StatusResponse.statusCode())
             .as("Expected 200 OK when checking second lock status after clearing")

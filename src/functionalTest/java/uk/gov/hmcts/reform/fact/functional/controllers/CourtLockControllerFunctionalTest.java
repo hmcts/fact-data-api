@@ -19,7 +19,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CONFLICT;
-import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -240,7 +239,8 @@ public final class CourtLockControllerFunctionalTest {
         final UUID userId = TestDataHelper.createUser(http, "test.user.endtoend");
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Lock End To End");
 
-        final CourtLock createdLock = TestDataHelper.createCourtLock(http, courtId, Page.COURT_LOCAL_AUTHORITY, userId);
+        final CourtLock createdLock = TestDataHelper
+            .createCourtLock(http, courtId, Page.COURT_LOCAL_AUTHORITY, userId);
 
         assertThat(createdLock.getCourtId())
             .as("Created lock court ID should be %s", courtId)
@@ -265,7 +265,8 @@ public final class CourtLockControllerFunctionalTest {
 
         Thread.sleep(1000);
 
-        final CourtLock refreshedLock = TestDataHelper.createCourtLock(http, courtId, Page.COURT_LOCAL_AUTHORITY, userId);
+        final CourtLock refreshedLock = TestDataHelper
+            .createCourtLock(http, courtId, Page.COURT_LOCAL_AUTHORITY, userId);
 
         assertThat(refreshedLock.getLockAcquired())
             .as("Refreshed lock timestamp should be after original timestamp")
