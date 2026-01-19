@@ -1,9 +1,14 @@
 package uk.gov.hmcts.reform.fact.functional.helpers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.response.Response;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.util.List;
@@ -17,6 +22,10 @@ import static org.springframework.http.HttpStatus.CREATED;
  * Helper methods for fetching test data via API endpoints.
  */
 public final class TestDataHelper {
+
+    private static final ObjectMapper mapper = new ObjectMapper()
+        .registerModule(new JavaTimeModule())
+        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private TestDataHelper() {
         // Utility class
@@ -145,5 +154,28 @@ public final class TestDataHelper {
         courtAreasOfLaw.setCourtId(courtId);
         courtAreasOfLaw.setAreasOfLaw(areasOfLaw);
         return courtAreasOfLaw;
+    }
+
+    /**
+     * Creates a court lock for a specific page.
+     *
+     * @param http the HTTP client
+     * @param courtId the court ID
+     * @param page the page to lock
+     * @param userId the user ID
+     * @return the created court lock
+     */
+    public static CourtLock createCourtLock(final HttpClient http, final UUID courtId,
+                                            final Page page, final UUID userId) throws Exception {
+        final Response response = http.doPost(
+            "/courts/" + courtId + "/v1/locks/" + page,
+            mapper.writeValueAsString(userId)
+        );
+
+        assertThat(response.statusCode())
+            .as("Expected 201 CREATED when creating lock for court %s page %s", courtId, page)
+            .isEqualTo(CREATED.value());
+
+        return mapper.readValue(response.getBody().asString(), CourtLock.class);
     }
 }

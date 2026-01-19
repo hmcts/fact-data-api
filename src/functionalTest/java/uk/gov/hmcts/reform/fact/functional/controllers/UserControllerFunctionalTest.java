@@ -9,7 +9,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
@@ -262,12 +264,53 @@ public final class UserControllerFunctionalTest {
     @DisplayName("DELETE /user/v1/{userId}/locks clears user locks successfully")
     void shouldReturnNoContentWhenClearingUserLocksSuccessfully() throws Exception {
         final UUID userId = TestDataHelper.createUser(http, "test.user.clear.locks");
+        final UUID court1Id = TestDataHelper
+            .createCourt(http, generateUniqueCourtName("Test Court Clear Locks One"));
+        final UUID court2Id = TestDataHelper
+            .createCourt(http, generateUniqueCourtName("Test Court Clear Locks Two"));
+
+        TestDataHelper.createCourtLock(http, court1Id, Page.COURT, userId);
+        TestDataHelper.createCourtLock(http, court2Id, Page.COURT_ACCESSIBILITY, userId);
+
+        final Response getLocksBeforeClearResponse = http.doGet("/courts/" + court1Id + "/v1/locks");
+
+        assertThat(getLocksBeforeClearResponse.statusCode())
+            .as("Expected 200 OK when getting locks before clearing")
+            .isEqualTo(OK.value());
+
+        final List<CourtLock> locksBeforeClear = getLocksBeforeClearResponse.jsonPath()
+            .getList("", CourtLock.class);
+
+        assertThat(locksBeforeClear)
+            .as("Expected at least 1 lock before clearing for user %s", userId)
+            .isNotEmpty();
 
         final Response clearLocksResponse = http.doDelete("/user/v1/" + userId + "/locks");
 
         assertThat(clearLocksResponse.statusCode())
             .as("Expected 204 NO CONTENT when clearing locks for user %s", userId)
             .isEqualTo(NO_CONTENT.value());
+
+        final Response getLock1StatusResponse = http.doGet("/courts/" + court1Id + "/v1/locks/" + Page.COURT);
+
+        assertThat(getLock1StatusResponse.statusCode())
+            .as("Expected 200 OK when checking lock status after clearing")
+            .isEqualTo(OK.value());
+
+        assertThat(getLock1StatusResponse.getBody().asString())
+            .as("Expected null response after clearing user locks")
+            .isEqualTo("null");
+
+        final Response getLock2StatusResponse = http.doGet("/courts/"
+                                                               + court2Id + "/v1/locks/" + Page.COURT_ACCESSIBILITY);
+
+        assertThat(getLock2StatusResponse.statusCode())
+            .as("Expected 200 OK when checking second lock status after clearing")
+            .isEqualTo(OK.value());
+
+        assertThat(getLock2StatusResponse.getBody().asString())
+            .as("Expected null response for second lock after clearing user locks")
+            .isEqualTo("null");
     }
 
     @Test
