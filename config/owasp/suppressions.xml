@@ -10,5 +10,10 @@
     <notes>False positive: Jakarta Mail is not on the classpath, only in Spring Boot BOM metadata</notes>
     <cve>CVE-2025-7962</cve>
   </suppress>
+  <suppress>
+    <notes>False positive on CVE-2025-15104 for hibernate-validator (see
+      https://github.com/dependency-check/DependencyCheck/pull/8251)</notes>
+    <cve>CVE-2025-15104</cve>
+  </suppress>
   <!--End of false positives section -->
 </suppressions>
