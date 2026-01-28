@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.functional.controllers;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -14,6 +15,7 @@ import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -227,6 +229,33 @@ public final class CourtControllerFunctionalTest {
         );
 
         AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
+    }
+
+    @Test
+    @DisplayName("GET /courts/all/v1 returns all court details including created court")
+    void shouldReturnAllCourtDetailsIncludingCreatedCourt() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court All Details");
+
+        final Response response = http.doGet("/courts/all/v1");
+
+        assertThat(response.statusCode())
+            .as("Expected 200 OK for GET /courts/all/v1")
+            .isEqualTo(OK.value());
+
+        final List<CourtDetails> courts = mapper.readValue(
+            response.getBody().asString(),
+            new TypeReference<List<CourtDetails>>() {}
+        );
+
+        assertThat(courts)
+            .as("Response should contain the created court with ID %s", courtId)
+            .filteredOn(court -> courtId.equals(court.getId()))
+            .singleElement()
+            .satisfies(court ->
+                assertThat(court.getName())
+                    .as("Court name should match the created court")
+                    .isEqualTo("Test Court All Details")
+            );
     }
 
     @AfterAll
