@@ -9,8 +9,28 @@ def component = "data-api"
 
 GradleBuilder builder = new GradleBuilder(this, product)
 
+def secrets = [
+  'fact-kv-${env}': [
+    secret('api-app-reg-id', 'APP_REG_ID'),
+    secret('func-test-tenant-id', 'AZURE_TENANT_ID'),
+    secret('func-test-client-app-id', 'CLIENT_APP_REG_ID'),
+    secret('bstrap-func-test-client-secret', 'AZURE_CLIENT_SECRET')
+  ]
+]
+
+static LinkedHashMap<String, Object> secret(String secretName, String envVar) {
+  [ $class: 'AzureKeyVaultSecret',
+    secretType: 'Secret',
+    name: secretName,
+    version: '',
+    envVariable: envVar
+  ]
+}
+
 withPipeline(type, product, component) {
   enableDbMigration('fact-kv')
+
+  loadVaultSecrets(secrets)
 
   afterSuccess('test') {
     builder.gradle('integration')
