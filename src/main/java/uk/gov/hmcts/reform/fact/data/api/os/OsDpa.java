@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// OsDpa refers to the delivery point address
 public class OsDpa {
     @JsonProperty("UPRN")
     private String uprn;
