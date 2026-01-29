@@ -1,4 +1,4 @@
-package uk.gov.hmcts.reform.fact.data.api.misc;
+package uk.gov.hmcts.reform.fact.data.api.db;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
