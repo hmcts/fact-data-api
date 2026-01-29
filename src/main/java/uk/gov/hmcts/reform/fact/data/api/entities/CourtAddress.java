@@ -76,6 +76,7 @@ public class CourtAddress {
     private String county;
 
     @Schema(description = "The postcode")
+    @NotNull
     @Size(max = ValidationConstants.POSTCODE_MAX_LENGTH, message = ValidationConstants.POSTCODE_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.POSTCODE_REGEX, message = ValidationConstants.POSTCODE_REGEX_MESSAGE)
     private String postcode;
