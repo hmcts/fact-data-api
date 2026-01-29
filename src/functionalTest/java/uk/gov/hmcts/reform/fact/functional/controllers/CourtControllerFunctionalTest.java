@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.functional.controllers;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -9,10 +10,12 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,7 +51,7 @@ public final class CourtControllerFunctionalTest {
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1");
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
-        final Court fetchedCourt = mapper.readValue(getResponse.getBody().asString(), Court.class);
+        final CourtDetails fetchedCourt = mapper.readValue(getResponse.getBody().asString(), CourtDetails.class);
         assertThat(fetchedCourt.getName()).isEqualTo("Test Court Create Valid");
         assertThat(fetchedCourt.getRegionId()).isEqualTo(UUID.fromString(regionId));
         assertThat(fetchedCourt.getIsServiceCentre()).isTrue();
@@ -110,7 +113,7 @@ public final class CourtControllerFunctionalTest {
         assertThat(updateResponse.statusCode()).isEqualTo(OK.value());
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1");
-        final Court fetchedCourt = mapper.readValue(getResponse.getBody().asString(), Court.class);
+        final CourtDetails fetchedCourt = mapper.readValue(getResponse.getBody().asString(), CourtDetails.class);
         assertThat(fetchedCourt.getName()).isEqualTo("Test Court Updated");
         assertThat(fetchedCourt.getIsServiceCentre()).isTrue();
     }
@@ -226,6 +229,90 @@ public final class CourtControllerFunctionalTest {
         );
 
         AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
+    }
+
+    @Test
+    @DisplayName("GET /courts/all/v1 returns all court details including created court")
+    void shouldReturnAllCourtDetailsIncludingCreatedCourt() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court All Details");
+
+        final Response response = http.doGet("/courts/all/v1");
+
+        assertThat(response.statusCode())
+            .as("Expected 200 OK for GET /courts/all/v1")
+            .isEqualTo(OK.value());
+
+        final List<CourtDetails> courts = mapper.readValue(
+            response.getBody().asString(),
+            new TypeReference<List<CourtDetails>>() {}
+        );
+
+        assertThat(courts)
+            .as("Response should contain the created court with ID %s", courtId)
+            .filteredOn(court -> courtId.equals(court.getId()))
+            .singleElement()
+            .satisfies(court ->
+                assertThat(court.getName())
+                    .as("Court name should match the created court")
+                    .isEqualTo("Test Court All Details")
+            );
+    }
+
+    @Test
+    @DisplayName("GET /courts/all.json returns all court details (alternate path)")
+    void shouldReturnAllCourtDetailsViaJsonPath() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court All Json Path");
+
+        final Response response = http.doGet("/courts/all.json");
+
+        assertThat(response.statusCode())
+            .as("Expected 200 OK for GET /courts/all.json")
+            .isEqualTo(OK.value());
+        assertThat(response.contentType())
+            .as("Response content type should be JSON")
+            .contains("application/json");
+
+        final List<CourtDetails> courts = mapper.readValue(
+            response.getBody().asString(),
+            new TypeReference<List<CourtDetails>>() {}
+        );
+
+        assertThat(courts)
+            .as("Response should contain the created court with ID %s", courtId)
+            .filteredOn(court -> courtId.equals(court.getId()))
+            .singleElement()
+            .satisfies(court ->
+                assertThat(court.getName())
+                    .as("Court name should match the created court")
+                    .isEqualTo("Test Court All Json Path")
+            );
+    }
+
+    @Test
+    @DisplayName("GET /courts/{courtId}.json returns court details (alternate path)")
+    void shouldReturnCourtDetailsViaJsonPath() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Single Json Path");
+
+        final Response response = http.doGet("/courts/" + courtId + ".json");
+
+        assertThat(response.statusCode())
+            .as("Expected 200 OK for GET /courts/{courtId}.json")
+            .isEqualTo(OK.value());
+        assertThat(response.contentType())
+            .as("Response content type should be JSON")
+            .contains("application/json");
+
+        final CourtDetails fetchedCourt = mapper.readValue(
+            response.getBody().asString(),
+            CourtDetails.class
+        );
+
+        assertThat(fetchedCourt.getId())
+            .as("Court ID should match the created court")
+            .isEqualTo(courtId);
+        assertThat(fetchedCourt.getName())
+            .as("Court name should match the created court")
+            .isEqualTo("Test Court Single Json Path");
     }
 
     @AfterAll
