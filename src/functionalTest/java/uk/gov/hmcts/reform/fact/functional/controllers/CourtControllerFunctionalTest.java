@@ -258,6 +258,63 @@ public final class CourtControllerFunctionalTest {
             );
     }
 
+    @Test
+    @DisplayName("GET /courts/all.json returns all court details (alternate path)")
+    void shouldReturnAllCourtDetailsViaJsonPath() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court All Json Path");
+
+        final Response response = http.doGet("/courts/all.json");
+
+        assertThat(response.statusCode())
+            .as("Expected 200 OK for GET /courts/all.json")
+            .isEqualTo(OK.value());
+        assertThat(response.contentType())
+            .as("Response content type should be JSON")
+            .contains("application/json");
+
+        final List<CourtDetails> courts = mapper.readValue(
+            response.getBody().asString(),
+            new TypeReference<List<CourtDetails>>() {}
+        );
+
+        assertThat(courts)
+            .as("Response should contain the created court with ID %s", courtId)
+            .filteredOn(court -> courtId.equals(court.getId()))
+            .singleElement()
+            .satisfies(court ->
+                assertThat(court.getName())
+                    .as("Court name should match the created court")
+                    .isEqualTo("Test Court All Json Path")
+            );
+    }
+
+    @Test
+    @DisplayName("GET /courts/{courtId}.json returns court details (alternate path)")
+    void shouldReturnCourtDetailsViaJsonPath() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Single Json Path");
+
+        final Response response = http.doGet("/courts/" + courtId + ".json");
+
+        assertThat(response.statusCode())
+            .as("Expected 200 OK for GET /courts/{courtId}.json")
+            .isEqualTo(OK.value());
+        assertThat(response.contentType())
+            .as("Response content type should be JSON")
+            .contains("application/json");
+
+        final CourtDetails fetchedCourt = mapper.readValue(
+            response.getBody().asString(),
+            CourtDetails.class
+        );
+
+        assertThat(fetchedCourt.getId())
+            .as("Court ID should match the created court")
+            .isEqualTo(courtId);
+        assertThat(fetchedCourt.getName())
+            .as("Court name should match the created court")
+            .isEqualTo("Test Court Single Json Path");
+    }
+
     @AfterAll
     static void cleanUpTestData() {
         http.doDelete("/testing-support/courts/name-prefix/Test Court");
