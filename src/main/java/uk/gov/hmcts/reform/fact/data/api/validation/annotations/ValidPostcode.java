@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Constraint(validatedBy = PostcodeValidator.class)
-@Target({ ElementType.PARAMETER })
+@Target({ ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidPostcode {
     /**
