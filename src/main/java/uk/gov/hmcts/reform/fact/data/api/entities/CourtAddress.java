@@ -76,7 +76,7 @@ public class CourtAddress {
     private String county;
 
     @Schema(description = "The postcode")
-    @NotNull
+    @NotBlank(message = "The postcode must be specified")
     @ValidPostcode
     private String postcode;
 
@@ -91,7 +91,7 @@ public class CourtAddress {
     private BigDecimal lon;
 
     @Schema(description = "The address type")
-    @NotBlank(message = "The postcode must be specified")
+    @NotNull
     @Enumerated(EnumType.STRING)
     private AddressType addressType;
 
