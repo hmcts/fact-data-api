@@ -331,8 +331,16 @@ public final class CourtAddressControllerFunctionalTest {
             .isEqualTo(NOT_FOUND.value());
     }
 
+    /**
+     * Builds a minimal court address for test setup.
+     *
+     * @param courtId the court identifier to associate with the address
+     * @param postcode the postcode to assign
+     * @param addressType the address type to assign
+     * @return the constructed {@link CourtAddress}
+     */
     private static CourtAddress buildMinimalAddress(final UUID courtId, final String postcode,
-                                                      final AddressType addressType) {
+                                                    final AddressType addressType) {
         return CourtAddress.builder()
             .courtId(courtId)
             .postcode(postcode)
@@ -340,8 +348,8 @@ public final class CourtAddressControllerFunctionalTest {
             .build();
     }
 
-//    @AfterAll
-//    static void cleanUpTestData() {
-//        http.doDelete("/testing-support/courts/name-prefix/Test Court");
-//    }
+    @AfterAll
+    static void cleanUpTestData() {
+        http.doDelete("/testing-support/courts/name-prefix/Test Court");
+    }
 }
