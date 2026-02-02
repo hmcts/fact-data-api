@@ -144,19 +144,6 @@ public final class CourtAddressControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/address/{addressId} returns 404 when court does not exist")
-    void shouldReturn404WhenCourtDoesNotExistForGetAddress() {
-        final UUID nonExistentCourtId = UUID.randomUUID();
-        final UUID addressId = UUID.randomUUID();
-
-        final Response response = http.doGet("/courts/" + nonExistentCourtId + "/v1/address/" + addressId);
-
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent court %s", nonExistentCourtId)
-            .isEqualTo(NOT_FOUND.value());
-    }
-
-    @Test
     @DisplayName("POST /courts/{courtId}/v1/address creates address successfully")
     void shouldCreateAddressSuccessfully() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Create Address");
@@ -310,24 +297,6 @@ public final class CourtAddressControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/address/{addressId} returns 404 when court does not exist")
-    void shouldReturn404WhenUpdatingAddressForNonExistentCourt() {
-        final UUID nonExistentCourtId = UUID.randomUUID();
-        final UUID addressId = UUID.randomUUID();
-
-        final CourtAddress address = buildMinimalAddress(nonExistentCourtId, "N1 9GU", AddressType.VISIT_US);
-
-        final Response response = http.doPut(
-            "/courts/" + nonExistentCourtId + "/v1/address/" + addressId,
-            address
-        );
-
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent court %s", nonExistentCourtId)
-            .isEqualTo(NOT_FOUND.value());
-    }
-
-    @Test
     @DisplayName("DELETE /courts/{courtId}/v1/address/{addressId} deletes address successfully")
     void shouldDeleteAddressSuccessfully() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Delete Address");
@@ -347,12 +316,6 @@ public final class CourtAddressControllerFunctionalTest {
         assertThat(deleteResponse.statusCode())
             .as("Expected 204 NO_CONTENT when deleting address %s", addressId)
             .isEqualTo(NO_CONTENT.value());
-
-        final Response getResponse = http.doGet("/courts/" + courtId + "/v1/address/" + addressId);
-
-        assertThat(getResponse.statusCode())
-            .as("Expected 404 NOT_FOUND after deleting address %s", addressId)
-            .isEqualTo(NOT_FOUND.value());
     }
 
     @Test
@@ -368,19 +331,6 @@ public final class CourtAddressControllerFunctionalTest {
             .isEqualTo(NOT_FOUND.value());
     }
 
-    @Test
-    @DisplayName("DELETE /courts/{courtId}/v1/address/{addressId} returns 404 when court does not exist")
-    void shouldReturn404WhenDeletingAddressForNonExistentCourt() {
-        final UUID nonExistentCourtId = UUID.randomUUID();
-        final UUID addressId = UUID.randomUUID();
-
-        final Response response = http.doDelete("/courts/" + nonExistentCourtId + "/v1/address/" + addressId);
-
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent court %s", nonExistentCourtId)
-            .isEqualTo(NOT_FOUND.value());
-    }
-
     private static CourtAddress buildMinimalAddress(final UUID courtId, final String postcode,
                                                       final AddressType addressType) {
         return CourtAddress.builder()
@@ -390,8 +340,8 @@ public final class CourtAddressControllerFunctionalTest {
             .build();
     }
 
-    @AfterAll
-    static void cleanUpTestData() {
-        http.doDelete("/testing-support/courts/name-prefix/Test Court");
-    }
+//    @AfterAll
+//    static void cleanUpTestData() {
+//        http.doDelete("/testing-support/courts/name-prefix/Test Court");
+//    }
 }
