@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
-import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 import java.util.UUID;
 
@@ -17,13 +16,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -53,8 +51,7 @@ public class CourtPostcode {
 
     @Schema(description = "The postcode", minLength = 1)
     @NotBlank(message = "The postcode must be specified")
-    @Size(max = ValidationConstants.POSTCODE_MAX_LENGTH, message = ValidationConstants.POSTCODE_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.POSTCODE_REGEX, message = ValidationConstants.POSTCODE_REGEX_MESSAGE)
+    @ValidPostcode
     private String postcode;
 
 }
