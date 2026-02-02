@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import jakarta.validation.constraints.NotBlank;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
-import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,7 +22,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -30,6 +29,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -76,9 +76,8 @@ public class CourtAddress {
     private String county;
 
     @Schema(description = "The postcode")
-    @NotNull
-    @Size(max = ValidationConstants.POSTCODE_MAX_LENGTH, message = ValidationConstants.POSTCODE_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.POSTCODE_REGEX, message = ValidationConstants.POSTCODE_REGEX_MESSAGE)
+    @NotBlank(message = "The postcode must be specified")
+    @ValidPostcode
     private String postcode;
 
     @Schema(description = "The EPIM ID")
