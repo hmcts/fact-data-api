@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
