@@ -26,7 +26,7 @@ import uk.gov.hmcts.reform.fact.data.api.migration.model.ServiceDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHourTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
@@ -41,7 +41,7 @@ class ReferenceDataImporter {
     private final LegacyServiceRepository legacyServiceRepository;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
-    private final OpeningHourTypeRepository openingHourTypeRepository;
+    private final OpeningHoursTypeRepository openingHourTypeRepository;
 
     ReferenceDataImporter(
         RegionRepository regionRepository,
@@ -50,7 +50,7 @@ class ReferenceDataImporter {
         LegacyServiceRepository legacyServiceRepository,
         LocalAuthorityTypeRepository localAuthorityTypeRepository,
         ContactDescriptionTypeRepository contactDescriptionTypeRepository,
-        OpeningHourTypeRepository openingHourTypeRepository
+        OpeningHoursTypeRepository openingHourTypeRepository
     ) {
         this.regionRepository = regionRepository;
         this.areaOfLawTypeRepository = areaOfLawTypeRepository;
