@@ -60,7 +60,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepositor
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHourTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import java.util.regex.Pattern;
@@ -96,7 +96,7 @@ class MigrationIntegrationTest {
     private final ServiceAreaRepository serviceAreaRepository;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
-    private final OpeningHourTypeRepository openingHourTypeRepository;
+    private final OpeningHoursTypeRepository openingHourTypeRepository;
     private final CourtTypeRepository courtTypeRepository;
     private final CourtRepository courtRepository;
     private final CourtServiceAreasRepository courtServiceAreasRepository;
@@ -124,7 +124,7 @@ class MigrationIntegrationTest {
         ServiceAreaRepository serviceAreaRepository,
         LocalAuthorityTypeRepository localAuthorityTypeRepository,
         ContactDescriptionTypeRepository contactDescriptionTypeRepository,
-        OpeningHourTypeRepository openingHourTypeRepository,
+        OpeningHoursTypeRepository openingHourTypeRepository,
         CourtTypeRepository courtTypeRepository,
         CourtRepository courtRepository,
         CourtServiceAreasRepository courtServiceAreasRepository,

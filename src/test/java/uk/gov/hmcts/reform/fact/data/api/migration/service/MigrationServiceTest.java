@@ -64,7 +64,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepositor
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHourTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
@@ -104,7 +104,7 @@ class MigrationServiceTest {
     @Mock
     private ContactDescriptionTypeRepository contactDescriptionTypeRepository;
     @Mock
-    private OpeningHourTypeRepository openingHourTypeRepository;
+    private OpeningHoursTypeRepository openingHourTypeRepository;
     @Mock
     private CourtTypeRepository courtTypeRepository;
     @Mock

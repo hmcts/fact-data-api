@@ -28,7 +28,7 @@ import uk.gov.hmcts.reform.fact.data.api.migration.model.ServiceDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHourTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
@@ -42,7 +42,7 @@ class ReferenceDataImporterTest {
     @Mock private LegacyServiceRepository legacyServiceRepository;
     @Mock private LocalAuthorityTypeRepository localAuthorityTypeRepository;
     @Mock private ContactDescriptionTypeRepository contactDescriptionTypeRepository;
-    @Mock private OpeningHourTypeRepository openingHourTypeRepository;
+    @Mock private OpeningHoursTypeRepository openingHourTypeRepository;
 
     @InjectMocks
     private ReferenceDataImporter importer;

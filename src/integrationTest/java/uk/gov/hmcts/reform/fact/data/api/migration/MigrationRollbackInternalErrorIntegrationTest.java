@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.RegionService;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.migration.client.LegacyFactClient;
@@ -126,8 +127,9 @@ class MigrationRollbackInternalErrorIntegrationTest {
 
         @Bean
         @Primary
-        CourtService failingCourtService(CourtRepository courtRepository, RegionService regionService) {
-            return new CourtService(courtRepository, regionService) {
+        CourtService failingCourtService(CourtRepository courtRepository, CourtDetailsRepository courtDetailsRepository,
+                                         RegionService regionService) {
+            return new CourtService(courtRepository, courtDetailsRepository, regionService) {
                 @Override
                 public Court createCourt(Court court) {
                     throw new RuntimeException("boom");
