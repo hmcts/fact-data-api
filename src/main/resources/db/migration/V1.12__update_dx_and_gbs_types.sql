@@ -3,7 +3,7 @@ ALTER TABLE court_dxcodes
     ALTER COLUMN explanation TYPE VARCHAR(250);
 
 ALTER TABLE court_codes
-  ALTER COLUMN gbs TYPE VARCHAR(10);
+    ALTER COLUMN gbs TYPE VARCHAR(10);
 
 ALTER TABLE court_fax
-  ALTER COLUMN description TYPE VARCHAR(250);
+    ALTER COLUMN description TYPE VARCHAR(250);
