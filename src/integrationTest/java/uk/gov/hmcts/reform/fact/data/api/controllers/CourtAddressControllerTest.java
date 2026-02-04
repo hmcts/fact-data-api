@@ -139,6 +139,8 @@ class CourtAddressControllerTest {
         CourtAddress request = buildAddress();
         request.setId(null);
         request.setAddressLine1(ADDRESS_LINE_1);
+        request.setPostcode("NE1 2ST");
+        request.setTownCity("London");
         request.setAddressType(AddressType.VISIT_US);
 
         when(courtAddressService.createAddress(any(UUID.class), any(CourtAddress.class)))
