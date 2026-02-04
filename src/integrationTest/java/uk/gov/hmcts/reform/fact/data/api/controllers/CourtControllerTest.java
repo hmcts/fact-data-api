@@ -140,6 +140,18 @@ class CourtControllerTest {
     }
 
     @Test
+    @DisplayName("GET /courts/slug/{courtSlug}/v1 returns 400 for slug above max length")
+    void getCourtBySlugReturnsBadRequestForLongSlug() throws Exception {
+        String longSlug = "a".repeat(251);
+
+        mockMvc.perform(get("/courts/slug/{courtSlug}/v1", longSlug))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString(
+                ValidationConstants.COURT_SLUG_LENGTH_MESSAGE
+            )));
+    }
+
+    @Test
     @DisplayName("GET /courts/slug/{courtSlug}.json returns court details")
     void getCourtBySlugJsonPathReturnsCourt() throws Exception {
         CourtDetails courtDetails = buildCourtDetails(COURT_ID, "Test Court");

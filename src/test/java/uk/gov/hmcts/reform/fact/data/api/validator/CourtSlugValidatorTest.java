@@ -33,6 +33,16 @@ class CourtSlugValidatorTest {
     }
 
     @Test
+    void testSlugAtMinLengthIsValid() {
+        assertTrue(validator.isValid("abcde", context));
+    }
+
+    @Test
+    void testSlugAtMaxLengthIsValid() {
+        assertTrue(validator.isValid("a".repeat(250), context));
+    }
+
+    @Test
     void testInvalidCourtSlugWithUppercaseCharacters() {
         assertFalse(validator.isValid("Test-Court-123", context));
     }
