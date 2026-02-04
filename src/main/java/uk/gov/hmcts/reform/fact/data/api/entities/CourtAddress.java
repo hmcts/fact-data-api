@@ -60,28 +60,30 @@ public class CourtAddress {
     private Court court;
 
     @Schema(description = "The first address line")
+    @NotNull
     @Size(max = 255, message = "Address line should be 255 characters or less")
-    @Pattern(regexp = ValidationConstants.ADDRESS_LINE_REGEX,
+    @Pattern(regexp = ValidationConstants.REQUIRED_ADDRESS_LINE_REGEX,
         message = "Address Line 1: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE)
     @Column(name = "address_line_1")
     private String addressLine1;
 
     @Schema(description = "The second address line")
     @Size(max = 255, message = "Address line should be 255 characters or less")
-    @Pattern(regexp = ValidationConstants.ADDRESS_LINE_REGEX,
+    @Pattern(regexp = ValidationConstants.OPTIONAL_ADDRESS_LINE_REGEX,
         message = "Address Line 2: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE)
     @Column(name = "address_line_2")
     private String addressLine2;
 
     @Schema(description = "The town/city")
+    @NotNull
     @Size(max = 100, message = "Town/City name should be 100 characters or less")
-    @Pattern(regexp = ValidationConstants.ADDRESS_LINE_REGEX,
+    @Pattern(regexp = ValidationConstants.REQUIRED_ADDRESS_LINE_REGEX,
         message = "Town/City: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE)
     private String townCity;
 
     @Schema(description = "The county")
     @Size(max = 100, message = "County name should be 100 characters or less")
-    @Pattern(regexp = ValidationConstants.ADDRESS_LINE_REGEX,
+    @Pattern(regexp = ValidationConstants.OPTIONAL_ADDRESS_LINE_REGEX,
         message = "County: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE)
     private String county;
 

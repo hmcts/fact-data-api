@@ -26,7 +26,8 @@ public class ValidationConstants {
     public static final String GENERIC_DESCRIPTION_REGEX = "^[A-Za-z0-9 ()':,-]+$";
     public static final String GENERIC_DESCRIPTION_REGEX_MESSAGE = "Value contains invalid characters";
 
-    public static final String ADDRESS_LINE_REGEX = "^[A-Za-z0-9 ()':,.-]+$";
+    public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 ()':,.-]+$)$";
+    public static final String REQUIRED_ADDRESS_LINE_REGEX = "^[A-Za-z0-9 ()':,.-]+$";
     public static final String ADDRESS_LINE_REGEX_MESSAGE = "Address line contains invalid characters";
 
     public static final String EPIM_ID_REGEX = "^[A-Za-z0-9 -]+$";
