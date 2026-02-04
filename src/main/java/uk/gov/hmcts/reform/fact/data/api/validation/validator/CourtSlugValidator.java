@@ -8,11 +8,11 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
 public class CourtSlugValidator implements ConstraintValidator<ValidCourtSlug, String> {
 
     /**
-     * Validates a slug against configured min/max length and regex
+     * Validates a slug against configured min/max length and regex.
      *
      * @param value slug value to validate
      * @param context validation context
-     * @return true when the slug is valid otherwise false
+     * @return true when the slug is valid otherwise false.
      */
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
