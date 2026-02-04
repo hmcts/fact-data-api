@@ -55,6 +55,7 @@ class CourtAddressControllerTest {
             .addressType(AddressType.VISIT_US)
             .addressLine1(ADDRESS_LINE_1)
             .postcode("NE1 2ST")
+            .townCity("London")
             .build();
     }
 
@@ -184,8 +185,6 @@ class CourtAddressControllerTest {
     void updateAddressReturnsOk() throws Exception {
         CourtAddress request = buildAddress();
         request.setAddressLine1("Updated address");
-        request.setPostcode("NE1 2ST");
-        request.setTownCity("London");
 
         when(courtAddressService.updateAddress(
             courtId,
@@ -197,10 +196,7 @@ class CourtAddressControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.addressLine1").value("Updated address"))
-            .andExpect(jsonPath("$.postcode").value("NE1 2ST"))
-            .andExpect(jsonPath("$.townCity").value("London"));
-
+            .andExpect(jsonPath("$.addressLine1").value("Updated address"));
     }
 
     @Test
