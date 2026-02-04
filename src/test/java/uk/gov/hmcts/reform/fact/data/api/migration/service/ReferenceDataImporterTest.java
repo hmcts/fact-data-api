@@ -58,13 +58,13 @@ class ReferenceDataImporterTest {
     void shouldMapExistingRegionsAndAreasOfLaw() {
         UUID regionId = UUID.randomUUID();
         UUID areaOfLawId = UUID.randomUUID();
+        UUID localAuthorityId = UUID.randomUUID();
         when(regionRepository.findByNameAndCountry("South", "England"))
             .thenReturn(Optional.of(Region.builder().id(regionId).build()));
         when(areaOfLawTypeRepository.findByNameIgnoreCase("Family"))
             .thenReturn(Optional.of(AreaOfLawType.builder().id(areaOfLawId).build()));
-
-        when(localAuthorityTypeRepository.findByName("LA"))
-            .thenReturn(Optional.of(LocalAuthorityType.builder().id(UUID.randomUUID()).name("LA").build()));
+        when(localAuthorityTypeRepository.findAll())
+            .thenReturn(List.of(LocalAuthorityType.builder().id(localAuthorityId).name("LA").build()));
         ServiceArea serviceArea = new ServiceArea();
         serviceArea.setId(UUID.randomUUID());
         when(serviceAreaRepository.findByNameIgnoreCase("Money claims")).thenReturn(Optional.of(serviceArea));
@@ -72,7 +72,64 @@ class ReferenceDataImporterTest {
         importer.importReferenceData(createResponse(), context);
         assertThat(context.getRegionIds()).containsEntry(5, regionId);
         assertThat(context.getAreaOfLawIds()).containsEntry(10, areaOfLawId);
+        assertThat(context.getLocalAuthorityTypeIds()).containsEntry(1, List.of(localAuthorityId));
         assertThat(context.getServiceAreaIds()).containsValue(serviceArea.getId());
+    }
+
+    @Test
+    void shouldMapLocalAuthorityTypeUsingNormalisedName() {
+        UUID mappedId = UUID.randomUUID();
+        when(localAuthorityTypeRepository.findAll()).thenReturn(List.of(
+            LocalAuthorityType.builder()
+                .id(mappedId)
+                .name("Bolton Metropolitan Borough Council")
+                .build()
+        ));
+
+        LegacyExportResponse response = new LegacyExportResponse(
+            Collections.emptyList(),
+            List.of(new LocalAuthorityTypeDto(42, "Bolton Borough Council")),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            null, null, null,
+            Collections.emptyList(),
+            Collections.emptyList()
+        );
+
+        importer.importReferenceData(response, context);
+
+        assertThat(context.getLocalAuthorityTypeIds()).containsEntry(42, List.of(mappedId));
+    }
+
+    @Test
+    void shouldMapLegacySplitCountyLocalAuthoritiesToBothSuccessors() {
+        UUID northNorthamptonshireId = UUID.randomUUID();
+        UUID westNorthamptonshireId = UUID.randomUUID();
+        when(localAuthorityTypeRepository.findAll()).thenReturn(List.of(
+            LocalAuthorityType.builder()
+                .id(northNorthamptonshireId)
+                .name("North Northamptonshire Council")
+                .build(),
+            LocalAuthorityType.builder()
+                .id(westNorthamptonshireId)
+                .name("West Northamptonshire Council")
+                .build()
+        ));
+
+        LegacyExportResponse response = new LegacyExportResponse(
+            Collections.emptyList(),
+            List.of(new LocalAuthorityTypeDto(397392, "Northamptonshire County Council")),
+            Collections.emptyList(),
+            Collections.emptyList(),
+            null, null, null,
+            Collections.emptyList(),
+            Collections.emptyList()
+        );
+
+        importer.importReferenceData(response, context);
+
+        assertThat(context.getLocalAuthorityTypeIds().get(397392))
+            .containsExactlyInAnyOrder(northNorthamptonshireId, westNorthamptonshireId);
     }
 
     @Test

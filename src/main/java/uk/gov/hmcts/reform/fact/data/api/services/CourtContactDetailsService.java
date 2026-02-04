@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepo
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtContactDetailsRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -69,13 +70,13 @@ public class CourtContactDetailsService {
     @Transactional
     public CourtContactDetails createContactDetail(UUID courtId, CourtContactDetails request) {
         Court court = courtService.getCourtById(courtId);
-        ContactDescriptionType description =
+        Optional<ContactDescriptionType> description =
             getValidatedContactDescription(request.getCourtContactDescriptionId());
 
         request.setId(null);
         request.setCourtId(courtId);
         request.setCourt(court);
-        request.setCourtContactDescription(description);
+        request.setCourtContactDescription(description.orElse(null));
 
         log.info("Creating contact detail for court {}", courtId);
         return courtContactDetailsRepository.save(request);
@@ -93,11 +94,11 @@ public class CourtContactDetailsService {
     @Transactional
     public CourtContactDetails updateContactDetail(UUID courtId, UUID contactId, CourtContactDetails request) {
         CourtContactDetails existing = getContactDetail(courtId, contactId);
-        ContactDescriptionType description =
+        Optional<ContactDescriptionType> description =
             getValidatedContactDescription(request.getCourtContactDescriptionId());
 
         existing.setCourtContactDescriptionId(request.getCourtContactDescriptionId());
-        existing.setCourtContactDescription(description);
+        existing.setCourtContactDescription(description.orElse(null));
         existing.setExplanation(request.getExplanation());
         existing.setExplanationCy(request.getExplanationCy());
         existing.setEmail(request.getEmail());
@@ -127,13 +128,13 @@ public class CourtContactDetailsService {
         courtContactDetailsRepository.deleteByIdAndCourtId(contactId, courtId);
     }
 
-    private ContactDescriptionType getValidatedContactDescription(UUID contactDescriptionId) {
+    private Optional<ContactDescriptionType> getValidatedContactDescription(UUID contactDescriptionId) {
         if (contactDescriptionId == null) {
-            return null;
+            return Optional.empty();
         }
 
-        return contactDescriptionTypeRepository.findById(contactDescriptionId).orElseThrow(
+        return Optional.of(contactDescriptionTypeRepository.findById(contactDescriptionId).orElseThrow(
             () -> new NotFoundException("Contact description type not found, ID: " + contactDescriptionId)
-        );
+        ));
     }
 }

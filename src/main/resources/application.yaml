@@ -82,7 +82,7 @@ user:
 
 courtLock:
   timeout-minutes: 60
-  
+
 os:
   key: ${OS_KEY}
   url: https://api.os.uk

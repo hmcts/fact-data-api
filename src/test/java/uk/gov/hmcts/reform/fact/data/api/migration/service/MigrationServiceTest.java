@@ -194,8 +194,8 @@ class MigrationServiceTest {
             .id(LOCAL_AUTHORITY_TYPE_ID)
             .name("Local Authority")
             .build();
-        lenient().when(localAuthorityTypeRepository.findByName("Local Authority"))
-            .thenReturn(Optional.of(localAuthorityType));
+        lenient().when(localAuthorityTypeRepository.findAll())
+            .thenReturn(List.of(localAuthorityType));
         lenient().when(localAuthorityTypeRepository.save(any(LocalAuthorityType.class))).thenAnswer(invocation -> {
             LocalAuthorityType entity = invocation.getArgument(0);
             entity.setId(UUID.randomUUID());

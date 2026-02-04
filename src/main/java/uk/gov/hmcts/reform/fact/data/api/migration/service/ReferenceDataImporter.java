@@ -1,10 +1,15 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.service;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +39,32 @@ import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepos
 class ReferenceDataImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceDataImporter.class);
+    /**
+     * Words removed during local-authority name normalisation so matching is based on
+     * distinctive tokens (for example, "Bolton Borough Council" can map to
+     * "Bolton Metropolitan Borough Council"). This is as opposed to simply skipping.
+     */
+    private static final Set<String> LOOKUP_STOP_WORDS = Set.of(
+        "and",
+        "authority",
+        "borough",
+        "city",
+        "corporation",
+        "council",
+        "county",
+        "district",
+        "london",
+        "metropolitan",
+        "of",
+        "royal",
+        "the"
+    );
+    private static final Map<String, List<String>> LEGACY_LOCAL_AUTHORITY_NAME_ALIASES = Map.of(
+        "cumbria county council",
+        List.of("Cumberland Council", "Westmorland and Furness Council"),
+        "northamptonshire county council",
+        List.of("North Northamptonshire Council", "West Northamptonshire Council")
+    );
 
     private final RegionRepository regionRepository;
     private final AreaOfLawTypeRepository areaOfLawTypeRepository;
@@ -172,11 +203,21 @@ class ReferenceDataImporter {
 
     private void mapExistingLocalAuthorityTypes(
         List<LocalAuthorityTypeDto> localAuthorityTypes,
-        Map<Integer, UUID> ids
+        Map<Integer, List<UUID>> ids
     ) {
         if (isEmpty(localAuthorityTypes)) {
             return;
         }
+
+        List<LocalAuthorityType> existingLocalAuthorities = localAuthorityTypeRepository.findAll();
+        Map<String, LocalAuthorityType> existingByExactName = buildCaseInsensitiveLookupMap(
+            existingLocalAuthorities,
+            LocalAuthorityType::getName
+        );
+        Map<String, LocalAuthorityType> existingByNormalisedName = buildNormalisedLookupMap(
+            existingLocalAuthorities,
+            LocalAuthorityType::getName
+        );
 
         for (LocalAuthorityTypeDto dto : localAuthorityTypes) {
             if (StringUtils.isBlank(dto.getName())) {
@@ -184,13 +225,20 @@ class ReferenceDataImporter {
                 continue;
             }
 
-            Optional<LocalAuthorityType> existing = localAuthorityTypeRepository.findByName(dto.getName());
-            if (existing.isEmpty()) {
+            List<LocalAuthorityType> existingMatches = findLocalAuthorityMatches(
+                dto.getName(),
+                existingByExactName,
+                existingByNormalisedName
+            );
+            if (existingMatches.isEmpty()) {
                 LOG.warn("No matching local authority type found for name '{}'", dto.getName());
                 continue;
             }
 
-            ids.put(dto.getId(), existing.get().getId());
+            ids.put(
+                dto.getId(),
+                existingMatches.stream().map(LocalAuthorityType::getId).distinct().toList()
+            );
         }
     }
 
@@ -199,16 +247,15 @@ class ReferenceDataImporter {
             return;
         }
 
-        Map<String, ContactDescriptionType> existing = contactDescriptionTypeRepository.findAll().stream()
-            .collect(java.util.stream.Collectors.toMap(
-                ContactDescriptionType::getName, type -> type, (left, right) -> left
-            ));
-
-        for (ContactDescriptionTypeDto dto : dtos) {
-            if (!existing.containsKey(dto.getName())) {
-                LOG.warn("Contact description '{}' was not found in the target database", dto.getName());
-            }
-        }
+        Map<String, ContactDescriptionType> existingByNormalisedName = buildNormalisedLookupMap(
+            contactDescriptionTypeRepository.findAll(),
+            ContactDescriptionType::getName
+        );
+        logMissingReferenceData(
+            "contact descriptions",
+            dtos.stream().map(ContactDescriptionTypeDto::getName).toList(),
+            existingByNormalisedName
+        );
     }
 
     private void mapExistingOpeningHours(List<OpeningHourTypeDto> dtos) {
@@ -216,16 +263,15 @@ class ReferenceDataImporter {
             return;
         }
 
-        Map<String, OpeningHourType> existing = openingHourTypeRepository.findAll().stream()
-            .collect(java.util.stream.Collectors.toMap(
-                OpeningHourType::getName, type -> type, (left, right) -> left
-            ));
-
-        for (OpeningHourTypeDto dto : dtos) {
-            if (!existing.containsKey(dto.getName())) {
-                LOG.warn("Opening hour type '{}' was not found in the target database", dto.getName());
-            }
-        }
+        Map<String, OpeningHourType> existingByNormalisedName = buildNormalisedLookupMap(
+            openingHourTypeRepository.findAll(),
+            OpeningHourType::getName
+        );
+        logMissingReferenceData(
+            "opening hour types",
+            dtos.stream().map(OpeningHourTypeDto::getName).toList(),
+            existingByNormalisedName
+        );
     }
 
     private static boolean isEmpty(Collection<?> values) {
@@ -238,7 +284,7 @@ class ReferenceDataImporter {
         String context
     ) {
         if (ids == null || ids.isEmpty()) {
-            return null;
+            return List.of();
         }
         List<UUID> results = new java.util.ArrayList<>();
         for (Integer id : ids) {
@@ -249,6 +295,162 @@ class ReferenceDataImporter {
             }
             results.add(mapped);
         }
-        return results.isEmpty() ? null : results;
+        return results.isEmpty() ? List.of() : results;
+    }
+
+    private void logMissingReferenceData(
+        String category,
+        List<String> names,
+        Map<String, ?> existingByNormalisedName
+    ) {
+        List<String> unmatchedNames = names.stream()
+            .filter(StringUtils::isNotBlank)
+            .filter(name -> findNormalisedMatch(name, existingByNormalisedName).isEmpty())
+            .toList();
+
+        if (unmatchedNames.isEmpty()) {
+            return;
+        }
+
+        String examples = unmatchedNames.stream().limit(10).collect(Collectors.joining(", "));
+        LOG.warn(
+            "{} {} from the legacy export were not found in the target database. Examples: {}",
+            unmatchedNames.size(),
+            category,
+            examples
+        );
+    }
+
+    private static <T> Map<String, T> buildNormalisedLookupMap(
+        List<T> values,
+        Function<T, String> nameExtractor
+    ) {
+        if (isEmpty(values)) {
+            return Map.of();
+        }
+
+        return values.stream()
+            .filter(Objects::nonNull)
+            .map(value -> Map.entry(normaliseLookupName(nameExtractor.apply(value)), value))
+            .filter(entry -> StringUtils.isNotBlank(entry.getKey()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (left, right) -> left));
+    }
+
+    private static <T> Map<String, T> buildCaseInsensitiveLookupMap(
+        List<T> values,
+        Function<T, String> nameExtractor
+    ) {
+        if (isEmpty(values)) {
+            return Map.of();
+        }
+
+        return values.stream()
+            .filter(Objects::nonNull)
+            .map(value -> Map.entry(normaliseCaseInsensitiveName(nameExtractor.apply(value)), value))
+            .filter(entry -> StringUtils.isNotBlank(entry.getKey()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (left, right) -> left));
+    }
+
+    private static List<LocalAuthorityType> findLocalAuthorityMatches(
+        String name,
+        Map<String, LocalAuthorityType> caseInsensitiveLookup,
+        Map<String, LocalAuthorityType> normalisedLookup
+    ) {
+        LocalAuthorityType exact = caseInsensitiveLookup.get(normaliseCaseInsensitiveName(name));
+        if (exact != null) {
+            return List.of(exact);
+        }
+
+        List<String> aliases = LEGACY_LOCAL_AUTHORITY_NAME_ALIASES.get(normaliseCaseInsensitiveName(name));
+        if (aliases != null) {
+            List<LocalAuthorityType> aliasMatches = aliases.stream()
+                .map(alias -> caseInsensitiveLookup.get(normaliseCaseInsensitiveName(alias)))
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+            if (!aliasMatches.isEmpty()) {
+                return aliasMatches;
+            }
+        }
+
+        return findNormalisedMatch(name, normalisedLookup).stream().toList();
+    }
+
+    private static <T> Optional<T> findNormalisedMatch(String name, Map<String, T> lookup) {
+        String normalisedName = normaliseLookupName(name);
+        if (StringUtils.isBlank(normalisedName)) {
+            return Optional.empty();
+        }
+
+        T exact = lookup.get(normalisedName);
+        if (exact != null) {
+            return Optional.of(exact);
+        }
+
+        Set<String> sourceTokens = tokeniseNormalisedName(normalisedName);
+        if (sourceTokens.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<T> partialMatches = lookup.entrySet().stream()
+            .filter(entry -> {
+                Set<String> targetTokens = tokeniseNormalisedName(entry.getKey());
+                return targetTokens.containsAll(sourceTokens) || sourceTokens.containsAll(targetTokens);
+            })
+            .map(Map.Entry::getValue)
+            .distinct()
+            .toList();
+
+        return partialMatches.size() == 1
+            ? Optional.of(partialMatches.get(0))
+            : Optional.empty();
+    }
+
+    private static Set<String> tokeniseNormalisedName(String normalisedName) {
+        Set<String> tokens = new LinkedHashSet<>();
+        for (String token : StringUtils.split(normalisedName, ' ')) {
+            if (StringUtils.isBlank(token)) {
+                continue;
+            }
+            tokens.add(token);
+        }
+        return tokens;
+    }
+
+    private static String normaliseLookupName(String name) {
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+
+        String normalised = name.toLowerCase()
+            .replace("&", " and ")
+            .replaceAll("[^a-z0-9 ]+", " ");
+
+        String[] tokens = StringUtils.split(normalised);
+        if (tokens == null) {
+            return "";
+        }
+
+        List<String> singularisedTokens = java.util.Arrays.stream(tokens)
+            .map(ReferenceDataImporter::singulariseToken)
+            .toList();
+
+        List<String> filteredTokens = singularisedTokens.stream()
+            .filter(token -> !LOOKUP_STOP_WORDS.contains(token))
+            .toList();
+
+        return (filteredTokens.isEmpty() ? singularisedTokens : filteredTokens).stream()
+            .collect(Collectors.joining(" "));
+    }
+
+    private static String normaliseCaseInsensitiveName(String name) {
+        return StringUtils.lowerCase(StringUtils.normalizeSpace(StringUtils.defaultString(name)));
+    }
+
+    private static String singulariseToken(String token) {
+        if (token.length() > 3 && token.endsWith("s")) {
+            return token.substring(0, token.length() - 1);
+        }
+        return token;
     }
 }

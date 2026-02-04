@@ -94,7 +94,7 @@ public class CourtProfessionalInformationService {
             professionalInformationDetails.getProfessionalInformation()
         );
 
-        CourtCodes savedCodes = replaceCourtCodes(courtId, court, professionalInformationDetails.getCodes());
+        Optional<CourtCodes> savedCodes = replaceCourtCodes(courtId, court, professionalInformationDetails.getCodes());
         List<CourtDxCode> savedDxCodes = replaceCourtDxCodes(
             courtId,
             court,
@@ -107,7 +107,7 @@ public class CourtProfessionalInformationService {
             professionalInformationDetails.getFaxNumbers()
         );
 
-        return buildDetailsDto(savedProfessionalInformation, savedCodes, savedDxCodes, savedFaxNumbers);
+        return buildDetailsDto(savedProfessionalInformation, savedCodes.orElse(null), savedDxCodes, savedFaxNumbers);
     }
 
 
@@ -177,11 +177,11 @@ public class CourtProfessionalInformationService {
      * @param codes The court codes to set.
      * @return The saved court codes.
      */
-    private CourtCodes replaceCourtCodes(UUID courtId, Court court, CourtCodesDto codes) {
+    private Optional<CourtCodes> replaceCourtCodes(UUID courtId, Court court, CourtCodesDto codes) {
         if (codes == null) {
             // No codes provided; remove any existing record for this court.
             courtCodesRepository.deleteByCourtId(courtId);
-            return null;
+            return Optional.empty();
         }
 
         CourtCodes entity = CourtCodes.builder()
@@ -200,7 +200,7 @@ public class CourtProfessionalInformationService {
             entity.setId(existing.getId())
         );
 
-        return courtCodesRepository.save(entity);
+        return Optional.of(courtCodesRepository.save(entity));
     }
 
     /**
