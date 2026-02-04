@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
@@ -58,6 +59,23 @@ public class CourtController {
         @Parameter(description = "UUID of the court", required = true)
         @ValidUUID @PathVariable String courtId) {
         return ResponseEntity.ok(courtService.getCourtDetailsById(UUID.fromString(courtId)));
+    }
+
+    @GetMapping(value = {"/slug/{courtSlug}/v1", "/slug/{courtSlug}.json"})
+    @Operation(
+        summary = "Get court details by slug",
+        description = "Fetch detailed court information for a given court slug."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court details"),
+        @ApiResponse(responseCode = "400", description = "Invalid court slug supplied"),
+        @ApiResponse(responseCode = "404", description = "Court not found")
+    })
+    public ResponseEntity<CourtDetails> getCourtDetailsBySlug(
+        @Parameter(description = "Slug of the court", required = true)
+        @ValidCourtSlug
+        @PathVariable String courtSlug) {
+        return ResponseEntity.ok(courtService.getCourtDetailsBySlug(courtSlug));
     }
 
     @GetMapping(value = {"/all/v1", "/all.json"})
