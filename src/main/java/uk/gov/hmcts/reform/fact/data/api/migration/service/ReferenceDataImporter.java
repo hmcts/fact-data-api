@@ -39,6 +39,11 @@ import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepos
 class ReferenceDataImporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReferenceDataImporter.class);
+    /**
+     * Words removed during local-authority name normalisation so matching is based on
+     * distinctive tokens (for example, "Bolton Borough Council" can map to
+     * "Bolton Metropolitan Borough Council"). This is as opposed to simply skipping.
+     */
     private static final Set<String> LOOKUP_STOP_WORDS = Set.of(
         "and",
         "authority",
