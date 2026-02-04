@@ -25,4 +25,12 @@ public class ValidationConstants {
 
     public static final String GENERIC_DESCRIPTION_REGEX = "^[A-Za-z0-9 ()':,-]+$";
     public static final String GENERIC_DESCRIPTION_REGEX_MESSAGE = "Value contains invalid characters";
+
+    public static final String COURT_SLUG_REGEX = "^[a-z0-9-]+$";
+    public static final String COURT_SLUG_REGEX_MESSAGE =
+        "Slug must match the regex '^[a-z0-9-]+$'";
+
+    public static final int COURT_SLUG_MIN_LENGTH = 5;
+    public static final int COURT_SLUG_MAX_LENGTH = 250;
+    public static final String COURT_SLUG_LENGTH_MESSAGE = "Court slug should be between 5 and 250 characters";
 }
