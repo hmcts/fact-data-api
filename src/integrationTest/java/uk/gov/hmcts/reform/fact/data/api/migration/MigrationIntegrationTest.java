@@ -213,6 +213,7 @@ class MigrationIntegrationTest {
                 localAuthorityTypeRepository.save(
                     LocalAuthorityType.builder()
                         .name(type.getName())
+                        .childCustodianCodes(List.of())
                         .build()
                 )
             );
