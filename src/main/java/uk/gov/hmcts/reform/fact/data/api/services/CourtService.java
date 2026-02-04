@@ -149,6 +149,18 @@ public class CourtService {
             );
     }
 
+    /**
+     * Get court details by slug.
+     *
+     * @param courtSlug The slug of the court details to get.
+     * @return The court details entity.
+     * @throws NotFoundException if the court details is not found.
+     */
+    public CourtDetails getCourtDetailsBySlug(String courtSlug) {
+        return courtDetailsRepository.findBySlug(courtSlug)
+            .orElseThrow(() -> new NotFoundException("Court not found, slug: " + courtSlug)
+        );
+    }
 
     /**
      * Get all court details.

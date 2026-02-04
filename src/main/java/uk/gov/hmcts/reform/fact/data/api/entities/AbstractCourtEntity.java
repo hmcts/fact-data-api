@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
+
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -49,11 +51,7 @@ public abstract class AbstractCourtEntity {
     private String name;
 
     @Schema(description = "The Court 'slug'")
-    @Size(min = 5, max = 250, message = "Court slug should be between 5 and 200 chars")
-    @Pattern(
-        regexp = "^[a-z0-9-]+$",
-        message = "Slug must match the regex '^[a-z0-9-]+$'"
-    )
+    @ValidCourtSlug
     private String slug;
 
     @Schema(description = "The open status of the Court")

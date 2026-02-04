@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.migration.service;
 import jakarta.validation.ConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -46,9 +47,11 @@ import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMapping
 class CourtMigrationHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(CourtMigrationHelper.class);
-    private static final Pattern COURT_NAME_PATTERN = Pattern.compile("^[A-Za-z&'(),\\- ]+$");
+    private static final Pattern COURT_NAME_PATTERN = Pattern.compile("^[A-Za-z&'()\\- ]+$");
     private static final Pattern GENERIC_DESCRIPTION_PATTERN =
         Pattern.compile(ValidationConstants.GENERIC_DESCRIPTION_REGEX);
+    private static final Pattern INVALID_GENERIC_DESCRIPTION_CHARACTERS =
+        Pattern.compile("[^A-Za-z0-9 ()':,-]+");
 
     private final RegionRepository regionRepository;
     private final CourtServiceAreasRepository courtServiceAreasRepository;
@@ -261,10 +264,9 @@ class CourtMigrationHelper {
                 continue;
             }
 
-            List<UUID> localAuthorityIds = mapIds(
+            List<UUID> localAuthorityIds = mapLocalAuthorityIds(
                 dto.getLocalAuthorityIds(),
-                context.getLocalAuthorityTypeIds(),
-                "court local authorities"
+                context.getLocalAuthorityTypeIds()
             );
             if (localAuthorityIds == null) {
                 LOG.warn(
@@ -351,34 +353,60 @@ class CourtMigrationHelper {
         }
 
         for (CourtDxCodeDto dto : dtos) {
-            if (StringUtils.isBlank(dto.getDxCode()) && StringUtils.isBlank(dto.getExplanation())) {
+            String dxCode = sanitiseGenericDescription(dto.getDxCode());
+            String explanation = sanitiseGenericDescription(dto.getExplanation());
+
+            if (StringUtils.isBlank(dxCode) && StringUtils.isBlank(explanation)) {
                 LOG.debug(
                     "Skipping DX code for court '{}' because both code and explanation are blank",
                     courtId
                 );
                 continue;
             }
-            if (StringUtils.length(dto.getDxCode()) > 200) {
+            if (StringUtils.isBlank(dxCode)) {
                 LOG.warn(
-                    "Skipping DX code '{}' for court '{}' because it exceeds 200 characters",
-                    dto.getDxCode(),
+                    "Skipping DX code for court '{}' because dx_code is blank after sanitisation",
                     courtId
                 );
                 continue;
             }
-            if (StringUtils.isNotBlank(dto.getDxCode())
-                && !GENERIC_DESCRIPTION_PATTERN.matcher(dto.getDxCode()).matches()) {
+            if (StringUtils.length(dxCode) > 200) {
+                LOG.warn(
+                    "Skipping DX code '{}' for court '{}' because it exceeds 200 characters",
+                    dxCode,
+                    courtId
+                );
+                continue;
+            }
+            if (!GENERIC_DESCRIPTION_PATTERN.matcher(dxCode).matches()) {
                 LOG.warn(
                     "Skipping DX code '{}' for court '{}' due to invalid characters",
-                    dto.getDxCode(),
+                    dxCode,
+                    courtId
+                );
+                continue;
+            }
+            if (StringUtils.length(explanation) > 250) {
+                LOG.warn(
+                    "Skipping DX code '{}' for court '{}' because explanation exceeds 250 characters",
+                    dxCode,
+                    courtId
+                );
+                continue;
+            }
+            if (StringUtils.isNotBlank(explanation)
+                && !GENERIC_DESCRIPTION_PATTERN.matcher(explanation).matches()) {
+                LOG.warn(
+                    "Skipping DX code '{}' for court '{}' because explanation has invalid characters",
+                    dxCode,
                     courtId
                 );
                 continue;
             }
             CourtDxCode entity = CourtDxCode.builder()
                 .courtId(courtId)
-                .dxCode(dto.getDxCode())
-                .explanation(dto.getExplanation())
+                .dxCode(dxCode)
+                .explanation(explanation)
                 .build();
             courtDxCodeRepository.save(entity);
             context.courtDxCodesMigrated++;
@@ -501,6 +529,27 @@ class CourtMigrationHelper {
         return results.isEmpty() ? null : results;
     }
 
+    private static List<UUID> mapLocalAuthorityIds(
+        List<Integer> sourceIds,
+        Map<Integer, List<UUID>> lookup
+    ) {
+        if (sourceIds == null || sourceIds.isEmpty()) {
+            return null;
+        }
+
+        LinkedHashSet<UUID> results = new LinkedHashSet<>();
+        for (Integer id : sourceIds) {
+            List<UUID> mapped = lookup.get(id);
+            if (mapped == null || mapped.isEmpty()) {
+                LOG.warn("Unable to map court local authorities identifier '{}' in migration payload", id);
+                continue;
+            }
+            results.addAll(mapped);
+        }
+
+        return results.isEmpty() ? null : new ArrayList<>(results);
+    }
+
     private static boolean isEmpty(Collection<?> values) {
         return values == null || values.isEmpty();
     }
@@ -509,7 +558,15 @@ class CourtMigrationHelper {
         if (StringUtils.isBlank(name)) {
             return name;
         }
-        String cleaned = name.replaceAll("[^A-Za-z&'(),\\- ]", " ");
+        String cleaned = name.replaceAll("[^A-Za-z&'()\\- ]", " ");
+        return cleaned.replaceAll("\\s+", " ").trim();
+    }
+
+    private static String sanitiseGenericDescription(String value) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        String cleaned = INVALID_GENERIC_DESCRIPTION_CHARACTERS.matcher(value).replaceAll(" ");
         return cleaned.replaceAll("\\s+", " ").trim();
     }
 }

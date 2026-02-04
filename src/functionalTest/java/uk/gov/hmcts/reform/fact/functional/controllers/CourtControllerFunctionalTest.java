@@ -315,6 +315,73 @@ public final class CourtControllerFunctionalTest {
             .isEqualTo("Test Court Single Json Path");
     }
 
+    @Test
+    @DisplayName("GET /courts/slug/{courtSlug}/v1 returns court details")
+    void shouldReturnCourtDetailsViaSlugPath() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Slug Path");
+
+        final Response byIdResponse = http.doGet("/courts/" + courtId + "/v1");
+        final CourtDetails courtFromIdPath = mapper.readValue(byIdResponse.getBody().asString(), CourtDetails.class);
+
+        final Response response = http.doGet("/courts/slug/" + courtFromIdPath.getSlug() + "/v1");
+
+        assertThat(response.statusCode())
+            .as("Expected 200 OK for GET /courts/slug/{courtSlug}/v1")
+            .isEqualTo(OK.value());
+
+        final CourtDetails fetchedCourt = mapper.readValue(
+            response.getBody().asString(),
+            CourtDetails.class
+        );
+
+        assertThat(fetchedCourt.getId())
+            .as("Court ID should match the created court")
+            .isEqualTo(courtId);
+        assertThat(fetchedCourt.getSlug())
+            .as("Court slug should match the created court")
+            .isEqualTo(courtFromIdPath.getSlug());
+    }
+
+    @Test
+    @DisplayName("GET /courts/slug/{courtSlug}.json returns court details")
+    void shouldReturnCourtDetailsViaSlugJsonPath() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Slug Json Path");
+
+        final Response byIdResponse = http.doGet("/courts/" + courtId + "/v1");
+        final CourtDetails courtFromIdPath = mapper.readValue(byIdResponse.getBody().asString(), CourtDetails.class);
+
+        final Response response = http.doGet("/courts/slug/" + courtFromIdPath.getSlug() + ".json");
+
+        assertThat(response.statusCode())
+            .as("Expected 200 OK for GET /courts/slug/{courtSlug}.json")
+            .isEqualTo(OK.value());
+        assertThat(response.contentType())
+            .as("Response content type should be JSON")
+            .contains("application/json");
+
+        final CourtDetails fetchedCourt = mapper.readValue(
+            response.getBody().asString(),
+            CourtDetails.class
+        );
+
+        assertThat(fetchedCourt.getId())
+            .as("Court ID should match the created court")
+            .isEqualTo(courtId);
+        assertThat(fetchedCourt.getSlug())
+            .as("Court slug should match the created court")
+            .isEqualTo(courtFromIdPath.getSlug());
+    }
+
+    @Test
+    @DisplayName("GET /courts/slug/{courtSlug}/v1 returns 404 for unknown slug")
+    void shouldFailToRetrieveNonExistentCourtBySlug() {
+        final Response response = http.doGet("/courts/slug/non-existent-court/v1");
+
+        assertThat(response.statusCode()).isEqualTo(NOT_FOUND.value());
+        assertThat(response.jsonPath().getString("message"))
+            .contains("Court not found, slug: non-existent-court");
+    }
+
     @AfterAll
     static void cleanUpTestData() {
         http.doDelete("/testing-support/courts/name-prefix/Test Court");
