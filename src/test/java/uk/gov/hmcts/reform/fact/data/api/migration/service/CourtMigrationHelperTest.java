@@ -237,6 +237,33 @@ class CourtMigrationHelperTest {
     }
 
     @Test
+    void shouldPersistDxCodeWithNullExplanationWhenSanitisedExplanationBecomesBlank() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(UUID.randomUUID());
+            return court;
+        });
+
+        CourtDto dto = new CourtDto();
+        dto.setId(704L);
+        dto.setName("DX Explanation Court");
+        dto.setSlug("dx-explanation-court");
+        dto.setOpen(true);
+        dto.setRegionId(1);
+        dto.setCourtDxCodes(List.of(new CourtDxCodeDto("dx-1", "123", "—")));
+        dto.setIsServiceCentre(false);
+
+        helper.migrateCourts(List.of(dto), context);
+
+        ArgumentCaptor<CourtDxCode> captor = ArgumentCaptor.forClass(CourtDxCode.class);
+        verify(courtDxCodeRepository).save(captor.capture());
+        assertThat(captor.getValue().getDxCode()).isEqualTo("123");
+        assertThat(captor.getValue().getExplanation()).isNull();
+        assertThat(context.getCourtDxCodesMigrated()).isEqualTo(1);
+    }
+
+    @Test
     void shouldExpandMappedLocalAuthorityIdToAllSuccessorAuthorities() {
         UUID courtId = UUID.randomUUID();
         UUID northNorthamptonshireId = UUID.randomUUID();

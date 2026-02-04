@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -440,31 +441,34 @@ class MigrationIntegrationTest {
         if (dto == null) {
             return false;
         }
-        String dxCode = sanitiseGenericDescription(dto.getDxCode());
-        String explanation = sanitiseGenericDescription(dto.getExplanation());
+        Optional<String> dxCode = sanitiseGenericDescription(dto.getDxCode());
+        Optional<String> explanation = sanitiseGenericDescription(dto.getExplanation());
 
-        if (StringUtils.isBlank(dxCode) && StringUtils.isBlank(explanation)) {
+        if (dxCode.isEmpty() && explanation.isEmpty()) {
             return false;
         }
-        if (StringUtils.isBlank(dxCode)) {
+        if (dxCode.isEmpty()) {
             return false;
         }
-        if (StringUtils.length(dxCode) > 200 || StringUtils.length(explanation) > 250) {
+        if (StringUtils.length(dxCode.get()) > 200) {
             return false;
         }
-        if (!GENERIC_DESCRIPTION_PATTERN.matcher(dxCode).matches()) {
+        if (explanation.map(value -> StringUtils.length(value) > 250).orElse(false)) {
             return false;
         }
-        return StringUtils.isBlank(explanation)
-            || GENERIC_DESCRIPTION_PATTERN.matcher(explanation).matches();
+        if (!GENERIC_DESCRIPTION_PATTERN.matcher(dxCode.get()).matches()) {
+            return false;
+        }
+        return explanation.isEmpty() || GENERIC_DESCRIPTION_PATTERN.matcher(explanation.get()).matches();
     }
 
-    private String sanitiseGenericDescription(String value) {
+    private Optional<String> sanitiseGenericDescription(String value) {
         if (StringUtils.isBlank(value)) {
-            return null;
+            return Optional.empty();
         }
         String cleaned = value.replaceAll("[^A-Za-z0-9 ()':,-]+", " ");
-        return cleaned.replaceAll("\\s+", " ").trim();
+        String normalised = cleaned.replaceAll("\\s+", " ").trim();
+        return StringUtils.isBlank(normalised) ? Optional.empty() : Optional.of(normalised);
     }
 
     private TableCounts captureTableCounts() {

@@ -279,7 +279,7 @@ class ReferenceDataImporter {
         String context
     ) {
         if (ids == null || ids.isEmpty()) {
-            return null;
+            return List.of();
         }
         List<UUID> results = new java.util.ArrayList<>();
         for (Integer id : ids) {
@@ -290,7 +290,7 @@ class ReferenceDataImporter {
             }
             results.add(mapped);
         }
-        return results.isEmpty() ? null : results;
+        return results.isEmpty() ? List.of() : results;
     }
 
     private void logMissingReferenceData(

@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCodes;
+import java.util.Optional;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -43,16 +44,15 @@ public class CourtCodesDto {
     private String gbs;
 
     public static CourtCodesDto fromEntity(CourtCodes entity) {
-        if (entity == null) {
-            return null;
-        }
-        return CourtCodesDto.builder()
-            .magistrateCourtCode(entity.getMagistrateCourtCode())
-            .familyCourtCode(entity.getFamilyCourtCode())
-            .tribunalCode(entity.getTribunalCode())
-            .countyCourtCode(entity.getCountyCourtCode())
-            .crownCourtCode(entity.getCrownCourtCode())
-            .gbs(entity.getGbs())
-            .build();
+        return Optional.ofNullable(entity)
+            .map(value -> CourtCodesDto.builder()
+                .magistrateCourtCode(value.getMagistrateCourtCode())
+                .familyCourtCode(value.getFamilyCourtCode())
+                .tribunalCode(value.getTribunalCode())
+                .countyCourtCode(value.getCountyCourtCode())
+                .crownCourtCode(value.getCrownCourtCode())
+                .gbs(value.getGbs())
+                .build())
+            .orElse(null);
     }
 }
