@@ -16,6 +16,7 @@ public class CourtSlugValidator implements ConstraintValidator<ValidCourtSlug, S
      */
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
+        // Slug can be generated during create/update, so this is here for that reason
         if (value == null) {
             return true;
         }
