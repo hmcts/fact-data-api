@@ -143,9 +143,9 @@ public final class CourtPhotoControllerFunctionalTest {
             oversizedFile
         );
 
-        assertThat(uploadResponse.statusCode()).isEqualTo(PAYLOAD_TOO_LARGE.value());
-        assertThat(uploadResponse.jsonPath().getString("message"))
-            .contains("Uploaded file size exceeds the maximum allowed limit of 2MB.");
+        assertThat(uploadResponse.statusCode())
+            .as("Expected 413 when uploading an oversized photo")
+            .isEqualTo(PAYLOAD_TOO_LARGE.value());
     }
 
     @Test

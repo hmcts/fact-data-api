@@ -16,6 +16,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceN
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -110,6 +111,14 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidFileException ex) {
         log.error("400, file failed validation. Details: {}", ex.getMessage());
+
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidPostcodeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidPostcodeException ex) {
+        log.error("400, invalid postcode. Details: {}", ex.getMessage());
 
         return generateExceptionResponse(ex.getMessage());
     }
