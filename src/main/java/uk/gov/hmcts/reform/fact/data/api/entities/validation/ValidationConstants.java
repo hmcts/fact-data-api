@@ -40,5 +40,4 @@ public class ValidationConstants {
     public static final int COURT_SLUG_MIN_LENGTH = 5;
     public static final int COURT_SLUG_MAX_LENGTH = 250;
     public static final String COURT_SLUG_LENGTH_MESSAGE = "Court slug should be between 5 and 250 characters";
-
 }

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
@@ -32,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Feature("Court Photo Controller")
 @DisplayName("Court Photo Controller")
 @WebMvcTest(CourtPhotoController.class)
+@ActiveProfiles("test")
 class CourtPhotoControllerTest {
 
     private static final UUID COURT_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
