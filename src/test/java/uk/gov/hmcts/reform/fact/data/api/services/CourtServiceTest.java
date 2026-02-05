@@ -413,6 +413,36 @@ class CourtServiceTest {
     }
 
     @Test
+    void getCourtDetailsBySlugReturnsCourtDetailsWhenFound() {
+        String courtSlug = "test-court";
+        CourtDetails courtDetails = new CourtDetails();
+        courtDetails.setSlug(courtSlug);
+        courtDetails.setName("Test Court");
+
+        when(courtDetailsRepository.findBySlug(courtSlug)).thenReturn(Optional.of(courtDetails));
+
+        CourtDetails result = courtService.getCourtDetailsBySlug(courtSlug);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSlug()).isEqualTo(courtSlug);
+        assertThat(result.getName()).isEqualTo("Test Court");
+    }
+
+    @Test
+    void getCourtDetailsBySlugThrowsNotFoundExceptionWhenCourtDoesNotExist() {
+        String courtSlug = "missing-court";
+
+        when(courtDetailsRepository.findBySlug(courtSlug)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class, () ->
+                courtService.getCourtDetailsBySlug(courtSlug)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Court not found, slug: " + courtSlug);
+    }
+
+    @Test
     void getAllCourtDetailsReturnsCourtDetailsListWhenFound() {
         List<CourtDetails> courtDetailsList = new ArrayList<>();
 
