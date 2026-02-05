@@ -3,6 +3,8 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -11,13 +13,16 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class CourtAddressService {
+
     private final CourtAddressRepository courtAddressRepository;
     private final CourtService courtService;
     private final TypesService typesService;
