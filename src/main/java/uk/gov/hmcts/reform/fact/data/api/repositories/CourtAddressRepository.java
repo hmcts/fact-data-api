@@ -5,6 +5,7 @@ import org.springframework.data.repository.query.Param;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -322,4 +323,12 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
         @Param("lon") double lon,
         @Param("aolId") UUID aolId
     );
+
+    List<CourtAddress> findByCourtId(UUID courtId);
+
+    Optional<CourtAddress> findByIdAndCourtId(UUID addressId, UUID courtId);
+
+    void deleteByIdAndCourtId(UUID addressId, UUID courtId);
+
+    boolean existsByIdAndCourtId(UUID addressId, UUID courtId);
 }
