@@ -19,6 +19,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
+import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
@@ -813,6 +814,71 @@ public final class SearchControllerFunctionalTest {
                 unmappedCourtName)
             .extracting(CourtWithDistanceDto::getCourtId)
             .doesNotContain(unmappedCourtId);
+    }
+
+    @Test
+    @DisplayName("GET /search/courts/v1/postcode returns nearest SPOE court for childcare arrangements")
+    void shouldReturnNearestSpoeCourtForChildcareArrangementsServiceArea() throws Exception {
+        final String childcareServiceAreaName = "Childcare arrangements if you separate from your partner";
+
+        final Response osResponse = http.doGet("/search/address/v1/postcode/" + STABLE_ENGLAND_POSTCODE);
+
+        assertThat(osResponse.statusCode())
+            .as("Expected 200 OK when fetching OS data for postcode %s", STABLE_ENGLAND_POSTCODE)
+            .isEqualTo(OK.value());
+
+        final OsData osData = mapper.readValue(osResponse.getBody().asString(), OsData.class);
+        final OsDpa dpa = osData.getResults().getFirst().getDpa();
+
+        final String courtName = TEST_COURT_PREFIX + " Childcare SPOE Search";
+        final UUID courtId = createOpenCourt(courtName);
+
+        final Response addressResponse = http.doPost(
+            "/courts/" + courtId + "/v1/address",
+            buildVisitUsAddressFromDpa(courtId, dpa)
+        );
+
+        assertThat(addressResponse.statusCode())
+            .as("Expected 201 CREATED when creating address for SPOE court %s", courtId)
+            .isEqualTo(CREATED.value());
+
+        final UUID childrenAreaOfLawId = TestDataHelper.getAreaOfLawIdByName(http, "Children");
+
+        final Response updateSinglePointOfEntryResponse = http.doPut(
+            "/courts/" + courtId + "/v1/single-point-of-entry",
+            List.of(AreaOfLawSelectionDto.builder().id(childrenAreaOfLawId).selected(true).build())
+        );
+
+        assertThat(updateSinglePointOfEntryResponse.statusCode())
+            .as("Expected 200 OK when updating single point of entry for court %s", courtId)
+            .isEqualTo(OK.value());
+
+        final Response searchResponse = http.doGet(
+            "/search/courts/v1/postcode",
+            Map.of(
+                "postcode", STABLE_ENGLAND_POSTCODE,
+                "serviceArea", childcareServiceAreaName,
+                "action", "DOCUMENTS"
+            )
+        );
+
+        assertThat(searchResponse.statusCode())
+            .as("Expected 200 OK for childcare SPOE postcode search (serviceArea=%s)",
+                childcareServiceAreaName)
+            .isEqualTo(OK.value());
+
+        final List<CourtWithDistanceDto> courts = mapper.readValue(
+            searchResponse.getBody().asString(),
+            new TypeReference<>() {}
+        );
+
+        assertThat(courts)
+            .as("Expected exactly one SPOE court to be returned for childcare arrangements")
+            .hasSize(1);
+
+        assertThat(courts.getFirst().getCourtId())
+            .as("Expected SPOE search to return the created court '%s'", courtName)
+            .isEqualTo(courtId);
     }
 
     @Test
