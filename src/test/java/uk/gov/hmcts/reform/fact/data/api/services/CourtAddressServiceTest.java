@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
@@ -17,15 +18,16 @@ import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 
-import java.util.UUID;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +36,9 @@ class CourtAddressServiceTest {
 
     @Mock
     private CourtAddressRepository courtAddressRepository;
+
+    @InjectMocks
+    private CourtAddressService courtAddressService;
 
     @Mock
     private CourtService courtService;
@@ -44,13 +49,21 @@ class CourtAddressServiceTest {
     @Mock
     private OsService osService;
 
-    @InjectMocks
-    private CourtAddressService courtAddressService;
-
     private UUID courtId;
     private UUID addressId;
     private Court court;
     private CourtAddress address;
+
+    @Test
+    void findCourtWithDistanceByOsDataShouldReturnResults() {
+        List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
+        when(courtAddressRepository.findNearestCourts(51.5, -0.1, 10)).thenReturn(results);
+
+        List<CourtWithDistance> response = courtAddressService.findCourtWithDistanceByOsData(51.5, -0.1, 10);
+
+        assertThat(response).isEqualTo(results);
+        verify(courtAddressRepository).findNearestCourts(51.5, -0.1, 10);
+    }
 
     @BeforeEach
     void setup() {
