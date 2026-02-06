@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.entities;
 import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -38,5 +39,32 @@ public class AreaOfLawType {
     @Schema(description = "The Welsh language name")
     @NotBlank(message = "The Welsh language name must be specified")
     private String nameCy;
+
+    @Column(name = "external_link")
+    private String externalLink;
+
+    @Column(name = "external_link_cy")
+    private String externalLinkCy;
+
+    @Column(name = "external_link_desc")
+    private String externalLinkDesc;
+
+    @Column(name = "external_link_desc_cy")
+    private String externalLinkDescCy;
+
+    @Column(name = "display_name")
+    private String displayName;
+
+    @Column(name = "display_name_cy")
+    private String displayNameCy;
+
+    @Column(name = "display_external_link")
+    private String displayExternalLink;
+
+    @Column(name = "alt_name")
+    private String altName;
+
+    @Column(name = "alt_name_cy")
+    private String altNameCy;
 
 }
