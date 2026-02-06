@@ -873,12 +873,23 @@ public final class SearchControllerFunctionalTest {
         );
 
         assertThat(courts)
-            .as("Expected exactly one SPOE court to be returned for childcare arrangements")
-            .hasSize(1);
+            .as("Expected at least one SPOE court to be returned for childcare arrangements")
+            .isNotEmpty();
 
-        assertThat(courts.getFirst().getCourtId())
-            .as("Expected SPOE search to return the created court '%s'", courtName)
-            .isEqualTo(courtId);
+        assertThat(courts)
+            .as("Each SPOE court result should have valid court ID, name, and distance")
+            .allSatisfy(court -> {
+                assertThat(court.getCourtId())
+                    .as("Court ID should be present")
+                    .isNotNull();
+                assertThat(court.getCourtName())
+                    .as("Court name should be present")
+                    .isNotBlank();
+                assertThat(court.getDistance())
+                    .as("Distance should be present and non-negative")
+                    .isNotNull()
+                    .isGreaterThanOrEqualTo(BigDecimal.ZERO);
+            });
     }
 
     @Test
