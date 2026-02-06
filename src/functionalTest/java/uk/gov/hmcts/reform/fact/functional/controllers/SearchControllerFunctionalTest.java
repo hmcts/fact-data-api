@@ -30,6 +30,7 @@ import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -484,8 +485,12 @@ public final class SearchControllerFunctionalTest {
             .isEqualTo(CREATED.value());
 
         final Response searchResponse = http.doGet(
-            "/search/courts/v1/postcode?postcode=" + STABLE_ENGLAND_POSTCODE
-                + "&serviceArea=" + serviceAreaName + "&action=DOCUMENTS"
+            "/search/courts/v1/postcode",
+            Map.of(
+                "postcode", STABLE_ENGLAND_POSTCODE,
+                "serviceArea", serviceAreaName,
+                "action", "DOCUMENTS"
+            )
         );
 
         assertThat(searchResponse.statusCode())
@@ -575,8 +580,12 @@ public final class SearchControllerFunctionalTest {
             .isEqualTo(CREATED.value());
 
         final Response searchResponse = http.doGet(
-            "/search/courts/v1/postcode?postcode=" + STABLE_ENGLAND_POSTCODE
-                + "&serviceArea=" + civilServiceArea.getName() + "&action=DOCUMENTS"
+            "/search/courts/v1/postcode",
+            Map.of(
+                "postcode", STABLE_ENGLAND_POSTCODE,
+                "serviceArea", civilServiceArea.getName(),
+                "action", "DOCUMENTS"
+            )
         );
 
         assertThat(searchResponse.statusCode())
@@ -773,8 +782,12 @@ public final class SearchControllerFunctionalTest {
             .isEqualTo(OK.value());
 
         final Response searchResponse = http.doGet(
-            "/search/courts/v1/postcode?postcode=" + STABLE_ENGLAND_POSTCODE
-                + "&serviceArea=" + familyServiceAreaName + "&action=DOCUMENTS"
+            "/search/courts/v1/postcode",
+            Map.of(
+                "postcode", STABLE_ENGLAND_POSTCODE,
+                "serviceArea", familyServiceAreaName,
+                "action", "DOCUMENTS"
+            )
         );
 
         assertThat(searchResponse.statusCode())
@@ -841,8 +854,12 @@ public final class SearchControllerFunctionalTest {
             .isEqualTo(OK.value());
 
         final Response searchResponse = http.doGet(
-            "/search/courts/v1/postcode?postcode=" + STABLE_ENGLAND_POSTCODE
-                + "&serviceArea=" + childcareServiceAreaName + "&action=DOCUMENTS"
+            "/search/courts/v1/postcode",
+            Map.of(
+                "postcode", STABLE_ENGLAND_POSTCODE,
+                "serviceArea", childcareServiceAreaName,
+                "action", "DOCUMENTS"
+            )
         );
 
         assertThat(searchResponse.statusCode())
@@ -867,9 +884,10 @@ public final class SearchControllerFunctionalTest {
     @Test
     @DisplayName("GET /search/courts/v1/postcode returns 400 when serviceArea provided without action")
     void shouldReturn400WhenServiceAreaProvidedWithoutAction() {
-        final Response response = http.doGet(
-            "/search/courts/v1/postcode?postcode=" + STABLE_ENGLAND_POSTCODE + "&serviceArea=Money claims"
-        );
+        final Response response = http.doGet("/search/courts/v1/postcode", Map.of(
+            "postcode", STABLE_ENGLAND_POSTCODE,
+            "serviceArea", "Money claims"
+        ));
 
         assertThat(response.statusCode())
             .as("Expected 400 Bad Request when serviceArea provided without action")
@@ -879,10 +897,11 @@ public final class SearchControllerFunctionalTest {
     @Test
     @DisplayName("GET /search/courts/v1/postcode returns 404 for non-existent service area")
     void shouldReturn404ForNonExistentServiceAreaInPostcodeSearch() {
-        final Response response = http.doGet(
-            "/search/courts/v1/postcode?postcode=" + STABLE_ENGLAND_POSTCODE
-                + "&serviceArea=Non Existent Service Area&action=NEAREST"
-        );
+        final Response response = http.doGet("/search/courts/v1/postcode", Map.of(
+            "postcode", STABLE_ENGLAND_POSTCODE,
+            "serviceArea", "Non Existent Service Area",
+            "action", "NEAREST"
+        ));
 
         assertThat(response.statusCode())
             .as("Expected 404 Not Found for non-existent service area")
@@ -892,9 +911,10 @@ public final class SearchControllerFunctionalTest {
     @Test
     @DisplayName("GET /search/courts/v1/postcode respects limit parameter")
     void shouldRespectLimitParameterInPostcodeSearch() throws Exception {
-        final Response searchResponse = http.doGet(
-            "/search/courts/v1/postcode?postcode=" + STABLE_ENGLAND_POSTCODE + "&limit=2"
-        );
+        final Response searchResponse = http.doGet("/search/courts/v1/postcode", Map.of(
+            "postcode", STABLE_ENGLAND_POSTCODE,
+            "limit", 2
+        ));
 
         assertThat(searchResponse.statusCode())
             .as("Expected 200 OK for postcode search with limit")
