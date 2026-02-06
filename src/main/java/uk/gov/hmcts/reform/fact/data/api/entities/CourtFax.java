@@ -5,6 +5,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 @Data
@@ -31,6 +33,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants
 @NoArgsConstructor
 @Builder
 @Entity
+@JsonView(CourtDetailsView.class)
 @Table(name = "court_fax")
 public class CourtFax {
 

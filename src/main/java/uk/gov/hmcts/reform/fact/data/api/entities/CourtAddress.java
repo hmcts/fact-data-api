@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -32,12 +34,14 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
+@JsonView(CourtDetailsView.class)
 @Table(name = "court_address")
 public class CourtAddress {
 
@@ -118,5 +122,35 @@ public class CourtAddress {
     @Type(ListArrayType.class)
     @Column(columnDefinition = "uuid[]")
     private List<UUID> courtTypes;
+
+    @jakarta.persistence.Transient
+    @JsonIgnore
+    private List<AreaOfLawType> areasOfLawDetails;
+
+    @jakarta.persistence.Transient
+    @JsonIgnore
+    private List<CourtType> courtTypeDetails;
+
+    @JsonView(CourtDetailsView.class)
+    @JsonProperty("areasOfLaw")
+    public List<?> getAreasOfLawForView() {
+        return areasOfLawDetails != null ? areasOfLawDetails : areasOfLaw;
+    }
+
+    @JsonView(CourtDetailsView.class)
+    @JsonProperty("courtTypes")
+    public List<?> getCourtTypesForView() {
+        return courtTypeDetails != null ? courtTypeDetails : courtTypes;
+    }
+
+    @JsonIgnore
+    public List<UUID> getAreasOfLaw() {
+        return areasOfLaw;
+    }
+
+    @JsonIgnore
+    public List<UUID> getCourtTypes() {
+        return courtTypes;
+    }
 
 }

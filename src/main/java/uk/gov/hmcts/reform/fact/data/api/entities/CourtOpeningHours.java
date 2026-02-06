@@ -4,6 +4,9 @@ import java.time.LocalTime;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,6 +19,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -24,6 +28,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidTimeOrder;
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -31,6 +36,7 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidTimeOrder;
 @Builder
 @Entity
 @ValidTimeOrder(start = "openingHour", end = "closingHour")
+@JsonView(CourtDetailsView.class)
 @Table(name = "court_opening_hours")
 public class CourtOpeningHours {
 
@@ -61,6 +67,17 @@ public class CourtOpeningHours {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "opening_hour_type", insertable = false, updatable = false)
     private OpeningHourType openingHourType;
+
+    @Transient
+    @JsonIgnore
+    private OpeningHourType openingHourTypeDetails;
+
+    @JsonView(CourtDetailsView.class)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("openingHourType")
+    public OpeningHourType getOpeningHourTypeForView() {
+        return openingHourTypeDetails;
+    }
 
     @Schema(description = "Day of the week or every day.")
     @NotNull

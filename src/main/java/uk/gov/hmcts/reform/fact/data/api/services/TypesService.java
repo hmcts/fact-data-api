@@ -90,12 +90,32 @@ public class TypesService {
     }
 
     /**
+     * Get multiple opening hours types by their IDs.
+     *
+     * @param openingHourTypeIds List of opening hours type IDs to retrieve.
+     * @return List of opening hours types matching the provided IDs.
+     */
+    public List<OpeningHourType> getOpeningHourTypesByIds(List<UUID> openingHourTypeIds) {
+        return openingHoursTypeRepository.findAllById(openingHourTypeIds);
+    }
+
+    /**
      * Get all contact description types.
      *
      * @return The contact description types.
      */
     public List<ContactDescriptionType> getContactDescriptionTypes() {
         return contactDescriptionTypeRepository.findAll();
+    }
+
+    /**
+     * Get multiple contact description types by their IDs.
+     *
+     * @param contactDescriptionTypeIds List of contact description type IDs to retrieve.
+     * @return List of contact description types matching the provided IDs.
+     */
+    public List<ContactDescriptionType> getContactDescriptionTypesByIds(List<UUID> contactDescriptionTypeIds) {
+        return contactDescriptionTypeRepository.findAllById(contactDescriptionTypeIds);
     }
 
     /**

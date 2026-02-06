@@ -147,13 +147,11 @@ public final class TestDataHelper {
      * @param areasOfLaw the list of area of law IDs
      * @return a CourtAreasOfLaw object
      */
-    public static uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw buildCourtAreasOfLaw(
-        final UUID courtId, final java.util.List<UUID> areasOfLaw) {
-        final uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw courtAreasOfLaw =
-            new uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw();
-        courtAreasOfLaw.setCourtId(courtId);
-        courtAreasOfLaw.setAreasOfLaw(areasOfLaw);
-        return courtAreasOfLaw;
+    public static Map<String, Object> buildCourtAreasOfLaw(final UUID courtId, final java.util.List<UUID> areasOfLaw) {
+        return Map.of(
+            "courtId", courtId,
+            "areasOfLaw", areasOfLaw
+        );
     }
 
     /**

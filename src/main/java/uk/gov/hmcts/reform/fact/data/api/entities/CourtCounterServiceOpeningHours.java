@@ -4,6 +4,7 @@ import java.time.LocalTime;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,6 +28,7 @@ import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidTimeOrder;
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -35,6 +37,7 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidTimeOrder;
 @Entity
 @ValidConditional(selected = "appointmentNeeded", selectedValueForRequired = "true", required = "appointmentContact")
 @ValidTimeOrder(start = "openingHour", end = "closingHour")
+@JsonView(CourtDetailsView.class)
 @Table(name = "court_counter_service_opening_hours")
 public class CourtCounterServiceOpeningHours {
 
