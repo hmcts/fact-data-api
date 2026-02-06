@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.annotation.concurrent.Immutable;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -17,6 +18,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -25,6 +27,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @Entity
 @Immutable
+@JsonView(CourtDetailsView.class)
 @Table(name = "court")
 public class CourtDetails extends AbstractCourtEntity {
 

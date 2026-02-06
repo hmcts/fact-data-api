@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -15,6 +17,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -22,12 +25,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
+@JsonView(CourtDetailsView.class)
 @Table(name = "court_areas_of_law")
 public class CourtAreasOfLaw {
 
@@ -53,5 +58,20 @@ public class CourtAreasOfLaw {
     @Type(ListArrayType.class)
     @Column(columnDefinition = "uuid[]")
     private List<UUID> areasOfLaw;
+
+    @Transient
+    @JsonIgnore
+    private List<AreaOfLawType> areasOfLawDetails;
+
+    @JsonView(CourtDetailsView.class)
+    @JsonProperty("areasOfLaw")
+    public List<?> getAreasOfLawForView() {
+        return areasOfLawDetails != null ? areasOfLawDetails : areasOfLaw;
+    }
+
+    @JsonIgnore
+    public List<UUID> getAreasOfLaw() {
+        return areasOfLaw;
+    }
 
 }
