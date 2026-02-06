@@ -87,4 +87,9 @@ public class CourtDetails extends AbstractCourtEntity {
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
     private List<CourtProfessionalInformation> courtProfessionalInformation;
+
+    @Schema(description = "The Areas of Law for the Court")
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "court_id", insertable = false, updatable = false)
+    private List<CourtAreasOfLaw> courtAreasOfLaw;
 }
