@@ -19,5 +19,5 @@ java:
           enable_distance_extensions.sql: |
             CREATE EXTENSION IF NOT EXISTS cube WITH SCHEMA public;
             CREATE EXTENSION IF NOT EXISTS earthdistance WITH SCHEMA public;
-        user: "{{ .Values.postgresql.auth.username}}"
+        user: postgres
         password: "{{ .Values.postgresql.auth.password}}"
