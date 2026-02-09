@@ -15,6 +15,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.AbstractCourtEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import java.util.List;
@@ -46,6 +47,9 @@ class CourtControllerTest {
 
     @Mock
     private CourtService courtService;
+
+    @Mock
+    private CourtDetailsViewService courtDetailsViewService;
 
     @InjectMocks
     private CourtController courtController;
@@ -83,6 +87,7 @@ class CourtControllerTest {
         CourtDetails courtDetails = createCourtDetails();
 
         when(courtService.getCourtDetailsBySlug(COURT_SLUG)).thenReturn(courtDetails);
+        when(courtDetailsViewService.prepareDetailsView(courtDetails)).thenReturn(courtDetails);
 
         ResponseEntity<CourtDetails> response = courtController.getCourtDetailsBySlug(COURT_SLUG);
 
