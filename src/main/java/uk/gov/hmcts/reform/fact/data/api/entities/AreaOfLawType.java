@@ -49,25 +49,10 @@ public class AreaOfLawType {
     @Column(name = "external_link_cy")
     private String externalLinkCy;
 
-    @Column(name = "external_link_desc")
-    private String externalLinkDesc;
-
-    @Column(name = "external_link_desc_cy")
-    private String externalLinkDescCy;
-
     @Column(name = "display_name")
     private String displayName;
 
     @Column(name = "display_name_cy")
     private String displayNameCy;
-
-    @Column(name = "display_external_link")
-    private String displayExternalLink;
-
-    @Column(name = "alt_name")
-    private String altName;
-
-    @Column(name = "alt_name_cy")
-    private String altNameCy;
 
 }
