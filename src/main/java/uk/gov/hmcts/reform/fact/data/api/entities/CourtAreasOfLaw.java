@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.JsonView;
 import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -72,6 +73,16 @@ public class CourtAreasOfLaw {
     @JsonIgnore
     public List<UUID> getAreasOfLaw() {
         return areasOfLaw;
+    }
+
+    @JsonSetter("courtId")
+    public void setCourtId(UUID courtId) {
+        this.courtId = courtId;
+    }
+
+    @JsonSetter("areasOfLaw")
+    public void setAreasOfLaw(List<UUID> areasOfLaw) {
+        this.areasOfLaw = areasOfLaw;
     }
 
 }
