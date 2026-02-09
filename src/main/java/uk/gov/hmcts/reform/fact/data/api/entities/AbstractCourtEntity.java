@@ -5,6 +5,7 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
@@ -25,12 +26,14 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
 import org.hibernate.annotations.UpdateTimestamp;
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
 @SuperBuilder
 @MappedSuperclass
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@JsonView(CourtDetailsView.class)
 public abstract class AbstractCourtEntity {
 
     @Schema(
