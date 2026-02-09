@@ -20,6 +20,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import java.util.ArrayList;
@@ -57,6 +58,9 @@ class CourtControllerTest {
     @MockitoBean
     private CourtService courtService;
 
+    @MockitoBean
+    private CourtDetailsViewService courtDetailsViewService;
+
     @Test
     @DisplayName("GET /courts/{courtId}/v1 returns court details")
     void getCourtByIdReturnsCourt() throws Exception {
@@ -93,6 +97,7 @@ class CourtControllerTest {
         CourtDetails courtDetails = buildCourtDetails(COURT_ID, "Test Court");
 
         when(courtService.getCourtDetailsBySlug(COURT_SLUG)).thenReturn(courtDetails);
+        when(courtDetailsViewService.prepareDetailsView(courtDetails)).thenReturn(courtDetails);
 
         mockMvc.perform(get("/courts/slug/{courtSlug}/v1", COURT_SLUG))
             .andExpect(status().isOk())
@@ -159,6 +164,7 @@ class CourtControllerTest {
         CourtDetails courtDetails = buildCourtDetails(COURT_ID, "Test Court");
 
         when(courtService.getCourtDetailsBySlug(COURT_SLUG)).thenReturn(courtDetails);
+        when(courtDetailsViewService.prepareDetailsView(courtDetails)).thenReturn(courtDetails);
 
         mockMvc.perform(get("/courts/slug/{courtSlug}.json", COURT_SLUG))
             .andExpect(status().isOk())
