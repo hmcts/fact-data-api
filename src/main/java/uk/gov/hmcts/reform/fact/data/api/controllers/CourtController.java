@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -9,6 +10,7 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -43,7 +45,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CourtController {
 
+    /**
+     * JsonView needs a marker type so we can expand the payload only on the details endpoint,
+     * without changing list/search responses.
+     */
+    public interface CourtDetailsView {
+    }
+
     private final CourtService courtService;
+    private final CourtDetailsViewService courtDetailsViewService;
 
     @GetMapping(value = {"/{courtId}/v1", "/{courtId}.json"})
     @Operation(
@@ -62,6 +72,7 @@ public class CourtController {
     }
 
     @GetMapping(value = {"/slug/{courtSlug}/v1", "/slug/{courtSlug}.json"})
+    @JsonView(CourtDetailsView.class)
     @Operation(
         summary = "Get court details by slug",
         description = "Fetch detailed court information for a given court slug."
@@ -75,7 +86,9 @@ public class CourtController {
         @Parameter(description = "Slug of the court", required = true)
         @ValidCourtSlug
         @PathVariable String courtSlug) {
-        return ResponseEntity.ok(courtService.getCourtDetailsBySlug(courtSlug));
+        return ResponseEntity.ok(
+            courtDetailsViewService.prepareDetailsView(courtService.getCourtDetailsBySlug(courtSlug))
+        );
     }
 
     @GetMapping(value = {"/all/v1", "/all.json"})
