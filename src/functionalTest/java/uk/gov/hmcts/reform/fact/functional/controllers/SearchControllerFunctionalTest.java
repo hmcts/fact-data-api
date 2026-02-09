@@ -52,49 +52,6 @@ public final class SearchControllerFunctionalTest {
     private static final String TEST_COURT_PREFIX = "Test Court";
 
     /**
-     * Creates a court and updates it to open so it can be returned in search results.
-     *
-     * @param courtName the court name
-     * @return the created court ID
-     */
-    private static UUID createOpenCourt(final String courtName) {
-        final UUID courtId = TestDataHelper.createCourt(http, courtName);
-
-        final Court courtToUpdate = new Court();
-        courtToUpdate.setName(courtName);
-        courtToUpdate.setRegionId(UUID.fromString(regionId));
-        courtToUpdate.setIsServiceCentre(true);
-        courtToUpdate.setOpen(true);
-
-        final Response updateResponse = http.doPut("/courts/" + courtId + "/v1", courtToUpdate);
-
-        assertThat(updateResponse.statusCode())
-            .as("Expected 200 OK when updating court %s to open", courtId)
-            .isEqualTo(OK.value());
-
-        return courtId;
-    }
-
-    /**
-     * Builds a visit address payload for a court based on OS Delivery Point Address (DPA) data.
-     *
-     * @param courtId the court ID
-     * @param dpa the OS DPA data
-     * @return the court address payload
-     */
-    private static CourtAddress buildVisitUsAddressFromDpa(final UUID courtId, final OsDpa dpa) {
-        return CourtAddress.builder()
-            .courtId(courtId)
-            .addressLine1(dpa.getAddress())
-            .townCity(dpa.getPostTown())
-            .postcode(dpa.getPostcode())
-            .addressType(AddressType.VISIT_US)
-            .lat(BigDecimal.valueOf(dpa.getLat()))
-            .lon(BigDecimal.valueOf(dpa.getLng()))
-            .build();
-    }
-
-    /**
      * DTO for deserializing CourtWithDistance projection interface responses.
      */
     @Data
@@ -928,6 +885,49 @@ public final class SearchControllerFunctionalTest {
         assertThat(courts)
             .as("Expected at most 2 results when limit=2")
             .hasSizeLessThanOrEqualTo(2);
+    }
+
+    /**
+     * Creates a court and updates it to open so it can be returned in search results.
+     *
+     * @param courtName the court name
+     * @return the created court ID
+     */
+    private static UUID createOpenCourt(final String courtName) {
+        final UUID courtId = TestDataHelper.createCourt(http, courtName);
+
+        final Court courtToUpdate = new Court();
+        courtToUpdate.setName(courtName);
+        courtToUpdate.setRegionId(UUID.fromString(regionId));
+        courtToUpdate.setIsServiceCentre(true);
+        courtToUpdate.setOpen(true);
+
+        final Response updateResponse = http.doPut("/courts/" + courtId + "/v1", courtToUpdate);
+
+        assertThat(updateResponse.statusCode())
+            .as("Expected 200 OK when updating court %s to open", courtId)
+            .isEqualTo(OK.value());
+
+        return courtId;
+    }
+
+    /**
+     * Builds a visit address payload for a court based on OS Delivery Point Address (DPA) data.
+     *
+     * @param courtId the court ID
+     * @param dpa the OS DPA data
+     * @return the court address payload
+     */
+    private static CourtAddress buildVisitUsAddressFromDpa(final UUID courtId, final OsDpa dpa) {
+        return CourtAddress.builder()
+            .courtId(courtId)
+            .addressLine1(dpa.getAddress())
+            .townCity(dpa.getPostTown())
+            .postcode(dpa.getPostcode())
+            .addressType(AddressType.VISIT_US)
+            .lat(BigDecimal.valueOf(dpa.getLat()))
+            .lon(BigDecimal.valueOf(dpa.getLng()))
+            .build();
     }
 
     @AfterAll
