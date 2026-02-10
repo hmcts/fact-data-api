@@ -1,6 +1,6 @@
 package uk.gov.hmcts.reform.fact.functional.controllers;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -15,8 +15,9 @@ import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -242,20 +243,17 @@ public final class CourtControllerFunctionalTest {
             .as("Expected 200 OK for GET /courts/all/v1")
             .isEqualTo(OK.value());
 
-        final List<CourtDetails> courts = mapper.readValue(
-            response.getBody().asString(),
-            new TypeReference<List<CourtDetails>>() {}
-        );
+        final JsonNode courts = mapper.readTree(response.getBody().asString());
+        final Optional<JsonNode> matchingCourt = StreamSupport.stream(courts.spliterator(), false)
+            .filter(court -> courtId.toString().equals(court.path("id").asText()))
+            .findFirst();
 
-        assertThat(courts)
+        assertThat(matchingCourt)
             .as("Response should contain the created court with ID %s", courtId)
-            .filteredOn(court -> courtId.equals(court.getId()))
-            .singleElement()
-            .satisfies(court ->
-                assertThat(court.getName())
-                    .as("Court name should match the created court")
-                    .isEqualTo("Test Court All Details")
-            );
+            .isPresent();
+        assertThat(matchingCourt.orElseThrow().path("name").asText())
+            .as("Court name should match the created court")
+            .isEqualTo("Test Court All Details");
     }
 
     @Test
@@ -272,20 +270,17 @@ public final class CourtControllerFunctionalTest {
             .as("Response content type should be JSON")
             .contains("application/json");
 
-        final List<CourtDetails> courts = mapper.readValue(
-            response.getBody().asString(),
-            new TypeReference<List<CourtDetails>>() {}
-        );
+        final JsonNode courts = mapper.readTree(response.getBody().asString());
+        final Optional<JsonNode> matchingCourt = StreamSupport.stream(courts.spliterator(), false)
+            .filter(court -> courtId.toString().equals(court.path("id").asText()))
+            .findFirst();
 
-        assertThat(courts)
+        assertThat(matchingCourt)
             .as("Response should contain the created court with ID %s", courtId)
-            .filteredOn(court -> courtId.equals(court.getId()))
-            .singleElement()
-            .satisfies(court ->
-                assertThat(court.getName())
-                    .as("Court name should match the created court")
-                    .isEqualTo("Test Court All Json Path")
-            );
+            .isPresent();
+        assertThat(matchingCourt.orElseThrow().path("name").asText())
+            .as("Court name should match the created court")
+            .isEqualTo("Test Court All Json Path");
     }
 
     @Test
