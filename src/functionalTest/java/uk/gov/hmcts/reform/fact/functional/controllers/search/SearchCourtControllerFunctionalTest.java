@@ -528,7 +528,8 @@ public final class SearchCourtControllerFunctionalTest {
             .as("Expected to find the mapped court '%s' in search results", mappedCourtName)
             .extracting(CourtWithDistanceResponse::getCourtId)
             .contains(mappedCourtId)
-            .as("Expected unmapped court '%s' not to be returned for FAMILY non-regional search", unmappedCourtName)
+            .as("Expected unmapped court '%s' not to be returned for FAMILY non-regional search",
+                unmappedCourtName)
             .doesNotContain(unmappedCourtId);
     }
 
