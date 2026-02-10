@@ -92,6 +92,7 @@ public class CourtController {
     }
 
     @GetMapping(value = {"/all/v1", "/all.json"})
+    @JsonView(CourtDetailsView.class)
     @Operation(
         summary = "Get all court details",
         description = "Fetch detailed court information for all courts."
@@ -100,7 +101,9 @@ public class CourtController {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved court details")
     })
     public ResponseEntity<List<CourtDetails>> getAllCourtDetails() {
-        return ResponseEntity.ok(courtService.getAllCourtDetails());
+        return ResponseEntity.ok(
+            courtService.getAllCourtDetails().stream().map(courtDetailsViewService::prepareDetailsView).toList()
+        );
     }
 
     @GetMapping("/v1")
