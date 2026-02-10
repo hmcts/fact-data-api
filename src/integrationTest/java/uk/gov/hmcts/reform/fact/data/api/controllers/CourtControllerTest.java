@@ -348,6 +348,8 @@ class CourtControllerTest {
         }
 
         when(courtService.getAllCourtDetails()).thenReturn(courtDetailsList);
+        when(courtDetailsViewService.prepareDetailsView(any(CourtDetails.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
 
         MvcResult result = mockMvc.perform(get("/courts/all/v1"))
             .andExpect(status().isOk())
