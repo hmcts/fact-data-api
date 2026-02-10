@@ -92,6 +92,7 @@ public class CourtController {
     }
 
     @GetMapping(value = {"/all/v1", "/all.json"})
+    @JsonView(CourtDetailsView.class)
     @Operation(
         summary = "Get all court details",
         description = "Fetch detailed court information for all courts."
