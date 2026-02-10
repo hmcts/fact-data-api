@@ -1,30 +1,25 @@
-package uk.gov.hmcts.reform.fact.functional.controllers;
+package uk.gov.hmcts.reform.fact.functional.controllers.search;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistanceResponse;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
-import uk.gov.hmcts.reform.fact.data.api.entities.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
-import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
-import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
@@ -39,67 +34,17 @@ import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
-@Feature("Search Controller")
-@DisplayName("Search Controller")
-public final class SearchControllerFunctionalTest {
+@Feature("Search Court Controller")
+@DisplayName("Search Court Controller")
+public final class SearchCourtControllerFunctionalTest {
 
     private static final HttpClient http = new HttpClient();
     private static final ObjectMapper mapper = new ObjectMapper()
         .registerModule(new JavaTimeModule())
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    private static final String regionId = TestDataHelper.getRegionId(http);
+    private static final String regionId = TestDataHelper.fetchFirstRegionId(http);
     private static final String STABLE_ENGLAND_POSTCODE = "SW1A 1AA";
     private static final String TEST_COURT_PREFIX = "Test Court";
-
-    /**
-     * DTO for deserializing CourtWithDistance projection interface responses.
-     */
-    @Data
-    @NoArgsConstructor
-    private static class CourtWithDistanceDto {
-        private UUID courtId;
-        private String courtName;
-        private String courtSlug;
-        private BigDecimal distance;
-    }
-
-    @Test
-    @DisplayName("GET /search/address/v1/postcode/{postcode} returns addresses for valid postcode")
-    void shouldReturnAddressesForValidPostcode() throws Exception {
-        final Response response = http.doGet("/search/address/v1/postcode/" + STABLE_ENGLAND_POSTCODE);
-
-        assertThat(response.statusCode())
-            .as("Expected 200 OK for valid England postcode %s", STABLE_ENGLAND_POSTCODE)
-            .isEqualTo(OK.value());
-
-        final OsData osData = mapper.readValue(response.getBody().asString(), OsData.class);
-
-        assertThat(osData.getResults())
-            .as("Expected non-empty results for postcode %s", STABLE_ENGLAND_POSTCODE)
-            .isNotNull()
-            .isNotEmpty();
-
-        assertThat(osData.getResults())
-            .as("Each result should contain valid DPA (Delivery Point Address) data")
-            .extracting(OsResult::getDpa)
-            .allSatisfy(dpa -> {
-                assertThat(dpa.getPostcode())
-                    .as("DPA POSTCODE should contain outward code SW1A")
-                    .contains("SW1A");
-            });
-
-        assertThat(osData.getResults())
-            .as("At least one result should have a non-blank address and postcode")
-            .extracting(OsResult::getDpa)
-            .anySatisfy(dpa -> {
-                assertThat(dpa.getAddress())
-                    .as("DPA ADDRESS should be non-blank")
-                    .isNotBlank();
-                assertThat(dpa.getPostcode())
-                    .as("DPA POSTCODE should be non-blank")
-                    .isNotBlank();
-            });
-    }
 
     @Test
     @DisplayName("GET /search/courts/v1/name returns courts matching query")
@@ -115,7 +60,7 @@ public final class SearchControllerFunctionalTest {
 
         final List<Court> courts = mapper.readValue(
             searchResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<Court>>() {}
         );
 
         assertThat(courts)
@@ -138,179 +83,28 @@ public final class SearchControllerFunctionalTest {
 
         final List<Court> courts = mapper.readValue(
             searchResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<Court>>() {}
         );
 
         assertThat(courts)
             .as("Expected to find courts starting with 'T'")
-            .isNotEmpty();
-
-        assertThat(courts)
+            .isNotEmpty()
+            .extracting(Court::getName)
             .as("All returned courts should start with 'T'")
-            .extracting(Court::getName)
-            .allMatch(name -> name.toUpperCase().startsWith("T"));
-
-        assertThat(courts)
+            .allMatch(name -> name.toUpperCase().startsWith("T"))
             .as("Expected to find the created court '%s' in prefix results", courtName)
-            .extracting(Court::getName)
             .contains(courtName);
-    }
-
-    @Test
-    @DisplayName("GET /search/services/v1 returns all services present in the db")
-    void shouldReturnAllServicesSuccessfully() throws Exception {
-        final Response response = http.doGet("/search/services/v1");
-
-        assertThat(response.statusCode())
-            .as("Expected 200 OK for service search")
-            .isEqualTo(OK.value());
-
-        final List<Service> services = mapper.readValue(
-            response.getBody().asString(),
-            new TypeReference<>() {}
-        );
-
-        final List<String> expectedServiceNames = List.of(
-            "Money",
-            "Probate, divorce or ending civil partnerships",
-            "Childcare and parenting",
-            "Harm and abuse",
-            "Immigration and asylum",
-            "Crime",
-            "High Court district registries"
-        );
-
-        assertThat(services)
-            .as("Expected services list to be non-empty")
-            .isNotEmpty();
-
-        assertThat(services)
-            .as("Expected to see all services to be returned in no specific order")
-            .extracting(Service::getName)
-            .containsAll(expectedServiceNames);
-
-        assertThat(services)
-            .as("Expected each service to have id and name populated")
-            .allSatisfy(service -> {
-                assertThat(service.getId())
-                    .as("Service id should be present")
-                    .isNotNull();
-                assertThat(service.getName())
-                    .as("Service name should be present")
-                    .isNotBlank();
-            });
-    }
-
-    @Test
-    @DisplayName("GET /search/services/v1/{serviceName}/service-areas by service name present in the db")
-    void shouldReturnServiceAreasByServiceNameSuccessfully() throws Exception {
-        final String serviceName = "Money";
-        final Response response = http.doGet("/search/services/v1/" + serviceName + "/service-areas");
-
-        assertThat(response.statusCode())
-            .as("Expected 200 OK for service search by service name %s", serviceName)
-            .isEqualTo(OK.value());
-
-        final List<ServiceArea> serviceArea = mapper.readValue(
-            response.getBody().asString(),
-            new TypeReference<>() {}
-        );
-
-        final List<String> expectedServiceNames = List.of(
-            "Money claims",
-            "Probate",
-            "Housing",
-            "Bankruptcy",
-            "Benefits",
-            "Claims against employers",
-            "Tax",
-            "Single Justice Procedure"
-        );
-
-        assertThat(serviceArea)
-            .as("Expected to see all service areas to be returned in no specific order")
-            .extracting(ServiceArea::getName)
-            .containsAll(expectedServiceNames);
-
-        assertThat(serviceArea)
-            .as("Expected each service area to have id and name populated")
-            .allSatisfy(area -> {
-                assertThat(area.getId())
-                    .as("Service area id should be present")
-                    .isNotNull();
-                assertThat(area.getName())
-                    .as("Service area name should be present")
-                    .isNotBlank();
-            });
-    }
-
-    /**
-     * This test asserts for an empty list at the moment because there is currently no API endpoint
-     * to associate courts with service areas. The only way to create this link is by
-     * directly updating the database manually or through a migration script, which is
-     * not recommended for functional tests. Once an endpoint to link courts to service
-     * areas is available, this test should be updated to create the association and
-     * assert that the court is returned.
-     */
-    @Test
-    @DisplayName("GET /search/service-area/v1/{serviceAreaName} returns empty list when no courts are linked")
-    void shouldReturnEmptyListForServiceAreaWithNoCourts() throws JsonProcessingException {
-        final String serviceAreaName = "Tax";
-        final Response response = http.doGet("/search/service-area/v1/" + serviceAreaName);
-
-        assertThat(response.statusCode())
-            .as("Expected 200 OK for valid service area name '%s'", serviceAreaName)
-            .isEqualTo(OK.value());
-
-        final List<Court> courts = mapper.readValue(
-            response.getBody().asString(),
-            new TypeReference<>() {}
-        );
-
-        assertThat(courts)
-            .as("Expected empty list as no courts are currently linked to service area '%s'",
-                serviceAreaName)
-            .isEmpty();
-    }
-
-    @Test
-    @DisplayName("GET /search/service-area/v1/{serviceAreaName} returns 404 for non-existent service area")
-    void shouldReturn404ForNonExistentServiceArea() {
-        final String nonExistentServiceArea = "Non Existent Service Area";
-        final Response response = http.doGet("/search/service-area/v1/" + nonExistentServiceArea);
-
-        assertThat(response.statusCode())
-            .as("Expected 404 Not Found for non-existent service area '%s'", nonExistentServiceArea)
-            .isEqualTo(NOT_FOUND.value());
-    }
-
-    @Test
-    @DisplayName("GET /search/services/v1/{serviceName}/service-areas returns 404 for non-existent service")
-    void shouldReturn404ForNonExistentService() {
-        final String nonExistentService = "Non Existent Service";
-        final Response response = http.doGet("/search/services/v1/" + nonExistentService + "/service-areas");
-
-        assertThat(response.statusCode())
-            .as("Expected 404 Not Found for non-existent service '%s'", nonExistentService)
-            .isEqualTo(NOT_FOUND.value());
     }
 
     @Test
     @DisplayName("GET /search/courts/v1/postcode returns nearest courts for postcode-only search")
     void shouldReturnNearestCourtsForPostcodeOnlySearch() throws Exception {
-        final Response osResponse = http.doGet("/search/address/v1/postcode/" + STABLE_ENGLAND_POSTCODE);
-
-        assertThat(osResponse.statusCode())
-            .as("Expected 200 OK when fetching OS data for postcode %s", STABLE_ENGLAND_POSTCODE)
-            .isEqualTo(OK.value());
-
-        final OsData osData = mapper.readValue(osResponse.getBody().asString(), OsData.class);
-        final OsDpa dpa = osData.getResults().getFirst().getDpa();
+        final OsDpa dpa = TestDataHelper.fetchFirstDpaForPostcode(http, STABLE_ENGLAND_POSTCODE);
 
         final String courtName = TEST_COURT_PREFIX + " Postcode Search";
         final UUID courtId = createOpenCourt(courtName);
 
-        final CourtAddress address = buildVisitUsAddressFromDpa(courtId, dpa);
+        final CourtAddress address = buildVisitUsAddressFromDpa(courtId, dpa).build();
 
         final Response addressResponse = http.doPost("/courts/" + courtId + "/v1/address", address);
 
@@ -325,16 +119,14 @@ public final class SearchControllerFunctionalTest {
             .as("Expected 200 OK for postcode-only search")
             .isEqualTo(OK.value());
 
-        final List<CourtWithDistanceDto> courts = mapper.readValue(
+        final List<CourtWithDistanceResponse> courts = mapper.readValue(
             searchResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<CourtWithDistanceResponse>>() {}
         );
 
         assertThat(courts)
             .as("Expected non-empty results for postcode search")
-            .isNotEmpty();
-
-        assertThat(courts)
+            .isNotEmpty()
             .as("Each result should have court ID, name, and distance")
             .allSatisfy(court -> {
                 assertThat(court.getCourtId())
@@ -351,7 +143,7 @@ public final class SearchControllerFunctionalTest {
 
         assertThat(courts)
             .as("Expected to find the created court '%s' in search results", courtName)
-            .extracting(CourtWithDistanceDto::getCourtId)
+            .extracting(CourtWithDistanceResponse::getCourtId)
             .contains(courtId);
     }
 
@@ -384,7 +176,7 @@ public final class SearchControllerFunctionalTest {
 
         final List<ServiceArea> serviceAreas = mapper.readValue(
             serviceAreasResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<ServiceArea>>() {}
         );
 
         final List<ServiceArea> matchingServiceAreas = serviceAreas.stream()
@@ -407,19 +199,12 @@ public final class SearchControllerFunctionalTest {
             .as("Service area '%s' should have an area of law ID", serviceAreaName)
             .isNotNull();
 
-        final Response osResponse = http.doGet("/search/address/v1/postcode/" + STABLE_ENGLAND_POSTCODE);
-
-        assertThat(osResponse.statusCode())
-            .as("Expected 200 OK when fetching OS data for postcode %s", STABLE_ENGLAND_POSTCODE)
-            .isEqualTo(OK.value());
-
-        final OsData osData = mapper.readValue(osResponse.getBody().asString(), OsData.class);
-        final OsDpa dpa = osData.getResults().getFirst().getDpa();
+        final OsDpa dpa = TestDataHelper.fetchFirstDpaForPostcode(http, STABLE_ENGLAND_POSTCODE);
 
         final String courtName = TEST_COURT_PREFIX + " Tax Service Area Search";
         final UUID courtId = createOpenCourt(courtName);
 
-        final CourtAddress address = buildVisitUsAddressFromDpa(courtId, dpa);
+        final CourtAddress address = buildVisitUsAddressFromDpa(courtId, dpa).build();
 
         final Response addressResponse = http.doPost("/courts/" + courtId + "/v1/address", address);
 
@@ -454,18 +239,16 @@ public final class SearchControllerFunctionalTest {
             .as("Expected 200 OK for postcode search with OTHER type service area")
             .isEqualTo(OK.value());
 
-        final List<CourtWithDistanceDto> courts = mapper.readValue(
+        final List<CourtWithDistanceResponse> courts = mapper.readValue(
             searchResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<CourtWithDistanceResponse>>() {}
         );
 
         assertThat(courts)
             .as("Expected non-empty results for OTHER type service area search")
-            .isNotEmpty();
-
-        assertThat(courts)
+            .isNotEmpty()
             .as("Expected to find the created court '%s' in search results", courtName)
-            .extracting(CourtWithDistanceDto::getCourtId)
+            .extracting(CourtWithDistanceResponse::getCourtId)
             .contains(courtId);
     }
 
@@ -481,7 +264,7 @@ public final class SearchControllerFunctionalTest {
 
         final List<ServiceArea> serviceAreas = mapper.readValue(
             serviceAreasResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<ServiceArea>>() {}
         );
 
         final List<ServiceArea> civilServiceAreas = serviceAreas.stream()
@@ -502,19 +285,12 @@ public final class SearchControllerFunctionalTest {
             .as("Expected CIVIL service area '%s' to have an area of law ID", civilServiceArea.getName())
             .isNotNull();
 
-        final Response osResponse = http.doGet("/search/address/v1/postcode/" + STABLE_ENGLAND_POSTCODE);
-
-        assertThat(osResponse.statusCode())
-            .as("Expected 200 OK when fetching OS data for postcode %s", STABLE_ENGLAND_POSTCODE)
-            .isEqualTo(OK.value());
-
-        final OsData osData = mapper.readValue(osResponse.getBody().asString(), OsData.class);
-        final OsDpa dpa = osData.getResults().getFirst().getDpa();
+        final OsDpa dpa = TestDataHelper.fetchFirstDpaForPostcode(http, STABLE_ENGLAND_POSTCODE);
 
         final String courtName = TEST_COURT_PREFIX + " Civil Service Area Search";
         final UUID courtId = createOpenCourt(courtName);
 
-        final CourtAddress address = buildVisitUsAddressFromDpa(courtId, dpa);
+        final CourtAddress address = buildVisitUsAddressFromDpa(courtId, dpa).build();
 
         final Response addressResponse = http.doPost("/courts/" + courtId + "/v1/address", address);
 
@@ -550,18 +326,16 @@ public final class SearchControllerFunctionalTest {
                 civilServiceArea.getName())
             .isEqualTo(OK.value());
 
-        final List<CourtWithDistanceDto> courts = mapper.readValue(
+        final List<CourtWithDistanceResponse> courts = mapper.readValue(
             searchResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<CourtWithDistanceResponse>>() {}
         );
 
         assertThat(courts)
             .as("Expected non-empty results for CIVIL service area search")
-            .isNotEmpty();
-
-        assertThat(courts)
+            .isNotEmpty()
             .as("Expected to find the created court '%s' in search results", courtName)
-            .extracting(CourtWithDistanceDto::getCourtId)
+            .extracting(CourtWithDistanceResponse::getCourtId)
             .contains(courtId);
     }
 
@@ -578,7 +352,7 @@ public final class SearchControllerFunctionalTest {
 
         final List<ServiceArea> serviceAreas = mapper.readValue(
             serviceAreasResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<ServiceArea>>() {}
         );
 
         final List<ServiceArea> matchingServiceAreas = serviceAreas.stream()
@@ -601,14 +375,7 @@ public final class SearchControllerFunctionalTest {
             .as("Expected FAMILY service area '%s' to have an area of law ID", familyServiceAreaName)
             .isNotNull();
 
-        final Response osResponse = http.doGet("/search/address/v1/postcode/" + STABLE_ENGLAND_POSTCODE);
-
-        assertThat(osResponse.statusCode())
-            .as("Expected 200 OK when fetching OS data for postcode %s", STABLE_ENGLAND_POSTCODE)
-            .isEqualTo(OK.value());
-
-        final OsData osData = mapper.readValue(osResponse.getBody().asString(), OsData.class);
-        final OsDpa dpa = osData.getResults().getFirst().getDpa();
+        final OsDpa dpa = TestDataHelper.fetchFirstDpaForPostcode(http, STABLE_ENGLAND_POSTCODE);
 
         final String expectedLocalAuthorityName = "City of Westminster";
         final Integer localCustodianCode = dpa.getLocalCustodianCode();
@@ -621,9 +388,7 @@ public final class SearchControllerFunctionalTest {
         assertThat(localCustodianCodeDescription)
             .as("Expected OS DPA to contain local custodian code description for postcode %s",
                 STABLE_ENGLAND_POSTCODE)
-            .isNotBlank();
-
-        assertThat(localCustodianCodeDescription)
+            .isNotBlank()
             .as(
                 "Expected stable postcode %s to resolve to local authority '%s' but was '%s' (code=%s)",
                 STABLE_ENGLAND_POSTCODE,
@@ -638,7 +403,7 @@ public final class SearchControllerFunctionalTest {
 
         final Response unmappedAddressResponse = http.doPost(
             "/courts/" + unmappedCourtId + "/v1/address",
-            buildVisitUsAddressFromDpa(unmappedCourtId, dpa)
+            buildVisitUsAddressFromDpa(unmappedCourtId, dpa).build()
         );
 
         assertThat(unmappedAddressResponse.statusCode())
@@ -664,7 +429,7 @@ public final class SearchControllerFunctionalTest {
 
         final Response mappedAddressResponse = http.doPost(
             "/courts/" + mappedCourtId + "/v1/address",
-            buildVisitUsAddressFromDpa(mappedCourtId, dpa)
+            buildVisitUsAddressFromDpa(mappedCourtId, dpa).build()
         );
 
         assertThat(mappedAddressResponse.statusCode())
@@ -694,7 +459,7 @@ public final class SearchControllerFunctionalTest {
 
         final List<CourtLocalAuthorityDto> localAuthoritiesByAreaOfLaw = mapper.readValue(
             localAuthoritiesResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<CourtLocalAuthorityDto>>() {}
         );
 
         final List<CourtLocalAuthorityDto> matchingAreaOfLawAuthorities = localAuthoritiesByAreaOfLaw.stream()
@@ -752,24 +517,18 @@ public final class SearchControllerFunctionalTest {
                 familyServiceAreaName)
             .isEqualTo(OK.value());
 
-        final List<CourtWithDistanceDto> courts = mapper.readValue(
+        final List<CourtWithDistanceResponse> courts = mapper.readValue(
             searchResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<CourtWithDistanceResponse>>() {}
         );
 
         assertThat(courts)
             .as("Expected non-empty results for FAMILY service area search")
-            .isNotEmpty();
-
-        assertThat(courts)
+            .isNotEmpty()
             .as("Expected to find the mapped court '%s' in search results", mappedCourtName)
-            .extracting(CourtWithDistanceDto::getCourtId)
-            .contains(mappedCourtId);
-
-        assertThat(courts)
-            .as("Expected unmapped court '%s' not to be returned for FAMILY non-regional search",
-                unmappedCourtName)
-            .extracting(CourtWithDistanceDto::getCourtId)
+            .extracting(CourtWithDistanceResponse::getCourtId)
+            .contains(mappedCourtId)
+            .as("Expected unmapped court '%s' not to be returned for FAMILY non-regional search", unmappedCourtName)
             .doesNotContain(unmappedCourtId);
     }
 
@@ -778,21 +537,14 @@ public final class SearchControllerFunctionalTest {
     void shouldReturnNearestSpoeCourtForChildcareArrangementsServiceArea() throws Exception {
         final String childcareServiceAreaName = "Childcare arrangements if you separate from your partner";
 
-        final Response osResponse = http.doGet("/search/address/v1/postcode/" + STABLE_ENGLAND_POSTCODE);
-
-        assertThat(osResponse.statusCode())
-            .as("Expected 200 OK when fetching OS data for postcode %s", STABLE_ENGLAND_POSTCODE)
-            .isEqualTo(OK.value());
-
-        final OsData osData = mapper.readValue(osResponse.getBody().asString(), OsData.class);
-        final OsDpa dpa = osData.getResults().getFirst().getDpa();
+        final OsDpa dpa = TestDataHelper.fetchFirstDpaForPostcode(http, STABLE_ENGLAND_POSTCODE);
 
         final String courtName = TEST_COURT_PREFIX + " Childcare SPOE Search";
         final UUID courtId = createOpenCourt(courtName);
 
         final Response addressResponse = http.doPost(
             "/courts/" + courtId + "/v1/address",
-            buildVisitUsAddressFromDpa(courtId, dpa)
+            buildVisitUsAddressFromDpa(courtId, dpa).build()
         );
 
         assertThat(addressResponse.statusCode())
@@ -824,9 +576,9 @@ public final class SearchControllerFunctionalTest {
                 childcareServiceAreaName)
             .isEqualTo(OK.value());
 
-        final List<CourtWithDistanceDto> courts = mapper.readValue(
+        final List<CourtWithDistanceResponse> courts = mapper.readValue(
             searchResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<CourtWithDistanceResponse>>() {}
         );
 
         assertThat(courts)
@@ -877,9 +629,9 @@ public final class SearchControllerFunctionalTest {
             .as("Expected 200 OK for postcode search with limit")
             .isEqualTo(OK.value());
 
-        final List<CourtWithDistanceDto> courts = mapper.readValue(
+        final List<CourtWithDistanceResponse> courts = mapper.readValue(
             searchResponse.getBody().asString(),
-            new TypeReference<>() {}
+            new TypeReference<List<CourtWithDistanceResponse>>() {}
         );
 
         assertThat(courts)
@@ -918,7 +670,7 @@ public final class SearchControllerFunctionalTest {
      * @param dpa the OS DPA data
      * @return the court address payload
      */
-    private static CourtAddress buildVisitUsAddressFromDpa(final UUID courtId, final OsDpa dpa) {
+    private static CourtAddress.CourtAddressBuilder buildVisitUsAddressFromDpa(final UUID courtId, final OsDpa dpa) {
         return CourtAddress.builder()
             .courtId(courtId)
             .addressLine1(dpa.getAddress())
@@ -926,8 +678,7 @@ public final class SearchControllerFunctionalTest {
             .postcode(dpa.getPostcode())
             .addressType(AddressType.VISIT_US)
             .lat(BigDecimal.valueOf(dpa.getLat()))
-            .lon(BigDecimal.valueOf(dpa.getLng()))
-            .build();
+            .lon(BigDecimal.valueOf(dpa.getLng()));
     }
 
     @AfterAll

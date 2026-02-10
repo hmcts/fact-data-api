@@ -9,6 +9,8 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
+import uk.gov.hmcts.reform.fact.data.api.os.OsData;
+import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
 
 /**
  * Helper methods for fetching test data via API endpoints.
@@ -37,7 +40,7 @@ public final class TestDataHelper {
      * @param http the HTTP client
      * @return the region ID as a string
      */
-    public static String getRegionId(final HttpClient http) {
+    public static String fetchFirstRegionId(final HttpClient http) {
         final Response response = http.doGet("/types/v1/regions");
         return response.jsonPath().getString("[0].id");
     }
@@ -87,7 +90,7 @@ public final class TestDataHelper {
     public static UUID createCourt(final HttpClient http, final String courtName) {
         final Court court = new Court();
         court.setName(courtName);
-        court.setRegionId(UUID.fromString(getRegionId(http)));
+        court.setRegionId(UUID.fromString(fetchFirstRegionId(http)));
         court.setIsServiceCentre(true);
 
         final Response createResponse = http.doPost("/courts/v1", court);
@@ -147,14 +150,6 @@ public final class TestDataHelper {
      * @param areasOfLaw the list of area of law IDs
      * @return a CourtAreasOfLaw object
      */
-
-    /**
-     * Builds a CourtAreasOfLaw object with the given parameters.
-     *
-     * @param courtId the court ID
-     * @param areasOfLaw the list of area of law IDs
-     * @return a CourtAreasOfLaw object
-     */
     public static uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw buildCourtAreasOfLaw(
         final UUID courtId, final java.util.List<UUID> areasOfLaw) {
         final uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw courtAreasOfLaw =
@@ -185,5 +180,35 @@ public final class TestDataHelper {
             .isEqualTo(CREATED.value());
 
         return mapper.readValue(response.getBody().asString(), CourtLock.class);
+    }
+
+    /**
+     * Fetches OS address data for a given postcode.
+     *
+     * @param http the HTTP client
+     * @param postcode the postcode to search for
+     * @return the OS data containing address results
+     * @throws Exception if the API call or JSON parsing fails
+     */
+    public static OsData fetchOsDataForPostcode(final HttpClient http, final String postcode) throws Exception {
+        final Response response = http.doGet("/search/address/v1/postcode/" + postcode);
+
+        assertThat(response.statusCode())
+            .as("Expected 200 OK when fetching OS data for postcode %s", postcode)
+            .isEqualTo(OK.value());
+
+        return mapper.readValue(response.getBody().asString(), OsData.class);
+    }
+
+    /**
+     * Fetches the first Delivery Point Address (DPA) for a given postcode from the OS API.
+     *
+     * @param http the HTTP client
+     * @param postcode the postcode to search for
+     * @return the first DPA result for the postcode
+     * @throws Exception if the API call or JSON parsing fails
+     */
+    public static OsDpa fetchFirstDpaForPostcode(final HttpClient http, final String postcode) throws Exception {
+        return fetchOsDataForPostcode(http, postcode).getResults().getFirst().getDpa();
     }
 }
