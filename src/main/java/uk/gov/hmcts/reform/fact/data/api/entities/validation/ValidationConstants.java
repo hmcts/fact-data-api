@@ -12,9 +12,9 @@ public class ValidationConstants {
     public static final int EMAIL_MAX_LENGTH = 254;
     public static final String EMAIL_MAX_LENGTH_MESSAGE = "Email address should be no more than {max} characters";
 
-    public static final String PHONE_NO_REGEX = "^(|[0-9 ]{10,20})$";
+    public static final String PHONE_NO_REGEX = "^(|(\\+44|)[0-9 ]{10,20})$";
     public static final String PHONE_NO_REGEX_MESSAGE =
-        "Phone Number must match the regex '^(|[0-9 ]{10,20})$'";
+        "Phone Number must match the regex '^(|(\\+44|)[0-9 ]{10,20})$'";
 
     public static final int PHONE_NO_MAX_LENGTH = 20;
     public static final String PHONE_NO_MAX_LENGTH_MESSAGE = "Phone number should be no more than {max} characters";
