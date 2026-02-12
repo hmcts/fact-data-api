@@ -185,7 +185,7 @@ dependencies {
 
   implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '6.1.0'
 
-  implementation group: 'io.hypersistence', name: 'hypersistence-utils-hibernate-63', version: '3.15.1'
+  implementation group: 'io.hypersistence', name: 'hypersistence-utils-hibernate-63', version: '3.15.2'
 
   implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-hibernate6', version: '2.21.0'
 
