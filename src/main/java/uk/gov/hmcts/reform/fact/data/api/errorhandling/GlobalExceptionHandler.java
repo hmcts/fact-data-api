@@ -13,7 +13,10 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import jakarta.servlet.http.HttpServletRequest;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -97,10 +100,25 @@ public class GlobalExceptionHandler {
         return generateExceptionResponse(message);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(IllegalArgumentException ex) {
+        log.error("400, illegal argument supplied. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
+    }
+
     @ExceptionHandler(InvalidFileException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidFileException ex) {
         log.error("400, file failed validation. Details: {}", ex.getMessage());
+
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidPostcodeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidPostcodeException ex) {
+        log.error("400, invalid postcode. Details: {}", ex.getMessage());
 
         return generateExceptionResponse(ex.getMessage());
     }
@@ -129,6 +147,20 @@ public class GlobalExceptionHandler {
         );
 
         return generateExceptionResponse(message);
+    }
+
+    @ExceptionHandler(DuplicatedListItemException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(DuplicatedListItemException ex) {
+        log.error("400, duplicated list item. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidAreaOfLawException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidAreaOfLawException ex) {
+        log.error("400, invalid area of law. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
     }
 
     private ExceptionResponse generateExceptionResponse(String message) {
