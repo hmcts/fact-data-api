@@ -33,7 +33,7 @@ public final class CourtControllerFunctionalTest {
     private static final ObjectMapper mapper = new ObjectMapper()
         .registerModule(new JavaTimeModule())
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    private static final String regionId = TestDataHelper.getRegionId(http);
+    private static final String regionId = TestDataHelper.fetchFirstRegionId(http);
 
     @Test
     @DisplayName("POST /courts/v1 creates court and verifies persistence")

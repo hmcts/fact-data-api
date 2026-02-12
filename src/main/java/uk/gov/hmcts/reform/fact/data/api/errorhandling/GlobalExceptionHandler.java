@@ -16,6 +16,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceN
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -147,6 +148,19 @@ public class GlobalExceptionHandler {
         );
 
         return generateExceptionResponse(message);
+    }
+
+    @ExceptionHandler(InvalidParameterCombinationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidParameterCombinationException ex,
+                                    HttpServletRequest request) {
+
+        log.error(
+            "400, invalid parameter combination. Path: {}. Details: {}",
+            request != null ? request.getRequestURI() : UNKNOWN,
+            ex.getMessage()
+        );
+        return generateExceptionResponse(ex.getMessage());
     }
 
     @ExceptionHandler(DuplicatedListItemException.class)
