@@ -152,7 +152,7 @@ public final class CourtTranslationControllerFunctionalTest {
         final Response postResponse = http.doPost("/courts/" + courtId + "/v1/translation-services", translation);
         assertThat(postResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
         assertThat(postResponse.jsonPath().getString("phoneNumber"))
-                .contains("Phone Number must match the regex '^(|[0-9 ]{10,20})$'");
+                .contains("Phone Number must match the regex '^(|(\\+44|)[0-9 ]{10,20})$'");
     }
 
     @Test
