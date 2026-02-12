@@ -76,6 +76,12 @@ spring:
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
 
+user:
+  retention-period: 365
+
+courtLock:
+  timeout-minutes: 60
+  
 os:
   key: ${OS_KEY}
   url: https://api.os.uk

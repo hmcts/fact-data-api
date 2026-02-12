@@ -2,6 +2,13 @@ spring:
   datasource:
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
     url: jdbc:tc:postgresql:16:///fact
+
+user:
+  retention-period: 365
+
+courtLock:
+  timeout-minutes: 60
+
 os:
   url: https://api.os.uk
   key: a-key

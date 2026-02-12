@@ -24,7 +24,6 @@ class CourtTranslationControllerTest {
 
     private static final UUID COURT_ID = UUID.randomUUID();
     private static final UUID UNKNOWN_COURT_ID = UUID.randomUUID();
-    private static final String UNKNOWN_COURT_ID_STRING = UNKNOWN_COURT_ID.toString();
     private static final String INVALID_UUID = "abcde";
 
     private static final String RESPONSE_STATUS_MESSAGE = "Response status does not match";
@@ -56,9 +55,11 @@ class CourtTranslationControllerTest {
         when(courtTranslationService.getTranslationByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new CourtResourceNotFoundException("No translation services found"));
 
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+
         assertThrows(
             CourtResourceNotFoundException.class, () ->
-            courtTranslationController.getTranslationServicesByCourtId(UNKNOWN_COURT_ID_STRING)
+            courtTranslationController.getTranslationServicesByCourtId(unknownCourtId)
         );
     }
 
@@ -67,8 +68,10 @@ class CourtTranslationControllerTest {
         when(courtTranslationService.getTranslationByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new NotFoundException("Court not found"));
 
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+
         assertThrows(NotFoundException.class, () ->
-            courtTranslationController.getTranslationServicesByCourtId(UNKNOWN_COURT_ID_STRING)
+            courtTranslationController.getTranslationServicesByCourtId(unknownCourtId)
         );
     }
 
@@ -117,8 +120,10 @@ class CourtTranslationControllerTest {
         when(courtTranslationService.setTranslation(UNKNOWN_COURT_ID, translation))
             .thenThrow(new NotFoundException("Court not found"));
 
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+
         assertThrows(NotFoundException.class, () ->
-            courtTranslationController.setTranslationServices(UNKNOWN_COURT_ID_STRING, translation)
+            courtTranslationController.setTranslationServices(unknownCourtId, translation)
         );
     }
 

@@ -6,6 +6,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,6 +28,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -41,6 +43,7 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional
 )
 @ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorWidth")
 @ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorLimit")
+@JsonView(CourtDetailsView.class)
 @Table(name = "court_accessibility_options")
 public class CourtAccessibilityOptions {
 
