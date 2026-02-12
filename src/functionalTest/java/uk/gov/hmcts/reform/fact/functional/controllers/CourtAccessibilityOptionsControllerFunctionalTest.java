@@ -39,10 +39,10 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
         final CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
             .courtId(courtId)
             .accessibleParking(true)
-            .accessibleParkingPhoneNumber("01234567890")
+            .accessibleParkingPhoneNumber("+44 20 7946 0958")
             .accessibleToiletDescription("Accessible toilets on ground floor")
             .accessibleEntrance(true)
-            .accessibleEntrancePhoneNumber("01234567890")
+            .accessibleEntrancePhoneNumber("020 7946 0959")
             .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(true)
             .liftDoorWidth(90)
@@ -83,7 +83,7 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
             .isTrue();
         assertThat(fetchedOptions.getAccessibleParkingPhoneNumber())
             .as("Accessible parking phone number should match")
-            .isEqualTo("01234567890");
+            .isEqualTo("+44 20 7946 0958");
         assertThat(fetchedOptions.getHearingEnhancementEquipment())
             .as("Hearing enhancement equipment should match")
             .isEqualTo(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS);
@@ -116,9 +116,9 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
         final CourtAccessibilityOptions updatedOptions = CourtAccessibilityOptions.builder()
             .courtId(courtId)
             .accessibleParking(true)
-            .accessibleParkingPhoneNumber("09876543210")
+            .accessibleParkingPhoneNumber("+44 161 496 0123")
             .accessibleEntrance(true)
-            .accessibleEntrancePhoneNumber("09876543211")
+            .accessibleEntrancePhoneNumber("0117 496 0456")
             .hearingEnhancementEquipment(HearingEnhancementEquipment.INFRARED_SYSTEMS_AND_HEARING_LOOP_SYSTEMS)
             .lift(true)
             .liftDoorWidth(100)
@@ -147,7 +147,7 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
             .isTrue();
         assertThat(fetchedOptions.getAccessibleParkingPhoneNumber())
             .as("Accessible parking phone number should be updated")
-            .isEqualTo("09876543210");
+            .isEqualTo("+44 161 496 0123");
         assertThat(fetchedOptions.getHearingEnhancementEquipment())
             .as("Hearing enhancement equipment should be updated")
             .isEqualTo(HearingEnhancementEquipment.INFRARED_SYSTEMS_AND_HEARING_LOOP_SYSTEMS);
