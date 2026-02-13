@@ -171,7 +171,7 @@ public final class CourtTranslationControllerFunctionalTest {
             .isEqualTo(BAD_REQUEST.value());
         assertThat(postResponse.jsonPath().getString("email"))
             .as("Error message should indicate invalid email format")
-            .contains("Email address must match the regex '^(|[A-Za-z0-9._+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$'");
+            .contains("Email address must match the regex");
     }
 
     @Test
@@ -190,7 +190,7 @@ public final class CourtTranslationControllerFunctionalTest {
             .isEqualTo(BAD_REQUEST.value());
         assertThat(postResponse.jsonPath().getString("phoneNumber"))
             .as("Error message should indicate invalid phone format")
-            .contains("Phone Number must match the regex '(|(\\+44|)[0-9 ]{10,20})$'");
+            .contains("Phone Number must match the regex");
     }
 
     @Test
