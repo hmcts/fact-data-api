@@ -104,9 +104,11 @@ public class CourtOpeningHoursService {
         // and to ensure everyday takes preference if present.
         if (hoursToSave
             .stream()
-            .anyMatch(hour -> hour.getDayOfWeek() == DayOfTheWeek.EVERYDAY)) {
+            .anyMatch(hour -> hour.getOpeningTimesDetails() != null && hour.getOpeningTimesDetails().stream()
+                .anyMatch(detail -> detail.getDayOfWeek() == DayOfTheWeek.EVERYDAY))) {
             hoursToSave
-                .removeIf(hour -> hour.getDayOfWeek() != DayOfTheWeek.EVERYDAY);
+                .removeIf(hour -> hour.getOpeningTimesDetails() == null || hour.getOpeningTimesDetails().stream()
+                    .noneMatch(detail -> detail.getDayOfWeek() == DayOfTheWeek.EVERYDAY));
         }
 
         Court foundCourt = courtService.getCourtById(courtId);

@@ -3,11 +3,12 @@ package uk.gov.hmcts.reform.fact.data.api.validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
+import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.validation.validator.UniqueOpeningDaysForCourtOpeningHoursValidator;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,7 +24,13 @@ class UniqueOpeningDaysForCourtOpeningHoursValidatorTest {
 
     private CourtOpeningHours entry(DayOfTheWeek day) {
         CourtOpeningHours h = new CourtOpeningHours();
-        h.setDayOfWeek(day);
+        OpeningTimesDetail detail = new OpeningTimesDetail();
+        detail.setDayOfWeek(day);
+        h.setOpeningTimesDetails(new ArrayList<OpeningTimesDetail>() {
+            {
+                add(detail);
+            }
+        });
         return h;
     }
 

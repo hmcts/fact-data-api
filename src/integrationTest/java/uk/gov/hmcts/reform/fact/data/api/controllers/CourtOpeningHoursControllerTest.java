@@ -14,6 +14,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHour
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtOpeningHoursService;
@@ -75,17 +76,25 @@ class CourtOpeningHoursControllerTest {
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0, 0))
-                .closingHour(LocalTime.of(17, 0, 0))
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0, 0))
+                        .closingTime(LocalTime.of(17, 0, 0))
+                        .build()
+                ))
                 .build(),
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
-                .dayOfWeek(DayOfTheWeek.TUESDAY)
-                .openingHour(LocalTime.of(9, 0, 0))
-                .closingHour(LocalTime.of(17, 0, 0))
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.TUESDAY)
+                        .openingTime(LocalTime.of(9, 0, 0))
+                        .closingTime(LocalTime.of(17, 0, 0))
+                        .build()
+                ))
                 .build()
         );
 
@@ -113,8 +122,8 @@ class CourtOpeningHoursControllerTest {
 
         mockMvc.perform(get("/courts/{courtId}/v1/opening-hours", courtId))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
-            .andExpect(jsonPath("$[0].openingHour").value("09:00:00"));
+            .andExpect(jsonPath("$[0].openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
+            .andExpect(jsonPath("$[0].openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
     @Test
@@ -157,8 +166,8 @@ class CourtOpeningHoursControllerTest {
                     courtId,
                     openingHourType.getId()))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
-            .andExpect(jsonPath("$[0].openingHour").value("09:00:00"));
+            .andExpect(jsonPath("$[0].openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
+            .andExpect(jsonPath("$[0].openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
     @Test
@@ -253,8 +262,8 @@ class CourtOpeningHoursControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(openingHours)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
-            .andExpect(jsonPath("$[0].openingHour").value("09:00:00"));
+            .andExpect(jsonPath("$[0].openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
+            .andExpect(jsonPath("$[0].openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
     @Test
@@ -293,9 +302,14 @@ class CourtOpeningHoursControllerTest {
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(null)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
+                .openingHourTypeId(openingHourTypeId)
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(null)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
                 .build()
         );
 
@@ -314,9 +328,14 @@ class CourtOpeningHoursControllerTest {
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(null)
-                .closingHour(LocalTime.of(17, 0))
+                .openingHourTypeId(openingHourTypeId)
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(null)
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
                 .build()
         );
 
@@ -335,9 +354,14 @@ class CourtOpeningHoursControllerTest {
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(null)
+                .openingHourTypeId(openingHourTypeId)
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(null)
+                        .build()
+                ))
                 .build()
         );
 

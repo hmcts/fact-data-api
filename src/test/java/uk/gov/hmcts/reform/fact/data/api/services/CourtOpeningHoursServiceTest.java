@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCounterServiceOpeningHoursRepository;
@@ -71,16 +72,24 @@ class CourtOpeningHoursServiceTest {
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
                 .build(),
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.TUESDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.TUESDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
                 .build()
         );
 
@@ -232,18 +241,26 @@ class CourtOpeningHoursServiceTest {
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
                 .openingHourTypeId(openingHourTypeId)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
                 .build(),
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
-                .dayOfWeek(DayOfTheWeek.EVERYDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.EVERYDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
                 .build()
         );
 
@@ -252,9 +269,13 @@ class CourtOpeningHoursServiceTest {
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
-                .dayOfWeek(DayOfTheWeek.EVERYDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.EVERYDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
                 .build()
         );
 
@@ -277,9 +298,13 @@ class CourtOpeningHoursServiceTest {
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingHourTypeId(openingHourType.getId())
-                .dayOfWeek(DayOfTheWeek.WEDNESDAY)
-                .openingHour(LocalTime.of(10, 0))
-                .closingHour(LocalTime.of(16, 0))
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.WEDNESDAY)
+                        .openingTime(LocalTime.of(10, 0))
+                        .closingTime(LocalTime.of(16, 0))
+                        .build()
+                ))
                 .build()
         );
 
