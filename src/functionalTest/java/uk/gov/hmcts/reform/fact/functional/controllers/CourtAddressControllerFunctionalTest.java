@@ -11,9 +11,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
+import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -160,6 +162,8 @@ public final class CourtAddressControllerFunctionalTest {
     void shouldCreateAddressSuccessfully() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Create Address");
 
+        final ZonedDateTime timestampBeforeCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+
         final CourtAddress address = CourtAddress.builder()
             .courtId(courtId)
             .addressLine1("789 New Street")
@@ -209,6 +213,11 @@ public final class CourtAddressControllerFunctionalTest {
         assertThat(createdAddress.getEpimId())
             .as("EPIM ID should match")
             .isEqualTo("EPIM123");
+
+        final ZonedDateTime timestampAfterCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterCreate)
+            .as("Court lastUpdatedAt should move forward after address creation for court %s", courtId)
+            .isAfter(timestampBeforeCreate);
     }
 
     @Test
@@ -250,6 +259,8 @@ public final class CourtAddressControllerFunctionalTest {
             .isEqualTo(CREATED.value());
 
         final UUID addressId = UUID.fromString(createResponse.jsonPath().getString("id"));
+
+        final ZonedDateTime timestampBeforeUpdate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
         final CourtAddress updatedAddress = CourtAddress.builder()
             .courtId(courtId)
@@ -300,6 +311,11 @@ public final class CourtAddressControllerFunctionalTest {
         assertThat(fetchedAddress.getEpimId())
             .as("EPIM ID should be updated")
             .isEqualTo("UPDATED01");
+
+        final ZonedDateTime timestampAfterUpdate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterUpdate)
+            .as("Court lastUpdatedAt should move forward after address update for court %s", courtId)
+            .isAfter(timestampBeforeUpdate);
     }
 
     @Test
@@ -347,11 +363,18 @@ public final class CourtAddressControllerFunctionalTest {
 
         final UUID addressId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
+        final ZonedDateTime timestampBeforeDelete = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+
         final Response deleteResponse = http.doDelete("/courts/" + courtId + "/v1/address/" + addressId);
 
         assertThat(deleteResponse.statusCode())
             .as("Expected 204 NO_CONTENT when deleting address %s", addressId)
             .isEqualTo(NO_CONTENT.value());
+
+        final ZonedDateTime timestampAfterDelete = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterDelete)
+            .as("Court lastUpdatedAt should move forward after address deletion for court %s", courtId)
+            .isAfter(timestampBeforeDelete);
     }
 
     @Test

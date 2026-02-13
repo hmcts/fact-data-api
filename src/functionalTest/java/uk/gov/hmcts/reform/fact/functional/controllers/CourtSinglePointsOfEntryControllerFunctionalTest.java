@@ -10,9 +10,11 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
+import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,26 +37,42 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court SPOE Get");
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry");
-        assertThat(getResponse.statusCode()).isEqualTo(OK.value());
+        assertThat(getResponse.statusCode())
+            .as("Expected 200 OK when retrieving SPOE for court %s", courtId)
+            .isEqualTo(OK.value());
 
         final List<AreaOfLawSelectionDto> areasOfLaw = mapper.readValue(
             getResponse.asString(),
             new TypeReference<List<AreaOfLawSelectionDto>>() {}
         );
 
-        assertThat(areasOfLaw).hasSize(4);
-        assertThat(areasOfLaw).allMatch(area -> area.getSelected().equals(false));
-        assertThat(areasOfLaw).extracting(AreaOfLawSelectionDto::getName)
+        assertThat(areasOfLaw)
+            .as("Should return 4 areas of law")
+            .hasSize(4);
+        assertThat(areasOfLaw)
+            .as("All areas should be unselected for new court")
+            .allMatch(area -> area.getSelected().equals(false));
+        assertThat(areasOfLaw)
+            .as("Should contain expected areas of law")
+            .extracting(AreaOfLawSelectionDto::getName)
             .containsExactlyInAnyOrder("Adoption", "Children", "Civil partnership", "Divorce");
-        assertThat(areasOfLaw).allMatch(area -> area.getId() != null);
-        assertThat(areasOfLaw).allMatch(area -> area.getName() != null);
-        assertThat(areasOfLaw).allMatch(area -> area.getNameCy() != null);
+        assertThat(areasOfLaw)
+            .as("All areas should have an ID")
+            .allMatch(area -> area.getId() != null);
+        assertThat(areasOfLaw)
+            .as("All areas should have a name")
+            .allMatch(area -> area.getName() != null);
+        assertThat(areasOfLaw)
+            .as("All areas should have a Welsh name")
+            .allMatch(area -> area.getNameCy() != null);
     }
 
     @Test
     @DisplayName("PUT /courts/{courtId}/v1/single-point-of-entry updates and persists selected areas of law")
     void shouldUpdateSinglePointsOfEntry() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court SPOE Update");
+
+        final ZonedDateTime timestampBeforeUpdate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
         final Response initialGetResponse = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry");
         final List<AreaOfLawSelectionDto> areasOfLaw = mapper.readValue(
@@ -71,37 +89,52 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         });
 
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/single-point-of-entry", areasOfLaw);
-        assertThat(putResponse.statusCode()).isEqualTo(OK.value());
+        assertThat(putResponse.statusCode())
+            .as("Expected 200 OK when updating SPOE for court %s", courtId)
+            .isEqualTo(OK.value());
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry");
-        assertThat(getResponse.statusCode()).isEqualTo(OK.value());
+        assertThat(getResponse.statusCode())
+            .as("Expected 200 OK when retrieving updated SPOE for court %s", courtId)
+            .isEqualTo(OK.value());
 
         final List<AreaOfLawSelectionDto> updatedAreasOfLaw = mapper.readValue(
             getResponse.asString(),
             new TypeReference<List<AreaOfLawSelectionDto>>() {}
         );
 
-        assertThat(updatedAreasOfLaw).hasSize(4);
+        assertThat(updatedAreasOfLaw)
+            .as("Should return 4 areas of law")
+            .hasSize(4);
 
         assertThat(updatedAreasOfLaw)
+            .as("Adoption should be selected")
             .filteredOn(area -> "Adoption".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(true);
 
         assertThat(updatedAreasOfLaw)
+            .as("Children should be selected")
             .filteredOn(area -> "Children".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(true);
 
         assertThat(updatedAreasOfLaw)
+            .as("Civil partnership should not be selected")
             .filteredOn(area -> "Civil partnership".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(false);
 
         assertThat(updatedAreasOfLaw)
+            .as("Divorce should not be selected")
             .filteredOn(area -> "Divorce".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(false);
+
+        final ZonedDateTime timestampAfterUpdate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterUpdate)
+            .as("Court lastUpdatedAt should move forward after SPOE update for court %s", courtId)
+            .isAfter(timestampBeforeUpdate);
     }
 
     @Test
@@ -141,7 +174,9 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
 
         final Response updateResponse = http.doPut("/courts/" + courtId
                                                        + "/v1/single-point-of-entry", modifiedAreasOfLaw);
-        assertThat(updateResponse.statusCode()).isEqualTo(OK.value());
+        assertThat(updateResponse.statusCode())
+            .as("Expected 200 OK when updating existing SPOE for court %s", courtId)
+            .isEqualTo(OK.value());
 
         final Response finalGetResponse = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry");
         final List<AreaOfLawSelectionDto> finalAreasOfLaw = mapper.readValue(
@@ -150,21 +185,25 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         );
 
         assertThat(finalAreasOfLaw)
+            .as("Adoption should now be unselected")
             .filteredOn(area -> "Adoption".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(false);
 
         assertThat(finalAreasOfLaw)
+            .as("Divorce should now be selected")
             .filteredOn(area -> "Divorce".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(true);
 
         assertThat(finalAreasOfLaw)
+            .as("Civil partnership should now be selected")
             .filteredOn(area -> "Civil partnership".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(true);
 
         assertThat(finalAreasOfLaw)
+            .as("Children should remain unselected")
             .filteredOn(area -> "Children".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(false);
@@ -192,31 +231,39 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         http.doPut("/courts/" + courtId + "/v1/single-point-of-entry", areasOfLaw);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry");
-        assertThat(getResponse.statusCode()).isEqualTo(OK.value());
+        assertThat(getResponse.statusCode())
+            .as("Expected 200 OK when retrieving configured SPOE for court %s", courtId)
+            .isEqualTo(OK.value());
 
         final List<AreaOfLawSelectionDto> configuredAreasOfLaw = mapper.readValue(
             getResponse.asString(),
             new TypeReference<List<AreaOfLawSelectionDto>>() {}
         );
 
-        assertThat(configuredAreasOfLaw).hasSize(4);
+        assertThat(configuredAreasOfLaw)
+            .as("Should return 4 areas of law")
+            .hasSize(4);
 
         assertThat(configuredAreasOfLaw)
+            .as("Adoption should be selected")
             .filteredOn(area -> "Adoption".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(true);
 
         assertThat(configuredAreasOfLaw)
+            .as("Divorce should be selected")
             .filteredOn(area -> "Divorce".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(true);
 
         assertThat(configuredAreasOfLaw)
+            .as("Children should not be selected")
             .filteredOn(area -> "Children".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(false);
 
         assertThat(configuredAreasOfLaw)
+            .as("Civil partnership should not be selected")
             .filteredOn(area -> "Civil partnership".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(false);
@@ -239,7 +286,9 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         areasOfLaw.forEach(area -> area.setSelected(false));
 
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/single-point-of-entry", areasOfLaw);
-        assertThat(putResponse.statusCode()).isEqualTo(OK.value());
+        assertThat(putResponse.statusCode())
+            .as("Expected 200 OK when clearing SPOE for court %s", courtId)
+            .isEqualTo(OK.value());
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry");
         final List<AreaOfLawSelectionDto> clearedAreasOfLaw = mapper.readValue(
@@ -247,8 +296,12 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
             new TypeReference<List<AreaOfLawSelectionDto>>() {}
         );
 
-        assertThat(clearedAreasOfLaw).hasSize(4);
-        assertThat(clearedAreasOfLaw).allMatch(area -> area.getSelected().equals(false));
+        assertThat(clearedAreasOfLaw)
+            .as("Should return 4 areas of law")
+            .hasSize(4);
+        assertThat(clearedAreasOfLaw)
+            .as("All areas should be unselected after clearing")
+            .allMatch(area -> area.getSelected().equals(false));
     }
 
     @Test
@@ -278,8 +331,11 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         areasOfLaw.add(duplicateAdoption);
 
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/single-point-of-entry", areasOfLaw);
-        assertThat(putResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
+        assertThat(putResponse.statusCode())
+            .as("Expected 400 BAD_REQUEST for duplicate area IDs")
+            .isEqualTo(BAD_REQUEST.value());
         assertThat(putResponse.jsonPath().getString("message"))
+            .as("Error message should indicate duplicate area of law")
             .contains("Duplicated Area of Law in selection");
     }
 
@@ -304,8 +360,11 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         areasOfLaw.add(invalidArea);
 
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/single-point-of-entry", areasOfLaw);
-        assertThat(putResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
+        assertThat(putResponse.statusCode())
+            .as("Expected 400 BAD_REQUEST for invalid area of law")
+            .isEqualTo(BAD_REQUEST.value());
         assertThat(putResponse.jsonPath().getString("message"))
+            .as("Error message should indicate invalid area of law")
             .contains("Invalid Area(s) of Law specified in Single Points of Entry configuration");
     }
 
