@@ -87,8 +87,10 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         assertThat(retrievedHours.getFirst().getOpeningTimesDetails()).hasSize(1);
         assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getDayOfWeek())
             .isIn(DayOfTheWeek.MONDAY, DayOfTheWeek.TUESDAY);
-        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getOpeningTime()).isEqualTo(LocalTime.of(9, 0));
-        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getClosingTime()).isEqualTo(LocalTime.of(17, 0));
+        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getOpeningTime())
+            .isEqualTo(LocalTime.of(9, 0));
+        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getClosingTime())
+            .isEqualTo(LocalTime.of(17, 0));
 
         assertThat(retrievedHours.get(1).getCourtId()).isEqualTo(courtId);
         assertThat(retrievedHours.get(1).getOpeningTimesDetails()).hasSize(1);
@@ -108,14 +110,20 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .courtId(courtId)
                 .openingHourTypeId(typeId1)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(17, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0))
                 ))
                 .build(),
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(typeId1)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(17, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.WEDNESDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0))
                 ))
                 .build()
         );
@@ -125,14 +133,20 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .courtId(courtId)
                 .openingHourTypeId(typeId2)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.TUESDAY, LocalTime.of(10, 0), LocalTime.of(16, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.TUESDAY,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(16, 0))
                 ))
                 .build(),
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(typeId2)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.FRIDAY, LocalTime.of(10, 0), LocalTime.of(16, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.FRIDAY,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(16, 0))
                 ))
                 .build()
         );
@@ -158,10 +172,12 @@ public final class CourtOpeningHoursControllerFunctionalTest {
             .containsExactlyInAnyOrder(DayOfTheWeek.MONDAY, DayOfTheWeek.WEDNESDAY);
         assertThat(retrievedHours.stream()
                        .flatMap(h -> h.getOpeningTimesDetails().stream())
-                       .allMatch(detail -> detail.getOpeningTime().equals(LocalTime.of(9, 0))));
+                       .allMatch(detail ->
+                                     detail.getOpeningTime().equals(LocalTime.of(9, 0))));
         assertThat(retrievedHours.stream()
                        .flatMap(h -> h.getOpeningTimesDetails().stream())
-                       .allMatch(detail -> detail.getClosingTime().equals(LocalTime.of(17, 0))));
+                       .allMatch(detail ->
+                                     detail.getClosingTime().equals(LocalTime.of(17, 0))));
     }
 
     @Test
@@ -229,14 +245,20 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.MONDAY, LocalTime.of(8, 30), LocalTime.of(18, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(8, 30),
+                        LocalTime.of(18, 0))
                 ))
                 .build(),
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.THURSDAY, LocalTime.of(8, 30), LocalTime.of(18, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.THURSDAY,
+                        LocalTime.of(8, 30),
+                        LocalTime.of(18, 0))
                 ))
                 .build()
         );
@@ -263,10 +285,12 @@ public final class CourtOpeningHoursControllerFunctionalTest {
             .containsExactlyInAnyOrder(DayOfTheWeek.MONDAY, DayOfTheWeek.THURSDAY);
         assertThat(createdHours.stream()
                        .flatMap(h -> h.getOpeningTimesDetails().stream())
-                       .allMatch(detail -> detail.getOpeningTime().equals(LocalTime.of(8, 30))));
+                       .allMatch(detail ->
+                                     detail.getOpeningTime().equals(LocalTime.of(8, 30))));
         assertThat(createdHours.stream()
                        .flatMap(h -> h.getOpeningTimesDetails().stream())
-                       .allMatch(detail -> detail.getClosingTime().equals(LocalTime.of(18, 0))));
+                       .allMatch(detail ->
+                                     detail.getClosingTime().equals(LocalTime.of(18, 0))));
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId);
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
@@ -294,14 +318,20 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(17, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0))
                 ))
                 .build(),
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.TUESDAY, LocalTime.of(9, 0), LocalTime.of(17, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.TUESDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0))
                 ))
                 .build()
         );
@@ -313,14 +343,20 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.WEDNESDAY, LocalTime.of(10, 0), LocalTime.of(16, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.WEDNESDAY,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(16, 0))
                 ))
                 .build(),
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.FRIDAY, LocalTime.of(10, 0), LocalTime.of(16, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.FRIDAY,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(16, 0))
                 ))
                 .build()
         );
@@ -347,10 +383,12 @@ public final class CourtOpeningHoursControllerFunctionalTest {
             .containsExactlyInAnyOrder(DayOfTheWeek.WEDNESDAY, DayOfTheWeek.FRIDAY);
         assertThat(retrievedHours.stream()
                        .flatMap(h -> h.getOpeningTimesDetails().stream())
-                       .allMatch(detail -> detail.getOpeningTime().equals(LocalTime.of(10, 0))));
+                       .allMatch(detail ->
+                                     detail.getOpeningTime().equals(LocalTime.of(10, 0))));
         assertThat(retrievedHours.stream()
                        .flatMap(h -> h.getOpeningTimesDetails().stream())
-                       .allMatch(detail -> detail.getClosingTime().equals(LocalTime.of(16, 0))));
+                       .allMatch(detail ->
+                                     detail.getClosingTime().equals(LocalTime.of(16, 0))));
         assertThat(retrievedHours.stream()
                        .flatMap(h -> h.getOpeningTimesDetails().stream())
                        .noneMatch(detail -> detail.getDayOfWeek().equals(DayOfTheWeek.MONDAY)));
@@ -434,14 +472,20 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(17, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0))
                 ))
                 .build(),
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.FRIDAY, LocalTime.of(9, 0), LocalTime.of(17, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.FRIDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0))
                 ))
                 .build()
         );
@@ -501,7 +545,10 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .courtId(UUID.randomUUID())
                 .openingHourTypeId(UUID.randomUUID())
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(17, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0))
                 ))
                 .build()
         );
@@ -560,21 +607,30 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(17, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0))
                 ))
                 .build(),
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.TUESDAY, LocalTime.of(9, 0), LocalTime.of(17, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.TUESDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0))
                 ))
                 .build(),
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.EVERYDAY, LocalTime.of(10, 0), LocalTime.of(16, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.EVERYDAY,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(16, 0))
                 ))
                 .build()
         );
@@ -600,7 +656,10 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(DayOfTheWeek.EVERYDAY, LocalTime.of(9, 0), LocalTime.of(17, 0))
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.EVERYDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0))
                 ))
                 .build()
         );
@@ -621,9 +680,12 @@ public final class CourtOpeningHoursControllerFunctionalTest {
 
         assertThat(retrievedHours).hasSize(1);
         assertThat(retrievedHours.getFirst().getOpeningTimesDetails()).hasSize(1);
-        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getDayOfWeek()).isEqualTo(DayOfTheWeek.EVERYDAY);
-        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getOpeningTime()).isEqualTo(LocalTime.of(9, 0));
-        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getClosingTime()).isEqualTo(LocalTime.of(17, 0));
+        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getDayOfWeek())
+            .isEqualTo(DayOfTheWeek.EVERYDAY);
+        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getOpeningTime())
+            .isEqualTo(LocalTime.of(9, 0));
+        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getClosingTime())
+            .isEqualTo(LocalTime.of(17, 0));
     }
 
     @AfterAll
