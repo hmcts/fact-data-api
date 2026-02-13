@@ -28,24 +28,27 @@ public class UniqueOpeningDaysForCourtOpeningHoursValidator
         }
 
         boolean containsEveryday = value.stream()
-            .map(CourtOpeningHours::getDayOfWeek)
-            .anyMatch(day -> day == DayOfTheWeek.EVERYDAY);
+            .filter(h -> h.getOpeningTimesDetails() != null)
+            .flatMap(h -> h.getOpeningTimesDetails().stream())
+            .anyMatch(detail -> detail.getDayOfWeek() == DayOfTheWeek.EVERYDAY);
 
         if (containsEveryday) {
-            return value.size() == 1;
+            return value.size() == 1 && value.get(0).getOpeningTimesDetails().size() == 1;
         }
 
         Set<DayOfTheWeek> seen = new HashSet<>();
         for (CourtOpeningHours h : value) {
-            if (h == null) {
+            if (h == null || h.getOpeningTimesDetails() == null) {
                 continue;
             }
-            DayOfTheWeek day = h.getDayOfWeek();
-            if (day == null) {
-                continue;
-            }
-            if (!seen.add(day)) {
-                return false;
+            for (var detail : h.getOpeningTimesDetails()) {
+                DayOfTheWeek day = detail.getDayOfWeek();
+                if (day == null) {
+                    continue;
+                }
+                if (!seen.add(day)) {
+                    return false;
+                }
             }
         }
         return true;
