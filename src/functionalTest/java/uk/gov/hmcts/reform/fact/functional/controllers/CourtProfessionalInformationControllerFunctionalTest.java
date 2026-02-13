@@ -101,14 +101,16 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
             .satisfies(info -> {
                 assertThat(info.getInterviewRooms()).as("Interview rooms").isTrue();
                 assertThat(info.getInterviewRoomCount()).as("Interview room count").isEqualTo(6);
-                assertThat(info.getInterviewPhoneNumber()).as("Interview phone").isEqualTo("0207 123 4567");
+                assertThat(info.getInterviewPhoneNumber()).as("Interview phone")
+                    .isEqualTo("0207 123 4567");
                 assertThat(info.getVideoHearings()).as("Video hearings").isTrue();
             });
 
         assertThat(createdInfo.getCodes())
             .as("Created codes should be valid")
             .isNotNull()
-            .satisfies(c -> assertThat(c.getGbs()).as("GBS code").isEqualTo("GBS001"));
+            .satisfies(c -> assertThat(c.getGbs()).as("GBS code")
+                .isEqualTo("GBS001"));
 
         assertThat(createdInfo.getDxCodes()).as("DX codes count").hasSize(2);
         assertThat(createdInfo.getFaxNumbers()).as("Fax numbers count").hasSize(2);
@@ -129,7 +131,8 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
             .satisfies(info -> {
                 assertThat(info.getInterviewRooms()).as("Interview rooms").isTrue();
                 assertThat(info.getInterviewRoomCount()).as("Interview room count").isEqualTo(6);
-                assertThat(info.getInterviewPhoneNumber()).as("Interview phone").isEqualTo("0207 123 4567");
+                assertThat(info.getInterviewPhoneNumber()).as("Interview phone")
+                    .isEqualTo("0207 123 4567");
                 assertThat(info.getVideoHearings()).as("Video hearings").isTrue();
                 assertThat(info.getCommonPlatform()).as("Common platform").isTrue();
                 assertThat(info.getAccessScheme()).as("Access scheme").isTrue();
@@ -139,7 +142,8 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
             .as("Retrieved codes should be valid")
             .isNotNull()
             .satisfies(c -> {
-                assertThat(c.getMagistrateCourtCode()).as("Magistrate court code").isEqualTo(123456);
+                assertThat(c.getMagistrateCourtCode()).as("Magistrate court code")
+                    .isEqualTo(123456);
                 assertThat(c.getGbs()).as("GBS code").isEqualTo("GBS001");
             });
 
@@ -147,17 +151,20 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
             .as("Retrieved DX codes should be valid")
             .hasSize(2)
             .first()
-            .satisfies(dx -> assertThat(dx.getDxCode()).as("First DX code").isEqualTo("120551 Marylebone 9"));
+            .satisfies(dx -> assertThat(dx.getDxCode()).as("First DX code")
+                .isEqualTo("120551 Marylebone 9"));
 
         assertThat(retrievedInfo.getFaxNumbers())
             .as("Retrieved fax numbers should be valid")
             .hasSize(2)
             .first()
-            .satisfies(fax -> assertThat(fax.getFaxNumber()).as("First fax number").isEqualTo("0207 222 3333"));
+            .satisfies(fax -> assertThat(fax.getFaxNumber()).as("First fax number")
+                .isEqualTo("0207 222 3333"));
 
         final ZonedDateTime timestampAfterCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
         assertThat(timestampAfterCreate)
-            .as("Court lastUpdatedAt should move forward after professional info creation for court %s", courtId)
+            .as("Court lastUpdatedAt should move forward after professional info creation for court %s",
+                courtId)
             .isAfter(timestampBeforeCreate);
     }
 
@@ -226,7 +233,8 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
             .as("Updated professional information should reflect changes")
             .satisfies(info -> {
                 assertThat(info.getInterviewRoomCount()).as("Interview room count").isEqualTo(10);
-                assertThat(info.getInterviewPhoneNumber()).as("Interview phone").isEqualTo("0207 999 8888");
+                assertThat(info.getInterviewPhoneNumber()).as("Interview phone")
+                    .isEqualTo("0207 999 8888");
                 assertThat(info.getVideoHearings()).as("Video hearings").isTrue();
                 assertThat(info.getCommonPlatform()).as("Common platform").isTrue();
             });
@@ -235,7 +243,8 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
             .as("Updated codes should reflect changes")
             .isNotNull()
             .satisfies(codes -> {
-                assertThat(codes.getMagistrateCourtCode()).as("Magistrate court code").isEqualTo(999999);
+                assertThat(codes.getMagistrateCourtCode()).as("Magistrate court code")
+                    .isEqualTo(999999);
                 assertThat(codes.getGbs()).as("GBS code").isEqualTo("GBS999");
             });
 
@@ -243,7 +252,8 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
             .as("Updated DX codes should reflect changes")
             .hasSize(1)
             .first()
-            .satisfies(dx -> assertThat(dx.getDxCode()).as("DX code").isEqualTo("999999 Updated 1"));
+            .satisfies(dx -> assertThat(dx.getDxCode()).as("DX code")
+                .isEqualTo("999999 Updated 1"));
     }
 
     @Test
