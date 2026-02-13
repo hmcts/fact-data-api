@@ -190,7 +190,7 @@ public final class CourtTranslationControllerFunctionalTest {
             .isEqualTo(BAD_REQUEST.value());
         assertThat(postResponse.jsonPath().getString("phoneNumber"))
             .as("Error message should indicate invalid phone format")
-            .contains("Phone Number must match the regex '^(|[0-9 ]{10,20})$'");
+            .contains("Phone Number must match the regex '(|(\\+44|)[0-9 ]{10,20})$'");
     }
 
     @Test
