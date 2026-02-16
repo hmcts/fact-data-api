@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -50,7 +49,7 @@ class CourtOpeningHoursControllerTest {
     private UUID openingHourTypeId;
     private Court court;
     private OpeningHourType openingHourType;
-    private List<CourtOpeningHours> openingHours;
+    private CourtOpeningHours openingHours;
     private List<CourtCounterServiceOpeningHours> counterServiceOpeningHours;
 
     @BeforeEach
@@ -71,7 +70,7 @@ class CourtOpeningHoursControllerTest {
             .nameCy("nameCy")
             .build();
 
-        openingHours = List.of(
+        openingHours =
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
@@ -81,22 +80,14 @@ class CourtOpeningHoursControllerTest {
                         .dayOfWeek(DayOfTheWeek.MONDAY)
                         .openingTime(LocalTime.of(9, 0, 0))
                         .closingTime(LocalTime.of(17, 0, 0))
-                        .build()
-                ))
-                .build(),
-            CourtOpeningHours.builder()
-                .id(UUID.randomUUID())
-                .courtId(courtId)
-                .openingHourTypeId(openingHourTypeId)
-                .openingTimesDetails(List.of(
+                        .build(),
                     OpeningTimesDetail.builder()
                         .dayOfWeek(DayOfTheWeek.TUESDAY)
                         .openingTime(LocalTime.of(9, 0, 0))
                         .closingTime(LocalTime.of(17, 0, 0))
                         .build()
                 ))
-                .build()
-        );
+                .build();
 
         counterServiceOpeningHours = List.of(
             CourtCounterServiceOpeningHours.builder()
@@ -118,11 +109,12 @@ class CourtOpeningHoursControllerTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1/opening-hours returns opening hours successfully")
     void getOpeningHoursReturnsSuccessfully() throws Exception {
-        when(courtOpeningHoursService.getOpeningHoursByCourtId(courtId)).thenReturn(openingHours);
+        when(courtOpeningHoursService.getOpeningHoursByCourtId(courtId)).thenReturn(List.of(openingHours));
 
         mockMvc.perform(get("/courts/{courtId}/v1/opening-hours", courtId))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
+            .andExpect(jsonPath("$[0].openingTimesDetails[0].dayOfWeek")
+                           .value(DayOfTheWeek.MONDAY.toString()))
             .andExpect(jsonPath("$[0].openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
@@ -166,7 +158,8 @@ class CourtOpeningHoursControllerTest {
                     courtId,
                     openingHourType.getId()))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
+            .andExpect(jsonPath("$[0].openingTimesDetails[0].dayOfWeek")
+                           .value(DayOfTheWeek.MONDAY.toString()))
             .andExpect(jsonPath("$[0].openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
@@ -245,7 +238,8 @@ class CourtOpeningHoursControllerTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1/opening-hours/counter-service returns 400 for invalid UUID")
     void getCounterServiceOpeningHoursInvalidUUID() throws Exception {
-        mockMvc.perform(get("/courts/{courtId}/v1/opening-hours/counter-service", "invalid-uuid"))
+        mockMvc.perform(
+            get("/courts/{courtId}/v1/opening-hours/counter-service", "invalid-uuid"))
             .andExpect(status().isBadRequest());
     }
 
@@ -253,7 +247,7 @@ class CourtOpeningHoursControllerTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} creates opening hours successfully")
     void setOpeningHoursCreatesSuccessfully() throws Exception {
-        when(courtOpeningHoursService.setOpeningHours(any(UUID.class), any(UUID.class), anyList()))
+        when(courtOpeningHoursService.setOpeningHours(any(UUID.class), any(UUID.class), any()))
             .thenReturn(openingHours);
 
         mockMvc
@@ -262,14 +256,15 @@ class CourtOpeningHoursControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(openingHours)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
+            .andExpect(
+                jsonPath("$[0].openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
             .andExpect(jsonPath("$[0].openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
     @Test
     @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} returns 404 if court does not exist")
     void setOpeningHoursNonExistentCourtReturnsNotFound() throws Exception {
-        when(courtOpeningHoursService.setOpeningHours(any(UUID.class), any(UUID.class), anyList()))
+        when(courtOpeningHoursService.setOpeningHours(any(UUID.class), any(UUID.class), any()))
             .thenThrow(new NotFoundException("Court not found"));
 
         mockMvc

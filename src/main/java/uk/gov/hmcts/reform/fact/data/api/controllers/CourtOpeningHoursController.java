@@ -65,7 +65,7 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID or opening hour type ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    public ResponseEntity<List<CourtOpeningHours>> getOpeningHoursByTypeId(
+    public ResponseEntity<CourtOpeningHours> getOpeningHoursByTypeId(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the opening hours type", required = true)
         @ValidUUID @PathVariable String openingHourTypeId) {
@@ -103,11 +103,11 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID, opening hours type ID, or request body"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    public ResponseEntity<List<CourtOpeningHours>> setOpeningHours(
+    public ResponseEntity<CourtOpeningHours> setOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the opening hours type", required = true)
         @ValidUUID @PathVariable String openingHourTypeId,
-        @UniqueOpeningDays @Valid @RequestBody List<CourtOpeningHours> courtOpeningHours) {
+        @UniqueOpeningDays @Valid @RequestBody CourtOpeningHours courtOpeningHours) {
         return ResponseEntity.ok(
             courtOpeningHoursService.setOpeningHours(
                 UUID.fromString(courtId), UUID.fromString(openingHourTypeId), courtOpeningHours)

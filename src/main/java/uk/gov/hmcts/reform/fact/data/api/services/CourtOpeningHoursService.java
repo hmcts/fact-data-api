@@ -8,6 +8,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCounterServiceOpeningHoursRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtOpeningHoursRepository;
@@ -59,12 +60,11 @@ public class CourtOpeningHoursService {
      * @return The opening hours record.
      * @throws CourtResourceNotFoundException if no opening hours record of this type exists for the court.
      */
-    public List<CourtOpeningHours> getOpeningHoursByTypeId(UUID courtId, UUID openingHourTypeId) {
+    public CourtOpeningHours getOpeningHoursByTypeId(UUID courtId, UUID openingHourTypeId) {
         return courtOpeningHoursRepository
             .findByCourtIdAndOpeningHourTypeId(
                 courtService.getCourtById(courtId).getId(),
                 openingHoursTypeService.getOpeningHourTypeById(openingHourTypeId).getId())
-            .filter(list -> !list.isEmpty())
             .orElseThrow(
                 () -> new CourtResourceNotFoundException(
                 "No opening hour found for court ID: " + courtId + " with type ID: " + openingHourTypeId));
@@ -95,20 +95,17 @@ public class CourtOpeningHoursService {
      * @return The created or updated opening hour entity.
      */
     @Transactional
-    public List<CourtOpeningHours> setOpeningHours(
-        UUID courtId, UUID openingHoursTypeId, List<CourtOpeningHours> courtOpeningHours) {
+    public CourtOpeningHours setOpeningHours(
+        UUID courtId, UUID openingHoursTypeId, CourtOpeningHours courtOpeningHours) {
 
-        List<CourtOpeningHours> hoursToSave = new ArrayList<>(courtOpeningHours);
+        List<OpeningTimesDetail> hoursToSave = new ArrayList<>(courtOpeningHours.getOpeningTimesDetails());
 
         // Check to ensure both options of everyday and specific days are not set together
         // and to ensure everyday takes preference if present.
-        if (hoursToSave
-            .stream()
-            .anyMatch(hour -> hour.getOpeningTimesDetails() != null && hour.getOpeningTimesDetails().stream()
-                .anyMatch(detail -> detail.getDayOfWeek() == DayOfTheWeek.EVERYDAY))) {
-            hoursToSave
-                .removeIf(hour -> hour.getOpeningTimesDetails() == null || hour.getOpeningTimesDetails().stream()
-                    .noneMatch(detail -> detail.getDayOfWeek() == DayOfTheWeek.EVERYDAY));
+        if (hoursToSave.stream()
+            .filter(java.util.Objects::nonNull)
+            .anyMatch(detail -> detail.getDayOfWeek() == DayOfTheWeek.EVERYDAY)) {
+            hoursToSave.removeIf(detail -> detail == null || detail.getDayOfWeek() != DayOfTheWeek.EVERYDAY);
         }
 
         Court foundCourt = courtService.getCourtById(courtId);
@@ -117,14 +114,13 @@ public class CourtOpeningHoursService {
         courtOpeningHoursRepository
             .deleteByCourtIdAndOpeningHourTypeId(foundCourt.getId(), foundOpeningHourType.getId());
 
-        for (CourtOpeningHours hour : hoursToSave) {
-            hour.setCourt(foundCourt);
-            hour.setCourtId(courtId);
-            hour.setOpeningHourType(foundOpeningHourType);
-            hour.setOpeningHourTypeId(openingHoursTypeId);
-        }
+        courtOpeningHours.setOpeningTimesDetails(hoursToSave);
+        courtOpeningHours.setCourt(foundCourt);
+        courtOpeningHours.setCourtId(courtId);
+        courtOpeningHours.setOpeningHourType(foundOpeningHourType);
+        courtOpeningHours.setOpeningHourTypeId(openingHoursTypeId);
 
-        return courtOpeningHoursRepository.saveAll(hoursToSave);
+        return courtOpeningHoursRepository.save(courtOpeningHours);
     }
 
     /**

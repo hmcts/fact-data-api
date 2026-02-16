@@ -99,7 +99,7 @@ class CourtOpeningHoursControllerTest {
 
     @Test
     void getOpeningHoursByTypeIdReturns200() {
-        List<CourtOpeningHours> openingHours = List.of(
+        CourtOpeningHours openingHours =
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(COURT_ID)
@@ -110,8 +110,7 @@ class CourtOpeningHoursControllerTest {
                         .closingTime(LocalTime.of(17, 0))
                         .build()
                 ))
-                .build()
-        );
+                .build();
 
         when(courtOpeningHoursService
                  .getOpeningHoursByTypeId(COURT_ID, OPENING_HOURS_TYPE_ID)).thenReturn(openingHours);
@@ -207,7 +206,7 @@ class CourtOpeningHoursControllerTest {
 
     @Test
     void setOpeningHoursReturns200() {
-        List<CourtOpeningHours> openingHours = List.of(
+        CourtOpeningHours openingHours =
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(COURT_ID)
@@ -216,21 +215,14 @@ class CourtOpeningHoursControllerTest {
                         .dayOfWeek(DayOfTheWeek.MONDAY)
                         .openingTime(LocalTime.of(9, 0))
                         .closingTime(LocalTime.of(17, 0))
-                        .build()
-                ))
-                .build(),
-            CourtOpeningHours.builder()
-                .id(UUID.randomUUID())
-                .courtId(COURT_ID)
-                .openingTimesDetails(List.of(
+                        .build(),
                     OpeningTimesDetail.builder()
                         .dayOfWeek(DayOfTheWeek.TUESDAY)
                         .openingTime(LocalTime.of(9, 0))
                         .closingTime(LocalTime.of(17, 0))
                         .build()
                 ))
-                .build()
-        );
+                .build();
 
         when(courtOpeningHoursService
                  .setOpeningHours(COURT_ID, OPENING_HOURS_TYPE_ID, openingHours)).thenReturn(openingHours);
@@ -244,7 +236,7 @@ class CourtOpeningHoursControllerTest {
 
     @Test
     void setOpeningHoursThrowsIllegalArgumentExceptionForInvalidCourtId() {
-        List<CourtOpeningHours> openingHours = List.of();
+        CourtOpeningHours openingHours = CourtOpeningHours.builder().build();
         assertThrows(
             IllegalArgumentException.class, () ->
                 courtOpeningHoursController.setOpeningHours(
@@ -257,7 +249,7 @@ class CourtOpeningHoursControllerTest {
 
     @Test
     void setOpeningHoursThrowsIllegalArgumentExceptionForInvalidTypeId() {
-        List<CourtOpeningHours> openingHours = List.of();
+        CourtOpeningHours openingHours = CourtOpeningHours.builder().build();
         assertThrows(
             IllegalArgumentException.class, () ->
                 courtOpeningHoursController.setOpeningHours(COURT_ID.toString(), INVALID_UUID, openingHours)
@@ -266,7 +258,7 @@ class CourtOpeningHoursControllerTest {
 
     @Test
     void setOpeningHoursThrowsCourtNotFoundException() {
-        List<CourtOpeningHours> openingHours = List.of();
+        CourtOpeningHours openingHours = CourtOpeningHours.builder().build();
         when(courtOpeningHoursService.setOpeningHours(UNKNOWN_COURT_ID, OPENING_HOURS_TYPE_ID, openingHours))
             .thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
 

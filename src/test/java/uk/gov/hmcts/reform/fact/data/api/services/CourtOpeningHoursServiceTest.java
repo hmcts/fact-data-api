@@ -48,7 +48,7 @@ class CourtOpeningHoursServiceTest {
 
     private UUID courtId;
     private Court court;
-    private List<CourtOpeningHours> openingHours;
+    private CourtOpeningHours openingHours;
     private List<CourtCounterServiceOpeningHours> counterServiceOpeningHours;
     private UUID openingHourTypeId;
     private OpeningHourType openingHourType;
@@ -68,7 +68,7 @@ class CourtOpeningHoursServiceTest {
         court.setId(courtId);
         court.setName("Test Court");
 
-        openingHours = List.of(
+        openingHours =
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
@@ -77,21 +77,14 @@ class CourtOpeningHoursServiceTest {
                         .dayOfWeek(DayOfTheWeek.MONDAY)
                         .openingTime(LocalTime.of(9, 0))
                         .closingTime(LocalTime.of(17, 0))
-                        .build()
-                ))
-                .build(),
-            CourtOpeningHours.builder()
-                .id(UUID.randomUUID())
-                .courtId(courtId)
-                .openingTimesDetails(List.of(
+                        .build(),
                     OpeningTimesDetail.builder()
                         .dayOfWeek(DayOfTheWeek.TUESDAY)
                         .openingTime(LocalTime.of(9, 0))
                         .closingTime(LocalTime.of(17, 0))
                         .build()
                 ))
-                .build()
-        );
+                .build();
 
         counterServiceOpeningHours = List.of(
             CourtCounterServiceOpeningHours.builder()
@@ -113,11 +106,11 @@ class CourtOpeningHoursServiceTest {
     @Test
     void getOpeningHoursByCourtIdReturnsOpeningHoursWhenFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.of(openingHours));
+        when(courtOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.of(List.of(openingHours)));
 
         List<CourtOpeningHours> result = courtOpeningHoursService.getOpeningHoursByCourtId(courtId);
 
-        assertThat(result).isEqualTo(openingHours);
+        assertThat(result).isEqualTo(List.of(openingHours));
     }
 
     @Test
@@ -147,7 +140,7 @@ class CourtOpeningHoursServiceTest {
         when(courtOpeningHoursRepository.findByCourtIdAndOpeningHourTypeId(courtId, openingHourType.getId()))
             .thenReturn(Optional.of(openingHours));
 
-        List<CourtOpeningHours> result = courtOpeningHoursService
+        CourtOpeningHours result = courtOpeningHoursService
             .getOpeningHoursByTypeId(courtId, openingHourType.getId());
 
         assertThat(result).isEqualTo(openingHours);
@@ -224,20 +217,20 @@ class CourtOpeningHoursServiceTest {
     void setOpeningHoursSuccessfullyCreatesNewOpeningHours() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(openingHoursTypeService.getOpeningHourTypeById(openingHourType.getId())).thenReturn(openingHourType);
-        when(courtOpeningHoursRepository.saveAll(any())).thenReturn(openingHours);
+        when(courtOpeningHoursRepository.save(any())).thenReturn(openingHours);
 
-        List<CourtOpeningHours> result = courtOpeningHoursService
+        CourtOpeningHours result = courtOpeningHoursService
             .setOpeningHours(courtId, openingHourType.getId(), openingHours);
 
         assertThat(result).isEqualTo(openingHours);
         verify(courtOpeningHoursRepository).deleteByCourtIdAndOpeningHourTypeId(courtId, openingHourType.getId());
-        verify(courtOpeningHoursRepository).saveAll(openingHours);
+        verify(courtOpeningHoursRepository).save(openingHours);
     }
 
     @Test
     void setOpeningHoursRemovesOtherDaysWhenEverydayPresent() {
 
-        List<CourtOpeningHours> hours = List.of(
+        CourtOpeningHours hours =
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
@@ -247,24 +240,16 @@ class CourtOpeningHoursServiceTest {
                         .dayOfWeek(DayOfTheWeek.MONDAY)
                         .openingTime(LocalTime.of(9, 0))
                         .closingTime(LocalTime.of(17, 0))
-                        .build()
-                ))
-                .build(),
-            CourtOpeningHours.builder()
-                .id(UUID.randomUUID())
-                .courtId(courtId)
-                .openingHourTypeId(openingHourTypeId)
-                .openingTimesDetails(List.of(
+                        .build(),
                     OpeningTimesDetail.builder()
                         .dayOfWeek(DayOfTheWeek.EVERYDAY)
                         .openingTime(LocalTime.of(9, 0))
                         .closingTime(LocalTime.of(17, 0))
                         .build()
                 ))
-                .build()
-        );
+                .build();
 
-        List<CourtOpeningHours> expectedHours = List.of(
+        CourtOpeningHours expectedHours =
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
@@ -276,24 +261,23 @@ class CourtOpeningHoursServiceTest {
                         .closingTime(LocalTime.of(17, 0))
                         .build()
                 ))
-                .build()
-        );
+                .build();
 
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(openingHoursTypeService.getOpeningHourTypeById(openingHourType.getId())).thenReturn(openingHourType);
-        when(courtOpeningHoursRepository.saveAll(any())).thenReturn(expectedHours);
+        when(courtOpeningHoursRepository.save(any())).thenReturn(expectedHours);
 
-        List<CourtOpeningHours> result =
+        CourtOpeningHours result =
             courtOpeningHoursService.setOpeningHours(courtId, openingHourTypeId, hours);
 
         assertThat(result).isEqualTo(expectedHours);
         verify(courtOpeningHoursRepository).deleteByCourtIdAndOpeningHourTypeId(courtId, openingHourType.getId());
-        verify(courtOpeningHoursRepository).saveAll(any());
+        verify(courtOpeningHoursRepository).save(any());
     }
 
     @Test
     void setOpeningHoursSuccessfullyUpdatesExistingOpeningHours() {
-        List<CourtOpeningHours> updatedHours = List.of(
+        CourtOpeningHours updatedHours =
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
@@ -305,19 +289,18 @@ class CourtOpeningHoursServiceTest {
                         .closingTime(LocalTime.of(16, 0))
                         .build()
                 ))
-                .build()
-        );
+                .build();
 
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(openingHoursTypeService.getOpeningHourTypeById(openingHourType.getId())).thenReturn(openingHourType);
-        when(courtOpeningHoursRepository.saveAll(any())).thenReturn(updatedHours);
+        when(courtOpeningHoursRepository.save(any())).thenReturn(updatedHours);
 
-        List<CourtOpeningHours> result = courtOpeningHoursService
+        CourtOpeningHours result = courtOpeningHoursService
             .setOpeningHours(courtId, openingHourType.getId(), updatedHours);
 
         assertThat(result).isEqualTo(updatedHours);
         verify(courtOpeningHoursRepository).deleteByCourtIdAndOpeningHourTypeId(courtId, openingHourType.getId());
-        verify(courtOpeningHoursRepository).saveAll(updatedHours);
+        verify(courtOpeningHoursRepository).save(updatedHours);
     }
 
     @Test
@@ -325,7 +308,8 @@ class CourtOpeningHoursServiceTest {
         when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
 
         assertThrows(NotFoundException.class, () ->
-            courtOpeningHoursService.setOpeningHours(courtId, openingHourType.getId(), List.of())
+            courtOpeningHoursService
+                .setOpeningHours(courtId, openingHourType.getId(), openingHours)
         );
     }
 
@@ -338,7 +322,7 @@ class CourtOpeningHoursServiceTest {
 
         assertThrows(
             NotFoundException.class, () ->
-                courtOpeningHoursService.setOpeningHours(courtId, typeId, List.of())
+                courtOpeningHoursService.setOpeningHours(courtId, typeId, openingHours)
         );
     }
 

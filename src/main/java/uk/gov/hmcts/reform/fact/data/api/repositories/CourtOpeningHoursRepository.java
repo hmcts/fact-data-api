@@ -14,7 +14,7 @@ public interface CourtOpeningHoursRepository extends JpaRepository<CourtOpeningH
 
     Optional<List<CourtOpeningHours>> findByCourtId(UUID courtId);
 
-    Optional<List<CourtOpeningHours>> findByCourtIdAndOpeningHourTypeId(UUID courtId, UUID openingHourTypeId);
+    Optional<CourtOpeningHours> findByCourtIdAndOpeningHourTypeId(UUID courtId, UUID openingHourTypeId);
 
     void deleteByCourtIdAndOpeningHourTypeId(UUID courtId, UUID openingHourId);
 }
