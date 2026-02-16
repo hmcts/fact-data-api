@@ -37,9 +37,8 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court SPOE Get");
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry");
-        assertThat(getResponse.statusCode())
-            .as("Expected 200 OK when retrieving SPOE for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(getResponse, OK);
 
         final List<AreaOfLawSelectionDto> areasOfLaw = mapper.readValue(
             getResponse.asString(),
@@ -89,14 +88,12 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         });
 
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/single-point-of-entry", areasOfLaw);
-        assertThat(putResponse.statusCode())
-            .as("Expected 200 OK when updating SPOE for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(putResponse, OK);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry");
-        assertThat(getResponse.statusCode())
-            .as("Expected 200 OK when retrieving updated SPOE for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(getResponse, OK);
 
         final List<AreaOfLawSelectionDto> updatedAreasOfLaw = mapper.readValue(
             getResponse.asString(),
@@ -174,9 +171,8 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
 
         final Response updateResponse = http.doPut("/courts/" + courtId
                                                        + "/v1/single-point-of-entry", modifiedAreasOfLaw);
-        assertThat(updateResponse.statusCode())
-            .as("Expected 200 OK when updating existing SPOE for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(updateResponse, OK);
 
         final Response finalGetResponse = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry");
         final List<AreaOfLawSelectionDto> finalAreasOfLaw = mapper.readValue(
@@ -231,9 +227,8 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         http.doPut("/courts/" + courtId + "/v1/single-point-of-entry", areasOfLaw);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry");
-        assertThat(getResponse.statusCode())
-            .as("Expected 200 OK when retrieving configured SPOE for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(getResponse, OK);
 
         final List<AreaOfLawSelectionDto> configuredAreasOfLaw = mapper.readValue(
             getResponse.asString(),
@@ -286,9 +281,8 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         areasOfLaw.forEach(area -> area.setSelected(false));
 
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/single-point-of-entry", areasOfLaw);
-        assertThat(putResponse.statusCode())
-            .as("Expected 200 OK when clearing SPOE for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(putResponse, OK);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry");
         final List<AreaOfLawSelectionDto> clearedAreasOfLaw = mapper.readValue(
@@ -331,9 +325,9 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         areasOfLaw.add(duplicateAdoption);
 
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/single-point-of-entry", areasOfLaw);
-        assertThat(putResponse.statusCode())
-            .as("Expected 400 BAD_REQUEST for duplicate area IDs")
-            .isEqualTo(BAD_REQUEST.value());
+
+        AssertionHelper.assertStatus(putResponse, BAD_REQUEST);
+
         assertThat(putResponse.jsonPath().getString("message"))
             .as("Error message should indicate duplicate area of law")
             .contains("Duplicated Area of Law in selection");
@@ -360,9 +354,9 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         areasOfLaw.add(invalidArea);
 
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/single-point-of-entry", areasOfLaw);
-        assertThat(putResponse.statusCode())
-            .as("Expected 400 BAD_REQUEST for invalid area of law")
-            .isEqualTo(BAD_REQUEST.value());
+
+        AssertionHelper.assertStatus(putResponse, BAD_REQUEST);
+
         assertThat(putResponse.jsonPath().getString("message"))
             .as("Error message should indicate invalid area of law")
             .contains("Invalid Area(s) of Law specified in Single Points of Entry configuration");

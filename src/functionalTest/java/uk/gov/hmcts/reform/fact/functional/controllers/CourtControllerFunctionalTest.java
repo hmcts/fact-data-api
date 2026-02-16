@@ -46,18 +46,16 @@ public final class CourtControllerFunctionalTest {
 
         final Response createResponse = http.doPost("/courts/v1", court);
 
-        assertThat(createResponse.statusCode())
-            .as("Expected 201 CREATED when creating court")
-            .isEqualTo(CREATED.value());
+        AssertionHelper.assertStatus(createResponse, CREATED);
+
         final UUID courtId = UUID.fromString(createResponse.jsonPath().getString("id"));
         assertThat(courtId)
             .as("Created court should have a generated ID")
             .isNotNull();
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1");
-        assertThat(getResponse.statusCode())
-            .as("Expected 200 OK when fetching created court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(getResponse, OK);
 
         final CourtDetails fetchedCourt = mapper.readValue(getResponse.getBody().asString(), CourtDetails.class);
         assertThat(fetchedCourt.getName())
@@ -81,9 +79,8 @@ public final class CourtControllerFunctionalTest {
 
         final Response response = http.doPost("/courts/v1", court);
 
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent region %s", court.getRegionId())
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(response, NOT_FOUND);
+
         assertThat(response.jsonPath().getString("message"))
             .as("Error message should indicate region not found")
             .contains("Region not found, ID: " + court.getRegionId());
@@ -98,9 +95,8 @@ public final class CourtControllerFunctionalTest {
 
         final Response response = http.doPost("/courts/v1", court);
 
-        assertThat(response.statusCode())
-            .as("Expected 400 BAD_REQUEST when court name is missing")
-            .isEqualTo(BAD_REQUEST.value());
+        AssertionHelper.assertStatus(response, BAD_REQUEST);
+
         assertThat(response.jsonPath().getString("name"))
             .as("Error message should indicate court name is required")
             .contains("Court name must be specified");
@@ -113,9 +109,8 @@ public final class CourtControllerFunctionalTest {
 
         final Response response = http.doGet("/courts/" + nonExistentCourtId + "/v1");
 
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent court %s", nonExistentCourtId)
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(response, NOT_FOUND);
+
         assertThat(response.jsonPath().getString("message"))
             .as("Error message should indicate court not found")
             .contains("Court not found, ID: " + nonExistentCourtId);
@@ -135,14 +130,12 @@ public final class CourtControllerFunctionalTest {
 
         final Response updateResponse = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
 
-        assertThat(updateResponse.statusCode())
-            .as("Expected 200 OK when updating court %s", courtId)
-            .isEqualTo(OK.value());
+        AssertionHelper.assertStatus(updateResponse, OK);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1");
-        assertThat(getResponse.statusCode())
-            .as("Expected 200 OK when fetching court %s after update", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(getResponse, OK);
+
         final CourtDetails fetchedCourt = mapper.readValue(getResponse.getBody().asString(), CourtDetails.class);
         assertThat(fetchedCourt.getName())
             .as("Court name should be updated")
@@ -169,9 +162,8 @@ public final class CourtControllerFunctionalTest {
 
         final Response response = http.doPut("/courts/" + nonExistentCourtId + "/v1", updatedCourt);
 
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent court %s", nonExistentCourtId)
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(response, NOT_FOUND);
+
         assertThat(response.jsonPath().getString("message"))
             .as("Error message should indicate court not found")
             .contains("Court not found, ID: " + nonExistentCourtId);
@@ -189,9 +181,8 @@ public final class CourtControllerFunctionalTest {
 
         final Response response = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
 
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent region %s", updatedCourt.getRegionId())
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(response, NOT_FOUND);
+
         assertThat(response.jsonPath().getString("message"))
             .as("Error message should indicate region not found")
             .contains("Region not found, ID: " + updatedCourt.getRegionId());
@@ -202,9 +193,8 @@ public final class CourtControllerFunctionalTest {
     void shouldReturnPaginatedStructureWithoutParams() {
         final Response response = http.doGet("/courts/v1");
 
-        assertThat(response.statusCode())
-            .as("Expected 200 OK for GET /courts/v1")
-            .isEqualTo(OK.value());
+        AssertionHelper.assertStatus(response, OK);
+
         assertThat(response.contentType())
             .as("Response content type should be JSON")
             .contains("json");
@@ -238,9 +228,8 @@ public final class CourtControllerFunctionalTest {
         updatedCourt.setOpen(true);
 
         final Response updateResponse = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
-        assertThat(updateResponse.statusCode())
-            .as("Expected 200 OK when updating court %s to open", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(updateResponse, OK);
 
         final Response listResponse = http.doGet(
             "/courts/v1?pageNumber=0&pageSize=200&includeClosed=false"
@@ -293,9 +282,7 @@ public final class CourtControllerFunctionalTest {
 
         final Response response = http.doGet("/courts/all/v1");
 
-        assertThat(response.statusCode())
-            .as("Expected 200 OK for GET /courts/all/v1")
-            .isEqualTo(OK.value());
+        AssertionHelper.assertStatus(response, OK);
 
         final JsonNode courts = mapper.readTree(response.getBody().asString());
         final Optional<JsonNode> matchingCourt = StreamSupport.stream(courts.spliterator(), false)
@@ -317,9 +304,8 @@ public final class CourtControllerFunctionalTest {
 
         final Response response = http.doGet("/courts/all.json");
 
-        assertThat(response.statusCode())
-            .as("Expected 200 OK for GET /courts/all.json")
-            .isEqualTo(OK.value());
+        AssertionHelper.assertStatus(response, OK);
+
         assertThat(response.contentType())
             .as("Response content type should be JSON")
             .contains("application/json");
@@ -374,9 +360,7 @@ public final class CourtControllerFunctionalTest {
 
         final Response response = http.doGet("/courts/slug/" + courtFromIdPath.getSlug() + "/v1");
 
-        assertThat(response.statusCode())
-            .as("Expected 200 OK for GET /courts/slug/{courtSlug}/v1")
-            .isEqualTo(OK.value());
+        AssertionHelper.assertStatus(response, OK);
 
         final CourtDetails fetchedCourt = mapper.readValue(
             response.getBody().asString(),
@@ -401,9 +385,8 @@ public final class CourtControllerFunctionalTest {
 
         final Response response = http.doGet("/courts/slug/" + courtFromIdPath.getSlug() + ".json");
 
-        assertThat(response.statusCode())
-            .as("Expected 200 OK for GET /courts/slug/{courtSlug}.json")
-            .isEqualTo(OK.value());
+        AssertionHelper.assertStatus(response, OK);
+
         assertThat(response.contentType())
             .as("Response content type should be JSON")
             .contains("application/json");
@@ -426,9 +409,8 @@ public final class CourtControllerFunctionalTest {
     void shouldFailToRetrieveNonExistentCourtBySlug() {
         final Response response = http.doGet("/courts/slug/non-existent-court/v1");
 
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent slug")
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(response, NOT_FOUND);
+
         assertThat(response.jsonPath().getString("message"))
             .as("Error message should indicate court not found by slug")
             .contains("Court not found, slug: non-existent-court");

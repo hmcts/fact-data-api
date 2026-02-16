@@ -116,9 +116,8 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
         assertThat(createdInfo.getFaxNumbers()).as("Fax numbers count").hasSize(2);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/professional-information");
-        assertThat(getResponse.statusCode())
-            .as("Expected 200 OK when retrieving professional info for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(getResponse, OK);
 
         final CourtProfessionalInformationDetailsDto retrievedInfo = mapper.readValue(
             getResponse.asString(),
@@ -187,9 +186,8 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
 
         final Response createResponse = http.doPost("/courts/" + courtId + "/v1/professional-information",
                                                      initialDetails);
-        assertThat(createResponse.statusCode())
-            .as("Expected 201 CREATED when creating initial professional info for court %s", courtId)
-            .isEqualTo(CREATED.value());
+
+        AssertionHelper.assertStatus(createResponse, CREATED);
 
         final ProfessionalInformationDto updatedInfo = new ProfessionalInformationDto();
         updatedInfo.setInterviewRooms(true);
@@ -215,14 +213,12 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
 
         final Response updateResponse = http.doPost("/courts/" + courtId + "/v1/professional-information",
                                                      updatedDetails);
-        assertThat(updateResponse.statusCode())
-            .as("Expected 201 CREATED when updating professional info for court %s", courtId)
-            .isEqualTo(CREATED.value());
+
+        AssertionHelper.assertStatus(updateResponse, CREATED);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/professional-information");
-        assertThat(getResponse.statusCode())
-            .as("Expected 200 OK when retrieving updated professional info for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(getResponse, OK);
 
         final CourtProfessionalInformationDetailsDto retrievedInfo = mapper.readValue(
             getResponse.asString(),
@@ -262,9 +258,8 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court No Professional Info");
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/professional-information");
-        assertThat(getResponse.statusCode())
-            .as("Expected 204 NO_CONTENT when no professional info exists for court %s", courtId)
-            .isEqualTo(NO_CONTENT.value());
+
+        AssertionHelper.assertStatus(getResponse, NO_CONTENT);
     }
 
     @Test
@@ -274,9 +269,9 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
 
         final Response getResponse = http.doGet("/courts/" + nonExistentCourtId
                                                     + "/v1/professional-information");
-        assertThat(getResponse.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent court %s", nonExistentCourtId)
-            .isEqualTo(NOT_FOUND.value());
+
+        AssertionHelper.assertStatus(getResponse, NOT_FOUND);
+
         assertThat(getResponse.jsonPath().getString("message"))
             .as("Error message should indicate court not found")
             .contains("Court not found, ID: " + nonExistentCourtId);
@@ -302,9 +297,9 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
         final Response postResponse = http.doPost("/courts/" + nonExistentCourtId
                                                       + "/v1/professional-information",
                                                    professionalInfoDetails);
-        assertThat(postResponse.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent court %s", nonExistentCourtId)
-            .isEqualTo(NOT_FOUND.value());
+
+        AssertionHelper.assertStatus(postResponse, NOT_FOUND);
+
         assertThat(postResponse.jsonPath().getString("message"))
             .as("Error message should indicate court not found")
             .contains("Court not found, ID: " + nonExistentCourtId);

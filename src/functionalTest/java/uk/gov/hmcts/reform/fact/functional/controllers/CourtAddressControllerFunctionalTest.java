@@ -41,9 +41,7 @@ public final class CourtAddressControllerFunctionalTest {
 
         final Response response = http.doGet("/courts/" + courtId + "/v1/address");
 
-        assertThat(response.statusCode())
-            .as("Expected 200 OK for court %s with no addresses", courtId)
-            .isEqualTo(OK.value());
+        AssertionHelper.assertStatus(response, OK);
 
         final List<CourtAddress> addresses = mapper.readValue(
             response.getBody().asString(),
@@ -70,9 +68,7 @@ public final class CourtAddressControllerFunctionalTest {
 
         final Response createResponse = http.doPost("/courts/" + courtId + "/v1/address", address);
 
-        assertThat(createResponse.statusCode())
-            .as("Expected 201 CREATED when creating address for court %s", courtId)
-            .isEqualTo(CREATED.value());
+        AssertionHelper.assertStatus(createResponse, CREATED);
 
         final UUID addressId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
@@ -100,9 +96,7 @@ public final class CourtAddressControllerFunctionalTest {
 
         final Response response = http.doGet("/courts/" + nonExistentCourtId + "/v1/address");
 
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent court %s", nonExistentCourtId)
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(response, NOT_FOUND);
     }
 
     @Test
@@ -119,9 +113,7 @@ public final class CourtAddressControllerFunctionalTest {
 
         final Response createResponse = http.doPost("/courts/" + courtId + "/v1/address", address);
 
-        assertThat(createResponse.statusCode())
-            .as("Expected 201 CREATED when creating address for court %s", courtId)
-            .isEqualTo(CREATED.value());
+        AssertionHelper.assertStatus(createResponse, CREATED);
 
         final UUID addressId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
@@ -152,9 +144,7 @@ public final class CourtAddressControllerFunctionalTest {
 
         final Response response = http.doGet("/courts/" + courtId + "/v1/address/" + nonExistentAddressId);
 
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent address %s", nonExistentAddressId)
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(response, NOT_FOUND);
     }
 
     @Test
@@ -177,9 +167,7 @@ public final class CourtAddressControllerFunctionalTest {
 
         final Response response = http.doPost("/courts/" + courtId + "/v1/address", address);
 
-        assertThat(response.statusCode())
-            .as("Expected 201 CREATED when creating address for court %s", courtId)
-            .isEqualTo(CREATED.value());
+        AssertionHelper.assertStatus(response, CREATED);
 
         final CourtAddress createdAddress = mapper.readValue(
             response.getBody().asString(),
@@ -235,9 +223,7 @@ public final class CourtAddressControllerFunctionalTest {
 
         final Response response = http.doPost("/courts/" + nonExistentCourtId + "/v1/address", address);
 
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent court %s", nonExistentCourtId)
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(response, NOT_FOUND);
     }
 
     @Test
@@ -254,9 +240,7 @@ public final class CourtAddressControllerFunctionalTest {
 
         final Response createResponse = http.doPost("/courts/" + courtId + "/v1/address", originalAddress);
 
-        assertThat(createResponse.statusCode())
-            .as("Expected 201 CREATED when creating address")
-            .isEqualTo(CREATED.value());
+        AssertionHelper.assertStatus(createResponse, CREATED);
 
         final UUID addressId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
@@ -278,9 +262,7 @@ public final class CourtAddressControllerFunctionalTest {
             updatedAddress
         );
 
-        assertThat(updateResponse.statusCode())
-            .as("Expected 200 OK when updating address %s", addressId)
-            .isEqualTo(OK.value());
+        AssertionHelper.assertStatus(updateResponse, OK);
 
         final CourtAddress fetchedAddress = mapper.readValue(
             updateResponse.getBody().asString(),
@@ -337,9 +319,7 @@ public final class CourtAddressControllerFunctionalTest {
             address
         );
 
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent address %s", nonExistentAddressId)
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(response, NOT_FOUND);
     }
 
     @Test
@@ -357,9 +337,7 @@ public final class CourtAddressControllerFunctionalTest {
 
         final Response createResponse = http.doPost("/courts/" + courtId + "/v1/address", address);
 
-        assertThat(createResponse.statusCode())
-            .as("Expected 201 CREATED when creating address")
-            .isEqualTo(CREATED.value());
+        AssertionHelper.assertStatus(createResponse, CREATED);
 
         final UUID addressId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
@@ -367,9 +345,7 @@ public final class CourtAddressControllerFunctionalTest {
 
         final Response deleteResponse = http.doDelete("/courts/" + courtId + "/v1/address/" + addressId);
 
-        assertThat(deleteResponse.statusCode())
-            .as("Expected 204 NO_CONTENT when deleting address %s", addressId)
-            .isEqualTo(NO_CONTENT.value());
+        AssertionHelper.assertStatus(deleteResponse, NO_CONTENT);
 
         final ZonedDateTime timestampAfterDelete = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
         assertThat(timestampAfterDelete)
@@ -385,9 +361,7 @@ public final class CourtAddressControllerFunctionalTest {
 
         final Response response = http.doDelete("/courts/" + courtId + "/v1/address/" + nonExistentAddressId);
 
-        assertThat(response.statusCode())
-            .as("Expected 404 NOT_FOUND for non-existent address %s", nonExistentAddressId)
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(response, NOT_FOUND);
     }
 
     @AfterAll

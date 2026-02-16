@@ -9,9 +9,11 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -46,6 +48,8 @@ public final class CourtAreasOfLawControllerFunctionalTest {
     void shouldSetAdoptionToTrue() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Areas Of Law Adoption");
 
+        final ZonedDateTime timestampBeforeUpdate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+
         final UUID adoptionId = TestDataHelper.getAreaOfLawIdByName(http, "Adoption");
 
         final Response updatePutResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
@@ -64,6 +68,11 @@ public final class CourtAreasOfLawControllerFunctionalTest {
         assertThat(adoptionSelected)
             .as("Adoption area of law should be selected")
             .isTrue();
+
+        final ZonedDateTime timestampAfterUpdate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterUpdate)
+            .as("Court lastUpdatedAt should move forward after areas of law update for court %s", courtId)
+            .isAfter(timestampBeforeUpdate);
     }
 
     @Test
