@@ -6,7 +6,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -208,6 +211,30 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void testHandleInvalidParameterCombinationException() {
+        InvalidParameterCombinationException ex = new InvalidParameterCombinationException(TEST_MESSAGE);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/search/courts/v1/postcode");
+
+        ExceptionResponse response = handler.handle(ex, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleInvalidParameterCombinationExceptionWithNullRequest() {
+        InvalidParameterCombinationException ex = new InvalidParameterCombinationException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex, null);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
     void testHandleMultipartExceptionWithProvidedContentType() {
         MultipartException ex = new MultipartException("Missing multipart boundary");
         HttpServletRequest request = mock(HttpServletRequest.class);
@@ -246,6 +273,29 @@ class GlobalExceptionHandlerTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleDuplicatedListItemException() {
+        DuplicatedListItemException ex = new DuplicatedListItemException("Duplicated list item");
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).contains("Duplicated list item");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleInvalidAreaOfLawTypeException() {
+        InvalidAreaOfLawException ex =
+            new InvalidAreaOfLawException("Invalid area of Law: Probate");
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).contains("Invalid area of Law: Probate");
         assertThat(response.getTimestamp()).isNotNull();
     }
 

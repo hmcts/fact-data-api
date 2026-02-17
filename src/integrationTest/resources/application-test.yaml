@@ -13,6 +13,12 @@ spring:
     exclude:
       - com.azure.spring.cloud.autoconfigure.implementation.context.AzureTokenCredentialAutoConfiguration
 
+user:
+  retention-period: 365
+
+courtLock:
+  timeout-minutes: 60
+
 os:
   url: https://api.os.uk
   key: a-key

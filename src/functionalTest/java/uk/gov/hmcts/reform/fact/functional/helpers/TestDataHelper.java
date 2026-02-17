@@ -1,8 +1,16 @@
 package uk.gov.hmcts.reform.fact.functional.helpers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.restassured.response.Response;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
+import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
+import uk.gov.hmcts.reform.fact.data.api.os.OsData;
+import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.util.List;
@@ -11,11 +19,16 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
 
 /**
  * Helper methods for fetching test data via API endpoints.
  */
 public final class TestDataHelper {
+
+    private static final ObjectMapper mapper = new ObjectMapper()
+        .registerModule(new JavaTimeModule())
+        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private TestDataHelper() {
         // Utility class
@@ -27,7 +40,7 @@ public final class TestDataHelper {
      * @param http the HTTP client
      * @return the region ID as a string
      */
-    public static String getRegionId(final HttpClient http) {
+    public static String fetchFirstRegionId(final HttpClient http) {
         final Response response = http.doGet("/types/v1/regions");
         return response.jsonPath().getString("[0].id");
     }
@@ -46,6 +59,28 @@ public final class TestDataHelper {
     }
 
     /**
+     * Creates a test user with the given email prefix.
+     *
+     * @param http the HTTP client
+     * @param emailPrefix the email prefix for the test user
+     * @return the created user's UUID
+     */
+    public static UUID createUser(final HttpClient http, final String emailPrefix) {
+        final User user = User.builder()
+            .email(emailPrefix + "." + System.currentTimeMillis() + "@justice.gov.uk")
+            .ssoId(UUID.randomUUID())
+            .build();
+
+        final Response createResponse = http.doPost("/user/v1", user);
+
+        assertThat(createResponse.statusCode())
+            .as("Expected 201 CREATED when creating user")
+            .isEqualTo(CREATED.value());
+
+        return UUID.fromString(createResponse.jsonPath().getString("id"));
+    }
+
+    /**
      * Creates a test court with the given name.
      *
      * @param http the HTTP client
@@ -55,7 +90,7 @@ public final class TestDataHelper {
     public static UUID createCourt(final HttpClient http, final String courtName) {
         final Court court = new Court();
         court.setName(courtName);
-        court.setRegionId(UUID.fromString(getRegionId(http)));
+        court.setRegionId(UUID.fromString(fetchFirstRegionId(http)));
         court.setIsServiceCentre(true);
 
         final Response createResponse = http.doPost("/courts/v1", court);
@@ -122,5 +157,58 @@ public final class TestDataHelper {
         courtAreasOfLaw.setCourtId(courtId);
         courtAreasOfLaw.setAreasOfLaw(areasOfLaw);
         return courtAreasOfLaw;
+    }
+
+    /**
+     * Creates a court lock for a specific page.
+     *
+     * @param http the HTTP client
+     * @param courtId the court ID
+     * @param page the page to lock
+     * @param userId the user ID
+     * @return the created court lock
+     */
+    public static CourtLock createCourtLock(final HttpClient http, final UUID courtId,
+                                            final Page page, final UUID userId) throws Exception {
+        final Response response = http.doPost(
+            "/courts/" + courtId + "/v1/locks/" + page,
+            mapper.writeValueAsString(userId)
+        );
+
+        assertThat(response.statusCode())
+            .as("Expected 201 CREATED when creating lock for court %s page %s", courtId, page)
+            .isEqualTo(CREATED.value());
+
+        return mapper.readValue(response.getBody().asString(), CourtLock.class);
+    }
+
+    /**
+     * Fetches OS address data for a given postcode.
+     *
+     * @param http the HTTP client
+     * @param postcode the postcode to search for
+     * @return the OS data containing address results
+     * @throws Exception if the API call or JSON parsing fails
+     */
+    public static OsData fetchOsDataForPostcode(final HttpClient http, final String postcode) throws Exception {
+        final Response response = http.doGet("/search/address/v1/postcode/" + postcode);
+
+        assertThat(response.statusCode())
+            .as("Expected 200 OK when fetching OS data for postcode %s", postcode)
+            .isEqualTo(OK.value());
+
+        return mapper.readValue(response.getBody().asString(), OsData.class);
+    }
+
+    /**
+     * Fetches the first Delivery Point Address (DPA) for a given postcode from the OS API.
+     *
+     * @param http the HTTP client
+     * @param postcode the postcode to search for
+     * @return the first DPA result for the postcode
+     * @throws Exception if the API call or JSON parsing fails
+     */
+    public static OsDpa fetchFirstDpaForPostcode(final HttpClient http, final String postcode) throws Exception {
+        return fetchOsDataForPostcode(http, postcode).getResults().getFirst().getDpa();
     }
 }

@@ -11,9 +11,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
+import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,9 +42,7 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/local-authorities");
 
-        assertThat(getResponse.statusCode())
-            .as("Expected 204 when no local authorities exist for court %s", courtId)
-            .isEqualTo(NO_CONTENT.value());
+        AssertionHelper.assertStatus(getResponse, NO_CONTENT);
     }
 
     @Test
@@ -52,9 +52,8 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
 
         final Response getResponse = http.doGet("/courts/" + nonExistentCourtId + "/v1/local-authorities");
 
-        assertThat(getResponse.statusCode())
-            .as("Expected 404 for non-existent court %s", nonExistentCourtId)
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(getResponse, NOT_FOUND);
+
         assertThat(getResponse.jsonPath().getString("message"))
             .as("Error message should mention the missing court ID")
             .contains("Court not found, ID: " + nonExistentCourtId);
@@ -75,14 +74,12 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
                                                             .buildCourtAreasOfLaw(courtId, List
                                                                 .of(adoptionId, childrenId, civilPartnershipId,
                                                                     divorceId)));
-        assertThat(enableAreasResponse.statusCode())
-            .as("Expected areas of law to be enabled for court %s", courtId)
-            .isEqualTo(CREATED.value());
+
+        AssertionHelper.assertStatus(enableAreasResponse, CREATED);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/local-authorities");
-        assertThat(getResponse.statusCode())
-            .as("Expected local authorities to be returned for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(getResponse, OK);
 
         final List<CourtLocalAuthorityDto> localAuthorities = mapper.readValue(
             getResponse.asString(),
@@ -111,14 +108,12 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
                                                         TestDataHelper.buildCourtAreasOfLaw(courtId,
                                                             List.of(adoptionId, childrenId,
                                                                     civilPartnershipId, divorceId)));
-        assertThat(enableAreasResponse.statusCode())
-            .as("Expected areas of law to be enabled for court %s", courtId)
-            .isEqualTo(CREATED.value());
+
+        AssertionHelper.assertStatus(enableAreasResponse, CREATED);
 
         final Response initialGetResponse = http.doGet("/courts/" + courtId + "/v1/local-authorities");
-        assertThat(initialGetResponse.statusCode())
-            .as("Expected local authorities to be returned for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(initialGetResponse, OK);
 
         final List<CourtLocalAuthorityDto> initialAuthorities = mapper.readValue(
             initialGetResponse.asString(),
@@ -127,6 +122,8 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
 
         final UUID firstLocalAuthorityId = initialAuthorities.get(0)
             .getLocalAuthorities().get(0).getId();
+
+        final ZonedDateTime timestampBeforeUpdate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
         final List<CourtLocalAuthorityDto> updates = List.of(
             buildCourtLocalAuthorityUpdate(adoptionId, List.of(buildLocalAuthoritySelection(
@@ -137,14 +134,12 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
         );
 
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/local-authorities", updates);
-        assertThat(putResponse.statusCode())
-            .as("Expected local authorities to be updated for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(putResponse, OK);
 
         final Response updatedGetResponse = http.doGet("/courts/" + courtId + "/v1/local-authorities");
-        assertThat(updatedGetResponse.statusCode())
-            .as("Expected updated local authorities for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(updatedGetResponse, OK);
 
         final List<CourtLocalAuthorityDto> updatedAuthorities = mapper.readValue(
             updatedGetResponse.asString(),
@@ -166,6 +161,11 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
                     .as("Selected local authority should remain selected after update")
                     .isEqualTo(true);
             });
+
+        final ZonedDateTime timestampAfterUpdate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterUpdate)
+            .as("Court lastUpdatedAt should move forward after local authorities update for court %s", courtId)
+            .isAfter(timestampBeforeUpdate);
     }
 
     @Test
@@ -177,9 +177,8 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
         final Response putResponse = http.doPut("/courts/" + nonExistentCourtId
                                                     + "/v1/local-authorities", putBody);
 
-        assertThat(putResponse.statusCode())
-            .as("Expected 404 for non-existent court %s", nonExistentCourtId)
-            .isEqualTo(NOT_FOUND.value());
+        AssertionHelper.assertStatus(putResponse, NOT_FOUND);
+
         assertThat(putResponse.jsonPath().getString("message"))
             .as("Error message should mention the missing court ID")
             .contains("Court not found, ID: " + nonExistentCourtId);
@@ -193,9 +192,7 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
 
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/local-authorities", putBody);
 
-        assertThat(putResponse.statusCode())
-            .as("Expected 204 when no areas of law exist for court %s", courtId)
-            .isEqualTo(NO_CONTENT.value());
+        AssertionHelper.assertStatus(putResponse, NO_CONTENT);
     }
 
     @Test
@@ -212,14 +209,12 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
                                                         TestDataHelper.buildCourtAreasOfLaw(courtId,
                                                             List.of(adoptionId, childrenId,
                                                                     civilPartnershipId, divorceId)));
-        assertThat(enableAreasResponse.statusCode())
-            .as("Expected areas of law to be enabled for court %s", courtId)
-            .isEqualTo(CREATED.value());
+
+        AssertionHelper.assertStatus(enableAreasResponse, CREATED);
 
         final Response initialGetResponse = http.doGet("/courts/" + courtId + "/v1/local-authorities");
-        assertThat(initialGetResponse.statusCode())
-            .as("Expected local authorities to be returned for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(initialGetResponse, OK);
 
         final List<CourtLocalAuthorityDto> initialAuthorities = mapper.readValue(
             initialGetResponse.asString(),
@@ -241,9 +236,8 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
 
         final Response firstPutResponse = http.doPut("/courts/" + courtId
                                                          + "/v1/local-authorities", firstUpdates);
-        assertThat(firstPutResponse.statusCode())
-            .as("Expected first local authority update to succeed for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(firstPutResponse, OK);
 
         final List<CourtLocalAuthorityDto> secondUpdates = List.of(
             buildCourtLocalAuthorityUpdate(adoptionId, List.of(buildLocalAuthoritySelection(
@@ -255,14 +249,12 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
 
         final Response secondPutResponse = http.doPut("/courts/" + courtId
                                                           + "/v1/local-authorities", secondUpdates);
-        assertThat(secondPutResponse.statusCode())
-            .as("Expected second local authority update to succeed for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(secondPutResponse, OK);
 
         final Response updatedGetResponse = http.doGet("/courts/" + courtId + "/v1/local-authorities");
-        assertThat(updatedGetResponse.statusCode())
-            .as("Expected updated local authorities for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(updatedGetResponse, OK);
 
         final List<CourtLocalAuthorityDto> updatedAuthorities = mapper.readValue(
             updatedGetResponse.asString(),
@@ -306,14 +298,12 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
                                                         TestDataHelper.buildCourtAreasOfLaw(courtId,
                                                             List.of(adoptionId, childrenId,
                                                                     civilPartnershipId, divorceId)));
-        assertThat(enableAreasResponse.statusCode())
-            .as("Expected areas of law to be enabled for court %s", courtId)
-            .isEqualTo(CREATED.value());
+
+        AssertionHelper.assertStatus(enableAreasResponse, CREATED);
 
         final Response initialGetResponse = http.doGet("/courts/" + courtId + "/v1/local-authorities");
-        assertThat(initialGetResponse.statusCode())
-            .as("Expected local authorities to be returned for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(initialGetResponse, OK);
 
         final List<CourtLocalAuthorityDto> initialAuthorities = mapper.readValue(
             initialGetResponse.asString(),
@@ -333,9 +323,8 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
 
         final Response firstPutResponse = http.doPut("/courts/" + courtId
                                                          + "/v1/local-authorities", firstUpdates);
-        assertThat(firstPutResponse.statusCode())
-            .as("Expected initial local authority selection to succeed for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(firstPutResponse, OK);
 
         final List<CourtLocalAuthorityDto> clearUpdates = List.of(
             buildCourtLocalAuthorityUpdate(adoptionId, List.of()),
@@ -346,14 +335,12 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
 
         final Response clearPutResponse = http.doPut("/courts/" + courtId
                                                          + "/v1/local-authorities", clearUpdates);
-        assertThat(clearPutResponse.statusCode())
-            .as("Expected local authority selections to be cleared for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(clearPutResponse, OK);
 
         final Response updatedGetResponse = http.doGet("/courts/" + courtId + "/v1/local-authorities");
-        assertThat(updatedGetResponse.statusCode())
-            .as("Expected updated local authorities for court %s", courtId)
-            .isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(updatedGetResponse, OK);
 
         final List<CourtLocalAuthorityDto> updatedAuthorities = mapper.readValue(
             updatedGetResponse.asString(),
@@ -383,9 +370,8 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
                                                         TestDataHelper.buildCourtAreasOfLaw(courtId,
                                                             List.of(adoptionId, childrenId,
                                                                     civilPartnershipId, divorceId)));
-        assertThat(enableAreasResponse.statusCode())
-            .as("Expected areas of law to be enabled for court %s", courtId)
-            .isEqualTo(CREATED.value());
+
+        AssertionHelper.assertStatus(enableAreasResponse, CREATED);
 
         final List<CourtLocalAuthorityDto> updates = List.of(
             buildCourtLocalAuthorityUpdate(adoptionId, List.of()),
@@ -396,9 +382,8 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/local-authorities",
                                                 updates);
 
-        assertThat(putResponse.statusCode())
-            .as("Expected 400 when missing updates for a required area of law")
-            .isEqualTo(BAD_REQUEST.value());
+        AssertionHelper.assertStatus(putResponse, BAD_REQUEST);
+
         assertThat(putResponse.jsonPath().getString("message"))
             .as("Error message should mention missing area updates")
             .contains("Missing update for area of law");

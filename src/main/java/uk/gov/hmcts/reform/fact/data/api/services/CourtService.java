@@ -1,27 +1,29 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
+import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.Region;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
-
-import java.util.List;
-import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class CourtService {
 
     private final CourtRepository courtRepository;
+    private final CourtDetailsRepository courtDetailsRepository;
     private final RegionService regionService;
-
-    public CourtService(CourtRepository courtRepository, RegionService regionService) {
-        this.courtRepository = courtRepository;
-        this.regionService = regionService;
-    }
 
     /**
      * Get a court by id.
@@ -33,15 +35,26 @@ public class CourtService {
     public Court getCourtById(UUID courtId) {
         return courtRepository.findById(courtId)
             .orElseThrow(() -> new NotFoundException("Court not found, ID: " + courtId)
-        );
+            );
+    }
+
+    /**
+     * Get multiple courts by their IDs.
+     *
+     * @param courtIds List of court IDs to retrieve.
+     * @return List of courts matching the provided IDs.
+     * @throws NotFoundException if a court is not found.
+     */
+    public List<Court> getAllCourtsByIds(List<UUID> courtIds) {
+        return courtRepository.findAllById(courtIds);
     }
 
     /**
      * Get a paginated list of courts with optional filters.
      *
-     * @param pageable The pagination information.
-     * @param includeClosed Whether to include closed courts.
-     * @param regionId The region ID to filter by.
+     * @param pageable         The pagination information.
+     * @param includeClosed    Whether to include closed courts.
+     * @param regionId         The region ID to filter by.
      * @param partialCourtName A partial court name to filter by.
      * @return A paginated list of courts.
      */
@@ -70,7 +83,7 @@ public class CourtService {
      */
     public Court createCourt(Court court) {
         Region foundRegion = regionService.getRegionById(court.getRegionId());
-        court.setRegion(foundRegion);
+        court.setRegionId(foundRegion.getId());
         court.setSlug(toUniqueSlug(court.getName()));
 
         // A court is closed on creation until an address is added.
@@ -83,7 +96,7 @@ public class CourtService {
      * Updates an existing court.
      *
      * @param courtId The id of the court to update.
-     * @param court The court entity with updated values.
+     * @param court   The court entity with updated values.
      * @return The updated court.
      * @throws NotFoundException if the court is not found.
      */
@@ -97,11 +110,34 @@ public class CourtService {
         }
 
         existingCourt.setOpen(court.getOpen());
-        existingCourt.setRegion(foundRegion);
         existingCourt.setRegionId(foundRegion.getId());
         existingCourt.setWarningNotice(court.getWarningNotice());
 
         return courtRepository.save(existingCourt);
+    }
+
+    /**
+     * Return a list of courts based on a provided prefix.
+     *
+     * @param prefix The prefix.
+     * @return A list of courts based on the provided prefix.
+     */
+    public List<Court> getCourtsByPrefixAndActiveSearch(String prefix) {
+        return new ArrayList<>(courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(
+            prefix,
+            true
+        ));
+    }
+
+    /**
+     * Search courts by a provided string query. Matches currently if the string
+     * matches in part an address or court name.
+     *
+     * @param query The query to search by.
+     * @return One or more courts that match.
+     */
+    public List<Court> searchOpenCourtsByNameOrAddress(String query) {
+        return courtRepository.searchOpenByNameOrAddress(query.trim());
     }
 
     /**
@@ -122,6 +158,46 @@ public class CourtService {
         return courtsToDelete.size();
     }
 
+
+    // -- Court Details --
+
+    /**
+     * Get a court details by id.
+     *
+     * @param courtId The ID of the court details to get.
+     * @return The court details entity.
+     * @throws NotFoundException if the court details is not found.
+     */
+    public CourtDetails getCourtDetailsById(UUID courtId) {
+        return courtDetailsRepository.findById(courtId)
+            .orElseThrow(() -> new NotFoundException("Court not found, ID: " + courtId)
+            );
+    }
+
+    /**
+     * Get court details by slug.
+     *
+     * @param courtSlug The slug of the court details to get.
+     * @return The court details entity.
+     * @throws NotFoundException if the court details is not found.
+     */
+    public CourtDetails getCourtDetailsBySlug(String courtSlug) {
+        return courtDetailsRepository.findBySlug(courtSlug)
+            .orElseThrow(() -> new NotFoundException("Court not found, slug: " + courtSlug)
+        );
+    }
+
+    /**
+     * Get all court details.
+     *
+     * @return The list of court details entities.
+     */
+    public List<CourtDetails> getAllCourtDetails() {
+        return courtDetailsRepository.findAll();
+    }
+
+    // -- Utilities --
+
     /**
      * Converts a court name to a unique slug.
      *
@@ -129,10 +205,7 @@ public class CourtService {
      * @return A unique slug.
      */
     private String toUniqueSlug(String name) {
-        String baseSlug = name.toLowerCase()
-            .replaceAll("[^a-z\\s-]", "")
-            .replaceAll("[\\s-]+", "-")
-            .replaceAll("(^-)|(-$)", "");
+        String baseSlug = toSlugFormat(name);
 
         String slug = baseSlug;
         int counter = 1;
@@ -142,5 +215,21 @@ public class CourtService {
         }
 
         return slug;
+    }
+
+    /**
+     * Util method to convert Court name to slug format.
+     *
+     * <p>
+     * Further checks need to be made to ensure the value is unique before assigning to a court entity.
+     *
+     * @param name the court name
+     * @return the slug representation of the name
+     */
+    public String toSlugFormat(String name) {
+        return name.toLowerCase()
+            .replaceAll("[^a-z\\s-]", "")
+            .replaceAll("[\\s-]+", "-")
+            .replaceAll("(^-)|(-$)", "");
     }
 }

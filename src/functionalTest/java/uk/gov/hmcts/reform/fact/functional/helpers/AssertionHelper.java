@@ -2,7 +2,9 @@ package uk.gov.hmcts.reform.fact.functional.helpers;
 
 import io.restassured.response.Response;
 import org.springframework.http.HttpStatus;
+import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,6 +16,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class AssertionHelper {
 
     private AssertionHelper() {
+        // Utility class
+    }
+
+    /**
+     * Asserts that a response has the expected HTTP status.
+     *
+     * @param response the response to validate
+     * @param expectedStatus the expected HTTP status
+     */
+    public static void assertStatus(final Response response, final HttpStatus expectedStatus) {
+        assertThat(response.statusCode())
+            .as("Response should have status %d %s", expectedStatus.value(), expectedStatus.name())
+            .isEqualTo(expectedStatus.value());
     }
 
     /**
@@ -49,5 +64,20 @@ public final class AssertionHelper {
         assertPaginatedResponseValid(response);
         final List<UUID> courtIds = extractCourtIdsFromResponse(response);
         assertThat(courtIds).contains(expectedCourtId);
+    }
+
+    /**
+     * Fetches the lastUpdatedAt timestamp for a court.
+     *
+     * @param http the HTTP client
+     * @param courtId the court ID
+     * @return the court's lastUpdatedAt timestamp
+     */
+    public static ZonedDateTime getCourtLastUpdatedAt(final HttpClient http, final UUID courtId) {
+        final Response response = http.doGet("/courts/" + courtId + "/v1");
+        assertThat(response.statusCode())
+            .as("Expected 200 OK when fetching court %s for timestamp", courtId)
+            .isEqualTo(HttpStatus.OK.value());
+        return ZonedDateTime.parse(response.jsonPath().getString("lastUpdatedAt"));
     }
 }
