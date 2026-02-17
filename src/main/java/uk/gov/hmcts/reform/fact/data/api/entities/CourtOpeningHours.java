@@ -4,9 +4,14 @@ import java.time.LocalTime;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,22 +19,26 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidTimeOrder;
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "court_opening_times")
-public class CourtOpeningTime {
+@ValidTimeOrder(start = "openingHour", end = "closingHour")
+@JsonView(CourtDetailsView.class)
+@Table(name = "court_opening_hours")
+public class CourtOpeningHours {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
@@ -59,11 +68,21 @@ public class CourtOpeningTime {
     @JoinColumn(name = "opening_hour_type", insertable = false, updatable = false)
     private OpeningHourType openingHourType;
 
-    @Schema(description = "Day of week (0-6)")
+    @Transient
+    @JsonIgnore
+    private OpeningHourType openingHourTypeDetails;
+
+    @JsonView(CourtDetailsView.class)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("openingHourType")
+    public OpeningHourType getOpeningHourTypeForView() {
+        return openingHourTypeDetails;
+    }
+
+    @Schema(description = "Day of the week or every day.")
     @NotNull
-    @Max(value = 6)
-    @Min(value = 0)
-    private Integer dayOfWeek;
+    @Enumerated(EnumType.STRING)
+    private DayOfTheWeek dayOfWeek;
 
     @Schema(description = "Opening hour")
     @NotNull
@@ -72,5 +91,4 @@ public class CourtOpeningTime {
     @Schema(description = "Closing hour")
     @NotNull
     private LocalTime closingHour;
-
 }

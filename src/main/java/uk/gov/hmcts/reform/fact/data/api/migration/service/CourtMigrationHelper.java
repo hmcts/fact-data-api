@@ -3,8 +3,10 @@ package uk.gov.hmcts.reform.fact.data.api.migration.service;
 import jakarta.validation.ConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -46,9 +48,11 @@ import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMapping
 class CourtMigrationHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(CourtMigrationHelper.class);
-    private static final Pattern COURT_NAME_PATTERN = Pattern.compile("^[A-Za-z&'(),\\- ]+$");
+    private static final Pattern COURT_NAME_PATTERN = Pattern.compile("^[A-Za-z&'()\\- ]+$");
     private static final Pattern GENERIC_DESCRIPTION_PATTERN =
         Pattern.compile(ValidationConstants.GENERIC_DESCRIPTION_REGEX);
+    private static final Pattern INVALID_GENERIC_DESCRIPTION_CHARACTERS =
+        Pattern.compile("[^A-Za-z0-9 ()':,-]+");
 
     private final RegionRepository regionRepository;
     private final CourtServiceAreasRepository courtServiceAreasRepository;
@@ -104,8 +108,8 @@ class CourtMigrationHelper {
 
         int total = 0;
         for (CourtDto dto : courts) {
-            UUID regionId = resolveRegionId(dto, context);
-            if (regionId == null) {
+            Optional<UUID> regionId = resolveRegionId(dto, context);
+            if (regionId.isEmpty()) {
                 LOG.warn("Skipping court {} because region {} was not migrated", dto.getSlug(), dto.getRegionId());
                 continue;
             }
@@ -128,7 +132,7 @@ class CourtMigrationHelper {
                 .name(courtName)
                 .slug(dto.getSlug())
                 .open(dto.getOpen())
-                .regionId(regionId)
+                .regionId(regionId.get())
                 .isServiceCentre(dto.getIsServiceCentre())
                 .build();
 
@@ -171,11 +175,12 @@ class CourtMigrationHelper {
         }
 
         for (CourtServiceAreaDto dto : serviceAreas) {
-            CourtServiceAreas entity = CourtServiceAreas.builder()
+            CourtServiceAreas.CourtServiceAreasBuilder entityBuilder = CourtServiceAreas.builder()
                 .courtId(courtId)
                 .serviceAreaId(mapIds(dto.getServiceAreaIds(), context.getServiceAreaIds(), "court service area"))
-                .catchmentType(parseCatchmentType(dto.getCatchmentType()))
-                .build();
+                ;
+            parseCatchmentType(dto.getCatchmentType()).ifPresent(entityBuilder::catchmentType);
+            CourtServiceAreas entity = entityBuilder.build();
             courtServiceAreasRepository.save(entity);
             context.courtServiceAreasMigrated++;
         }
@@ -261,12 +266,11 @@ class CourtMigrationHelper {
                 continue;
             }
 
-            List<UUID> localAuthorityIds = mapIds(
+            List<UUID> localAuthorityIds = mapLocalAuthorityIds(
                 dto.getLocalAuthorityIds(),
-                context.getLocalAuthorityTypeIds(),
-                "court local authorities"
+                context.getLocalAuthorityTypeIds()
             );
-            if (localAuthorityIds == null) {
+            if (localAuthorityIds.isEmpty()) {
                 LOG.warn(
                     "Skipping court local authority for court '{}' because local authority ids could not be mapped",
                     courtId
@@ -351,35 +355,61 @@ class CourtMigrationHelper {
         }
 
         for (CourtDxCodeDto dto : dtos) {
-            if (StringUtils.isBlank(dto.getDxCode()) && StringUtils.isBlank(dto.getExplanation())) {
+            Optional<String> dxCode = sanitiseGenericDescription(dto.getDxCode());
+            Optional<String> explanation = sanitiseGenericDescription(dto.getExplanation());
+
+            if (dxCode.isEmpty() && explanation.isEmpty()) {
                 LOG.debug(
                     "Skipping DX code for court '{}' because both code and explanation are blank",
                     courtId
                 );
                 continue;
             }
-            if (StringUtils.length(dto.getDxCode()) > 200) {
+            if (dxCode.isEmpty()) {
+                LOG.warn(
+                    "Skipping DX code for court '{}' because dx_code is blank after sanitisation",
+                    courtId
+                );
+                continue;
+            }
+            if (StringUtils.length(dxCode.get()) > 200) {
                 LOG.warn(
                     "Skipping DX code '{}' for court '{}' because it exceeds 200 characters",
-                    dto.getDxCode(),
+                    dxCode.get(),
                     courtId
                 );
                 continue;
             }
-            if (StringUtils.isNotBlank(dto.getDxCode())
-                && !GENERIC_DESCRIPTION_PATTERN.matcher(dto.getDxCode()).matches()) {
+            if (!GENERIC_DESCRIPTION_PATTERN.matcher(dxCode.get()).matches()) {
                 LOG.warn(
                     "Skipping DX code '{}' for court '{}' due to invalid characters",
-                    dto.getDxCode(),
+                    dxCode.get(),
                     courtId
                 );
                 continue;
             }
-            CourtDxCode entity = CourtDxCode.builder()
+            if (explanation.map(value -> StringUtils.length(value) > 250).orElse(false)) {
+                LOG.warn(
+                    "Skipping DX code '{}' for court '{}' because explanation exceeds 250 characters",
+                    dxCode.get(),
+                    courtId
+                );
+                continue;
+            }
+            if (explanation.isPresent()
+                && !GENERIC_DESCRIPTION_PATTERN.matcher(explanation.get()).matches()) {
+                LOG.warn(
+                    "Skipping DX code '{}' for court '{}' because explanation has invalid characters",
+                    dxCode.get(),
+                    courtId
+                );
+                continue;
+            }
+            CourtDxCode.CourtDxCodeBuilder entityBuilder = CourtDxCode.builder()
                 .courtId(courtId)
-                .dxCode(dto.getDxCode())
-                .explanation(dto.getExplanation())
-                .build();
+                .dxCode(dxCode.get());
+            explanation.ifPresent(entityBuilder::explanation);
+            CourtDxCode entity = entityBuilder.build();
             courtDxCodeRepository.save(entity);
             context.courtDxCodesMigrated++;
         }
@@ -428,64 +458,63 @@ class CourtMigrationHelper {
      *
      * @param dto legacy court payload.
      * @param context migration context containing mapped region IDs.
-     * @return mapped region ID or {@code null} when the court should be skipped.
+     * @return mapped region ID, or empty when the court should be skipped.
      */
-    private UUID resolveRegionId(CourtDto dto, MigrationContext context) {
+    private Optional<UUID> resolveRegionId(CourtDto dto, MigrationContext context) {
         UUID regionId = dto.getRegionId() == null ? null : context.getRegionIds().get(dto.getRegionId());
         if (regionId != null) {
-            return regionId;
+            return Optional.of(regionId);
         }
         if (!Boolean.TRUE.equals(dto.getIsServiceCentre())) {
-            return null;
+            return Optional.empty();
         }
         UUID fallback = context.getServiceCentreRegionId();
         if (fallback == null) {
-            fallback = loadServiceCentreRegionId();
-            context.setServiceCentreRegionId(fallback);
-            if (fallback == null) {
+            Optional<UUID> loadedFallback = loadServiceCentreRegionId();
+            if (loadedFallback.isEmpty()) {
                 LOG.warn(
                     "Unable to assign region for service centre '{}' because the fallback region was not found",
                     dto.getSlug()
                 );
-                return null;
+                return Optional.empty();
             }
+            fallback = loadedFallback.get();
+            context.setServiceCentreRegionId(fallback);
         }
-        return fallback;
+        return Optional.of(fallback);
     }
 
     /**
-     * Loads the fallback region for service centres. Returns {@code null} if the region is not
-     * present (the caller logs the warning).
+     * Loads the fallback region for service centres.
      *
-     * @return identifier of the service-centre region or {@code null}.
+     * @return identifier of the service-centre region when present.
      */
-    private UUID loadServiceCentreRegionId() {
+    private Optional<UUID> loadServiceCentreRegionId() {
         return regionRepository.findByNameAndCountry("Service Centre", "England")
-            .map(uk.gov.hmcts.reform.fact.data.api.entities.Region::getId)
-            .orElse(null);
+            .map(uk.gov.hmcts.reform.fact.data.api.entities.Region::getId);
     }
 
     /**
      * Normalises the catchment type value coming from the legacy service area payload.
      *
      * @param value legacy catchment text.
-     * @return parsed {@link CatchmentType} or {@code null} if the value is blank/unknown.
+     * @return parsed {@link CatchmentType}, or empty if the value is blank/unknown.
      */
-    private static CatchmentType parseCatchmentType(String value) {
+    private static Optional<CatchmentType> parseCatchmentType(String value) {
         if (StringUtils.isBlank(value)) {
-            return null;
+            return Optional.empty();
         }
         try {
-            return CatchmentType.valueOf(StringUtils.upperCase(value).replace('-', '_'));
+            return Optional.of(CatchmentType.valueOf(StringUtils.upperCase(value).replace('-', '_')));
         } catch (IllegalArgumentException ex) {
             LOG.warn("Unknown catchment method '{}'", value);
-            return null;
+            return Optional.empty();
         }
     }
 
     private static List<UUID> mapIds(List<Integer> sourceIds, Map<Integer, UUID> lookup, String context) {
         if (sourceIds == null || sourceIds.isEmpty()) {
-            return null;
+            return List.of();
         }
 
         List<UUID> results = new ArrayList<>();
@@ -498,7 +527,28 @@ class CourtMigrationHelper {
             results.add(mapped);
         }
 
-        return results.isEmpty() ? null : results;
+        return results.isEmpty() ? List.of() : results;
+    }
+
+    private static List<UUID> mapLocalAuthorityIds(
+        List<Integer> sourceIds,
+        Map<Integer, List<UUID>> lookup
+    ) {
+        if (sourceIds == null || sourceIds.isEmpty()) {
+            return List.of();
+        }
+
+        LinkedHashSet<UUID> results = new LinkedHashSet<>();
+        for (Integer id : sourceIds) {
+            List<UUID> mapped = lookup.get(id);
+            if (mapped == null || mapped.isEmpty()) {
+                LOG.warn("Unable to map court local authorities identifier '{}' in migration payload", id);
+                continue;
+            }
+            results.addAll(mapped);
+        }
+
+        return results.isEmpty() ? List.of() : new ArrayList<>(results);
     }
 
     private static boolean isEmpty(Collection<?> values) {
@@ -509,7 +559,16 @@ class CourtMigrationHelper {
         if (StringUtils.isBlank(name)) {
             return name;
         }
-        String cleaned = name.replaceAll("[^A-Za-z&'(),\\- ]", " ");
+        String cleaned = name.replaceAll("[^A-Za-z&'()\\- ]", " ");
         return cleaned.replaceAll("\\s+", " ").trim();
+    }
+
+    private static Optional<String> sanitiseGenericDescription(String value) {
+        if (StringUtils.isBlank(value)) {
+            return Optional.empty();
+        }
+        String cleaned = INVALID_GENERIC_DESCRIPTION_CHARACTERS.matcher(value).replaceAll(" ");
+        String normalised = cleaned.replaceAll("\\s+", " ").trim();
+        return StringUtils.isBlank(normalised) ? Optional.empty() : Optional.of(normalised);
     }
 }

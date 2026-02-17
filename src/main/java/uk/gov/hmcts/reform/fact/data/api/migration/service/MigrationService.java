@@ -27,7 +27,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformati
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHourTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
@@ -52,7 +52,7 @@ public class MigrationService {
         LegacyCourtMappingRepository legacyCourtMappingRepository,
         LocalAuthorityTypeRepository localAuthorityTypeRepository,
         ContactDescriptionTypeRepository contactDescriptionTypeRepository,
-        OpeningHourTypeRepository openingHourTypeRepository,
+        OpeningHoursTypeRepository openingHourTypeRepository,
         CourtServiceAreasRepository courtServiceAreasRepository,
         CourtAreasOfLawRepository courtAreasOfLawRepository,
         CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository,

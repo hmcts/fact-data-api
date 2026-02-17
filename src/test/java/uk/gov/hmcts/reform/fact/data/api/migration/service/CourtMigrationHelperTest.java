@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.migration.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -15,14 +16,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtDxCode;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
+import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtAreasOfLawDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDto;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDxCodeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtLocalAuthorityDto;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtProfessionalInformationDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtServiceAreaDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtSinglePointOfEntryDto;
-import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtProfessionalInformationDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
@@ -78,7 +82,7 @@ class CourtMigrationHelperTest {
         context.getRegionIds().put(1, regionId);
         context.getAreaOfLawIds().put(10, UUID.randomUUID());
         context.getServiceAreaIds().put(100, UUID.randomUUID());
-        context.getLocalAuthorityTypeIds().put(20, UUID.randomUUID());
+        context.getLocalAuthorityTypeIds().put(20, List.of(UUID.randomUUID()));
         when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
             Court court = invocation.getArgument(0);
             court.setId(courtId);
@@ -153,5 +157,140 @@ class CourtMigrationHelperTest {
             ArgumentCaptor.forClass(CourtProfessionalInformation.class);
         verify(courtProfessionalInformationRepository).save(captor.capture());
         assertThat(captor.getValue().getInterviewRoomCount()).isNull();
+    }
+
+    @Test
+    void shouldSanitiseCourtNameToRemoveCommas() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(UUID.randomUUID());
+            return court;
+        });
+
+        CourtDto dto = new CourtDto();
+        dto.setId(705L);
+        dto.setName("Enforcement (Crime) Contact Centre - Wales, South West & London");
+        dto.setSlug("enforcement-crime-contact-centre");
+        dto.setOpen(true);
+        dto.setRegionId(1);
+        dto.setIsServiceCentre(false);
+
+        int migrated = helper.migrateCourts(List.of(dto), context);
+
+        assertThat(migrated).isEqualTo(1);
+        ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
+        verify(courtService).createCourt(captor.capture());
+        assertThat(captor.getValue().getName())
+            .isEqualTo("Enforcement (Crime) Contact Centre - Wales South West & London");
+    }
+
+    @Test
+    void shouldSanitiseDxCodeExplanationBeforePersisting() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(UUID.randomUUID());
+            return court;
+        });
+
+        CourtDto dto = new CourtDto();
+        dto.setId(701L);
+        dto.setName("DX Court");
+        dto.setSlug("dx-court");
+        dto.setOpen(true);
+        dto.setRegionId(1);
+        dto.setCourtDxCodes(List.of(new CourtDxCodeDto("dx-1", "123", "Main office – Room 2")));
+        dto.setIsServiceCentre(false);
+
+        helper.migrateCourts(List.of(dto), context);
+
+        ArgumentCaptor<CourtDxCode> captor = ArgumentCaptor.forClass(CourtDxCode.class);
+        verify(courtDxCodeRepository).save(captor.capture());
+        assertThat(captor.getValue().getDxCode()).isEqualTo("123");
+        assertThat(captor.getValue().getExplanation()).isEqualTo("Main office Room 2");
+        assertThat(context.getCourtDxCodesMigrated()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldSkipDxCodeWhenCodeBlankAfterSanitisation() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(UUID.randomUUID());
+            return court;
+        });
+
+        CourtDto dto = new CourtDto();
+        dto.setId(702L);
+        dto.setName("Invalid DX Court");
+        dto.setSlug("invalid-dx-court");
+        dto.setOpen(true);
+        dto.setRegionId(1);
+        dto.setCourtDxCodes(List.of(new CourtDxCodeDto("dx-1", null, "Explanation only")));
+        dto.setIsServiceCentre(false);
+
+        helper.migrateCourts(List.of(dto), context);
+
+        verify(courtDxCodeRepository, never()).save(any());
+        assertThat(context.getCourtDxCodesMigrated()).isZero();
+    }
+
+    @Test
+    void shouldPersistDxCodeWithNullExplanationWhenSanitisedExplanationBecomesBlank() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(UUID.randomUUID());
+            return court;
+        });
+
+        CourtDto dto = new CourtDto();
+        dto.setId(704L);
+        dto.setName("DX Explanation Court");
+        dto.setSlug("dx-explanation-court");
+        dto.setOpen(true);
+        dto.setRegionId(1);
+        dto.setCourtDxCodes(List.of(new CourtDxCodeDto("dx-1", "123", "—")));
+        dto.setIsServiceCentre(false);
+
+        helper.migrateCourts(List.of(dto), context);
+
+        ArgumentCaptor<CourtDxCode> captor = ArgumentCaptor.forClass(CourtDxCode.class);
+        verify(courtDxCodeRepository).save(captor.capture());
+        assertThat(captor.getValue().getDxCode()).isEqualTo("123");
+        assertThat(captor.getValue().getExplanation()).isNull();
+        assertThat(context.getCourtDxCodesMigrated()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldExpandMappedLocalAuthorityIdToAllSuccessorAuthorities() {
+        UUID courtId = UUID.randomUUID();
+        UUID northNorthamptonshireId = UUID.randomUUID();
+        UUID westNorthamptonshireId = UUID.randomUUID();
+        context.getRegionIds().put(1, UUID.randomUUID());
+        context.getAreaOfLawIds().put(10, UUID.randomUUID());
+        context.getLocalAuthorityTypeIds().put(397392, List.of(northNorthamptonshireId, westNorthamptonshireId));
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(courtId);
+            return court;
+        });
+
+        CourtDto dto = new CourtDto();
+        dto.setId(703L);
+        dto.setName("Northamptonshire Court");
+        dto.setSlug("northamptonshire-court");
+        dto.setOpen(true);
+        dto.setRegionId(1);
+        dto.setCourtLocalAuthorities(List.of(new CourtLocalAuthorityDto(1, 10, List.of(397392))));
+        dto.setIsServiceCentre(false);
+
+        helper.migrateCourts(List.of(dto), context);
+
+        ArgumentCaptor<CourtLocalAuthorities> captor = ArgumentCaptor.forClass(CourtLocalAuthorities.class);
+        verify(courtLocalAuthoritiesRepository).save(captor.capture());
+        assertThat(captor.getValue().getLocalAuthorityIds())
+            .containsExactly(northNorthamptonshireId, westNorthamptonshireId);
     }
 }

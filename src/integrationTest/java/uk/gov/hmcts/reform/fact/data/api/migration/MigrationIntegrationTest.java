@@ -6,9 +6,11 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -60,10 +62,9 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepositor
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHourTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
-import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -96,7 +97,7 @@ class MigrationIntegrationTest {
     private final ServiceAreaRepository serviceAreaRepository;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
-    private final OpeningHourTypeRepository openingHourTypeRepository;
+    private final OpeningHoursTypeRepository openingHourTypeRepository;
     private final CourtTypeRepository courtTypeRepository;
     private final CourtRepository courtRepository;
     private final CourtServiceAreasRepository courtServiceAreasRepository;
@@ -112,7 +113,7 @@ class MigrationIntegrationTest {
     private final ConfigurableApplicationContext applicationContext;
     private final LegacyFactClient legacyFactClient;
     private static final Pattern COURT_NAME_PATTERN =
-        Pattern.compile("^[A-Za-z&'(),\\- ]+$");
+        Pattern.compile("^[A-Za-z&'()\\- ]+$");
     private static final Pattern GENERIC_DESCRIPTION_PATTERN =
         Pattern.compile(ValidationConstants.GENERIC_DESCRIPTION_REGEX);
 
@@ -124,7 +125,7 @@ class MigrationIntegrationTest {
         ServiceAreaRepository serviceAreaRepository,
         LocalAuthorityTypeRepository localAuthorityTypeRepository,
         ContactDescriptionTypeRepository contactDescriptionTypeRepository,
-        OpeningHourTypeRepository openingHourTypeRepository,
+        OpeningHoursTypeRepository openingHourTypeRepository,
         CourtTypeRepository courtTypeRepository,
         CourtRepository courtRepository,
         CourtServiceAreasRepository courtServiceAreasRepository,
@@ -212,6 +213,7 @@ class MigrationIntegrationTest {
                 localAuthorityTypeRepository.save(
                     LocalAuthorityType.builder()
                         .name(type.getName())
+                        .childCustodianCodes(List.of())
                         .build()
                 )
             );
@@ -432,7 +434,7 @@ class MigrationIntegrationTest {
         if (StringUtils.isBlank(name)) {
             return name;
         }
-        String cleaned = name.replaceAll("[^A-Za-z&'(),\\- ]", " ");
+        String cleaned = name.replaceAll("[^A-Za-z&'()\\- ]", " ");
         return cleaned.replaceAll("\\s+", " ").trim();
     }
 
@@ -440,14 +442,34 @@ class MigrationIntegrationTest {
         if (dto == null) {
             return false;
         }
-        if (StringUtils.isBlank(dto.getDxCode()) && StringUtils.isBlank(dto.getExplanation())) {
+        Optional<String> dxCode = sanitiseGenericDescription(dto.getDxCode());
+        Optional<String> explanation = sanitiseGenericDescription(dto.getExplanation());
+
+        if (dxCode.isEmpty() && explanation.isEmpty()) {
             return false;
         }
-        if (StringUtils.length(dto.getDxCode()) > 200) {
+        if (dxCode.isEmpty()) {
             return false;
         }
-        return StringUtils.isBlank(dto.getDxCode())
-            || GENERIC_DESCRIPTION_PATTERN.matcher(dto.getDxCode()).matches();
+        if (StringUtils.length(dxCode.get()) > 200) {
+            return false;
+        }
+        if (explanation.map(value -> StringUtils.length(value) > 250).orElse(false)) {
+            return false;
+        }
+        if (!GENERIC_DESCRIPTION_PATTERN.matcher(dxCode.get()).matches()) {
+            return false;
+        }
+        return explanation.isEmpty() || GENERIC_DESCRIPTION_PATTERN.matcher(explanation.get()).matches();
+    }
+
+    private Optional<String> sanitiseGenericDescription(String value) {
+        if (StringUtils.isBlank(value)) {
+            return Optional.empty();
+        }
+        String cleaned = value.replaceAll("[^A-Za-z0-9 ()':,-]+", " ");
+        String normalised = cleaned.replaceAll("\\s+", " ").trim();
+        return StringUtils.isBlank(normalised) ? Optional.empty() : Optional.of(normalised);
     }
 
     private TableCounts captureTableCounts() {
