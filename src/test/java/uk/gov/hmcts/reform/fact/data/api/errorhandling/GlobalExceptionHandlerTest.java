@@ -17,7 +17,11 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
+
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -124,52 +128,6 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getMessage()).isEqualTo("Invalid format: ABC123");
     }
 
-    private ValidUUID validUuidAnnotation() {
-        return new ValidUUID() {
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return ValidUUID.class;
-            }
-
-            @Override
-            public String message() {
-                return "Invalid UUID format";
-            }
-
-            @Override
-            public Class<?>[] groups() {
-                return new Class<?>[0];
-            }
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public Class<? extends Payload>[] payload() {
-                return new Class[0];
-            }
-
-            @Override
-            public boolean allowNull() {
-                return false;
-            }
-        };
-    }
-
-    @SuppressWarnings("unchecked")
-    private ConstraintViolation<?> createConstraintViolation(
-        Annotation annotation, Object invalidValue, String message) {
-
-        ConstraintViolation<?> violation = mock(ConstraintViolation.class);
-        ConstraintDescriptor<Annotation> descriptor =
-            (ConstraintDescriptor<Annotation>) mock(ConstraintDescriptor.class);
-        when(violation.getConstraintDescriptor()).thenReturn((ConstraintDescriptor) descriptor);
-        when(descriptor.getAnnotation()).thenReturn(annotation);
-        when(violation.getInvalidValue()).thenReturn(invalidValue);
-        if (message != null) {
-            when(violation.getMessage()).thenReturn(message);
-        }
-        return violation;
-    }
-
     @Test
     void testHandleMethodArgumentNotValidException() {
         FieldError fieldError = new FieldError("object", "field", TEST_MESSAGE);
@@ -182,8 +140,8 @@ class GlobalExceptionHandlerTest {
         Map<String, String> response = handler.handle(methodArgumentNotValidException);
 
         assertThat(response).isNotNull();
-        assertThat(response).containsKey("field");
-        assertThat(response.get("field")).isEqualTo(TEST_MESSAGE);
+        assertThat(response).containsEntry("field", TEST_MESSAGE);
+        assertThat(response).containsKey("timestamp");
     }
 
     @Test
@@ -280,6 +238,30 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void testHandleInvalidParameterCombinationException() {
+        InvalidParameterCombinationException ex = new InvalidParameterCombinationException(TEST_MESSAGE);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/search/courts/v1/postcode");
+
+        ExceptionResponse response = handler.handle(ex, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleInvalidParameterCombinationExceptionWithNullRequest() {
+        InvalidParameterCombinationException ex = new InvalidParameterCombinationException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex, null);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
     void testHandleMultipartExceptionWithProvidedContentType() {
         MultipartException ex = new MultipartException("Missing multipart boundary");
         HttpServletRequest request = mock(HttpServletRequest.class);
@@ -309,5 +291,73 @@ class GlobalExceptionHandlerTest {
             .contains("use 'multipart/form-data'")
             .contains("use 'application/json'");
         assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleDuplicatedListItemException() {
+        DuplicatedListItemException ex = new DuplicatedListItemException("Duplicated list item");
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).contains("Duplicated list item");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleInvalidAreaOfLawTypeException() {
+        InvalidAreaOfLawException ex =
+            new InvalidAreaOfLawException("Invalid area of Law: Probate");
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).contains("Invalid area of Law: Probate");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    private ConstraintViolation<?> createConstraintViolation(
+        Annotation annotation,
+        Object invalidValue,
+        String message
+    ) {
+        ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+        ConstraintDescriptor<?> descriptor = mock(ConstraintDescriptor.class);
+        doReturn(descriptor).when(violation).getConstraintDescriptor();
+        doReturn(annotation).when(descriptor).getAnnotation();
+        when(violation.getInvalidValue()).thenReturn(invalidValue);
+        when(violation.getMessage()).thenReturn(message);
+        return violation;
+    }
+
+    private ValidUUID validUuidAnnotation() {
+        return new ValidUUID() {
+            @Override
+            public String message() {
+                return "Invalid UUID format";
+            }
+
+            @Override
+            public Class<?>[] groups() {
+                return new Class[0];
+            }
+
+            @Override
+            public Class<? extends Payload>[] payload() {
+                @SuppressWarnings("unchecked")
+                Class<? extends Payload>[] payload = (Class<? extends Payload>[]) new Class<?>[0];
+                return payload;
+            }
+
+            @Override
+            public boolean allowNull() {
+                return false;
+            }
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return ValidUUID.class;
+            }
+        };
     }
 }

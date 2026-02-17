@@ -9,9 +9,11 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
+import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +36,8 @@ public final class CourtFacilitiesControllerFunctionalTest {
     @DisplayName("POST /courts/{courtId}/v1/building-facilities with all valid fields")
     void shouldCreateFacilitiesWithAllValidFields() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Facilities Full", true);
+
+        final ZonedDateTime timestampBeforeCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
         final CourtFacilities facilities = TestDataHelper.buildFacilities(courtId);
         facilities.setFreeWaterDispensers(false);
@@ -60,6 +64,11 @@ public final class CourtFacilitiesControllerFunctionalTest {
         assertThat(retrievedFacilities.getParking()).isTrue();
         assertThat(retrievedFacilities.getFreeWaterDispensers()).isFalse();
         assertThat(retrievedFacilities.getWifi()).isTrue();
+
+        final ZonedDateTime timestampAfterCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterCreate)
+            .as("Court lastUpdatedAt should move forward after facilities creation for court %s", courtId)
+            .isAfter(timestampBeforeCreate);
     }
 
     @Test

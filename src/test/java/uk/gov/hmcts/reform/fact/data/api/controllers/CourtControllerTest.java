@@ -10,8 +10,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import uk.gov.hmcts.reform.fact.data.api.entities.AbstractCourtEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import java.util.List;
@@ -31,6 +35,8 @@ class CourtControllerTest {
     private static final UUID COURT_ID = UUID.randomUUID();
     private static final UUID UNKNOWN_COURT_ID = UUID.randomUUID();
     private static final String INVALID_UUID = "invalid-uuid";
+    private static final String COURT_SLUG = "test-court";
+    private static final String UNKNOWN_COURT_SLUG = "missing-court";
 
     private static final int PAGE_NUMBER = 0;
     private static final int PAGE_SIZE = 25;
@@ -44,34 +50,60 @@ class CourtControllerTest {
     @Mock
     private CourtService courtService;
 
+    @Mock
+    private CourtDetailsViewService courtDetailsViewService;
+
     @InjectMocks
     private CourtController courtController;
 
     @Test
-    void getCourtByIdReturns200() {
-        Court court = createCourt();
+    void getCourtDetailsByIdReturns200() {
+        CourtDetails courtDetails = createCourtDetails();
 
-        when(courtService.getCourtById(COURT_ID)).thenReturn(court);
+        when(courtService.getCourtDetailsById(COURT_ID)).thenReturn(courtDetails);
 
-        ResponseEntity<Court> response = courtController.getCourtById(COURT_ID.toString());
+        ResponseEntity<CourtDetails> response = courtController.getCourtDetailsById(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(court);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(courtDetails);
     }
 
     @Test
-    void getCourtByIdThrowsNotFoundException() {
-        when(courtService.getCourtById(UNKNOWN_COURT_ID)).thenThrow(new NotFoundException("Court not found"));
+    void getCourtDetailsByIdThrowsNotFoundException() {
+        when(courtService.getCourtDetailsById(UNKNOWN_COURT_ID)).thenThrow(new NotFoundException("Court not found"));
 
         assertThrows(NotFoundException.class, () ->
-            courtController.getCourtById(UNKNOWN_COURT_ID.toString())
+            courtController.getCourtDetailsById(UNKNOWN_COURT_ID.toString())
         );
     }
 
     @Test
-    void getCourtByIdThrowsIllegalArgumentExceptionForInvalidUUID() {
+    void getCourtDetailsByIdThrowsIllegalArgumentExceptionForInvalidUUID() {
         assertThrows(IllegalArgumentException.class, () ->
-            courtController.getCourtById(INVALID_UUID)
+            courtController.getCourtDetailsById(INVALID_UUID)
+        );
+    }
+
+    @Test
+    void getCourtDetailsBySlugReturns200() {
+        CourtDetails courtDetails = createCourtDetails();
+
+        when(courtService.getCourtDetailsBySlug(COURT_SLUG)).thenReturn(courtDetails);
+        when(courtDetailsViewService.prepareDetailsView(courtDetails)).thenReturn(courtDetails);
+
+        ResponseEntity<CourtDetails> response = courtController.getCourtDetailsBySlug(COURT_SLUG);
+
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(courtDetails);
+    }
+
+    @Test
+    void getCourtDetailsBySlugThrowsNotFoundException() {
+        when(courtService.getCourtDetailsBySlug(UNKNOWN_COURT_SLUG))
+            .thenThrow(new NotFoundException("Court not found"));
+
+        assertThrows(NotFoundException.class, () ->
+            courtController.getCourtDetailsBySlug(UNKNOWN_COURT_SLUG)
         );
     }
 
@@ -180,6 +212,17 @@ class CourtControllerTest {
 
     private Court createCourt() {
         Court court = new Court();
+        populateCourt(court);
+        return court;
+    }
+
+    private CourtDetails createCourtDetails() {
+        CourtDetails court = new CourtDetails();
+        populateCourt(court);
+        return court;
+    }
+
+    private static void populateCourt(final AbstractCourtEntity court) {
         court.setId(COURT_ID);
         court.setName("Test Court Name");
         court.setSlug("test-court");
@@ -189,6 +232,5 @@ class CourtControllerTest {
         court.setOpenOnCath(Boolean.TRUE);
         court.setWarningNotice("Warning notice");
         court.setMrdId("MRD123");
-        return court;
     }
 }

@@ -11,15 +11,19 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import uk.gov.hmcts.reform.fact.data.api.clients.CathClient;
 import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
+
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
 import feign.FeignException;
 import feign.Request;
 import feign.RequestTemplate;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +47,9 @@ class CourtServiceTest {
 
     @Mock
     private CourtRepository courtRepository;
+
+    @Mock
+    private CourtDetailsRepository courtDetailsRepository;
 
     @Mock
     private RegionService regionService;
@@ -78,11 +85,67 @@ class CourtServiceTest {
 
         when(courtRepository.findById(courtId)).thenReturn(Optional.empty());
 
-        NotFoundException exception = assertThrows(NotFoundException.class, () ->
-            courtService.getCourtById(courtId)
+        NotFoundException exception = assertThrows(
+            NotFoundException.class, () ->
+                courtService.getCourtById(courtId)
         );
 
         assertThat(exception.getMessage()).isEqualTo("Court not found, ID: " + courtId);
+    }
+
+    @Test
+    void getAllCourtsByIdsReturnsMatchingCourts() {
+        UUID courtId1 = UUID.randomUUID();
+        UUID courtId2 = UUID.randomUUID();
+
+        Court court1 = new Court();
+        court1.setId(courtId1);
+        court1.setName("Test Court 1");
+
+        Court court2 = new Court();
+        court2.setId(courtId2);
+        court2.setName("Test Court 2");
+
+        List<UUID> courtIds = List.of(courtId1, courtId2);
+        List<Court> expectedCourts = List.of(court1, court2);
+
+        when(courtRepository.findAllById(courtIds)).thenReturn(expectedCourts);
+
+        List<Court> result = courtService.getAllCourtsByIds(courtIds);
+
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactlyElementsOf(expectedCourts);
+    }
+
+    @Test
+    void getAllCourtsByIdsReturnsPartialResultsWhenSomeCourtsNotFound() {
+        UUID courtId1 = UUID.randomUUID();
+        UUID courtId2 = UUID.randomUUID();
+
+        Court court1 = new Court();
+        court1.setId(courtId1);
+        court1.setName("Test Court 1");
+
+        List<UUID> courtIds = List.of(courtId1, courtId2);
+        List<Court> expectedCourts = List.of(court1);
+
+        when(courtRepository.findAllById(courtIds)).thenReturn(expectedCourts);
+
+        List<Court> result = courtService.getAllCourtsByIds(courtIds);
+
+        assertThat(result).hasSize(1);
+        assertThat(result).containsExactly(court1);
+    }
+
+    @Test
+    void getAllCourtsByIdsReturnsEmptyListWhenInputIsEmpty() {
+        List<UUID> courtIds = Collections.emptyList();
+
+        when(courtRepository.findAllById(courtIds)).thenReturn(Collections.emptyList());
+
+        List<Court> result = courtService.getAllCourtsByIds(courtIds);
+
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -205,7 +268,7 @@ class CourtServiceTest {
         Court saved = courtService.createCourt(input);
 
         assertThat(saved.getOpen()).isFalse();
-        assertThat(saved.getRegion()).isEqualTo(region);
+        assertThat(saved.getRegionId()).isEqualTo(region.getId());
         assertThat(saved.getSlug()).isEqualTo("my-test-court");
         verify(courtRepository).save(saved);
     }
@@ -298,7 +361,6 @@ class CourtServiceTest {
         existing.setSlug("existing-name");
         existing.setOpen(Boolean.TRUE);
         existing.setRegionId(regionId);
-        existing.setRegion(region);
         existing.setOpenOnCath(Boolean.TRUE);
         existing.setMrdId("MRD123");
 
@@ -329,7 +391,6 @@ class CourtServiceTest {
         existing.setSlug("existing-name");
         existing.setOpen(Boolean.TRUE);
         existing.setRegionId(regionId);
-        existing.setRegion(region);
         existing.setOpenOnCath(Boolean.TRUE);
         existing.setMrdId("MRD123");
 
@@ -382,7 +443,6 @@ class CourtServiceTest {
         existing.setSlug("existing-name");
         existing.setOpen(Boolean.FALSE);
         existing.setRegionId(regionId);
-        existing.setRegion(region);
         existing.setOpenOnCath(Boolean.FALSE);
         existing.setMrdId("MRD123");
 
@@ -413,7 +473,6 @@ class CourtServiceTest {
         existing.setSlug("existing-name");
         existing.setOpen(Boolean.TRUE);
         existing.setRegionId(regionId);
-        existing.setRegion(region);
         existing.setOpenOnCath(Boolean.TRUE);
         existing.setMrdId("MRD123");
 
@@ -444,7 +503,6 @@ class CourtServiceTest {
         existing.setSlug("existing-name");
         existing.setOpen(Boolean.TRUE);
         existing.setRegionId(regionId);
-        existing.setRegion(region);
         existing.setOpenOnCath(Boolean.TRUE);
 
         Court updated = new Court();
@@ -474,7 +532,6 @@ class CourtServiceTest {
         existing.setSlug("existing-name");
         existing.setOpen(Boolean.TRUE);
         existing.setRegionId(regionId);
-        existing.setRegion(region);
         existing.setOpenOnCath(Boolean.TRUE);
         existing.setMrdId("   ");
 
@@ -556,6 +613,33 @@ class CourtServiceTest {
     }
 
     @Test
+    void getCourtsByPrefixAndActiveSearchShouldReturnMatchingCourts() {
+        Court court = new Court();
+        List<Court> courts = List.of(court);
+
+        when(courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc("A", true))
+            .thenReturn(courts);
+
+        List<Court> response = courtService.getCourtsByPrefixAndActiveSearch("A");
+
+        assertThat(response).isEqualTo(courts);
+        verify(courtRepository).findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc("A", true);
+    }
+
+    @Test
+    void searchOpenCourtsByNameOrAddressShouldTrimQuery() {
+        Court court = new Court();
+        List<Court> courts = List.of(court);
+
+        when(courtRepository.searchOpenByNameOrAddress("Test Court")).thenReturn(courts);
+
+        List<Court> response = courtService.searchOpenCourtsByNameOrAddress("  Test Court  ");
+
+        assertThat(response).isEqualTo(courts);
+        verify(courtRepository).searchOpenByNameOrAddress("Test Court");
+    }
+
+    @Test
     void deleteCourtsByNamePrefixShouldReturnZeroWhenNoMatchesFound() {
         when(courtRepository.findByNameStartingWithIgnoreCase("Missing")).thenReturn(Collections.emptyList());
 
@@ -576,5 +660,86 @@ class CourtServiceTest {
         assertThat(deleted).isEqualTo(1);
         verify(courtRepository).findByNameStartingWithIgnoreCase("Example");
         verify(courtRepository).deleteAllInBatch(courts);
+    }
+
+    @Test
+    void getCourtDetailsByIdReturnsCourtDetailsWhenFound() {
+        UUID courtId = UUID.randomUUID();
+        CourtDetails courtDetails = new CourtDetails();
+        courtDetails.setId(courtId);
+        courtDetails.setName("Test Court");
+
+        when(courtDetailsRepository.findById(courtId)).thenReturn(Optional.of(courtDetails));
+
+        CourtDetails result = courtService.getCourtDetailsById(courtId);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(courtId);
+        assertThat(result.getName()).isEqualTo("Test Court");
+    }
+
+    @Test
+    void getCourtDetailsByIdThrowsNotFoundExceptionWhenCourtDoesNotExist() {
+        UUID courtId = UUID.randomUUID();
+
+        when(courtDetailsRepository.findById(courtId)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class, () ->
+                courtService.getCourtDetailsById(courtId)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Court not found, ID: " + courtId);
+    }
+
+    @Test
+    void getCourtDetailsBySlugReturnsCourtDetailsWhenFound() {
+        String courtSlug = "test-court";
+        CourtDetails courtDetails = new CourtDetails();
+        courtDetails.setSlug(courtSlug);
+        courtDetails.setName("Test Court");
+
+        when(courtDetailsRepository.findBySlug(courtSlug)).thenReturn(Optional.of(courtDetails));
+
+        CourtDetails result = courtService.getCourtDetailsBySlug(courtSlug);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSlug()).isEqualTo(courtSlug);
+        assertThat(result.getName()).isEqualTo("Test Court");
+    }
+
+    @Test
+    void getCourtDetailsBySlugThrowsNotFoundExceptionWhenCourtDoesNotExist() {
+        String courtSlug = "missing-court";
+
+        when(courtDetailsRepository.findBySlug(courtSlug)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class, () ->
+                courtService.getCourtDetailsBySlug(courtSlug)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Court not found, slug: " + courtSlug);
+    }
+
+    @Test
+    void getAllCourtDetailsReturnsCourtDetailsListWhenFound() {
+        List<CourtDetails> courtDetailsList = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            UUID courtId = UUID.randomUUID();
+            CourtDetails courtDetails = new CourtDetails();
+            courtDetails.setId(courtId);
+            courtDetails.setName(String.format("Test Court %s", (char) (i + 0x41)));
+            courtDetailsList.add(courtDetails);
+        }
+
+        when(courtDetailsRepository.findAll()).thenReturn(courtDetailsList);
+
+        List<CourtDetails> result = courtService.getAllCourtDetails();
+
+        assertThat(result)
+            .isNotNull()
+            .isEqualTo(courtDetailsList);
     }
 }
