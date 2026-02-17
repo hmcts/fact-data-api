@@ -1,23 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
+import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.CourtLockTimeoutCheck;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -26,9 +11,25 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-@Tag(name = "Court Lock", description = "Operations related to court lock services")
-@RestController
-@Validated
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@SecuredFactRestController(
+    name = "Court Lock",
+    description = "Operations related to court lock services"
+)
 @RequestMapping("/courts/{courtId}")
 public class CourtLockController {
 
@@ -72,6 +73,7 @@ public class CourtLockController {
         @ApiResponse(responseCode = "404", description = "Court or user not found"),
         @ApiResponse(responseCode = "409", description = "Conflict with existing court lock")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtLock> createOrUpdateCourtLock(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Page to lock", required = true) @PathVariable Page page,
@@ -87,6 +89,7 @@ public class CourtLockController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID or page supplied"),
         @ApiResponse(responseCode = "404", description = "Court or lock not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteCourtLock(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Page to delete lock", required = true) @PathVariable Page page) {
