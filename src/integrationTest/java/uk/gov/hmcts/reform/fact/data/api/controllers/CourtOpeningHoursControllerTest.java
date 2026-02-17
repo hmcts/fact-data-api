@@ -158,9 +158,9 @@ class CourtOpeningHoursControllerTest {
                     courtId,
                     openingHourType.getId()))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].openingTimesDetails[0].dayOfWeek")
+            .andExpect(jsonPath("$.openingTimesDetails[0].dayOfWeek")
                            .value(DayOfTheWeek.MONDAY.toString()))
-            .andExpect(jsonPath("$[0].openingTimesDetails[0].openingTime").value("09:00:00"));
+            .andExpect(jsonPath("$.openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
     @Test
@@ -257,8 +257,8 @@ class CourtOpeningHoursControllerTest {
                             .content(objectMapper.writeValueAsString(openingHours)))
             .andExpect(status().isOk())
             .andExpect(
-                jsonPath("$[0].openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
-            .andExpect(jsonPath("$[0].openingTimesDetails[0].openingTime").value("09:00:00"));
+                jsonPath("$.openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
+            .andExpect(jsonPath("$.openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
     @Test
