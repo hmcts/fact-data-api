@@ -107,79 +107,67 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         final UUID typeId1 = TestDataHelper.getOpeningHourTypeId(http, 0);
         final UUID typeId2 = TestDataHelper.getOpeningHourTypeId(http, 1);
 
-        final List<CourtOpeningHours> type1Hours = List.of(
-            CourtOpeningHours.builder()
-                .courtId(courtId)
-                .openingHourTypeId(typeId1)
-                .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(
-                        DayOfTheWeek.MONDAY,
-                        LocalTime.of(9, 0),
-                        LocalTime.of(17, 0))
-                ))
-                .build(),
-            CourtOpeningHours.builder()
-                .courtId(courtId)
-                .openingHourTypeId(typeId1)
-                .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(
-                        DayOfTheWeek.WEDNESDAY,
-                        LocalTime.of(9, 0),
-                        LocalTime.of(17, 0))
-                ))
-                .build()
-        );
+        final CourtOpeningHours type1Hours = CourtOpeningHours.builder()
+            .courtId(courtId)
+            .openingHourTypeId(typeId1)
+            .openingTimesDetails(List.of(
+                new OpeningTimesDetail(
+                    DayOfTheWeek.MONDAY,
+                    LocalTime.of(9, 0),
+                    LocalTime.of(17, 0)
+                ),
+                new OpeningTimesDetail(
+                    DayOfTheWeek.WEDNESDAY,
+                    LocalTime.of(9, 0),
+                    LocalTime.of(17, 0)
+                )
+            ))
+            .build();
 
-        final List<CourtOpeningHours> type2Hours = List.of(
-            CourtOpeningHours.builder()
-                .courtId(courtId)
-                .openingHourTypeId(typeId2)
-                .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(
-                        DayOfTheWeek.TUESDAY,
-                        LocalTime.of(10, 0),
-                        LocalTime.of(16, 0))
-                ))
-                .build(),
-            CourtOpeningHours.builder()
-                .courtId(courtId)
-                .openingHourTypeId(typeId2)
-                .openingTimesDetails(List.of(
-                    new OpeningTimesDetail(
-                        DayOfTheWeek.FRIDAY,
-                        LocalTime.of(10, 0),
-                        LocalTime.of(16, 0))
-                ))
-                .build()
-        );
+        final CourtOpeningHours type2Hours = CourtOpeningHours.builder()
+            .courtId(courtId)
+            .openingHourTypeId(typeId2)
+            .openingTimesDetails(List.of(
+                new OpeningTimesDetail(
+                    DayOfTheWeek.TUESDAY,
+                    LocalTime.of(10, 0),
+                    LocalTime.of(16, 0)
+                ),
+                new OpeningTimesDetail(
+                    DayOfTheWeek.FRIDAY,
+                    LocalTime.of(10, 0),
+                    LocalTime.of(16, 0)
+                )
+            ))
+            .build();
 
-        http.doPut("/courts/" + courtId + "/v1/opening-hours/" + typeId1, type1Hours);
-        http.doPut("/courts/" + courtId + "/v1/opening-hours/" + typeId2, type2Hours);
+        final Response putType1Response = http.doPut("/courts/" + courtId + "/v1/opening-hours/" + typeId1,
+                                                     List.of(type1Hours));
+        assertThat(putType1Response.statusCode()).isEqualTo(OK.value());
+
+        final Response putType2Response = http.doPut("/courts/" + courtId + "/v1/opening-hours/" + typeId2,
+                                                     List.of(type2Hours));
+        assertThat(putType2Response.statusCode()).isEqualTo(OK.value());
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + typeId1);
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
-        final List<CourtOpeningHours> retrievedHours = mapper.readValue(
-            getResponse.asString(),
-            new TypeReference<List<CourtOpeningHours>>() {}
-        );
+        final CourtOpeningHours retrievedHours = mapper.readValue(getResponse.asString(), CourtOpeningHours.class);
 
-        assertThat(retrievedHours).hasSize(2);
-        assertThat(retrievedHours).allMatch(hour -> hour.getOpeningHourTypeId().equals(typeId1));
-        assertThat(retrievedHours).allMatch(hour -> hour.getOpeningTimesDetails().size() == 1);
-        assertThat(retrievedHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
+        assertThat(retrievedHours.getCourtId()).isEqualTo(courtId);
+        assertThat(retrievedHours.getOpeningHourTypeId()).isEqualTo(typeId1);
+        assertThat(retrievedHours.getOpeningTimesDetails()).hasSize(2);
+
+        assertThat(retrievedHours.getOpeningTimesDetails().stream()
                        .map(OpeningTimesDetail::getDayOfWeek)
                        .toList())
             .containsExactlyInAnyOrder(DayOfTheWeek.MONDAY, DayOfTheWeek.WEDNESDAY);
-        assertThat(retrievedHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
-                       .allMatch(detail ->
-                                     detail.getOpeningTime().equals(LocalTime.of(9, 0))));
-        assertThat(retrievedHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
-                       .allMatch(detail ->
-                                     detail.getClosingTime().equals(LocalTime.of(17, 0))));
+
+        assertThat(retrievedHours.getOpeningTimesDetails())
+            .allMatch(d -> d.getOpeningTime().equals(LocalTime.of(9, 0)));
+
+        assertThat(retrievedHours.getOpeningTimesDetails())
+            .allMatch(d -> d.getClosingTime().equals(LocalTime.of(17, 0)));
     }
 
     @Test
