@@ -18,6 +18,12 @@ public interface LocalAuthorityTypeRepository extends JpaRepository<LocalAuthori
     
     Optional<LocalAuthorityType> findByName(String name);
 
+    /**
+     * Finds the parent or child authority by custodian code.
+     *
+     * @param code the custodian code
+     * @return the matching authority, if found
+     */
     @Query(
         value = """
             SELECT *
@@ -34,4 +40,12 @@ public interface LocalAuthorityTypeRepository extends JpaRepository<LocalAuthori
         nativeQuery = true
     )
     Optional<LocalAuthorityType> findParentOrChildNameByCustodianCode(int code);
+
+    /**
+     * Finds an authority by name, case-insensitive.
+     *
+     * @param name the authority name
+     * @return the matching authority, if found
+     */
+    Optional<LocalAuthorityType> findIdByNameIgnoreCase(String name);
 }

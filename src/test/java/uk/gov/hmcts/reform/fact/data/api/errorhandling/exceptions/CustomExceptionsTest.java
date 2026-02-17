@@ -31,6 +31,12 @@ class CustomExceptionsTest {
     }
 
     @Test
+    void testCreationOfInvalidParameterCombinationException() {
+        InvalidParameterCombinationException exception = new InvalidParameterCombinationException(TEST_MESSAGE);
+        assertEquals(TEST_MESSAGE, exception.getMessage(), ASSERTION_MESSAGE);
+    }
+
+    @Test
     void testCreationOfDuplicatedListItemException() {
         DuplicatedListItemException exception = new DuplicatedListItemException(TEST_MESSAGE);
         assertEquals(TEST_MESSAGE, exception.getMessage(), ASSERTION_MESSAGE);

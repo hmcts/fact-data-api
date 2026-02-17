@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 import java.util.UUID;
@@ -26,6 +27,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
@@ -33,6 +35,14 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @NoArgsConstructor
 @Builder
 @Entity
+@ValidConditional(
+    selected = "accessibleParking", selectedValueForRequired = "true", required = "accessibleParkingPhoneNumber"
+)
+@ValidConditional(
+    selected = "accessibleEntrance", selectedValueForRequired = "true", required = "accessibleEntrancePhoneNumber"
+)
+@ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorWidth")
+@ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorLimit")
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_accessibility_options")
 public class CourtAccessibilityOptions {
@@ -65,9 +75,15 @@ public class CourtAccessibilityOptions {
     private String accessibleParkingPhoneNumber;
 
     @Schema(description = "Details of available accessible toilets")
+    @Size(max = 255, message = "Accessible toilet description must not exceed 255 characters")
+    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
+        message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
     private String accessibleToiletDescription;
 
     @Schema(description = "Welsh language details of available accessible toilets")
+    @Size(max = 255, message = "Welsh accessible toilet description must not exceed 255 characters")
+    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
+        message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
     private String accessibleToiletDescriptionCy;
 
     @Schema(description = "The accessible entrance status")
@@ -80,19 +96,21 @@ public class CourtAccessibilityOptions {
     private String accessibleEntrancePhoneNumber;
 
     @Schema(description = "Details of available hearing enhancement equipment")
-    private String hearingEnhancementEquipment;
+    @NotNull
+    private HearingEnhancementEquipment hearingEnhancementEquipment;
 
     @Schema(description = "Lift availability status")
     @NotNull
     private Boolean lift;
 
     @Schema(description = "Lift door width (in cm)")
-    @Min(value = 100, message = "Lift door width needs to be over 100cm")
+    @Min(value = 1, message = "Lift door width needs to be over 1cm")
+    @Max(value = 1000, message = "Lift door width needs to be under 1000cm")
     private Integer liftDoorWidth;
 
     @Schema(description = "Lift weight limit (in kg)")
-    @Min(value = 150, message = "Lift weight limit should be at least 150kg")
-    @Max(value = 3000, message = "Lift weight limit should be at most 3000kg")
+    @Min(value = 1, message = "Lift weight limit should be at least 1kg")
+    @Max(value = 10000, message = "Lift weight limit should be at most 10000kg")
     private Integer liftDoorLimit;
 
     @Schema(description = "Quiet room availability status")
