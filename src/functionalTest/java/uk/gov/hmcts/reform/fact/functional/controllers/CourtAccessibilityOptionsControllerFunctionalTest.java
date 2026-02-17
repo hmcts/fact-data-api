@@ -14,6 +14,7 @@ import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,6 +36,8 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
     @DisplayName("POST /courts/{courtId}/v1/accessibility-options creates options and verifies persistence")
     void shouldCreateAccessibilityOptionsAndVerifyPersistence() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Accessibility Options");
+
+        final ZonedDateTime timestampBeforeCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
         final CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
             .courtId(courtId)
@@ -90,6 +93,11 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
         assertThat(fetchedOptions.getLiftDoorWidth())
             .as("Lift door width should match")
             .isEqualTo(90);
+
+        final ZonedDateTime timestampAfterCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterCreate)
+            .as("Court lastUpdatedAt should move forward after accessibility options creation for court %s", courtId)
+            .isAfter(timestampBeforeCreate);
     }
 
     @Test

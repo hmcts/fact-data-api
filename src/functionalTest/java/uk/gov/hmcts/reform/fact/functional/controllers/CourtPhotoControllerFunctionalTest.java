@@ -9,10 +9,12 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
+import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.io.File;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +43,8 @@ public final class CourtPhotoControllerFunctionalTest {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Upload JPEG");
         courtsWithPhotos.add(courtId);
 
+        final ZonedDateTime timestampBeforeUpload = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+
         final File testImage = new File("src/functionalTest/resources/test-images/test valid jpg 1.2 MB.jpg");
         final Response uploadResponse = http.doMultipartPost(
             "/courts/" + courtId + "/v1/photo",
@@ -62,6 +66,11 @@ public final class CourtPhotoControllerFunctionalTest {
         final CourtPhoto fetchedPhoto = mapper.readValue(getResponse.getBody().asString(), CourtPhoto.class);
         assertThat(fetchedPhoto.getId()).isEqualTo(photo.getId());
         assertThat(fetchedPhoto.getFileLink()).isEqualTo(photo.getFileLink());
+
+        final ZonedDateTime timestampAfterUpload = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterUpload)
+            .as("Court lastUpdatedAt should move forward after photo upload for court %s", courtId)
+            .isAfter(timestampBeforeUpload);
     }
 
     @Test
