@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
-import uk.gov.hmcts.reform.fact.data.api.validation.validator.UniqueOpeningDaysForCounterServiceValidator;
 
 import java.util.ArrayList;
 import java.util.List;

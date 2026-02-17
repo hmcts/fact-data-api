@@ -31,6 +31,7 @@ import org.hibernate.annotations.Type;
 import org.hibernate.type.SqlTypes;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -84,5 +85,6 @@ public class CourtOpeningHours {
     @Type(JsonBinaryType.class)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "opening_times_details", columnDefinition = "jsonb")
+    @UniqueOpeningDays
     private List<OpeningTimesDetail> openingTimesDetails;
 }

@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.fact.data.api.validation.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
@@ -19,16 +18,11 @@ import java.util.Set;
  * - Null values in the list or null days are ignored
  * - Empty or null lists are considered invalid
  */
-public class UniqueOpeningDaysForCourtOpeningHoursValidator
-    implements ConstraintValidator<UniqueOpeningDays, CourtOpeningHours> {
+public class UniqueOpeningDaysValidator
+    implements ConstraintValidator<UniqueOpeningDays, List<OpeningTimesDetail>> {
 
     @Override
-    public boolean isValid(CourtOpeningHours value, ConstraintValidatorContext context) {
-        if (value == null) {
-            return false;
-        }
-
-        List<OpeningTimesDetail> details = value.getOpeningTimesDetails();
+    public boolean isValid(List<OpeningTimesDetail> details, ConstraintValidatorContext context) {
         if (details == null || details.isEmpty()) {
             return false;
         }

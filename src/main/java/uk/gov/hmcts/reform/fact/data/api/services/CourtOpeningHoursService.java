@@ -78,10 +78,9 @@ public class CourtOpeningHoursService {
      * @return The counter-service opening hours record.
      * @throws CourtResourceNotFoundException if no counter-service opening hours record exists for the court.
      */
-    public List<CourtCounterServiceOpeningHours> getCounterServiceOpeningHoursByCourtId(UUID courtId) {
+    public CourtCounterServiceOpeningHours getCounterServiceOpeningHoursByCourtId(UUID courtId) {
         return courtCounterServiceOpeningHoursRepository
             .findByCourtId(courtService.getCourtById(courtId).getId())
-            .filter(list -> !list.isEmpty())
             .orElseThrow(
                 () -> new CourtResourceNotFoundException(
                     "No counter service opening hours found for court ID: " + courtId));
@@ -98,15 +97,7 @@ public class CourtOpeningHoursService {
     public CourtOpeningHours setOpeningHours(
         UUID courtId, UUID openingHoursTypeId, CourtOpeningHours courtOpeningHours) {
 
-        List<OpeningTimesDetail> hoursToSave = new ArrayList<>(courtOpeningHours.getOpeningTimesDetails());
-
-        // Check to ensure both options of everyday and specific days are not set together
-        // and to ensure everyday takes preference if present.
-        if (hoursToSave.stream()
-            .filter(java.util.Objects::nonNull)
-            .anyMatch(detail -> detail.getDayOfWeek() == DayOfTheWeek.EVERYDAY)) {
-            hoursToSave.removeIf(detail -> detail == null || detail.getDayOfWeek() != DayOfTheWeek.EVERYDAY);
-        }
+        List<OpeningTimesDetail> hoursToSave = normaliseOpeningTimesDetails(courtOpeningHours.getOpeningTimesDetails());
 
         Court foundCourt = courtService.getCourtById(courtId);
         OpeningHourType foundOpeningHourType = openingHoursTypeService.getOpeningHourTypeById(openingHoursTypeId);
@@ -130,30 +121,19 @@ public class CourtOpeningHoursService {
      * @return The created or updated counter-service opening hour entity.
      */
     @Transactional
-    public List<CourtCounterServiceOpeningHours> setCounterServiceOpeningHours(
-        UUID courtId, List<CourtCounterServiceOpeningHours> courtCounterServiceOpeningHours) {
+    public CourtCounterServiceOpeningHours setCounterServiceOpeningHours(
+        UUID courtId, CourtCounterServiceOpeningHours courtCounterServiceOpeningHours) {
 
-        List<CourtCounterServiceOpeningHours> hoursToSave
-            = new ArrayList<>(courtCounterServiceOpeningHours);
-
-        // Check to ensure both options of everyday and specific days are not set together
-        // and to ensure everyday takes preference if present.
-        if (hoursToSave
-            .stream()
-            .anyMatch(hour -> hour.getDayOfWeek() == DayOfTheWeek.EVERYDAY)) {
-            hoursToSave
-                .removeIf(hour -> hour.getDayOfWeek() != DayOfTheWeek.EVERYDAY);
-        }
+        List<OpeningTimesDetail> hoursToSave = normaliseOpeningTimesDetails(courtCounterServiceOpeningHours.getOpeningTimesDetails());
 
         Court foundCourt = courtService.getCourtById(courtId);
         courtCounterServiceOpeningHoursRepository.deleteByCourtId(foundCourt.getId());
 
-        for (CourtCounterServiceOpeningHours hour : hoursToSave) {
-            hour.setCourt(foundCourt);
-            hour.setCourtId(courtId);
-        }
+        courtCounterServiceOpeningHours.setOpeningTimesDetails(hoursToSave);
+        courtCounterServiceOpeningHours.setCourt(foundCourt);
+        courtCounterServiceOpeningHours.setCourtId(courtId);
 
-        return courtCounterServiceOpeningHoursRepository.saveAll(hoursToSave);
+        return courtCounterServiceOpeningHoursRepository.save(courtCounterServiceOpeningHours);
     }
 
     /**
@@ -167,5 +147,19 @@ public class CourtOpeningHoursService {
             .deleteByCourtIdAndOpeningHourTypeId(
                 courtService.getCourtById(courtId).getId(),
                 openingHoursTypeService.getOpeningHourTypeById(openingHoursTypeId).getId());
+    }
+
+    private List<OpeningTimesDetail> normaliseOpeningTimesDetails(List<OpeningTimesDetail> openingTimesDetails) {
+        List<OpeningTimesDetail> hoursToSave = new ArrayList<>(openingTimesDetails);
+
+        // Check to ensure both options of everyday and specific days are not set together
+        // and to ensure everyday takes preference if present.
+        if (hoursToSave.stream()
+            .filter(java.util.Objects::nonNull)
+            .anyMatch(detail -> detail.getDayOfWeek() == DayOfTheWeek.EVERYDAY)) {
+            hoursToSave.removeIf(detail -> detail == null || detail.getDayOfWeek() != DayOfTheWeek.EVERYDAY);
+        }
+
+        return hoursToSave;
     }
 }
