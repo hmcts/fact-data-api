@@ -1,25 +1,18 @@
 package uk.gov.hmcts.reform.fact.data.api.repositories;
 
-import jakarta.validation.constraints.NotBlank;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 import org.springframework.data.repository.query.Param;
+import jakarta.validation.constraints.NotBlank;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
-
-import java.util.Optional;
-import java.util.UUID;
-
 @Repository
 public interface ServiceAreaRepository extends JpaRepository<ServiceArea, UUID> {
-    
-    Optional<ServiceArea> findByNameIgnoreCase(String name);
 
     /**
      * Finds a service area by name, case-insensitive.
