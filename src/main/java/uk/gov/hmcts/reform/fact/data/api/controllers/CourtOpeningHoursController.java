@@ -19,7 +19,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHour
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtOpeningHoursService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
 
 import java.util.List;
 import java.util.UUID;

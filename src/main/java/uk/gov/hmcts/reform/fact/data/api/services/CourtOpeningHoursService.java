@@ -124,7 +124,8 @@ public class CourtOpeningHoursService {
     public CourtCounterServiceOpeningHours setCounterServiceOpeningHours(
         UUID courtId, CourtCounterServiceOpeningHours courtCounterServiceOpeningHours) {
 
-        List<OpeningTimesDetail> hoursToSave = normaliseOpeningTimesDetails(courtCounterServiceOpeningHours.getOpeningTimesDetails());
+        List<OpeningTimesDetail> hoursToSave
+            = normaliseOpeningTimesDetails(courtCounterServiceOpeningHours.getOpeningTimesDetails());
 
         Court foundCourt = courtService.getCourtById(courtId);
         courtCounterServiceOpeningHoursRepository.deleteByCourtId(foundCourt.getId());
@@ -157,7 +158,8 @@ public class CourtOpeningHoursService {
         if (hoursToSave.stream()
             .filter(java.util.Objects::nonNull)
             .anyMatch(detail -> detail.getDayOfWeek() == DayOfTheWeek.EVERYDAY)) {
-            hoursToSave.removeIf(detail -> detail == null || detail.getDayOfWeek() != DayOfTheWeek.EVERYDAY);
+            hoursToSave
+                .removeIf(detail -> detail == null || detail.getDayOfWeek() != DayOfTheWeek.EVERYDAY);
         }
 
         return hoursToSave;

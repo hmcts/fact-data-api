@@ -51,6 +51,7 @@ class CourtOpeningHoursControllerTest {
     private OpeningHourType openingHourType;
     private CourtOpeningHours openingHours;
     private CourtCounterServiceOpeningHours counterServiceOpeningHours;
+    private List<OpeningTimesDetail> openingTimesDetails;
 
     @BeforeEach
     public void setup() {
@@ -70,36 +71,47 @@ class CourtOpeningHoursControllerTest {
             .nameCy("nameCy")
             .build();
 
+        openingTimesDetails = List.of(
+            new OpeningTimesDetail(
+                DayOfTheWeek.MONDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(17, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.TUESDAY,
+                LocalTime.of(10, 0),
+                LocalTime.of(17, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.WEDNESDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(16, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.THURSDAY,
+                LocalTime.of(10, 0),
+                LocalTime.of(16, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.FRIDAY,
+                LocalTime.of(9, 30),
+                LocalTime.of(17, 0)
+            )
+        );
+
         openingHours =
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
-                .openingTimesDetails(List.of(
-                    OpeningTimesDetail.builder()
-                        .dayOfWeek(DayOfTheWeek.MONDAY)
-                        .openingTime(LocalTime.of(9, 0, 0))
-                        .closingTime(LocalTime.of(17, 0, 0))
-                        .build(),
-                    OpeningTimesDetail.builder()
-                        .dayOfWeek(DayOfTheWeek.TUESDAY)
-                        .openingTime(LocalTime.of(9, 0, 0))
-                        .closingTime(LocalTime.of(17, 0, 0))
-                        .build()
-                ))
+                .openingTimesDetails(openingTimesDetails)
                 .build();
 
         counterServiceOpeningHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .openingTimesDetails(List.of(
-                    OpeningTimesDetail.builder()
-                        .dayOfWeek(DayOfTheWeek.MONDAY)
-                        .openingTime(LocalTime.of(9, 0, 0))
-                        .closingTime(LocalTime.of(17, 0, 0))
-                        .build()
-                ))
+                .openingTimesDetails(openingTimesDetails)
                 .appointmentContact("Test Contact")
                 .assistWithForms(true)
                 .counterService(true)
@@ -213,7 +225,8 @@ class CourtOpeningHoursControllerTest {
         mockMvc.perform(get("/courts/{courtId}/v1/opening-hours/counter-service", courtId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.openingTimesDetails[0].dayOfWeek")
-                           .value(counterServiceOpeningHours.getOpeningTimesDetails().getFirst().getDayOfWeek().toString()))
+                           .value(counterServiceOpeningHours
+                                      .getOpeningTimesDetails().getFirst().getDayOfWeek().toString()))
             .andExpect(jsonPath("$.openingTimesDetails[0].openingTime")
                            .value("09:00:00"));
     }

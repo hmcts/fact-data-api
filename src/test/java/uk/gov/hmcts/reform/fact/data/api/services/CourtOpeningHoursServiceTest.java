@@ -52,6 +52,7 @@ class CourtOpeningHoursServiceTest {
     private CourtCounterServiceOpeningHours counterServiceOpeningHours;
     private UUID openingHourTypeId;
     private OpeningHourType openingHourType;
+    private List<OpeningTimesDetail> openingTimesDetails;
 
     private static final String COURT_NOT_FOUND_MESSAGE = "Court not found";
     private static final String OPENING_HOUR_TYPE_NOT_FOUND_MESSAGE = "Opening hour type not found";
@@ -68,35 +69,46 @@ class CourtOpeningHoursServiceTest {
         court.setId(courtId);
         court.setName("Test Court");
 
+        openingTimesDetails = List.of(
+            new OpeningTimesDetail(
+                DayOfTheWeek.MONDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(17, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.TUESDAY,
+                LocalTime.of(10, 0),
+                LocalTime.of(17, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.WEDNESDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(16, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.THURSDAY,
+                LocalTime.of(10, 0),
+                LocalTime.of(16, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.FRIDAY,
+                LocalTime.of(9, 30),
+                LocalTime.of(17, 0)
+            )
+        );
+
         openingHours =
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .openingTimesDetails(List.of(
-                    OpeningTimesDetail.builder()
-                        .dayOfWeek(DayOfTheWeek.MONDAY)
-                        .openingTime(LocalTime.of(9, 0))
-                        .closingTime(LocalTime.of(17, 0))
-                        .build(),
-                    OpeningTimesDetail.builder()
-                        .dayOfWeek(DayOfTheWeek.TUESDAY)
-                        .openingTime(LocalTime.of(9, 0))
-                        .closingTime(LocalTime.of(17, 0))
-                        .build()
-                ))
+                .openingTimesDetails(openingTimesDetails)
                 .build();
 
         counterServiceOpeningHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .openingTimesDetails(List.of(
-                    OpeningTimesDetail.builder()
-                        .dayOfWeek(DayOfTheWeek.MONDAY)
-                        .openingTime(LocalTime.of(9, 0, 0))
-                        .closingTime(LocalTime.of(17, 0, 0))
-                        .build()
-                ))
+                .openingTimesDetails(openingTimesDetails)
                 .appointmentContact("Test Contact")
                 .assistWithForms(true)
                 .counterService(true)
@@ -187,7 +199,8 @@ class CourtOpeningHoursServiceTest {
     @Test
     void getCounterServiceOpeningHoursByCourtIdReturnsOpeningHoursWhenFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.of(counterServiceOpeningHours));
+        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId))
+            .thenReturn(Optional.of(counterServiceOpeningHours));
 
         CourtCounterServiceOpeningHours result =
             courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(courtId);

@@ -31,7 +31,6 @@ import org.hibernate.type.SqlTypes;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidTimeOrder;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
