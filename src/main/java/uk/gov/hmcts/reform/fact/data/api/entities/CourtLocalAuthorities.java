@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -8,6 +10,7 @@ import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,8 +31,9 @@ import org.hibernate.annotations.Type;
 @NoArgsConstructor
 @Builder
 @Entity
+@EntityListeners(AuditableCourtEntityListener.class)
 @Table(name = "court_local_authorities")
-public class CourtLocalAuthorities {
+public class CourtLocalAuthorities implements AuditableCourtEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.FetchType;
@@ -25,6 +26,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidTimeOrder;
@@ -35,11 +38,12 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @NoArgsConstructor
 @Builder
 @Entity
+@EntityListeners(AuditableCourtEntityListener.class)
 @ValidConditional(selected = "appointmentNeeded", selectedValueForRequired = "true", required = "appointmentContact")
 @ValidTimeOrder(start = "openingHour", end = "closingHour")
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_counter_service_opening_hours")
-public class CourtCounterServiceOpeningHours {
+public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
