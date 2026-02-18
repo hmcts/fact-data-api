@@ -22,24 +22,10 @@ class UniqueOpeningDaysForCourtOpeningHoursValidatorTest {
         validator = new UniqueOpeningDaysValidator();
     }
 
-    private CourtOpeningHours entry(DayOfTheWeek day) {
-        CourtOpeningHours h = new CourtOpeningHours();
+    private OpeningTimesDetail entry(DayOfTheWeek day) {
         OpeningTimesDetail detail = new OpeningTimesDetail();
         detail.setDayOfWeek(day);
-        h.setOpeningTimesDetails(new ArrayList<>(List.of(detail)));
-        return h;
-    }
-
-    private CourtOpeningHours entry(List<DayOfTheWeek> days) {
-        CourtOpeningHours h = new CourtOpeningHours();
-        List<OpeningTimesDetail> details = new ArrayList<>();
-        for (DayOfTheWeek day : days) {
-            OpeningTimesDetail detail = new OpeningTimesDetail();
-            detail.setDayOfWeek(day);
-            details.add(detail);
-        }
-        h.setOpeningTimesDetails(details);
-        return h;
+        return detail;
     }
 
     @Test
@@ -49,38 +35,34 @@ class UniqueOpeningDaysForCourtOpeningHoursValidatorTest {
 
     @Test
     void shouldReturnFalseForEmptyList() {
-        assertFalse(validator.isValid(new CourtOpeningHours(), null));
+        assertFalse(validator.isValid(List.of(), null));
     }
 
     @Test
     void shouldReturnTrueWhenOnlyEverydayProvided() {
-        CourtOpeningHours openingHours = entry(DayOfTheWeek.EVERYDAY);
-        assertTrue(validator.isValid(openingHours, null));
+        assertTrue(validator.isValid(List.of(entry(DayOfTheWeek.EVERYDAY)), null));
     }
 
     @Test
     void shouldReturnFalseWhenEverydayWithOtherDays() {
-        CourtOpeningHours openingHours = entry(List.of(DayOfTheWeek.EVERYDAY, DayOfTheWeek.MONDAY));
-        assertFalse(validator.isValid(openingHours, null));
+        assertFalse(validator.isValid(List.of(entry(DayOfTheWeek.EVERYDAY), entry(DayOfTheWeek.MONDAY)), null));
     }
 
     @Test
     void shouldReturnFalseWhenDuplicateDaysPresent() {
-        CourtOpeningHours openingHours = entry(List.of(
-            DayOfTheWeek.MONDAY,
-            DayOfTheWeek.TUESDAY,
-            DayOfTheWeek.MONDAY
-        ));
-        assertFalse(validator.isValid(openingHours, null));
+        assertFalse(validator.isValid(List.of(
+            entry(DayOfTheWeek.MONDAY),
+            entry(DayOfTheWeek.TUESDAY),
+            entry(DayOfTheWeek.MONDAY)
+        ), null));
     }
 
     @Test
     void shouldReturnTrueWhenAllDaysUnique() {
-        CourtOpeningHours openingHours = entry(List.of(
-            DayOfTheWeek.MONDAY,
-            DayOfTheWeek.TUESDAY,
-            DayOfTheWeek.WEDNESDAY
-        ));
-        assertTrue(validator.isValid(openingHours, null));
+        assertTrue(validator.isValid(List.of(
+            entry(DayOfTheWeek.MONDAY),
+            entry(DayOfTheWeek.TUESDAY),
+            entry(DayOfTheWeek.WEDNESDAY)
+        ), null));
     }
 }

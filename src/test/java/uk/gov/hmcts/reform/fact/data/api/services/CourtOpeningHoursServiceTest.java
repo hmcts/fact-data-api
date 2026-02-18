@@ -49,7 +49,7 @@ class CourtOpeningHoursServiceTest {
     private UUID courtId;
     private Court court;
     private CourtOpeningHours openingHours;
-    private List<CourtCounterServiceOpeningHours> counterServiceOpeningHours;
+    private CourtCounterServiceOpeningHours counterServiceOpeningHours;
     private UUID openingHourTypeId;
     private OpeningHourType openingHourType;
 
@@ -86,21 +86,24 @@ class CourtOpeningHoursServiceTest {
                 ))
                 .build();
 
-        counterServiceOpeningHours = List.of(
+        counterServiceOpeningHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0, 0))
-                .closingHour(LocalTime.of(17, 0, 0))
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0, 0))
+                        .closingTime(LocalTime.of(17, 0, 0))
+                        .build()
+                ))
                 .appointmentContact("Test Contact")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
                 .assistWithSupport(true)
                 .appointmentNeeded(false)
-                .build()
-        );
+                .build();
     }
 
     @Test
@@ -183,14 +186,13 @@ class CourtOpeningHoursServiceTest {
 
     @Test
     void getCounterServiceOpeningHoursByCourtIdReturnsOpeningHoursWhenFound() {
-        List<CourtCounterServiceOpeningHours> counterHours = List.of(new CourtCounterServiceOpeningHours());
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.of(counterHours));
+        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.of(counterServiceOpeningHours));
 
-        List<CourtCounterServiceOpeningHours> result =
+        CourtCounterServiceOpeningHours result =
             courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(courtId);
 
-        assertThat(result).isEqualTo(counterHours);
+        assertThat(result).isEqualTo(counterServiceOpeningHours);
     }
 
     @Test
@@ -330,95 +332,97 @@ class CourtOpeningHoursServiceTest {
     void setCounterServiceOpeningHoursSuccessfullyCreatesNewOpeningHours() {
 
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtCounterServiceOpeningHoursRepository.saveAll(any())).thenReturn(counterServiceOpeningHours);
+        when(courtCounterServiceOpeningHoursRepository.save(any())).thenReturn(counterServiceOpeningHours);
 
-        List<CourtCounterServiceOpeningHours> result =
+        CourtCounterServiceOpeningHours result =
             courtOpeningHoursService.setCounterServiceOpeningHours(courtId, counterServiceOpeningHours);
 
         assertThat(result).isEqualTo(counterServiceOpeningHours);
         verify(courtCounterServiceOpeningHoursRepository).deleteByCourtId(courtId);
-        verify(courtCounterServiceOpeningHoursRepository).saveAll(counterServiceOpeningHours);
+        verify(courtCounterServiceOpeningHoursRepository).save(counterServiceOpeningHours);
     }
 
     @Test
     void setCounterServiceOpeningHoursRemovesOtherDaysWhenEverydayPresent() {
 
-        List<CourtCounterServiceOpeningHours> hours = List.of(
+        CourtCounterServiceOpeningHours hours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0, 0))
-                .closingHour(LocalTime.of(17, 0, 0))
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0, 0))
+                        .closingTime(LocalTime.of(17, 0, 0))
+                        .build(),
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.EVERYDAY)
+                        .openingTime(LocalTime.of(9, 0, 0))
+                        .closingTime(LocalTime.of(17, 0, 0))
+                        .build()
+                ))
                 .appointmentContact("Test Contact")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
                 .assistWithSupport(true)
                 .appointmentNeeded(false)
-                .build(),
-            CourtCounterServiceOpeningHours.builder()
-                .id(UUID.randomUUID())
-                .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.EVERYDAY)
-                .openingHour(LocalTime.of(9, 0, 0))
-                .closingHour(LocalTime.of(17, 0, 0))
-                .appointmentContact("Test Contact")
-                .assistWithForms(true)
-                .counterService(true)
-                .assistWithDocuments(true)
-                .assistWithSupport(true)
-                .appointmentNeeded(false)
-                .build());
+                .build();
 
-        List<CourtCounterServiceOpeningHours> expectedHours = List.of(
+        CourtCounterServiceOpeningHours expectedHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.EVERYDAY)
-                .openingHour(LocalTime.of(9, 0, 0))
-                .closingHour(LocalTime.of(17, 0, 0))
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.EVERYDAY)
+                        .openingTime(LocalTime.of(9, 0, 0))
+                        .closingTime(LocalTime.of(17, 0, 0))
+                        .build()
+                ))
                 .appointmentContact("Test Contact")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
                 .assistWithSupport(true)
                 .appointmentNeeded(false)
-                .build());
+                .build();
 
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtCounterServiceOpeningHoursRepository.saveAll(any())).thenReturn(expectedHours);
+        when(courtCounterServiceOpeningHoursRepository.save(any())).thenReturn(expectedHours);
 
-        List<CourtCounterServiceOpeningHours> result =
+        CourtCounterServiceOpeningHours result =
             courtOpeningHoursService.setCounterServiceOpeningHours(courtId, hours);
 
         assertThat(result).isEqualTo(expectedHours);
         verify(courtCounterServiceOpeningHoursRepository).deleteByCourtId(courtId);
-        verify(courtCounterServiceOpeningHoursRepository).saveAll(any());
+        verify(courtCounterServiceOpeningHoursRepository).save(any());
     }
 
     @Test
     void setCounterServiceOpeningHoursUpdatesExistingOpeningHours() {
-        List<CourtCounterServiceOpeningHours> updatedHours =
-            List.of(new CourtCounterServiceOpeningHours());
+        CourtCounterServiceOpeningHours updatedHours = new CourtCounterServiceOpeningHours();
+        updatedHours.setOpeningTimesDetails(List.of());
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtCounterServiceOpeningHoursRepository.saveAll(any())).thenReturn(updatedHours);
+        when(courtCounterServiceOpeningHoursRepository.save(any())).thenReturn(updatedHours);
 
-        List<CourtCounterServiceOpeningHours> result =
+        CourtCounterServiceOpeningHours result =
             courtOpeningHoursService.setCounterServiceOpeningHours(courtId, updatedHours);
 
         assertThat(result).isEqualTo(updatedHours);
         verify(courtCounterServiceOpeningHoursRepository).deleteByCourtId(courtId);
-        verify(courtCounterServiceOpeningHoursRepository).saveAll(updatedHours);
+        verify(courtCounterServiceOpeningHoursRepository).save(updatedHours);
     }
 
     @Test
     void setCounterServiceOpeningHoursThrowsExceptionWhenCourtDoesNotExist() {
         when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
+        CourtCounterServiceOpeningHours hours = new CourtCounterServiceOpeningHours();
+        hours.setOpeningTimesDetails(List.of());
 
         assertThrows(
             NotFoundException.class, () ->
-                courtOpeningHoursService.setCounterServiceOpeningHours(courtId, List.of())
+                courtOpeningHoursService.setCounterServiceOpeningHours(courtId, hours)
         );
     }
 

@@ -40,7 +40,6 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @Builder
 @Entity
 @ValidConditional(selected = "appointmentNeeded", selectedValueForRequired = "true", required = "appointmentContact")
-@ValidTimeOrder(start = "openingHour", end = "closingHour")
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_counter_service_opening_hours")
 public class CourtCounterServiceOpeningHours {

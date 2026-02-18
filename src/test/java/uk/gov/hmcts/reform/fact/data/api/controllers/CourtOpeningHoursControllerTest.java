@@ -156,15 +156,18 @@ class CourtOpeningHoursControllerTest {
 
     @Test
     void getCounterServiceOpeningHoursByCourtIdReturns200() {
-        List<CourtCounterServiceOpeningHours> openingHours = List.of(
+        CourtCounterServiceOpeningHours openingHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(COURT_ID)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
-                .build()
-        );
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
+                .build();
 
         when(courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(COURT_ID)).thenReturn(openingHours);
 
@@ -273,13 +276,17 @@ class CourtOpeningHoursControllerTest {
 
     @Test
     void setCounterServiceOpeningHoursReturns200() {
-        List<CourtCounterServiceOpeningHours> openingHours = List.of(
+        CourtCounterServiceOpeningHours openingHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
-                .build());
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
+                .build();
 
         when(courtOpeningHoursService.setCounterServiceOpeningHours(COURT_ID, openingHours))
             .thenReturn(openingHours);
@@ -295,13 +302,17 @@ class CourtOpeningHoursControllerTest {
 
     @Test
     void setCounterServiceOpeningHoursThrowsNotFoundException() {
-        List<CourtCounterServiceOpeningHours> openingHours = List.of(
+        CourtCounterServiceOpeningHours openingHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
-                .build());
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
+                .build();
 
         when(courtOpeningHoursService.setCounterServiceOpeningHours(UNKNOWN_COURT_ID, openingHours))
             .thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
@@ -317,13 +328,17 @@ class CourtOpeningHoursControllerTest {
 
     @Test
     void setCounterServiceOpeningHoursThrowsIllegalArgumentException() {
-        List<CourtCounterServiceOpeningHours> openingHours = List.of(
+        CourtCounterServiceOpeningHours openingHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
-                .build());
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
+                .build();
         assertThrows(
             IllegalArgumentException.class, () ->
                 courtOpeningHoursController.setCounterServiceOpeningHours(INVALID_UUID, openingHours)

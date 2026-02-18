@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
+import uk.gov.hmcts.reform.fact.data.api.validation.validator.UniqueOpeningDaysValidator;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,17 +16,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class UniqueOpeningDaysForCounterServiceValidatorTest {
 
-    private UniqueOpeningDaysForCounterServiceValidator validator;
+    private UniqueOpeningDaysValidator validator;
 
     @BeforeEach
     void setUp() {
-        validator = new UniqueOpeningDaysForCounterServiceValidator();
+        validator = new UniqueOpeningDaysValidator();
     }
 
-    private CourtCounterServiceOpeningHours entry(DayOfTheWeek day) {
-        CourtCounterServiceOpeningHours h = new CourtCounterServiceOpeningHours();
-        h.setDayOfWeek(day);
-        return h;
+    private OpeningTimesDetail entry(DayOfTheWeek day) {
+        OpeningTimesDetail detail = new OpeningTimesDetail();
+        detail.setDayOfWeek(day);
+        return detail;
     }
 
     @Test
@@ -33,18 +36,18 @@ class UniqueOpeningDaysForCounterServiceValidatorTest {
 
     @Test
     void shouldReturnFalseForEmptyList() {
-        assertFalse(validator.isValid(new ArrayList<>(), null));
+        assertFalse(validator.isValid(List.of(), null));
     }
 
     @Test
     void shouldReturnTrueWhenOnlyEverydayProvided() {
-        List<CourtCounterServiceOpeningHours> list = List.of(entry(DayOfTheWeek.EVERYDAY));
+        List<OpeningTimesDetail> list = List.of(entry(DayOfTheWeek.EVERYDAY));
         assertTrue(validator.isValid(list, null));
     }
 
     @Test
     void shouldReturnFalseWhenEverydayWithOtherDays() {
-        List<CourtCounterServiceOpeningHours> list = List.of(
+        List<OpeningTimesDetail> list = List.of(
             entry(DayOfTheWeek.EVERYDAY),
             entry(DayOfTheWeek.MONDAY)
         );
@@ -53,7 +56,7 @@ class UniqueOpeningDaysForCounterServiceValidatorTest {
 
     @Test
     void shouldReturnFalseWhenDuplicateDaysPresent() {
-        List<CourtCounterServiceOpeningHours> list = List.of(
+        List<OpeningTimesDetail> list = List.of(
             entry(DayOfTheWeek.MONDAY),
             entry(DayOfTheWeek.TUESDAY),
             entry(DayOfTheWeek.MONDAY)
@@ -63,7 +66,7 @@ class UniqueOpeningDaysForCounterServiceValidatorTest {
 
     @Test
     void shouldReturnTrueWhenAllDaysUnique() {
-        List<CourtCounterServiceOpeningHours> list = List.of(
+        List<OpeningTimesDetail> list = List.of(
             entry(DayOfTheWeek.MONDAY),
             entry(DayOfTheWeek.TUESDAY),
             entry(DayOfTheWeek.WEDNESDAY)
@@ -73,10 +76,10 @@ class UniqueOpeningDaysForCounterServiceValidatorTest {
 
     @Test
     void shouldIgnoreNullEntriesAndNullDays() {
-        CourtCounterServiceOpeningHours nullDay = new CourtCounterServiceOpeningHours();
+        OpeningTimesDetail nullDay = new OpeningTimesDetail();
         nullDay.setDayOfWeek(null);
 
-        List<CourtCounterServiceOpeningHours> list = new ArrayList<>();
+        List<OpeningTimesDetail> list = new ArrayList<>();
         list.add(null); // null entry
         list.add(entry(DayOfTheWeek.THURSDAY));
         list.add(nullDay); // entry with null day
