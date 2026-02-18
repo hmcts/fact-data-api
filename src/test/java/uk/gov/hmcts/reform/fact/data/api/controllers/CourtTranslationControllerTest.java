@@ -6,9 +6,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtTranslationService;
 
 import java.util.UUID;
@@ -41,19 +43,23 @@ class CourtTranslationControllerTest {
 
         when(courtTranslationService.getTranslationByCourtId(COURT_ID)).thenReturn(translation);
 
-        var response = courtTranslationController.getTranslationServicesByCourtId(COURT_ID.toString());
+        ResponseEntity<CourtTranslation> response =
+            courtTranslationController.getTranslationServicesByCourtId(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(translation);
     }
 
     @Test
-    void getTranslationServicesThrowsTranslationNotFound() {
+    void getTranslationServicesThrowsCourtResourceNotFound() {
         when(courtTranslationService.getTranslationByCourtId(UNKNOWN_COURT_ID))
-            .thenThrow(new TranslationNotFoundException("No translation services found"));
+            .thenThrow(new CourtResourceNotFoundException("No translation services found"));
 
-        assertThrows(TranslationNotFoundException.class, () ->
-            courtTranslationController.getTranslationServicesByCourtId(UNKNOWN_COURT_ID.toString())
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+
+        assertThrows(
+            CourtResourceNotFoundException.class, () ->
+            courtTranslationController.getTranslationServicesByCourtId(unknownCourtId)
         );
     }
 
@@ -62,8 +68,10 @@ class CourtTranslationControllerTest {
         when(courtTranslationService.getTranslationByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new NotFoundException("Court not found"));
 
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+
         assertThrows(NotFoundException.class, () ->
-            courtTranslationController.getTranslationServicesByCourtId(UNKNOWN_COURT_ID.toString())
+            courtTranslationController.getTranslationServicesByCourtId(unknownCourtId)
         );
     }
 
@@ -82,7 +90,8 @@ class CourtTranslationControllerTest {
 
         when(courtTranslationService.setTranslation(COURT_ID, translation)).thenReturn(translation);
 
-        var response = courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
+        ResponseEntity<CourtTranslation> response =
+            courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(translation);
@@ -96,7 +105,8 @@ class CourtTranslationControllerTest {
 
         when(courtTranslationService.setTranslation(COURT_ID, translation)).thenReturn(translation);
 
-        var response = courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
+        ResponseEntity<CourtTranslation> response =
+            courtTranslationController.setTranslationServices(COURT_ID.toString(), translation);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(translation);
@@ -110,8 +120,10 @@ class CourtTranslationControllerTest {
         when(courtTranslationService.setTranslation(UNKNOWN_COURT_ID, translation))
             .thenThrow(new NotFoundException("Court not found"));
 
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+
         assertThrows(NotFoundException.class, () ->
-            courtTranslationController.setTranslationServices(UNKNOWN_COURT_ID.toString(), translation)
+            courtTranslationController.setTranslationServices(unknownCourtId, translation)
         );
     }
 

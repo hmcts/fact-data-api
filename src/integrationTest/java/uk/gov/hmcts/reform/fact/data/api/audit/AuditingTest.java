@@ -182,8 +182,9 @@ class AuditingTest {
             }
             // lot of updates
             for (int i = 0; i < updateCount; i++) {
-                court.setName("Court Test " + RandomStringUtils.insecure().nextAlphabetic(6));
-                courtRepository.save(court);
+                Court c = courtRepository.findById(court.getId()).orElseThrow();
+                c.setName("Court Test " + RandomStringUtils.insecure().nextAlphabetic(6));
+                courtRepository.save(c);
             }
         });
 
@@ -198,8 +199,9 @@ class AuditingTest {
             }
             // lot of updates
             for (int i = 0; i < updateCount; i++) {
-                courtTranslation.setEmail(RandomStringUtils.insecure().nextAlphabetic(6) + "@here.com");
-                courtTranslationRepository.save(courtTranslation);
+                CourtTranslation ct = courtTranslationRepository.findById(courtTranslation.getId()).orElseThrow();
+                ct.setEmail(RandomStringUtils.insecure().nextAlphabetic(6) + "@here.com");
+                courtTranslationRepository.save(ct);
             }
         });
 

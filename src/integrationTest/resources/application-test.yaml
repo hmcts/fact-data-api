@@ -2,11 +2,21 @@ spring:
   datasource:
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
     url: jdbc:tc:postgresql:16:///fact
-  # prevents some unwanted azure autoconfiguration during integration testing
+  cloud:
+    azure:
+      storage:
+        # allows blob store autoconfigure to complete without exception
+        account-name: test
   autoconfigure:
     exclude:
       - com.azure.spring.cloud.autoconfigure.implementation.context.AzureTokenCredentialAutoConfiguration
-      - com.azure.spring.cloud.autoconfigure.implementation.storage.blob.AzureStorageBlobAutoConfiguration
-      - com.azure.spring.cloud.autoconfigure.implementation.storage.blob.AzureStorageBlobResourceAutoConfiguration
-      - com.azure.spring.cloud.autoconfigure.implementation.storage.fileshare.AzureStorageFileShareResourceAutoConfiguration
 
+user:
+  retention-period: 365
+
+courtLock:
+  timeout-minutes: 60
+
+os:
+  url: https://api.os.uk
+  key: a-key

@@ -1,6 +1,29 @@
 package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
+
+import java.lang.annotation.Annotation;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Payload;
+import jakarta.validation.metadata.ConstraintDescriptor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -11,18 +34,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
-
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
-
-import java.util.Collections;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.springframework.web.multipart.MultipartException;
 
 @ExtendWith(MockitoExtension.class)
 class GlobalExceptionHandlerTest {
@@ -45,8 +57,8 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void testHandleTranslationNotFoundException() {
-        TranslationNotFoundException ex = new TranslationNotFoundException(TEST_MESSAGE);
+    void testHandleCourtResourceNotFoundException() {
+        CourtResourceNotFoundException ex = new CourtResourceNotFoundException(TEST_MESSAGE);
         ExceptionResponse response = handler.handle(ex);
 
         assertThat(response).isNotNull();
@@ -66,6 +78,44 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void testHandleConstraintViolationExceptionWithValidUuidAnnotation() {
+        ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+        ConstraintDescriptor<?> descriptor = mock(ConstraintDescriptor.class);
+        doReturn(descriptor).when(violation).getConstraintDescriptor();
+        doReturn(validUuidAnnotation()).when(descriptor).getAnnotation();
+        when(violation.getInvalidValue()).thenReturn("bad-uuid");
+
+        ConstraintViolationException ex =
+            new ConstraintViolationException("invalid", Set.of(violation));
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo("Invalid UUID supplied: bad-uuid");
+    }
+
+    @Test
+    void testHandleConstraintViolationExceptionWithNonUuidAnnotation() {
+        ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+        ConstraintDescriptor<?> descriptor = mock(ConstraintDescriptor.class);
+        doReturn(descriptor).when(violation).getConstraintDescriptor();
+        doReturn(new Annotation() {
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return Annotation.class;
+            }
+        }).when(descriptor).getAnnotation();
+        when(violation.getMessage()).thenReturn("Bad request");
+        when(violation.getInvalidValue()).thenReturn("oops");
+
+        ConstraintViolationException ex =
+            new ConstraintViolationException("invalid", Set.of(violation));
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo("Bad request: oops");
+    }
+
+    @Test
     void testHandleMethodArgumentNotValidException() {
         FieldError fieldError = new FieldError("object", "field", TEST_MESSAGE);
         BeanPropertyBindingResult bindingResult =
@@ -77,8 +127,22 @@ class GlobalExceptionHandlerTest {
         Map<String, String> response = handler.handle(methodArgumentNotValidException);
 
         assertThat(response).isNotNull();
-        assertThat(response).containsKey("field");
-        assertThat(response.get("field")).isEqualTo(TEST_MESSAGE);
+        assertThat(response).containsEntry("field", TEST_MESSAGE);
+        assertThat(response).containsKey("timestamp");
+    }
+
+    @Test
+    void testHandleMethodArgumentNotValidExceptionWithDuplicateFieldsRetainsFirstMessage() {
+        BeanPropertyBindingResult bindingResult =
+            new BeanPropertyBindingResult(new Object(), "object");
+        bindingResult.addError(new FieldError("object", "field", "first"));
+        bindingResult.addError(new FieldError("object", "field", "second"));
+        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
+        when(ex.getBindingResult()).thenReturn(bindingResult);
+
+        Map<String, String> response = handler.handle(ex);
+
+        assertThat(response.get("field")).isEqualTo("first");
     }
 
     @Test
@@ -141,5 +205,128 @@ class GlobalExceptionHandlerTest {
         assertThat(response).isNotNull();
         assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
         assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleMethodArgumentTypeMismatchExceptionWithUnknownExpectedType() {
+        MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
+            "123", null, "page", null, new IllegalArgumentException("fail")
+        );
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage())
+            .contains("Invalid value for parameter 'page'")
+            .contains("unknown");
+    }
+
+    @Test
+    void testHandleInvalidParameterCombinationException() {
+        InvalidParameterCombinationException ex = new InvalidParameterCombinationException(TEST_MESSAGE);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRequestURI()).thenReturn("/search/courts/v1/postcode");
+
+        ExceptionResponse response = handler.handle(ex, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleInvalidParameterCombinationExceptionWithNullRequest() {
+        InvalidParameterCombinationException ex = new InvalidParameterCombinationException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex, null);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleMultipartExceptionWithProvidedContentType() {
+        MultipartException ex = new MultipartException("Missing multipart boundary");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getContentType()).thenReturn("multipart/form-data");
+
+        ExceptionResponse response = handler.handle(ex, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage())
+            .contains("Unsupported or malformed Content-Type 'multipart/form-data'")
+            .contains("use 'multipart/form-data'")
+            .contains("use 'application/json'");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleMultipartExceptionWithUnknownContentType() {
+        MultipartException ex = new MultipartException("Not a multipart request");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getContentType()).thenReturn(null);
+
+        ExceptionResponse response = handler.handle(ex, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage())
+            .contains("Unsupported or malformed Content-Type 'unknown'")
+            .contains("use 'multipart/form-data'")
+            .contains("use 'application/json'");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleDuplicatedListItemException() {
+        DuplicatedListItemException ex = new DuplicatedListItemException("Duplicated list item");
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).contains("Duplicated list item");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleInvalidAreaOfLawTypeException() {
+        InvalidAreaOfLawException ex =
+            new InvalidAreaOfLawException("Invalid area of Law: Probate");
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).contains("Invalid area of Law: Probate");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    private ValidUUID validUuidAnnotation() {
+        return new ValidUUID() {
+            @Override
+            public String message() {
+                return "Invalid UUID format";
+            }
+
+            @Override
+            public Class<?>[] groups() {
+                return new Class[0];
+            }
+
+            @Override
+            public Class<? extends Payload>[] payload() {
+                @SuppressWarnings("unchecked")
+                Class<? extends Payload>[] payload = (Class<? extends Payload>[]) new Class<?>[0];
+                return payload;
+            }
+
+            @Override
+            public boolean allowNull() {
+                return false;
+            }
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return ValidUUID.class;
+            }
+        };
     }
 }

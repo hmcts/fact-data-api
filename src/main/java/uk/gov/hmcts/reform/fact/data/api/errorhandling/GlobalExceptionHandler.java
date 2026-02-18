@@ -1,15 +1,20 @@
 package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.TranslationNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,10 +25,13 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final String UNKNOWN = "unknown";
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -32,10 +40,26 @@ public class GlobalExceptionHandler {
         return generateExceptionResponse(ex.getMessage());
     }
 
-    @ExceptionHandler(TranslationNotFoundException.class)
+    @ExceptionHandler(MultipartException.class)
+    @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+    public ExceptionResponse handle(MultipartException ex, HttpServletRequest request) {
+        String provided = request != null && request.getContentType() != null
+            ? request.getContentType()
+            : UNKNOWN;
+        log.error("415, multipart handling error. Provided Content-Type: {}. Details: {}", provided, ex.getMessage());
+
+        String message = String.format(
+            "Unsupported or malformed Content-Type '%s'. If uploading a file, use 'multipart/form-data'. "
+                + "If sending JSON, use 'application/json'.",
+            provided
+        );
+        return generateExceptionResponse(message);
+    }
+
+    @ExceptionHandler(CourtResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ExceptionResponse handle(TranslationNotFoundException ex) {
-        log.trace("204, no translation services for a court. Details: {}", ex.getMessage());
+    public ExceptionResponse handle(CourtResourceNotFoundException ex) {
+        log.trace("204, unable to find court resource. Details: {}", ex.getMessage());
         return generateExceptionResponse(ex.getMessage());
     }
 
@@ -59,12 +83,14 @@ public class GlobalExceptionHandler {
     public Map<String, String> handle(MethodArgumentNotValidException ex) {
         log.error("400, error while validating request body. Details: {}", ex.getMessage());
 
-        return ex.getBindingResult().getFieldErrors().stream()
-            .collect(Collectors.toMap(
-                fieldError -> fieldError.getField(),
-                fieldError -> fieldError.getDefaultMessage(),
-                (existing, replacement) -> existing
-            ));
+        LinkedHashMap<String, String> errors = new LinkedHashMap<>();
+
+        ex.getBindingResult().getFieldErrors().forEach(fieldError ->
+            errors.putIfAbsent(fieldError.getField(), fieldError.getDefaultMessage())
+        );
+
+        errors.put("timestamp", LocalDateTime.now().toString());
+        return errors;
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -77,10 +103,25 @@ public class GlobalExceptionHandler {
         return generateExceptionResponse(message);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(IllegalArgumentException ex) {
+        log.error("400, illegal argument supplied. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
+    }
+
     @ExceptionHandler(InvalidFileException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidFileException ex) {
         log.error("400, file failed validation. Details: {}", ex.getMessage());
+
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidPostcodeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidPostcodeException ex) {
+        log.error("400, invalid postcode. Details: {}", ex.getMessage());
 
         return generateExceptionResponse(ex.getMessage());
     }
@@ -96,13 +137,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(MethodArgumentTypeMismatchException ex) {
-        log.error(
-            "400, invalid parameter type. Parameter: {}, Value: {}, Expected type: {}",
-            ex.getName(), ex.getValue(), ex.getRequiredType()
-                != null ? ex.getRequiredType().getSimpleName() : "unknown"
-        );
+        log.error("400, invalid parameter type. Parameter: {}, Value: {}, Expected type: {}",
+                  ex.getName(), ex.getValue(), ex.getRequiredType()
+                      != null ? ex.getRequiredType().getSimpleName() : UNKNOWN);
 
-        String expectedType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
+        String expectedType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : UNKNOWN;
         String message = String.format(
             "Invalid value for parameter '%s': '%s'. Expected type: %s.",
             ex.getName(),
@@ -118,6 +157,33 @@ public class GlobalExceptionHandler {
     public ExceptionResponse handle(InvalidDateRangeException ex) {
         log.error("400, date range failed validation. Details: {}", ex.getMessage());
 
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidParameterCombinationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidParameterCombinationException ex,
+                                    HttpServletRequest request) {
+
+        log.error(
+            "400, invalid parameter combination. Path: {}. Details: {}",
+            request != null ? request.getRequestURI() : UNKNOWN,
+            ex.getMessage()
+        );
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicatedListItemException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(DuplicatedListItemException ex) {
+        log.error("400, duplicated list item. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidAreaOfLawException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidAreaOfLawException ex) {
+        log.error("400, invalid area of law. Details: {}", ex.getMessage());
         return generateExceptionResponse(ex.getMessage());
     }
 

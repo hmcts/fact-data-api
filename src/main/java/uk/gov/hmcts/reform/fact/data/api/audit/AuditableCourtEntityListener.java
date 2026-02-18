@@ -5,6 +5,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.AuditableCourtEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
 
+import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PrePersist;
@@ -147,14 +149,16 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
             // convert the entities into maps
             String previousString = previous != null ? objectMapper.writeValueAsString(previous) : "{}";
             String currentString = objectMapper.writeValueAsString(current);
-            Map<?, ?> previousMap = objectMapper.readValue(previousString, Map.class);
-            Map<?, ?> currentMap = objectMapper.readValue(currentString, Map.class);
+            Map<String, Serializable> previousMap = objectMapper.readValue(
+                previousString, new TypeReference<Map<String,Serializable>>(){});
+            Map<String, Serializable> currentMap = objectMapper.readValue(
+                currentString, new TypeReference<Map<String,Serializable>>(){});
             // diff the maps
             currentMap.forEach((key, value) -> {
                 if (!previousMap.containsKey(key)) {
-                    diffs.add(new Change(key.toString(), null, value));
+                    diffs.add(new Change(key, null, value));
                 } else if (!Objects.equals(previousMap.get(key), value)) {
-                    diffs.add(new Change(key.toString(), previousMap.get(key), value));
+                    diffs.add(new Change(key, previousMap.get(key), value));
                 }
             });
         } catch (JsonProcessingException e) {

@@ -1,5 +1,16 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
+
+import java.util.List;
+import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -10,10 +21,12 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,37 +37,73 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
-
-import java.util.UUID;
 
 @Tag(name = "Court", description = "Operations related to courts")
 @RestController
 @Validated
 @RequestMapping("/courts")
+@RequiredArgsConstructor
 public class CourtController {
 
-    private final CourtService courtService;
-
-    public CourtController(CourtService courtService) {
-        this.courtService = courtService;
+    /**
+     * JsonView needs a marker type so we can expand the payload only on the details endpoint,
+     * without changing list/search responses.
+     */
+    public interface CourtDetailsView {
     }
 
-    @GetMapping("/{courtId}/v1")
+    private final CourtService courtService;
+    private final CourtDetailsViewService courtDetailsViewService;
+
+    @GetMapping(value = {"/{courtId}/v1", "/{courtId}.json"})
     @Operation(
-        summary = "Get court by ID",
-        description = "Fetch court information for a given court ID."
+        summary = "Get court details by ID",
+        description = "Fetch detailed court information for a given court ID."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved court"),
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court details"),
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    public ResponseEntity<Court> getCourtById(@Parameter(description = "UUID of the court", required = true)
-                                                  @ValidUUID @PathVariable String courtId) {
-        return ResponseEntity.ok(courtService.getCourtById(UUID.fromString(courtId)));
+    public ResponseEntity<CourtDetails> getCourtDetailsById(
+        @Parameter(description = "UUID of the court", required = true)
+        @ValidUUID @PathVariable String courtId) {
+        return ResponseEntity.ok(courtService.getCourtDetailsById(UUID.fromString(courtId)));
+    }
+
+    @GetMapping(value = {"/slug/{courtSlug}/v1", "/slug/{courtSlug}.json"})
+    @JsonView(CourtDetailsView.class)
+    @Operation(
+        summary = "Get court details by slug",
+        description = "Fetch detailed court information for a given court slug."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court details"),
+        @ApiResponse(responseCode = "400", description = "Invalid court slug supplied"),
+        @ApiResponse(responseCode = "404", description = "Court not found")
+    })
+    public ResponseEntity<CourtDetails> getCourtDetailsBySlug(
+        @Parameter(description = "Slug of the court", required = true)
+        @ValidCourtSlug
+        @PathVariable String courtSlug) {
+        return ResponseEntity.ok(
+            courtDetailsViewService.prepareDetailsView(courtService.getCourtDetailsBySlug(courtSlug))
+        );
+    }
+
+    @GetMapping(value = {"/all/v1", "/all.json"})
+    @JsonView(CourtDetailsView.class)
+    @Operation(
+        summary = "Get all court details",
+        description = "Fetch detailed court information for all courts."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court details")
+    })
+    public ResponseEntity<List<CourtDetails>> getAllCourtDetails() {
+        return ResponseEntity.ok(
+            courtService.getAllCourtDetails().stream().map(courtDetailsViewService::prepareDetailsView).toList()
+        );
     }
 
     @GetMapping("/v1")
@@ -92,8 +141,8 @@ public class CourtController {
         );
     }
 
-
-    @PostMapping("/v1")
+    @PostMapping(value = "/v1",
+        consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
         summary = "Create a new court",
         description = "Creates a new court record."
@@ -107,7 +156,8 @@ public class CourtController {
         return ResponseEntity.status(HttpStatus.CREATED).body(courtService.createCourt(court));
     }
 
-    @PutMapping("/{courtId}/v1")
+    @PutMapping(value = "/{courtId}/v1",
+        consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
         summary = "Update an existing court",
         description = "Updates the details of an existing court."

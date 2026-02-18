@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities.types;
 
+import java.io.Serializable;
+
 /**
  * Simple record for recording value change to a field.
  *
@@ -9,6 +11,6 @@ package uk.gov.hmcts.reform.fact.data.api.entities.types;
  */
 public record Change(
     String field,
-    Object oldValue,
-    Object newValue) {
+    Serializable oldValue,
+    Serializable newValue) implements Serializable {
 }
