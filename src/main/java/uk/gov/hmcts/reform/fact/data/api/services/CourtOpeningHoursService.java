@@ -3,10 +3,11 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
+import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
@@ -25,16 +26,19 @@ public class CourtOpeningHoursService {
     private final CourtCounterServiceOpeningHoursRepository courtCounterServiceOpeningHoursRepository;
     private final CourtService courtService;
     private final OpeningHoursTypeService openingHoursTypeService;
+    private final TypesService typesService;
 
     public CourtOpeningHoursService(
         CourtOpeningHoursRepository courtOpeningHoursRepository,
         CourtCounterServiceOpeningHoursRepository courtCounterServiceOpeningHoursRepository,
         CourtService courtService,
-        OpeningHoursTypeService openingHoursTypeService) {
+        OpeningHoursTypeService openingHoursTypeService,
+        TypesService typesService) {
         this.courtOpeningHoursRepository = courtOpeningHoursRepository;
         this.courtCounterServiceOpeningHoursRepository = courtCounterServiceOpeningHoursRepository;
         this.courtService = courtService;
         this.openingHoursTypeService = openingHoursTypeService;
+        this.typesService = typesService;
     }
 
     /**
@@ -134,6 +138,11 @@ public class CourtOpeningHoursService {
         courtCounterServiceOpeningHours.setCourt(foundCourt);
         courtCounterServiceOpeningHours.setCourtId(courtId);
 
+        if (courtCounterServiceOpeningHours.getCourtTypes() != null) {
+            courtCounterServiceOpeningHours
+                .setCourtTypes(getValidatedCourtTypeIds(courtCounterServiceOpeningHours.getCourtTypes()));
+        }
+
         return courtCounterServiceOpeningHoursRepository.save(courtCounterServiceOpeningHours);
     }
 
@@ -150,11 +159,17 @@ public class CourtOpeningHoursService {
                 openingHoursTypeService.getOpeningHourTypeById(openingHoursTypeId).getId());
     }
 
+
+    /**
+     * Normalizes a list of opening times details by enforcing the rule that if "everyday" is specified,
+     * it takes precedence over individual days.
+     *
+     * @param openingTimesDetails The list of opening times details to normalize
+     * @return A normalized list where either all entries are "everyday" or specific days
+     */
     private List<OpeningTimesDetail> normaliseOpeningTimesDetails(List<OpeningTimesDetail> openingTimesDetails) {
         List<OpeningTimesDetail> hoursToSave = new ArrayList<>(openingTimesDetails);
 
-        // Check to ensure both options of everyday and specific days are not set together
-        // and to ensure everyday takes preference if present.
         if (hoursToSave.stream()
             .filter(java.util.Objects::nonNull)
             .anyMatch(detail -> detail.getDayOfWeek() == DayOfTheWeek.EVERYDAY)) {
@@ -163,5 +178,20 @@ public class CourtOpeningHoursService {
         }
 
         return hoursToSave;
+    }
+
+    /**
+     * Validates and retrieves a list of court type IDs.
+     * Takes a list of UUIDs representing court types and validates their existence.
+     * Only returns IDs that correspond to valid court types in the system.
+     *
+     * @param courtTypeIds List of UUIDs to validate
+     * @return List of validated court type UUIDs
+     */
+    private List<UUID> getValidatedCourtTypeIds(List<UUID> courtTypeIds) {
+        return typesService.getAllCourtTypesByIds(courtTypeIds)
+            .stream()
+            .map(CourtType::getId)
+            .toList();
     }
 }

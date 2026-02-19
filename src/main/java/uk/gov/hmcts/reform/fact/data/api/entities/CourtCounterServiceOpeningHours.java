@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
+import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -61,6 +62,11 @@ public class CourtCounterServiceOpeningHours {
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
     private Court court;
 
+    @Schema(description = "the list of associated Court Type IDs")
+    @Type(ListArrayType.class)
+    @Column(columnDefinition = "uuid[]")
+    private List<UUID> courtTypes;
+
     @Schema(description = "Counter service availability status")
     @NotNull
     private Boolean counterService;
@@ -95,5 +101,4 @@ public class CourtCounterServiceOpeningHours {
     @Column(name = "opening_times_details", columnDefinition = "jsonb")
     @UniqueOpeningDays
     private List<OpeningTimesDetail> openingTimesDetails;
-
 }
