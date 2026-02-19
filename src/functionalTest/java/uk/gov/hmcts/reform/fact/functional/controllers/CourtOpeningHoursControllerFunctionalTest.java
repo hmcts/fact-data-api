@@ -489,7 +489,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 5);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId);
-        assertThat(getResponse.statusCode()).isEqualTo(NOT_FOUND.value());
+        assertThat(getResponse.statusCode()).isEqualTo(NO_CONTENT.value());
     }
 
     @Test
