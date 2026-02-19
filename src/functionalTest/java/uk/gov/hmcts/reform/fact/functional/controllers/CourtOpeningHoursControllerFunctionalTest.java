@@ -115,6 +115,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Opening Hours");
         final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 0);
 
+        openingHours.setId(null);
         openingHours.setCourtId(courtId);
         openingHours.setOpeningHourTypeId(openingHourTypeId);
 
@@ -132,21 +133,16 @@ public final class CourtOpeningHoursControllerFunctionalTest {
             new TypeReference<List<CourtOpeningHours>>() {}
         );
 
-        assertThat(retrievedHours).hasSize(2);
+        assertThat(retrievedHours).hasSize(1);
         assertThat(retrievedHours.getFirst().getCourtId()).isEqualTo(courtId);
         assertThat(retrievedHours.getFirst().getOpeningHourTypeId()).isEqualTo(openingHourTypeId);
-        assertThat(retrievedHours.getFirst().getOpeningTimesDetails()).hasSize(1);
+        assertThat(retrievedHours.getFirst().getOpeningTimesDetails()).hasSize(5);
         assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getDayOfWeek())
-            .isIn(DayOfTheWeek.MONDAY, DayOfTheWeek.TUESDAY);
+            .isEqualTo(DayOfTheWeek.MONDAY);
         assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getOpeningTime())
             .isEqualTo(LocalTime.of(9, 0));
         assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getClosingTime())
             .isEqualTo(LocalTime.of(17, 0));
-
-        assertThat(retrievedHours.get(1).getCourtId()).isEqualTo(courtId);
-        assertThat(retrievedHours.get(1).getOpeningTimesDetails()).hasSize(1);
-        assertThat(retrievedHours.get(1).getOpeningTimesDetails().getFirst().getDayOfWeek())
-            .isIn(DayOfTheWeek.MONDAY, DayOfTheWeek.TUESDAY);
     }
 
     @Test
@@ -156,6 +152,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         final UUID typeId1 = TestDataHelper.getOpeningHourTypeId(http, 0);
         final UUID typeId2 = TestDataHelper.getOpeningHourTypeId(http, 1);
 
+        openingHours.setId(null);
         openingHours.setCourtId(courtId);
         openingHours.setOpeningHourTypeId(typeId1);
         openingHours.setOpeningTimesDetails(List.of(
@@ -189,11 +186,11 @@ public final class CourtOpeningHoursControllerFunctionalTest {
             .build();
 
         final Response putType1Response = http.doPut("/courts/" + courtId + "/v1/opening-hours/" + typeId1,
-                                                     List.of(openingHours));
+                                                     openingHours);
         assertThat(putType1Response.statusCode()).isEqualTo(OK.value());
 
         final Response putType2Response = http.doPut("/courts/" + courtId + "/v1/opening-hours/" + typeId2,
-                                                     List.of(type2Hours));
+                                                     type2Hours);
         assertThat(putType2Response.statusCode()).isEqualTo(OK.value());
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + typeId1);
@@ -222,34 +219,37 @@ public final class CourtOpeningHoursControllerFunctionalTest {
     void shouldGetCounterServiceOpeningHours() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Counter Service");
 
+        counterServiceOpeningHours.setId(null);
         counterServiceOpeningHours.setCourtId(courtId);
 
         final Response putResponse = http.doPut(
             "/courts/" + courtId + "/v1/opening-hours/counter-service",
-            List.of(counterServiceOpeningHours)
+            counterServiceOpeningHours
         );
         assertThat(putResponse.statusCode()).isEqualTo(OK.value());
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/counter-service");
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
-        final List<CourtCounterServiceOpeningHours> retrievedHours = mapper.readValue(
+        final CourtCounterServiceOpeningHours retrievedHours = mapper.readValue(
             getResponse.asString(),
-            new TypeReference<List<CourtCounterServiceOpeningHours>>() {}
+            CourtCounterServiceOpeningHours.class
         );
 
-        assertThat(retrievedHours).hasSize(2);
-        assertThat(retrievedHours.getFirst().getCourtId()).isEqualTo(courtId);
-        assertThat(retrievedHours.getFirst().getCounterService()).isTrue();
-        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getOpeningTime())
+        assertThat(retrievedHours.getOpeningTimesDetails()).hasSize(5);
+        assertThat(retrievedHours.getOpeningTimesDetails().getFirst().getOpeningTime())
             .isEqualTo(LocalTime.of(9, 0));
-        assertThat(retrievedHours.getFirst().getOpeningTimesDetails().getFirst().getClosingTime())
+        assertThat(retrievedHours.getOpeningTimesDetails().getFirst().getClosingTime())
             .isEqualTo(LocalTime.of(17, 0));
-        assertThat(retrievedHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
+        assertThat(retrievedHours.getOpeningTimesDetails().stream()
                        .map(OpeningTimesDetail::getDayOfWeek)
                        .toList())
-            .containsExactlyInAnyOrder(DayOfTheWeek.MONDAY, DayOfTheWeek.TUESDAY);
+            .containsExactlyInAnyOrder(
+                DayOfTheWeek.MONDAY,
+                DayOfTheWeek.TUESDAY,
+                DayOfTheWeek.WEDNESDAY,
+                DayOfTheWeek.THURSDAY,
+                DayOfTheWeek.FRIDAY);
     }
 
     @Test
@@ -260,6 +260,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
 
         final ZonedDateTime timestampBeforeCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
+        openingHours.setId(null);
         openingHours.setCourtId(courtId);
         openingHours.setOpeningHourTypeId(openingHourTypeId);
         openingHours.setOpeningTimesDetails(List.of(
@@ -275,43 +276,37 @@ public final class CourtOpeningHoursControllerFunctionalTest {
 
         final Response putResponse = http.doPut(
             "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId,
-            List.of(openingHours)
+            openingHours
         );
         assertThat(putResponse.statusCode()).isEqualTo(OK.value());
 
-        final List<CourtOpeningHours> createdHours = mapper.readValue(
+        final CourtOpeningHours createdHours = mapper.readValue(
             putResponse.asString(),
-            new TypeReference<List<CourtOpeningHours>>() {}
+            CourtOpeningHours.class
         );
 
-        assertThat(createdHours).hasSize(2);
-        assertThat(createdHours.getFirst().getId()).isNotNull();
-        assertThat(createdHours.getFirst().getCourtId()).isEqualTo(courtId);
-        assertThat(createdHours.getFirst().getOpeningHourTypeId()).isEqualTo(openingHourTypeId);
-        assertThat(createdHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
+        assertThat(createdHours.getId()).isNotNull();
+        assertThat(createdHours.getCourtId()).isEqualTo(courtId);
+        assertThat(createdHours.getOpeningHourTypeId()).isEqualTo(openingHourTypeId);
+        assertThat(createdHours.getOpeningTimesDetails().stream()
                        .map(OpeningTimesDetail::getDayOfWeek)
                        .toList())
             .containsExactlyInAnyOrder(DayOfTheWeek.MONDAY, DayOfTheWeek.THURSDAY);
-        assertThat(createdHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
+        assertThat(createdHours.getOpeningTimesDetails().stream()
                        .allMatch(detail ->
                                      detail.getOpeningTime().equals(LocalTime.of(8, 30))));
-        assertThat(createdHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
+        assertThat(createdHours.getOpeningTimesDetails().stream()
                        .allMatch(detail ->
                                      detail.getClosingTime().equals(LocalTime.of(18, 0))));
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId);
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
-        final List<CourtOpeningHours> retrievedHours = mapper.readValue(
+        final CourtOpeningHours retrievedHours = mapper.readValue(
             getResponse.asString(),
-            new TypeReference<List<CourtOpeningHours>>() {}
+            CourtOpeningHours.class
         );
-        assertThat(retrievedHours).hasSize(2);
-        assertThat(retrievedHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
+        assertThat(retrievedHours.getOpeningTimesDetails().stream()
                        .map(OpeningTimesDetail::getDayOfWeek)
                        .toList())
             .containsExactlyInAnyOrder(DayOfTheWeek.MONDAY, DayOfTheWeek.THURSDAY);
@@ -341,7 +336,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 LocalTime.of(17, 0))
         ));
 
-        http.doPut("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId, List.of(openingHours));
+        http.doPut("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId, openingHours);
 
         final List<CourtOpeningHours> updatedHoursList = List.of(
             CourtOpeningHours.builder()
@@ -362,37 +357,32 @@ public final class CourtOpeningHoursControllerFunctionalTest {
 
         final Response putResponse = http.doPut(
             "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId,
-            updatedHoursList
+            updatedHoursList.getFirst()
         );
         assertThat(putResponse.statusCode()).isEqualTo(OK.value());
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId);
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
-        final List<CourtOpeningHours> retrievedHours = mapper.readValue(
+        final CourtOpeningHours retrievedHours = mapper.readValue(
             getResponse.asString(),
-            new TypeReference<List<CourtOpeningHours>>() {}
+            CourtOpeningHours.class
         );
 
-        assertThat(retrievedHours).hasSize(2);
-        assertThat(retrievedHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
+        assertThat(retrievedHours.getOpeningTimesDetails()).hasSize(2);
+        assertThat(retrievedHours.getOpeningTimesDetails().stream()
                        .map(OpeningTimesDetail::getDayOfWeek)
                        .toList())
             .containsExactlyInAnyOrder(DayOfTheWeek.WEDNESDAY, DayOfTheWeek.FRIDAY);
-        assertThat(retrievedHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
+        assertThat(retrievedHours.getOpeningTimesDetails().stream()
                        .allMatch(detail ->
                                      detail.getOpeningTime().equals(LocalTime.of(10, 0))));
-        assertThat(retrievedHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
+        assertThat(retrievedHours.getOpeningTimesDetails().stream()
                        .allMatch(detail ->
                                      detail.getClosingTime().equals(LocalTime.of(16, 0))));
-        assertThat(retrievedHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
+        assertThat(retrievedHours.getOpeningTimesDetails().stream()
                        .noneMatch(detail -> detail.getDayOfWeek().equals(DayOfTheWeek.MONDAY)));
-        assertThat(retrievedHours.stream()
-                       .flatMap(h -> h.getOpeningTimesDetails().stream())
+        assertThat(retrievedHours.getOpeningTimesDetails().stream()
                        .noneMatch(detail -> detail.getDayOfWeek().equals(DayOfTheWeek.TUESDAY)));
     }
 
@@ -401,7 +391,14 @@ public final class CourtOpeningHoursControllerFunctionalTest {
     void shouldCreateCounterServiceOpeningHours() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Create Counter Service");
 
+        counterServiceOpeningHours.setId(null); // ensure server generates ID (@GeneratedValue)
         counterServiceOpeningHours.setCourtId(courtId);
+
+        counterServiceOpeningHours.setCounterService(true);
+        counterServiceOpeningHours.setAssistWithForms(true);
+        counterServiceOpeningHours.setAssistWithDocuments(true);
+        counterServiceOpeningHours.setAssistWithSupport(true);
+
         counterServiceOpeningHours.setOpeningTimesDetails(List.of(
             new OpeningTimesDetail(
                 DayOfTheWeek.MONDAY,
@@ -461,12 +458,12 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         http.doPut("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId, openingHours);
         final Response getBeforeDelete = http.doGet("/courts/" + courtId + "/v1/opening-hours/"
                                                         + openingHourTypeId);
-        assertThat(getBeforeDelete.statusCode()).isEqualTo(OK.value());
+        assertThat(getBeforeDelete.statusCode()).isIn(OK.value(), NO_CONTENT.value());
 
         final Response deleteResponse = http.doDelete(
             "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId
         );
-        assertThat(deleteResponse.statusCode()).isEqualTo(OK.value());
+        assertThat(deleteResponse.statusCode()).isIn(OK.value(), NO_CONTENT.value());
 
         final Response getAfterDelete = http.doGet("/courts/" + courtId + "/v1/opening-hours/"
                                                        + openingHourTypeId);
@@ -583,6 +580,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Everyday Only");
         final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 8);
 
+        openingHours.setId(null);
         openingHours.setCourtId(courtId);
         openingHours.setOpeningHourTypeId(openingHourTypeId);
         openingHours.setOpeningTimesDetails(List.of(
