@@ -7,9 +7,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
-import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
+import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
@@ -42,6 +43,9 @@ class CourtOpeningHoursServiceTest {
 
     @Mock
     private OpeningHoursTypeService openingHoursTypeService;
+
+    @Mock
+    private TypesService typesService;
 
     @InjectMocks
     private CourtOpeningHoursService courtOpeningHoursService;
@@ -437,6 +441,27 @@ class CourtOpeningHoursServiceTest {
             NotFoundException.class, () ->
                 courtOpeningHoursService.setCounterServiceOpeningHours(courtId, hours)
         );
+    }
+
+    @Test
+    void setCounterServiceOpeningHoursValidatesCourtTypes() {
+        List<UUID> courtTypeIds = List.of(UUID.randomUUID());
+        counterServiceOpeningHours.setCourtTypes(courtTypeIds);
+
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        CourtType courtType = new CourtType();
+        courtType.setId(courtTypeIds.getFirst());
+        when(typesService.getAllCourtTypesByIds(courtTypeIds)).thenReturn(List.of(courtType));
+        when(courtCounterServiceOpeningHoursRepository.save(any(CourtCounterServiceOpeningHours.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        CourtCounterServiceOpeningHours result
+            = courtOpeningHoursService.setCounterServiceOpeningHours(courtId, counterServiceOpeningHours);
+
+        assertThat(result.getCourtTypes()).isEqualTo(courtTypeIds);
+        verify(typesService).getAllCourtTypesByIds(courtTypeIds);
+        verify(courtCounterServiceOpeningHoursRepository).deleteByCourtId(courtId);
+        verify(courtCounterServiceOpeningHoursRepository).save(counterServiceOpeningHours);
     }
 
     @Test
