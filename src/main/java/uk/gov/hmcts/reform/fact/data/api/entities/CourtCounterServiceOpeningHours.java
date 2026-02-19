@@ -62,7 +62,7 @@ public class CourtCounterServiceOpeningHours {
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
     private Court court;
 
-    @Schema(description = "the list of associated Court Type IDs")
+    @Schema(description = "List of associated Court Type IDs")
     @Type(ListArrayType.class)
     @Column(columnDefinition = "uuid[]")
     private List<UUID> courtTypes;
