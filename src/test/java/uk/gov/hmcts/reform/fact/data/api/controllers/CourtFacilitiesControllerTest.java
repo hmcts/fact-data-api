@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -42,7 +43,8 @@ class CourtFacilitiesControllerTest {
 
         when(courtFacilitiesService.getFacilitiesByCourtId(COURT_ID)).thenReturn(facilities);
 
-        var response = courtFacilitiesController.getBuildingFacilitiesByCourtId(COURT_ID.toString());
+        ResponseEntity<CourtFacilities> response
+            = courtFacilitiesController.getBuildingFacilitiesByCourtId(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(facilities);
@@ -83,7 +85,8 @@ class CourtFacilitiesControllerTest {
 
         when(courtFacilitiesService.setFacilities(COURT_ID, facilities)).thenReturn(facilities);
 
-        var response = courtFacilitiesController.setBuildingFacilities(COURT_ID.toString(), facilities);
+        ResponseEntity<CourtFacilities> response
+            = courtFacilitiesController.setBuildingFacilities(COURT_ID.toString(), facilities);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(facilities);

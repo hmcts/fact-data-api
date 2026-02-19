@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
@@ -117,7 +118,8 @@ class CourtOpeningHoursControllerTest {
     void getOpeningHoursByCourtIdReturns200() {
         when(courtOpeningHoursService.getOpeningHoursByCourtId(COURT_ID)).thenReturn(List.of(openingHours));
 
-        var response = courtOpeningHoursController.getOpeningHoursByCourtId(COURT_ID.toString());
+        ResponseEntity<List<CourtOpeningHours>> response
+            = courtOpeningHoursController.getOpeningHoursByCourtId(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(List.of(openingHours));
@@ -158,7 +160,7 @@ class CourtOpeningHoursControllerTest {
         when(courtOpeningHoursService
                  .getOpeningHoursByTypeId(COURT_ID, OPENING_HOURS_TYPE_ID)).thenReturn(openingHours);
 
-        var response = courtOpeningHoursController
+        ResponseEntity<CourtOpeningHours> response = courtOpeningHoursController
             .getOpeningHoursByTypeId(COURT_ID.toString(), OPENING_HOURS_TYPE_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
@@ -202,7 +204,8 @@ class CourtOpeningHoursControllerTest {
         when(courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(COURT_ID))
             .thenReturn(counterServiceOpeningHours);
 
-        var response = courtOpeningHoursController.getCounterServiceOpeningHoursByCourtId(COURT_ID.toString());
+        ResponseEntity<CourtCounterServiceOpeningHours> response
+            = courtOpeningHoursController.getCounterServiceOpeningHoursByCourtId(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(counterServiceOpeningHours);
@@ -243,7 +246,7 @@ class CourtOpeningHoursControllerTest {
         when(courtOpeningHoursService
                  .setOpeningHours(COURT_ID, OPENING_HOURS_TYPE_ID, openingHours)).thenReturn(openingHours);
 
-        var response = courtOpeningHoursController
+        ResponseEntity<CourtOpeningHours> response = courtOpeningHoursController
             .setOpeningHours(COURT_ID.toString(), OPENING_HOURS_TYPE_ID.toString(), openingHours);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
@@ -292,7 +295,8 @@ class CourtOpeningHoursControllerTest {
         when(courtOpeningHoursService.setCounterServiceOpeningHours(COURT_ID, counterServiceOpeningHours))
             .thenReturn(counterServiceOpeningHours);
 
-        var response = courtOpeningHoursController.setCounterServiceOpeningHours(
+        ResponseEntity<CourtCounterServiceOpeningHours> response
+            = courtOpeningHoursController.setCounterServiceOpeningHours(
             COURT_ID.toString(),
             counterServiceOpeningHours
         );
@@ -326,7 +330,7 @@ class CourtOpeningHoursControllerTest {
 
     @Test
     void deleteCourtOpeningHoursReturns200() {
-        var response = courtOpeningHoursController.deleteOpeningHours(
+        ResponseEntity<Void> response = courtOpeningHoursController.deleteOpeningHours(
             COURT_ID.toString(),
             OPENING_HOURS_TYPE_ID.toString()
         );
