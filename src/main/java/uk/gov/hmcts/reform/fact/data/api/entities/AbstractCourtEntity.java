@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
 
 import java.time.ZonedDateTime;
@@ -26,7 +27,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
 import org.hibernate.annotations.UpdateTimestamp;
-import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
 @SuperBuilder
@@ -94,5 +94,4 @@ public abstract class AbstractCourtEntity {
 
     @Schema(description = "The Court's Master Reference Data ID")
     private String mrdId;
-
 }

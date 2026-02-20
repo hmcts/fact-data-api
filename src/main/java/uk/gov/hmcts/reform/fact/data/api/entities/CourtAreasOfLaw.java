@@ -11,6 +11,7 @@ import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,6 +27,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Type;
+
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
@@ -33,9 +36,10 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @NoArgsConstructor
 @Builder
 @Entity
+@EntityListeners(AuditableCourtEntityListener.class)
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_areas_of_law")
-public class CourtAreasOfLaw {
+public class CourtAreasOfLaw implements AuditableCourtEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",

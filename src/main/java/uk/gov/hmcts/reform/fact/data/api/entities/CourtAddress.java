@@ -1,7 +1,10 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import jakarta.persistence.EntityListeners;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 
 import java.math.BigDecimal;
@@ -41,9 +44,10 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @NoArgsConstructor
 @Builder
 @Entity
+@EntityListeners(AuditableCourtEntityListener.class)
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_address")
-public class CourtAddress {
+public class CourtAddress implements AuditableCourtEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",

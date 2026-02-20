@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,6 +24,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
@@ -31,9 +34,10 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @NoArgsConstructor
 @Builder
 @Entity
+@EntityListeners(AuditableCourtEntityListener.class)
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_dxcodes")
-public class CourtDxCode {
+public class CourtDxCode implements AuditableCourtEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
