@@ -16,7 +16,9 @@ management:
         include: health, info, prometheus
 
 springdoc:
-  packagesToScan: uk.gov.hmcts.reform.fact.data.api.controllers
+  packagesToScan:
+    - uk.gov.hmcts.reform.fact.data.api.controllers
+    - uk.gov.hmcts.reform.fact.data.api.migration.controller
   writer-with-order-by-keys: true
 
 spring:
@@ -72,7 +74,6 @@ spring:
     web:
       pageable:
         serialization-mode: via_dto
-
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
 
@@ -81,12 +82,15 @@ user:
 
 courtLock:
   timeout-minutes: 60
-  
+
 os:
   key: ${OS_KEY}
   url: https://api.os.uk
   endpoint:
     postcode-search: /search/places/v1/postcode
+
+migration:
+  source-base-url: ${FACT_MIGRATION_SOURCE_BASE_URL}
 
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}
