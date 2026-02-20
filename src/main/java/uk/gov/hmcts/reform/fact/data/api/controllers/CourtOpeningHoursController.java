@@ -1,32 +1,33 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
+import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtOpeningHoursService;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
+
+import java.util.List;
+import java.util.UUID;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtOpeningHoursService;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
 
-import java.util.List;
-import java.util.UUID;
-
-@Tag(name = "Court Opening Hours", description = "Operations related to opening hours for courts")
-@RestController
-@Validated
+@SecuredFactRestController(
+    name = "Court Opening Hours",
+    description = "Operations related to opening hours for courts"
+)
 @RequestMapping("/courts/{courtId}/")
 public class CourtOpeningHoursController {
 
@@ -103,6 +104,7 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID, opening hours type ID, or request body"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<List<CourtOpeningHours>> setOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the opening hours type", required = true)
@@ -125,6 +127,7 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID or request body"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<List<CourtCounterServiceOpeningHours>> setCounterServiceOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @UniqueOpeningDays @Valid @RequestBody List<CourtCounterServiceOpeningHours> courtCounterServiceOpeningHours) {
@@ -144,6 +147,7 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID or opening hours type ID"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the opening hours type", required = true)

@@ -6,6 +6,8 @@ management:
   endpoint:
     health:
       show-details: "always"
+      probes:
+        enabled: true
       group:
         readiness:
           include: "db"
@@ -65,6 +67,13 @@ spring:
         blob:
           container-name: photos
           connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
+      # required for security flows
+      active-directory:
+        enabled: true
+        profile:
+          tenant-id: ${AZURE_TENANT_ID}
+        app-id-uri: ${APP_REG_ID}
+
   servlet:
     multipart:
       max-file-size: 2MB

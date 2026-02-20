@@ -1,23 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -25,9 +10,25 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 import java.util.List;
 import java.util.UUID;
 
-@Tag(name = "User", description = "Operations related to Users")
-@RestController
-@Validated
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@SecuredFactRestController(
+    name = "User",
+    description = "Operations related to Users"
+)
 @RequestMapping("/user")
 public class UserController {
 
@@ -60,6 +61,7 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "Invalid request"),
         @ApiResponse(responseCode = "404", description = "User or court not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> addUserFavorites(
         @Parameter(description = "UUID of the user", required = true) @ValidUUID @PathVariable String userId,
         @Parameter(description = "UUIDs of the courts", required = true) @Valid @RequestBody List<UUID> courtIds) {
@@ -74,6 +76,7 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "Invalid request"),
         @ApiResponse(responseCode = "404", description = "User not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteUserFavorite(
         @Parameter(description = "UUID of the user", required = true) @ValidUUID @PathVariable String userId,
         @Parameter(description = "UUID of the favourite court", required = true)
@@ -89,6 +92,7 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "Invalid user ID supplied"),
         @ApiResponse(responseCode = "404", description = "User not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> clearUserLocks(
         @Parameter(description = "UUID of the user", required = true) @ValidUUID @PathVariable String userId) {
         courtLockService.clearUserLocks(UUID.fromString(userId));
@@ -101,6 +105,7 @@ public class UserController {
         @ApiResponse(responseCode = "201", description = "Successfully created/updated user"),
         @ApiResponse(responseCode = "400", description = "Invalid request")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<User> createOrUpdateLastLoginUser(@Valid @RequestBody User user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createOrUpdateLastLoginUser(user));
     }
@@ -110,6 +115,7 @@ public class UserController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Successfully processed inactive users")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteInactiveUsers() {
         userService.deleteInactiveUsers();
         return ResponseEntity.noContent().build();
