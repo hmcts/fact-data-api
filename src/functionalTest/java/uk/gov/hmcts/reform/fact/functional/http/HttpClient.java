@@ -25,28 +25,43 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class HttpClient {
 
+    private static final String ADMIN_CLIENT_APP_REG_ID = "ADMIN_CLIENT_APP_REG_ID";
+    private static final String VIEWER_CLIENT_APP_REG_ID = "VIEWER_CLIENT_APP_REG_ID";
+    private static final String ADMIN_AZURE_CLIENT_SECRET = "ADMIN_AZURE_CLIENT_SECRET";
+    private static final String VIEWER_AZURE_CLIENT_SECRET = "VIEWER_AZURE_CLIENT_SECRET";
+
     private final String baseUrl;
     private static final AtomicReference<String> factAdminBearerToken = new AtomicReference<>();
+    private static final AtomicReference<String> factViewerBearerToken = new AtomicReference<>();
 
     public HttpClient() {
         this.baseUrl = System.getenv().getOrDefault("TEST_URL", "http://localhost:8989");
     }
 
     public static String getAdminBearerToken() {
-        synchronized (factAdminBearerToken) {
-            if (factAdminBearerToken.get() == null) {
+        return getBearerToken(ADMIN_CLIENT_APP_REG_ID, ADMIN_AZURE_CLIENT_SECRET, factAdminBearerToken);
+    }
+
+    public static String getViewerBearerToken() {
+        return getBearerToken(VIEWER_CLIENT_APP_REG_ID, VIEWER_AZURE_CLIENT_SECRET, factViewerBearerToken);
+    }
+
+    private static String getBearerToken(final String clientAppRegEnvVar,
+                                         final String clientSecretEnvVar,
+                                         final AtomicReference<String> tokenCache) {
+        synchronized (tokenCache) {
+            if (tokenCache.get() == null) {
                 // Load the custom properties from the environment.
-                // AZURE_TENANT_ID and AZURE_CLIENT_SECRET will be used directly from the environment
-                final String clientAppRegId = Optional.ofNullable(System.getenv("CLIENT_APP_REG_ID"))
-                    .orElseThrow(() -> new IllegalStateException("No CLIENT_APP_REG_ID environment set"));
+                // AZURE_TENANT_ID and the role-specific client secret are used from the environment.
+                final String clientAppRegId = getRequiredEnv(clientAppRegEnvVar);
                 final String appRegId = Optional.ofNullable(System.getenv("APP_REG_ID"))
                     .orElseThrow(() -> new IllegalStateException("No APP_REG_ID environment set"));
-                Optional.ofNullable(System.getenv("AZURE_TENANT_ID"))
+                final String tenantId = Optional.ofNullable(System.getenv("AZURE_TENANT_ID"))
                     .orElseThrow(() -> new IllegalStateException("No AZURE_TENANT_ID environment set"));
-                Optional.ofNullable(System.getenv("AZURE_CLIENT_SECRET"))
-                    .orElseThrow(() -> new IllegalStateException("No AZURE_CLIENT_SECRET environment set"));
+                final String clientSecret = getRequiredEnv(clientSecretEnvVar);
 
-                log.info("All authentication env variables set");
+                log.info("All authentication env variables set for {} using {}", clientAppRegEnvVar,
+                         clientSecretEnvVar);
 
                 // set the scope up for the destination app
                 TokenRequestContext requestContext = new TokenRequestContext();
@@ -55,6 +70,8 @@ public final class HttpClient {
                 // Create config override for the azure client id
                 Configuration configuration = new ConfigurationBuilder()
                     .putProperty(Configuration.PROPERTY_AZURE_CLIENT_ID, clientAppRegId)
+                    .putProperty(Configuration.PROPERTY_AZURE_CLIENT_SECRET, clientSecret)
+                    .putProperty(Configuration.PROPERTY_AZURE_TENANT_ID, tenantId)
                     .build();
 
                 // Create the credential object and request the token
@@ -63,14 +80,35 @@ public final class HttpClient {
                     .configuration(configuration)
                     .build();
 
-                factAdminBearerToken.set(
+                tokenCache.set(
                     Optional.ofNullable(credentials.getTokenSync(requestContext))
                         .map(AccessToken::getToken)
                         .orElseThrow(() -> new IllegalStateException("Failed to get token"))
                 );
             }
-            return factAdminBearerToken.get();
+            return tokenCache.get();
         }
+    }
+
+    private static String getRequiredEnv(final String varName) {
+        final String value = System.getenv(varName);
+        if (value != null && !value.isBlank()) {
+            return value;
+        }
+
+        throw new IllegalStateException("No " + varName + " environment set");
+    }
+
+    private RequestSpecification requestWithOptionalAuthorization(final String bearerToken) {
+        RequestSpecification request = given()
+            .filter(new AllureRestAssured())
+            .baseUri(baseUrl);
+
+        if (bearerToken != null && !bearerToken.isBlank()) {
+            request = request.header("Authorization", "Bearer " + bearerToken);
+        }
+
+        return request;
     }
 
     public Response doGet(final String path) {
@@ -78,10 +116,7 @@ public final class HttpClient {
     }
 
     public Response doGet(final String path, final String bearerToken) {
-        return given()
-            .filter(new AllureRestAssured())
-            .baseUri(baseUrl)
-            .header("Authorization", "Bearer " + bearerToken)
+        return requestWithOptionalAuthorization(bearerToken)
             .when()
             .get(path)
             .thenReturn();
@@ -96,9 +131,7 @@ public final class HttpClient {
      * Example: doGet("/courts/v1", Map.of("pageNumber", 0, "pageSize", 25))
      */
     public Response doGet(final String path, final Map<String, Object> queryParams, final String bearerToken) {
-        RequestSpecification request = given()
-            .filter(new AllureRestAssured())
-            .baseUri(baseUrl);
+        RequestSpecification request = requestWithOptionalAuthorization(bearerToken);
 
         for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
             if (entry.getValue() != null) {
@@ -106,9 +139,7 @@ public final class HttpClient {
             }
         }
 
-        return request
-            .header("Authorization", "Bearer " + bearerToken)
-            .when()
+        return request.when()
             .get(path)
             .thenReturn();
     }
@@ -118,10 +149,7 @@ public final class HttpClient {
     }
 
     public Response doPost(final String path, final Object body, final String bearerToken) {
-        return given()
-            .filter(new AllureRestAssured())
-            .baseUri(baseUrl)
-            .header("Authorization", "Bearer " + bearerToken)
+        return requestWithOptionalAuthorization(bearerToken)
             .contentType(ContentType.JSON)
             .body(body)
             .when()
@@ -134,10 +162,7 @@ public final class HttpClient {
     }
 
     public Response doPut(final String path, final Object body, final String bearerToken) {
-        return given()
-            .filter(new AllureRestAssured())
-            .baseUri(baseUrl)
-            .header("Authorization", "Bearer " + bearerToken)
+        return requestWithOptionalAuthorization(bearerToken)
             .contentType(ContentType.JSON)
             .body(body)
             .when()
@@ -150,10 +175,7 @@ public final class HttpClient {
     }
 
     public Response doDelete(final String path, final String bearerToken) {
-        return given()
-            .filter(new AllureRestAssured())
-            .baseUri(baseUrl)
-            .header("Authorization", "Bearer " + bearerToken)
+        return requestWithOptionalAuthorization(bearerToken)
             .when()
             .delete(path)
             .thenReturn();
@@ -165,10 +187,7 @@ public final class HttpClient {
 
     public Response doMultipartPost(final String path, final String fileParamName,
                                     final File file, final String bearerToken) {
-        return given()
-            .filter(new AllureRestAssured())
-            .baseUri(baseUrl)
-            .header("Authorization", "Bearer " + bearerToken)
+        return requestWithOptionalAuthorization(bearerToken)
             .contentType(ContentType.MULTIPART)
             .multiPart(fileParamName, file)
             .when()
