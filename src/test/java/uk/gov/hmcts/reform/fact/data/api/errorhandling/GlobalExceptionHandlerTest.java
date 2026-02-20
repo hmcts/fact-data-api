@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Payload;
@@ -15,20 +16,19 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import jakarta.servlet.http.HttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
@@ -107,11 +107,25 @@ class GlobalExceptionHandlerTest {
         when(violation.getInvalidValue()).thenReturn("oops");
 
         ConstraintViolationException ex =
-            new ConstraintViolationException("invalid", Set.of(violation));
+            new ConstraintViolationException(TEST_MESSAGE, Set.of(violation));
 
         ExceptionResponse response = handler.handle(ex);
 
         assertThat(response.getMessage()).isEqualTo("Bad request: oops");
+    }
+
+    @Test
+    void testHandleConstraintViolationExceptionWithNonBlankInvalidValue() {
+        ConstraintViolation<?> violation = createConstraintViolation(
+            mock(Annotation.class), "ABC123", "Invalid format"
+        );
+
+        ConstraintViolationException ex =
+            new ConstraintViolationException(TEST_MESSAGE, Set.of(violation));
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo("Invalid format: ABC123");
     }
 
     @Test
@@ -178,6 +192,20 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getMessage())
             .isEqualTo("Uploaded file size exceeds the maximum allowed limit of 2MB.");
         assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleConstraintViolationExceptionWithNullInvalidValue() {
+        ConstraintViolation<?> violation = createConstraintViolation(
+            mock(Annotation.class), null, "Value cannot be null"
+        );
+
+        ConstraintViolationException ex =
+            new ConstraintViolationException(TEST_MESSAGE, Set.of(violation));
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo("Value cannot be null");
     }
 
     @Test
@@ -286,6 +314,20 @@ class GlobalExceptionHandlerTest {
         assertThat(response).isNotNull();
         assertThat(response.getMessage()).contains("Invalid area of Law: Probate");
         assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    private ConstraintViolation<?> createConstraintViolation(
+        Annotation annotation,
+        Object invalidValue,
+        String message
+    ) {
+        ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+        ConstraintDescriptor<?> descriptor = mock(ConstraintDescriptor.class);
+        doReturn(descriptor).when(violation).getConstraintDescriptor();
+        doReturn(annotation).when(descriptor).getAnnotation();
+        when(violation.getInvalidValue()).thenReturn(invalidValue);
+        when(violation.getMessage()).thenReturn(message);
+        return violation;
     }
 
     private ValidUUID validUuidAnnotation() {

@@ -192,6 +192,9 @@ dependencies {
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '6.1.9'
 
   implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.20.0'
+
+  implementation group: 'com.slack.api', name: 'slack-api-client', version: '1.46.0'
+  
   //Solves CVE-2025-48976
   implementation group: 'commons-fileupload', name: 'commons-fileupload', version: '1.6.0'
 
@@ -243,4 +246,11 @@ rootProject.tasks.named("processFunctionalTestResources") {
 
 wrapper {
   distributionType = Wrapper.DistributionType.ALL
+}
+
+dependencyManagement {
+  dependencies {
+    // CVE-2025-48976
+    dependency group: 'commons-fileupload', name: 'commons-fileupload', version: '1.6.0'
+  }
 }

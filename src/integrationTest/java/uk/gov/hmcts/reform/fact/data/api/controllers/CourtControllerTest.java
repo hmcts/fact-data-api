@@ -24,11 +24,15 @@ import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -331,6 +335,44 @@ class CourtControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalidCourt)))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1/link returns matched and unmatched results")
+    void linkCaTHCourtsReturnsOk() throws Exception {
+        Map<String, Object> response = Map.of(
+            "matchedLocations", List.of(Map.of("mrdId", "MRD123", "isOpen", true)),
+            "unmatchedLocations", List.of("UNKNOWN")
+        );
+
+        when(courtService.linkCathCourtsToFact(anyList())).thenReturn(response);
+
+        mockMvc.perform(post("/courts/v1/link")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(List.of("MRD123", "UNKNOWN"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.matchedLocations[0].mrdId").value("MRD123"))
+            .andExpect(jsonPath("$.matchedLocations[0].isOpen").value(true))
+            .andExpect(jsonPath("$.unmatchedLocations[0]").value("UNKNOWN"));
+    }
+
+    @Test
+    @DisplayName("PUT /courts/v1/link/{mrdId} returns 204 when deletion processed")
+    void handleCaTHCourtDeletionReturnsNoContent() throws Exception {
+        mockMvc.perform(put("/courts/v1/link/{mrdId}", "MRD123"))
+            .andExpect(status().isNoContent());
+
+        verify(courtService).handleCathCourtDeletion("MRD123");
+    }
+
+    @Test
+    @DisplayName("PUT /courts/v1/link/{mrdId} returns 404 when court missing")
+    void handleCaTHCourtDeletionReturnsNotFound() throws Exception {
+        doThrow(new NotFoundException("Court not found"))
+            .when(courtService).handleCathCourtDeletion("MRD123");
+
+        mockMvc.perform(put("/courts/v1/link/{mrdId}", "MRD123"))
+            .andExpect(status().isNotFound());
     }
 
     @Test

@@ -20,3 +20,7 @@ courtLock:
 os:
   url: https://api.os.uk
   key: a-key
+
+clients:
+  cath:
+    url: http://localhost:4747

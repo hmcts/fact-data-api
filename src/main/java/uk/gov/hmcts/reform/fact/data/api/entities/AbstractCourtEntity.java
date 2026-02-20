@@ -58,6 +58,7 @@ public abstract class AbstractCourtEntity {
     private String slug;
 
     @Schema(description = "The open status of the Court")
+    @NotNull(message = "Court open status must be specified")
     private Boolean open;
 
     @Schema(description = "Any warning notices attached to the Court")
