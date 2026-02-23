@@ -25,10 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Feature("OpenAPI Publisher")
 @DisplayName("OpenAPI Publisher")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = "spring.config.name=application-test"
-)
+@SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class OpenAPIPublisherTest {

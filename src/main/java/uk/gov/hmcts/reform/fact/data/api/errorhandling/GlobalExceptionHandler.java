@@ -1,5 +1,20 @@
 package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
+
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -11,19 +26,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
-import jakarta.servlet.http.HttpServletRequest;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
-
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @Slf4j
 @RestControllerAdvice
@@ -150,6 +152,14 @@ public class GlobalExceptionHandler {
         return generateExceptionResponse(message);
     }
 
+    @ExceptionHandler(InvalidDateRangeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidDateRangeException ex) {
+        log.error("400, date range failed validation. Details: {}", ex.getMessage());
+
+        return generateExceptionResponse(ex.getMessage());
+    }
+
     @ExceptionHandler(InvalidParameterCombinationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidParameterCombinationException ex,
@@ -184,3 +194,4 @@ public class GlobalExceptionHandler {
         return response;
     }
 }
+

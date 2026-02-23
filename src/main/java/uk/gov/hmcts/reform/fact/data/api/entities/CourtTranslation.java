@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
-import jakarta.validation.constraints.NotNull;
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 import java.util.UUID;
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,23 +19,26 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
+@EntityListeners(AuditableCourtEntityListener.class)
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_translation")
-public class CourtTranslation {
+public class CourtTranslation implements AuditableCourtEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
