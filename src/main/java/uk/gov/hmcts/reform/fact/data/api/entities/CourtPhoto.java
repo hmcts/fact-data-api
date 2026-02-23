@@ -1,5 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
+
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -8,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,21 +25,23 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
 import org.hibernate.annotations.UpdateTimestamp;
-import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
+@EntityListeners(AuditableCourtEntityListener.class)
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_photo")
-public class CourtPhoto {
+public class CourtPhoto implements AuditableCourtEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
