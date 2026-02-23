@@ -94,6 +94,14 @@ class AuditingTest {
     }
 
     @Test
+    @DisplayName("Deleting audit records via the service should remove all records that are out of date")
+    void deletingExistingAuditRecordsViaServiceShouldWork() {
+        creatingAndUpdatingACourtShouldCreateAuditRecords();
+        auditService.removeExpiredAuditEntries();
+        assertEquals(0L, auditRepository.count());
+    }
+
+    @Test
     @DisplayName("Creating and updating a CourtTranslation should create Audit records")
     void creatingAndUpdatingACourtTranslationShouldCreateAuditRecords() {
 
