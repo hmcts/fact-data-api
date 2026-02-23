@@ -14,9 +14,11 @@ import uk.gov.hmcts.reform.fact.data.api.dto.CourtDxCodeDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtFaxDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtProfessionalInformationDetailsDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.ProfessionalInformationDto;
+import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,6 +42,8 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
     @DisplayName("POST /courts/{courtId}/v1/professional-information with all valid fields")
     void shouldCreateProfessionalInformationWithAllValidFields() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Full Professional Info");
+
+        final ZonedDateTime timestampBeforeCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
         final ProfessionalInformationDto professionalInfo = new ProfessionalInformationDto();
         professionalInfo.setInterviewRooms(true);
@@ -82,45 +86,85 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
 
         final Response postResponse = http.doPost("/courts/" + courtId + "/v1/professional-information",
                                                    professionalInfoDetails);
-        assertThat(postResponse.statusCode()).isEqualTo(CREATED.value());
+        assertThat(postResponse.statusCode())
+            .as("Expected 201 CREATED when creating professional info for court %s", courtId)
+            .isEqualTo(CREATED.value());
 
         final CourtProfessionalInformationDetailsDto createdInfo = mapper.readValue(
             postResponse.asString(),
             CourtProfessionalInformationDetailsDto.class
         );
-        assertThat(createdInfo.getProfessionalInformation()).isNotNull();
-        assertThat(createdInfo.getProfessionalInformation().getInterviewRooms()).isTrue();
-        assertThat(createdInfo.getProfessionalInformation().getInterviewRoomCount()).isEqualTo(6);
-        assertThat(createdInfo.getProfessionalInformation().getInterviewPhoneNumber())
-            .isEqualTo("0207 123 4567");
-        assertThat(createdInfo.getProfessionalInformation().getVideoHearings()).isTrue();
-        assertThat(createdInfo.getCodes()).isNotNull();
-        assertThat(createdInfo.getCodes().getGbs()).isEqualTo("GBS001");
-        assertThat(createdInfo.getDxCodes()).hasSize(2);
-        assertThat(createdInfo.getFaxNumbers()).hasSize(2);
+
+        assertThat(createdInfo.getProfessionalInformation())
+            .as("Created professional information should be valid")
+            .isNotNull()
+            .satisfies(info -> {
+                assertThat(info.getInterviewRooms()).as("Interview rooms").isTrue();
+                assertThat(info.getInterviewRoomCount()).as("Interview room count").isEqualTo(6);
+                assertThat(info.getInterviewPhoneNumber()).as("Interview phone")
+                    .isEqualTo("0207 123 4567");
+                assertThat(info.getVideoHearings()).as("Video hearings").isTrue();
+            });
+
+        assertThat(createdInfo.getCodes())
+            .as("Created codes should be valid")
+            .isNotNull()
+            .satisfies(c -> assertThat(c.getGbs()).as("GBS code")
+                .isEqualTo("GBS001"));
+
+        assertThat(createdInfo.getDxCodes()).as("DX codes count").hasSize(2);
+        assertThat(createdInfo.getFaxNumbers()).as("Fax numbers count").hasSize(2);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/professional-information");
-        assertThat(getResponse.statusCode()).isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(getResponse, OK);
 
         final CourtProfessionalInformationDetailsDto retrievedInfo = mapper.readValue(
             getResponse.asString(),
             CourtProfessionalInformationDetailsDto.class
         );
-        assertThat(retrievedInfo.getProfessionalInformation()).isNotNull();
-        assertThat(retrievedInfo.getProfessionalInformation().getInterviewRooms()).isTrue();
-        assertThat(retrievedInfo.getProfessionalInformation().getInterviewRoomCount()).isEqualTo(6);
-        assertThat(retrievedInfo.getProfessionalInformation().getInterviewPhoneNumber())
-            .isEqualTo("0207 123 4567");
-        assertThat(retrievedInfo.getProfessionalInformation().getVideoHearings()).isTrue();
-        assertThat(retrievedInfo.getProfessionalInformation().getCommonPlatform()).isTrue();
-        assertThat(retrievedInfo.getProfessionalInformation().getAccessScheme()).isTrue();
-        assertThat(retrievedInfo.getCodes()).isNotNull();
-        assertThat(retrievedInfo.getCodes().getMagistrateCourtCode()).isEqualTo(123456);
-        assertThat(retrievedInfo.getCodes().getGbs()).isEqualTo("GBS001");
-        assertThat(retrievedInfo.getDxCodes()).hasSize(2);
-        assertThat(retrievedInfo.getDxCodes().getFirst().getDxCode()).isEqualTo("120551 Marylebone 9");
-        assertThat(retrievedInfo.getFaxNumbers()).hasSize(2);
-        assertThat(retrievedInfo.getFaxNumbers().getFirst().getFaxNumber()).isEqualTo("0207 222 3333");
+
+        assertThat(retrievedInfo.getProfessionalInformation())
+            .as("Retrieved professional information should be valid")
+            .isNotNull()
+            .satisfies(info -> {
+                assertThat(info.getInterviewRooms()).as("Interview rooms").isTrue();
+                assertThat(info.getInterviewRoomCount()).as("Interview room count").isEqualTo(6);
+                assertThat(info.getInterviewPhoneNumber()).as("Interview phone")
+                    .isEqualTo("0207 123 4567");
+                assertThat(info.getVideoHearings()).as("Video hearings").isTrue();
+                assertThat(info.getCommonPlatform()).as("Common platform").isTrue();
+                assertThat(info.getAccessScheme()).as("Access scheme").isTrue();
+            });
+
+        assertThat(retrievedInfo.getCodes())
+            .as("Retrieved codes should be valid")
+            .isNotNull()
+            .satisfies(c -> {
+                assertThat(c.getMagistrateCourtCode()).as("Magistrate court code")
+                    .isEqualTo(123456);
+                assertThat(c.getGbs()).as("GBS code").isEqualTo("GBS001");
+            });
+
+        assertThat(retrievedInfo.getDxCodes())
+            .as("Retrieved DX codes should be valid")
+            .hasSize(2)
+            .first()
+            .satisfies(dx -> assertThat(dx.getDxCode()).as("First DX code")
+                .isEqualTo("120551 Marylebone 9"));
+
+        assertThat(retrievedInfo.getFaxNumbers())
+            .as("Retrieved fax numbers should be valid")
+            .hasSize(2)
+            .first()
+            .satisfies(fax -> assertThat(fax.getFaxNumber()).as("First fax number")
+                .isEqualTo("0207 222 3333"));
+
+        final ZonedDateTime timestampAfterCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterCreate)
+            .as("Court lastUpdatedAt should move forward after professional info creation for court %s",
+                courtId)
+            .isAfter(timestampBeforeCreate);
     }
 
     @Test
@@ -142,7 +186,8 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
 
         final Response createResponse = http.doPost("/courts/" + courtId + "/v1/professional-information",
                                                      initialDetails);
-        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
+
+        AssertionHelper.assertStatus(createResponse, CREATED);
 
         final ProfessionalInformationDto updatedInfo = new ProfessionalInformationDto();
         updatedInfo.setInterviewRooms(true);
@@ -168,25 +213,43 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
 
         final Response updateResponse = http.doPost("/courts/" + courtId + "/v1/professional-information",
                                                      updatedDetails);
-        assertThat(updateResponse.statusCode()).isEqualTo(CREATED.value());
+
+        AssertionHelper.assertStatus(updateResponse, CREATED);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/professional-information");
-        assertThat(getResponse.statusCode()).isEqualTo(OK.value());
+
+        AssertionHelper.assertStatus(getResponse, OK);
 
         final CourtProfessionalInformationDetailsDto retrievedInfo = mapper.readValue(
             getResponse.asString(),
             CourtProfessionalInformationDetailsDto.class
         );
-        assertThat(retrievedInfo.getProfessionalInformation().getInterviewRoomCount()).isEqualTo(10);
-        assertThat(retrievedInfo.getProfessionalInformation().getInterviewPhoneNumber())
-            .isEqualTo("0207 999 8888");
-        assertThat(retrievedInfo.getProfessionalInformation().getVideoHearings()).isTrue();
-        assertThat(retrievedInfo.getProfessionalInformation().getCommonPlatform()).isTrue();
-        assertThat(retrievedInfo.getCodes()).isNotNull();
-        assertThat(retrievedInfo.getCodes().getMagistrateCourtCode()).isEqualTo(999999);
-        assertThat(retrievedInfo.getCodes().getGbs()).isEqualTo("GBS999");
-        assertThat(retrievedInfo.getDxCodes()).hasSize(1);
-        assertThat(retrievedInfo.getDxCodes().getFirst().getDxCode()).isEqualTo("999999 Updated 1");
+
+        assertThat(retrievedInfo.getProfessionalInformation())
+            .as("Updated professional information should reflect changes")
+            .satisfies(info -> {
+                assertThat(info.getInterviewRoomCount()).as("Interview room count").isEqualTo(10);
+                assertThat(info.getInterviewPhoneNumber()).as("Interview phone")
+                    .isEqualTo("0207 999 8888");
+                assertThat(info.getVideoHearings()).as("Video hearings").isTrue();
+                assertThat(info.getCommonPlatform()).as("Common platform").isTrue();
+            });
+
+        assertThat(retrievedInfo.getCodes())
+            .as("Updated codes should reflect changes")
+            .isNotNull()
+            .satisfies(codes -> {
+                assertThat(codes.getMagistrateCourtCode()).as("Magistrate court code")
+                    .isEqualTo(999999);
+                assertThat(codes.getGbs()).as("GBS code").isEqualTo("GBS999");
+            });
+
+        assertThat(retrievedInfo.getDxCodes())
+            .as("Updated DX codes should reflect changes")
+            .hasSize(1)
+            .first()
+            .satisfies(dx -> assertThat(dx.getDxCode()).as("DX code")
+                .isEqualTo("999999 Updated 1"));
     }
 
     @Test
@@ -195,7 +258,8 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court No Professional Info");
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/professional-information");
-        assertThat(getResponse.statusCode()).isEqualTo(NO_CONTENT.value());
+
+        AssertionHelper.assertStatus(getResponse, NO_CONTENT);
     }
 
     @Test
@@ -205,8 +269,11 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
 
         final Response getResponse = http.doGet("/courts/" + nonExistentCourtId
                                                     + "/v1/professional-information");
-        assertThat(getResponse.statusCode()).isEqualTo(NOT_FOUND.value());
+
+        AssertionHelper.assertStatus(getResponse, NOT_FOUND);
+
         assertThat(getResponse.jsonPath().getString("message"))
+            .as("Error message should indicate court not found")
             .contains("Court not found, ID: " + nonExistentCourtId);
     }
 
@@ -230,8 +297,11 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
         final Response postResponse = http.doPost("/courts/" + nonExistentCourtId
                                                       + "/v1/professional-information",
                                                    professionalInfoDetails);
-        assertThat(postResponse.statusCode()).isEqualTo(NOT_FOUND.value());
+
+        AssertionHelper.assertStatus(postResponse, NOT_FOUND);
+
         assertThat(postResponse.jsonPath().getString("message"))
+            .as("Error message should indicate court not found")
             .contains("Court not found, ID: " + nonExistentCourtId);
     }
 

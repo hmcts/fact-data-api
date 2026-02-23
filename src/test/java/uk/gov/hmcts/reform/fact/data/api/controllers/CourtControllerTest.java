@@ -15,6 +15,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.AbstractCourtEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import java.util.List;
@@ -32,6 +33,8 @@ class CourtControllerTest {
     private static final UUID COURT_ID = UUID.randomUUID();
     private static final UUID UNKNOWN_COURT_ID = UUID.randomUUID();
     private static final String INVALID_UUID = "invalid-uuid";
+    private static final String COURT_SLUG = "test-court";
+    private static final String UNKNOWN_COURT_SLUG = "missing-court";
 
     private static final int PAGE_NUMBER = 0;
     private static final int PAGE_SIZE = 25;
@@ -44,6 +47,9 @@ class CourtControllerTest {
 
     @Mock
     private CourtService courtService;
+
+    @Mock
+    private CourtDetailsViewService courtDetailsViewService;
 
     @InjectMocks
     private CourtController courtController;
@@ -73,6 +79,29 @@ class CourtControllerTest {
     void getCourtDetailsByIdThrowsIllegalArgumentExceptionForInvalidUUID() {
         assertThrows(IllegalArgumentException.class, () ->
             courtController.getCourtDetailsById(INVALID_UUID)
+        );
+    }
+
+    @Test
+    void getCourtDetailsBySlugReturns200() {
+        CourtDetails courtDetails = createCourtDetails();
+
+        when(courtService.getCourtDetailsBySlug(COURT_SLUG)).thenReturn(courtDetails);
+        when(courtDetailsViewService.prepareDetailsView(courtDetails)).thenReturn(courtDetails);
+
+        ResponseEntity<CourtDetails> response = courtController.getCourtDetailsBySlug(COURT_SLUG);
+
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(courtDetails);
+    }
+
+    @Test
+    void getCourtDetailsBySlugThrowsNotFoundException() {
+        when(courtService.getCourtDetailsBySlug(UNKNOWN_COURT_SLUG))
+            .thenThrow(new NotFoundException("Court not found"));
+
+        assertThrows(NotFoundException.class, () ->
+            courtController.getCourtDetailsBySlug(UNKNOWN_COURT_SLUG)
         );
     }
 

@@ -217,7 +217,7 @@ public class OsService {
     }
 
     /**
-     * We need to the partial for a postcode. I.e. OX14 4 or SL6 8.
+     * We need to get the partial for a postcode. I.e. OX14 4 or SL6 8.
      * This is for accurate postcode lookup for when we cache requests
      *
      * @param postcode the postcode

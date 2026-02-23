@@ -1,8 +1,12 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
+
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
@@ -29,6 +33,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @MappedSuperclass
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@JsonView(CourtDetailsView.class)
 public abstract class AbstractCourtEntity {
 
     @Schema(
@@ -49,11 +54,7 @@ public abstract class AbstractCourtEntity {
     private String name;
 
     @Schema(description = "The Court 'slug'")
-    @Size(min = 5, max = 250, message = "Court slug should be between 5 and 200 chars")
-    @Pattern(
-        regexp = "^[a-z0-9-]+$",
-        message = "Slug must match the regex '^[a-z0-9-]+$'"
-    )
+    @ValidCourtSlug
     private String slug;
 
     @Schema(description = "The open status of the Court")
@@ -93,5 +94,4 @@ public abstract class AbstractCourtEntity {
 
     @Schema(description = "The Court's Master Reference Data ID")
     private String mrdId;
-
 }

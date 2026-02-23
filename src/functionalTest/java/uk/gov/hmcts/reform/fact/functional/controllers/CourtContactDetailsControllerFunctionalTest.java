@@ -9,9 +9,11 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtContactDetails;
+import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +39,8 @@ public final class CourtContactDetailsControllerFunctionalTest {
         final UUID contactDescriptionTypeId = UUID.fromString(http.doGet("/types/v1/contact-description-types")
                                                                   .jsonPath().getString("[0].id"));
 
+        final ZonedDateTime timestampBeforeCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+
         final CourtContactDetails contactDetail = new CourtContactDetails();
         contactDetail.setCourtId(courtId);
         contactDetail.setCourtContactDescriptionId(contactDescriptionTypeId);
@@ -56,6 +60,11 @@ public final class CourtContactDetailsControllerFunctionalTest {
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/contact-details");
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
+
+        final ZonedDateTime timestampAfterCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterCreate)
+            .as("Court lastUpdatedAt should move forward after contact details creation for court %s", courtId)
+            .isAfter(timestampBeforeCreate);
     }
 
     @Test

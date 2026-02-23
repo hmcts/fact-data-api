@@ -7,6 +7,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -116,6 +117,30 @@ public class CourtService {
     }
 
     /**
+     * Return a list of courts based on a provided prefix.
+     *
+     * @param prefix The prefix.
+     * @return A list of courts based on the provided prefix.
+     */
+    public List<Court> getCourtsByPrefixAndActiveSearch(String prefix) {
+        return new ArrayList<>(courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(
+            prefix,
+            true
+        ));
+    }
+
+    /**
+     * Search courts by a provided string query. Matches currently if the string
+     * matches in part an address or court name.
+     *
+     * @param query The query to search by.
+     * @return One or more courts that match.
+     */
+    public List<Court> searchOpenCourtsByNameOrAddress(String query) {
+        return courtRepository.searchOpenByNameOrAddress(query.trim());
+    }
+
+    /**
      * Deletes courts whose names start with the supplied prefix.
      *
      * @param courtNamePrefix the name prefix to match (case-insensitive).
@@ -149,6 +174,18 @@ public class CourtService {
             );
     }
 
+    /**
+     * Get court details by slug.
+     *
+     * @param courtSlug The slug of the court details to get.
+     * @return The court details entity.
+     * @throws NotFoundException if the court details is not found.
+     */
+    public CourtDetails getCourtDetailsBySlug(String courtSlug) {
+        return courtDetailsRepository.findBySlug(courtSlug)
+            .orElseThrow(() -> new NotFoundException("Court not found, slug: " + courtSlug)
+        );
+    }
 
     /**
      * Get all court details.

@@ -12,10 +12,12 @@ import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -204,6 +206,8 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Create Opening Hours");
         final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 2);
 
+        final ZonedDateTime timestampBeforeCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+
         final List<CourtOpeningHours> openingHoursList = List.of(
             CourtOpeningHours.builder()
                 .courtId(courtId)
@@ -253,6 +257,11 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         assertThat(retrievedHours).hasSize(2);
         assertThat(retrievedHours).extracting(CourtOpeningHours::getDayOfWeek)
             .containsExactlyInAnyOrder(DayOfTheWeek.MONDAY, DayOfTheWeek.THURSDAY);
+
+        final ZonedDateTime timestampAfterCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
+        assertThat(timestampAfterCreate)
+            .as("Court lastUpdatedAt should move forward after opening hours creation for court %s", courtId)
+            .isAfter(timestampBeforeCreate);
     }
 
     @Test

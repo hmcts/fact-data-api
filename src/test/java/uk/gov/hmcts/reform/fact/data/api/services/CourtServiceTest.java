@@ -333,6 +333,33 @@ class CourtServiceTest {
     }
 
     @Test
+    void getCourtsByPrefixAndActiveSearchShouldReturnMatchingCourts() {
+        Court court = new Court();
+        List<Court> courts = List.of(court);
+
+        when(courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc("A", true))
+            .thenReturn(courts);
+
+        List<Court> response = courtService.getCourtsByPrefixAndActiveSearch("A");
+
+        assertThat(response).isEqualTo(courts);
+        verify(courtRepository).findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc("A", true);
+    }
+
+    @Test
+    void searchOpenCourtsByNameOrAddressShouldTrimQuery() {
+        Court court = new Court();
+        List<Court> courts = List.of(court);
+
+        when(courtRepository.searchOpenByNameOrAddress("Test Court")).thenReturn(courts);
+
+        List<Court> response = courtService.searchOpenCourtsByNameOrAddress("  Test Court  ");
+
+        assertThat(response).isEqualTo(courts);
+        verify(courtRepository).searchOpenByNameOrAddress("Test Court");
+    }
+
+    @Test
     void deleteCourtsByNamePrefixShouldReturnZeroWhenNoMatchesFound() {
         when(courtRepository.findByNameStartingWithIgnoreCase("Missing")).thenReturn(Collections.emptyList());
 
@@ -383,6 +410,36 @@ class CourtServiceTest {
         );
 
         assertThat(exception.getMessage()).isEqualTo("Court not found, ID: " + courtId);
+    }
+
+    @Test
+    void getCourtDetailsBySlugReturnsCourtDetailsWhenFound() {
+        String courtSlug = "test-court";
+        CourtDetails courtDetails = new CourtDetails();
+        courtDetails.setSlug(courtSlug);
+        courtDetails.setName("Test Court");
+
+        when(courtDetailsRepository.findBySlug(courtSlug)).thenReturn(Optional.of(courtDetails));
+
+        CourtDetails result = courtService.getCourtDetailsBySlug(courtSlug);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSlug()).isEqualTo(courtSlug);
+        assertThat(result.getName()).isEqualTo("Test Court");
+    }
+
+    @Test
+    void getCourtDetailsBySlugThrowsNotFoundExceptionWhenCourtDoesNotExist() {
+        String courtSlug = "missing-court";
+
+        when(courtDetailsRepository.findBySlug(courtSlug)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class, () ->
+                courtService.getCourtDetailsBySlug(courtSlug)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Court not found, slug: " + courtSlug);
     }
 
     @Test

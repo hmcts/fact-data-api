@@ -1,0 +1,120 @@
+package uk.gov.hmcts.reform.fact.data.api.controllers.search;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
+
+import java.util.List;
+
+@Tag(name = "Search Court", description = "Operations related to the searching of courts")
+@RestController
+@Validated
+@RequestMapping("/search/courts")
+public class SearchCourtController {
+
+    private static final String SINGLE_LETTER_REGEX = "^[A-Za-z]$";
+    private final SearchCourtService searchCourtService;
+    private final CourtService courtService;
+
+    public SearchCourtController(SearchCourtService searchCourtService,
+                                 CourtService courtService) {
+        this.searchCourtService = searchCourtService;
+        this.courtService = courtService;
+    }
+
+    @GetMapping("/v1/postcode")
+    @Operation(
+        summary = "Search courts by postcode, plus optional fields based on various business rules.",
+        description = "Retrieve courts based on postcode, service area and action."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court(s) based on provided postcode."),
+        @ApiResponse(responseCode = "400", description = "Postcode is missing or is not valid."),
+        @ApiResponse(responseCode = "404", description = "Information not found. "
+            + "For example, service area provided but not valid."),
+        @ApiResponse(responseCode = "500", description = "OS returned an error when attempting to "
+            + "retrieve information about the provided postcode.")
+    })
+    public ResponseEntity<List<CourtWithDistance>> getCourtsByPostcode(
+        @Parameter(description = "Postcode")
+        @ValidPostcode
+        @NotBlank
+        @RequestParam(value = "postcode")
+        final String postcode,
+
+        @Parameter(description = "Service area name")
+        @RequestParam(value = "serviceArea", required = false)
+        final String serviceArea,
+
+        @Parameter(description = "Action to perform")
+        @RequestParam(value = "action", required = false)
+        final SearchAction action,
+
+        @Parameter(description = "Maximum number of results (default 10)")
+        @RequestParam(value = "limit", required = false, defaultValue = "10")
+        @Min(1)
+        @Max(50)
+        final Integer limit) {
+
+        return ResponseEntity.ok(
+            searchCourtService.getCourtsBySearchParameters(postcode, serviceArea, action, limit));
+    }
+
+    @GetMapping("/v1/prefix")
+    @Operation(
+        summary = "Search courts by prefix.",
+        description = "Retrieve courts based on a provided prefix."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court(s) based on provided postcode."),
+        @ApiResponse(responseCode = "400", description = "Prefix is missing or is not valid.")
+    })
+    public ResponseEntity<List<Court>> getCourtsByPrefix(
+        @RequestParam("prefix")
+        @Pattern(
+            regexp = SINGLE_LETTER_REGEX,
+            message = "Prefix must be exactly one alphabetic letter"
+        )
+        final String prefix
+    ) {
+        return ResponseEntity.ok(courtService.getCourtsByPrefixAndActiveSearch(prefix));
+    }
+
+    @GetMapping("/v1/name")
+    @Operation(
+        summary = "Search courts by prefix.",
+        description = "Retrieve courts based on a provided prefix."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court(s) that match data from query."),
+        @ApiResponse(responseCode = "400", description = "Query is missing or invalid.")
+    })
+    public ResponseEntity<List<Court>> getCourtsByQuery(
+        @Parameter(description = "Query string to used to search for courts")
+        @NotBlank(message = "q must not be blank")
+        @Size(min = 3, message = "q must be at least 3 characters in length")
+        @RequestParam(value = "q")
+        final String query
+    ) {
+        return ResponseEntity.ok(courtService.searchOpenCourtsByNameOrAddress(query));
+    }
+}
