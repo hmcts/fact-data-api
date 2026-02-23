@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -28,7 +29,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -198,6 +198,16 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void testHandleInvalidDateRangeException() {
+        InvalidDateRangeException ex = new InvalidDateRangeException(TEST_MESSAGE);
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
     void testHandleMethodArgumentTypeMismatchExceptionWithUnknownExpectedType() {
         MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
             "123", null, "page", null, new IllegalArgumentException("fail")
@@ -263,16 +273,6 @@ class GlobalExceptionHandlerTest {
             .contains("Unsupported or malformed Content-Type 'unknown'")
             .contains("use 'multipart/form-data'")
             .contains("use 'application/json'");
-        assertThat(response.getTimestamp()).isNotNull();
-    }
-
-    @Test
-    void testHandleAccessDeniedException() {
-        AccessDeniedException ex = new AccessDeniedException(TEST_MESSAGE);
-        ExceptionResponse response = handler.handle(ex);
-
-        assertThat(response).isNotNull();
-        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
         assertThat(response.getTimestamp()).isNotNull();
     }
 

@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
@@ -161,6 +162,14 @@ public class GlobalExceptionHandler {
         return generateExceptionResponse(ex.getMessage());
     }
 
+    @ExceptionHandler(InvalidDateRangeException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(InvalidDateRangeException ex) {
+        log.error("400, date range failed validation. Details: {}", ex.getMessage());
+
+        return generateExceptionResponse(ex.getMessage());
+    }
+
     @ExceptionHandler(InvalidParameterCombinationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidParameterCombinationException ex,
@@ -195,3 +204,4 @@ public class GlobalExceptionHandler {
         return response;
     }
 }
+

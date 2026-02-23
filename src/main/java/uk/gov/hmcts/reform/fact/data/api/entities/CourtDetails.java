@@ -18,6 +18,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data

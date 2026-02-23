@@ -22,3 +22,9 @@ courtLock:
 os:
   url: https://api.os.uk
   key: a-key
+
+# fact-data-api internal configuration
+fact:
+  data-api:
+    audit:
+      retention-days: 0

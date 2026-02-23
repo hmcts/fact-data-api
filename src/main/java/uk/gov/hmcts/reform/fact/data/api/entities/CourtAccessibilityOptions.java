@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -35,6 +37,7 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @NoArgsConstructor
 @Builder
 @Entity
+@EntityListeners(AuditableCourtEntityListener.class)
 @ValidConditional(
     selected = "accessibleParking", selectedValueForRequired = "true", required = "accessibleParkingPhoneNumber"
 )
@@ -45,7 +48,7 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorLimit")
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_accessibility_options")
-public class CourtAccessibilityOptions {
+public class CourtAccessibilityOptions implements AuditableCourtEntity {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
