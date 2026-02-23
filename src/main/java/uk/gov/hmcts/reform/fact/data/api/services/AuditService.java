@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -68,6 +69,7 @@ public class AuditService {
      * <p>
      * Expiry retention days are configured via {@link AuditConfigurationProperties}.
      */
+    @Transactional
     public void removeExpiredAuditEntries() {
         auditRepository.deleteAllByCreatedAtBefore(
             ZonedDateTime.now().minusDays(auditConfiguration.getRetentionDays())
