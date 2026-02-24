@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Service("authService")
 @Primary
 @Slf4j
-public class TestAuthService {
+public class AuthService {
     public boolean canView() {
         return true;
     }
