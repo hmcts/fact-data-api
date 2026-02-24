@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationResponse;
@@ -15,7 +14,8 @@ import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 
 @SecuredFactRestController(
     name = "Migration",
-    description = "Endpoints supporting one-off migrations from the legacy FaCT system"
+    description = "Endpoints supporting one-off migrations from the legacy FaCT system",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/migration")
 @RequiredArgsConstructor
@@ -35,7 +35,6 @@ public class MigrationController {
         @ApiResponse(responseCode = "409", description = "Migration already applied"),
         @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<MigrationResponse> importLegacyData() {
         MigrationSummary summary = migrationService.migrate();
         return ResponseEntity.ok(new MigrationResponse(
