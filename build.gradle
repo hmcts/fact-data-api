@@ -179,7 +179,7 @@ dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-oauth2-client'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-oauth2-resource-server'
-  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter', version: '6.1.0'
+  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter', version: '7.0.0'
   implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-openfeign', version: '4.3.1'
 
   implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.8.15'
@@ -189,7 +189,7 @@ dependencies {
   implementation group: 'org.flywaydb', name: 'flyway-core', version: '11.20.3'
   implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '11.20.3'
 
-  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '6.1.0'
+  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.0.0'
 
   implementation group: 'io.hypersistence', name: 'hypersistence-utils-hibernate-63', version: '3.15.2'
 
