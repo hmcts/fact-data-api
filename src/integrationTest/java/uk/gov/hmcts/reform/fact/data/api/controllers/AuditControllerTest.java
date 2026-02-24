@@ -285,6 +285,7 @@ class AuditControllerTest {
     private Court buildCourt(UUID regionId, String name) {
         return Court.builder()
             .name(name)
+            .open(Boolean.FALSE)
             .regionId(regionId)
             .isServiceCentre(Boolean.FALSE)
             .build();
