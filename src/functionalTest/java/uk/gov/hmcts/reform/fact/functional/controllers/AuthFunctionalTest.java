@@ -23,6 +23,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
@@ -406,17 +407,23 @@ public class AuthFunctionalTest {
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(typeId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
+                .openingTimesDetails(List.of(
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0)
+                    )))
                 .build()
         );
         List<CourtCounterServiceOpeningHours> counter = List.of(
             CourtCounterServiceOpeningHours.builder()
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(16, 0))
+                .openingTimesDetails(List.of(
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0)
+                    )))
                 .counterService(true)
                 .assistWithForms(true)
                 .assistWithDocuments(true)
