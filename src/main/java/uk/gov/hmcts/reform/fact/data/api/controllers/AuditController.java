@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
+import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.AuditService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -11,24 +12,24 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
+
+@SecuredFactRestController(
+    name = "Audit",
+    description = "Operations related to audits"
+)
 @RequiredArgsConstructor
-@Tag(name = "Audit", description = "Operations related to audits")
-@RestController
-@Validated
 @RequestMapping("/audits")
 public class AuditController {
 
@@ -44,6 +45,7 @@ public class AuditController {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved list of audits"),
         @ApiResponse(responseCode = "400", description = "Invalid request parameters supplied")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Page<Audit>> getFilteredAndPaginatedAudits(
         @RequestParam(name = "pageNumber", defaultValue = "0")
         @PositiveOrZero(message = "pageNumber must be greater than or equal to 0") int pageNumber,
@@ -87,6 +89,7 @@ public class AuditController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "The request to remove expired audits has completed")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> removeExpiredAuditEntries() {
         auditService.removeExpiredAuditEntries();
         return ResponseEntity.noContent().build();
