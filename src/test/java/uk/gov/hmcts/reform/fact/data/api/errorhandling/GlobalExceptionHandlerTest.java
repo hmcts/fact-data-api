@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Payload;
@@ -29,6 +28,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
@@ -221,6 +221,16 @@ class GlobalExceptionHandlerTest {
             .contains("Invalid value for parameter 'includeClosed'")
             .contains("abc")
             .contains("Boolean");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleInvalidDateRangeException() {
+        InvalidDateRangeException ex = new InvalidDateRangeException(TEST_MESSAGE);
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
         assertThat(response.getTimestamp()).isNotNull();
     }
 

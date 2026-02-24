@@ -1,13 +1,17 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
+import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonView;
@@ -15,10 +19,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -30,7 +31,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,18 +39,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-@Tag(name = "Court", description = "Operations related to courts")
-@RestController
-@Validated
+@SecuredFactRestController(
+    name = "Court",
+    description = "Operations related to courts"
+)
 @RequestMapping("/courts")
 @RequiredArgsConstructor
 public class CourtController {
@@ -161,6 +155,7 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid court data supplied"),
         @ApiResponse(responseCode = "404", description = "Associated region not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Court> createCourt(@Valid @RequestBody Court court) {
         return ResponseEntity.status(HttpStatus.CREATED).body(courtService.createCourt(court));
     }
@@ -176,6 +171,7 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid court data supplied"),
         @ApiResponse(responseCode = "404", description = "Court or associated region not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Court> updateCourt(@ValidUUID @PathVariable String courtId, @Valid @RequestBody Court court) {
         return ResponseEntity.ok(courtService.updateCourt(UUID.fromString(courtId), court));
     }
@@ -189,6 +185,7 @@ public class CourtController {
         @ApiResponse(responseCode = "200", description = "Response of matched and unmatched courts"),
         @ApiResponse(responseCode = "400", description = "Invalid linking data supplied")
     })
+    @PreAuthorize("@authService.isAdmin()") //TODO: CaTH role
     public ResponseEntity<Map<String, Object>> linkCaTHCourtsToFaCT(
         @RequestBody @NotEmpty(message = "mrdIds cannot be empty")
         List<@NotBlank(message = "mrdId cannot be blank") String> mrdIds) {
@@ -205,6 +202,7 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid MRD ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court with given MRD ID not found")
     })
+    @PreAuthorize("@authService.isAdmin()") //TODO: CaTH role
     public ResponseEntity<Void> handleCaTHCourtDeletion(
         @Parameter(description = "MRD ID of the deleted court", required = true)
         @NotBlank(message = "mrdId cannot be blank") @PathVariable String mrdId
