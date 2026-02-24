@@ -71,6 +71,7 @@ public class AuthFunctionalTest {
         Court court = new Court();
         court.setName(name + " " + buildAlphabeticSuffix());
         court.setRegionId(UUID.fromString(getRegionId()));
+        court.setOpen(Boolean.FALSE);
         court.setIsServiceCentre(true);
         Response createResponse = http.doPost("/courts/v1", court, adminToken);
         assertThat(createResponse.statusCode()).isEqualTo(201);
