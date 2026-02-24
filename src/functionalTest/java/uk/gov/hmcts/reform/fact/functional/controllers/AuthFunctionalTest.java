@@ -403,7 +403,7 @@ public class AuthFunctionalTest {
     void courtOpeningHoursAuth() {
         UUID courtId = createCourtAsAdmin("Test Court Auth OH");
         UUID typeId = TestDataHelper.getOpeningHourTypeId(http, 0);
-        List<CourtOpeningHours> hours = List.of(
+        CourtOpeningHours hours =
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(typeId)
@@ -413,9 +413,8 @@ public class AuthFunctionalTest {
                         LocalTime.of(9, 0),
                         LocalTime.of(17, 0)
                     )))
-                .build()
-        );
-        List<CourtCounterServiceOpeningHours> counter = List.of(
+                .build();
+        CourtCounterServiceOpeningHours counter =
             CourtCounterServiceOpeningHours.builder()
                 .courtId(courtId)
                 .openingTimesDetails(List.of(
@@ -429,8 +428,7 @@ public class AuthFunctionalTest {
                 .assistWithDocuments(true)
                 .assistWithSupport(false)
                 .appointmentNeeded(false)
-                .build()
-        );
+                .build();
 
         Response putAdmin = http.doPut("/courts/" + courtId + "/v1/opening-hours/" + typeId, hours, adminToken);
         assertThat(putAdmin.statusCode()).isEqualTo(200);
