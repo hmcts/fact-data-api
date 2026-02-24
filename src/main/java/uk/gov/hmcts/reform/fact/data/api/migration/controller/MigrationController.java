@@ -3,25 +3,25 @@ package uk.gov.hmcts.reform.fact.data.api.migration.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationSummary;
 import uk.gov.hmcts.reform.fact.data.api.migration.service.MigrationService;
+import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 
-@RestController
+@SecuredFactRestController(
+    name = "Migration",
+    description = "Endpoints supporting one-off migrations from the legacy FaCT system"
+)
 @RequestMapping("/migration")
-@Tag(name = "Migration", description = "Endpoints supporting one-off migrations from the legacy FaCT system")
+@RequiredArgsConstructor
 public class MigrationController {
 
     private final MigrationService migrationService;
-
-    public MigrationController(MigrationService migrationService) {
-        this.migrationService = migrationService;
-    }
 
     @PostMapping("/import")
     @Operation(
@@ -35,6 +35,7 @@ public class MigrationController {
         @ApiResponse(responseCode = "409", description = "Migration already applied"),
         @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<MigrationResponse> importLegacyData() {
         MigrationSummary summary = migrationService.migrate();
         return ResponseEntity.ok(new MigrationResponse(
