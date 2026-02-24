@@ -4,7 +4,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHour
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtOpeningHoursService;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
@@ -23,14 +22,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtOpeningHoursService;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
-
-import java.util.List;
-import java.util.UUID;
 
 @SecuredFactRestController(
     name = "Court Opening Hours",
