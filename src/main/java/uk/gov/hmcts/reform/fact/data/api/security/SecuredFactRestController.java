@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Retention(RetentionPolicy.RUNTIME)
 @Tag(name = "")
 @SecurityRequirement(name = OpenAPIConfiguration.BEARER_AUTH_SECURITY_SCHEME)
-@PreAuthorize("@authService.canView()")
+@PreAuthorize(value = "@authService.canView()")
 @Validated
 @RestController
 public @interface SecuredFactRestController {
@@ -33,4 +33,7 @@ public @interface SecuredFactRestController {
 
     @AliasFor(annotation = Tag.class, attribute = "description")
     String description() default "";
+
+    @AliasFor(annotation = PreAuthorize.class, attribute = "value")
+    String preAuthorize() default "@authService.canView()";
 }
