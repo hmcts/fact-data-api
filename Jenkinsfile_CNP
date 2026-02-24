@@ -13,8 +13,10 @@ def secrets = [
   'fact-kv-${env}': [
     secret('api-app-reg-id', 'APP_REG_ID'),
     secret('func-test-tenant-id', 'AZURE_TENANT_ID'),
-    secret('func-test-client-app-id', 'CLIENT_APP_REG_ID'),
-    secret('bstrap-func-test-client-secret', 'AZURE_CLIENT_SECRET')
+    secret('func-test-client-app-id', 'ADMIN_CLIENT_APP_REG_ID'),
+    secret('func-test-viewer-client-app-id', 'VIEWER_CLIENT_APP_REG_ID'),
+    secret('bstrap-func-test-client-secret', 'ADMIN_AZURE_CLIENT_SECRET'),
+    secret('bstrap-func-viewer-test-client-secret', 'VIEWER_AZURE_CLIENT_SECRET')
   ]
 ]
 

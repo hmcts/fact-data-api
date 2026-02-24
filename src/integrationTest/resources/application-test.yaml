@@ -7,6 +7,8 @@ spring:
       storage:
         # allows blob store autoconfigure to complete without exception
         account-name: test
+      active-directory:
+        app-id-uri: test
   autoconfigure:
     exclude:
       - com.azure.spring.cloud.autoconfigure.implementation.context.AzureTokenCredentialAutoConfiguration
@@ -20,3 +22,9 @@ courtLock:
 os:
   url: https://api.os.uk
   key: a-key
+
+# fact-data-api internal configuration
+fact:
+  data-api:
+    audit:
+      retention-days: 0

@@ -1,5 +1,12 @@
 package uk.gov.hmcts.reform.fact.data.api.openapi;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,13 +18,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 /**
  * Built-in feature which saves service's swagger specs in temporary directory.
  * Each CI run on master should automatically save and upload (if updated) documentation.
@@ -25,11 +25,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Feature("OpenAPI Publisher")
 @DisplayName("OpenAPI Publisher")
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = "spring.config.name=application-test"
-)
-@AutoConfigureMockMvc
+@SpringBootTest
+@AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 class OpenAPIPublisherTest {
 
