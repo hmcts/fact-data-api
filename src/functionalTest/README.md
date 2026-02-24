@@ -5,7 +5,14 @@ Functional tests for the Court and Types controllers. These are end-to-end HTTP 
 ## Prerequisites
 
 1. Application running on configured URL (default: `http://localhost:8989`)
-2. Environment variable configured: `TEST_URL`
+2. Environment variables configured:
+   - `TEST_URL` (optional)
+   - `APP_REG_ID`
+   - `AZURE_TENANT_ID`
+   - `ADMIN_CLIENT_APP_REG_ID`
+   - `VIEWER_CLIENT_APP_REG_ID`
+   - `ADMIN_AZURE_CLIENT_SECRET`
+   - `VIEWER_AZURE_CLIENT_SECRET`
 
 ## Local Development Setup
 

@@ -1,30 +1,31 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
+import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtLocalAuthoritiesService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
 import java.util.UUID;
 
-@Tag(name = "Local Authorities", description = "Operations related to court local authorities")
-@RestController
-@Validated
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@SecuredFactRestController(
+    name = "Local Authorities",
+    description = "Operations related to court local authorities"
+)
 @RequestMapping("/courts/{courtId}")
 public class CourtLocalAuthoritiesController {
 
@@ -66,6 +67,7 @@ public class CourtLocalAuthoritiesController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or request validation failed"),
         @ApiResponse(responseCode = "404", description = "Court or local authority not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<String> updateCourtLocalAuthorities(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Local authority mappings to update", required = true)
