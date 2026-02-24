@@ -151,6 +151,7 @@ public class AuthFunctionalTest {
         UUID courtId = createCourtAsAdmin("Test Court Auth Core");
         Court updateCourt = new Court();
         updateCourt.setName("Test Court Auth Updated");
+        updateCourt.setOpen(Boolean.FALSE);
         updateCourt.setRegionId(UUID.fromString(getRegionId()));
         updateCourt.setIsServiceCentre(true);
 
