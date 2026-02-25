@@ -458,8 +458,8 @@ public class AuthFunctionalTest {
             "/courts/{courtId}/v1/opening-hours/counter-service [GET]"
         );
         assertViewerForbidden(
-            http.doPut("/courts/" + courtId + "/v1/opening-hours/" + hours.getId(), hours, viewerToken),
-            "/courts/{courtId}/v1/opening-hours/{openingHoursId} [PUT]"
+            http.doPut("/courts/" + courtId + "/v1/opening-hours", hours, viewerToken),
+            "/courts/{courtId}/v1/opening-hours [PUT]"
         );
         assertViewerForbidden(
             http.doPut("/courts/" + courtId + "/v1/opening-hours/counter-service", counter, viewerToken),
