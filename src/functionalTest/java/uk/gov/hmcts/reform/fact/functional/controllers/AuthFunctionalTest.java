@@ -431,7 +431,7 @@ public class AuthFunctionalTest {
                 .appointmentNeeded(false)
                 .build();
 
-        Response putAdmin = http.doPut("/courts/" + courtId + "/v1/opening-hours/", hours, adminToken);
+        Response putAdmin = http.doPut("/courts/" + courtId + "/v1/opening-hours", hours, adminToken);
         assertThat(putAdmin.statusCode()).isEqualTo(200);
         Response counterAdmin = http.doPut(
             "/courts/" + courtId + "/v1/opening-hours/counter-service",
