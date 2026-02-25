@@ -3,10 +3,8 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
-import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
@@ -60,18 +58,18 @@ public class CourtOpeningHoursService {
      * Get opening hours type by court ID.
      *
      * @param courtId The court ID to find the opening hours type for.
-     * @param openingHourTypeId The type ID for the opening hours type to find.
+     * @param openingHourId The ID for the opening hours to find.
      * @return The opening hours record.
      * @throws CourtResourceNotFoundException if no opening hours record of this type exists for the court.
      */
-    public CourtOpeningHours getOpeningHoursByTypeId(UUID courtId, UUID openingHourTypeId) {
+    public CourtOpeningHours getOpeningHoursById(UUID courtId, UUID openingHourId) {
         return courtOpeningHoursRepository
-            .findByCourtIdAndOpeningHourTypeId(
+            .findByCourtIdAndId(
                 courtService.getCourtById(courtId).getId(),
-                openingHoursTypeService.getOpeningHourTypeById(openingHourTypeId).getId())
+                openingHourId)
             .orElseThrow(
                 () -> new CourtResourceNotFoundException(
-                "No opening hour found for court ID: " + courtId + " with type ID: " + openingHourTypeId));
+                "No opening hour found for court ID: " + courtId + " with ID: " + openingHourId));
     }
 
     /**
@@ -93,27 +91,25 @@ public class CourtOpeningHoursService {
     /**
      * Set opening hours for a court.
      * @param courtId The ID of the court to set opening hours for.
-     * @param openingHoursTypeId The ID of the opening hours type to set opening hours for.
      * @param courtOpeningHours The court opening hours entity to create or update.
      * @return The created or updated opening hour entity.
      */
     @Transactional
     public CourtOpeningHours setOpeningHours(
-        UUID courtId, UUID openingHoursTypeId, CourtOpeningHours courtOpeningHours) {
+        UUID courtId, CourtOpeningHours courtOpeningHours) {
 
-        List<OpeningTimesDetail> hoursToSave = normaliseOpeningTimesDetails(courtOpeningHours.getOpeningTimesDetails());
+        courtOpeningHours.setCourt(courtService.getCourtById(courtId));
+        courtOpeningHours.setCourtId(courtId);
 
-        Court foundCourt = courtService.getCourtById(courtId);
-        OpeningHourType foundOpeningHourType = openingHoursTypeService.getOpeningHourTypeById(openingHoursTypeId);
+        courtOpeningHours.setOpeningHourType(
+            openingHoursTypeService.getOpeningHourTypeById(courtOpeningHours.getOpeningHourTypeId()));
+
+        courtOpeningHours.setOpeningTimesDetails(
+            normaliseOpeningTimesDetails(courtOpeningHours.getOpeningTimesDetails())
+        );
 
         courtOpeningHoursRepository
-            .deleteByCourtIdAndOpeningHourTypeId(foundCourt.getId(), foundOpeningHourType.getId());
-
-        courtOpeningHours.setOpeningTimesDetails(hoursToSave);
-        courtOpeningHours.setCourt(foundCourt);
-        courtOpeningHours.setCourtId(courtId);
-        courtOpeningHours.setOpeningHourType(foundOpeningHourType);
-        courtOpeningHours.setOpeningHourTypeId(openingHoursTypeId);
+            .deleteByCourtIdAndId(courtId, courtOpeningHours.getId());
 
         return courtOpeningHoursRepository.save(courtOpeningHours);
     }
@@ -128,37 +124,42 @@ public class CourtOpeningHoursService {
     public CourtCounterServiceOpeningHours setCounterServiceOpeningHours(
         UUID courtId, CourtCounterServiceOpeningHours courtCounterServiceOpeningHours) {
 
-        List<OpeningTimesDetail> hoursToSave
-            = normaliseOpeningTimesDetails(courtCounterServiceOpeningHours.getOpeningTimesDetails());
-
-        Court foundCourt = courtService.getCourtById(courtId);
-        courtCounterServiceOpeningHoursRepository.deleteByCourtId(foundCourt.getId());
-
-        courtCounterServiceOpeningHours.setOpeningTimesDetails(hoursToSave);
-        courtCounterServiceOpeningHours.setCourt(foundCourt);
+        courtCounterServiceOpeningHours.setCourt(courtService.getCourtById(courtId));
         courtCounterServiceOpeningHours.setCourtId(courtId);
+
+        courtCounterServiceOpeningHours.setOpeningTimesDetails(
+            normaliseOpeningTimesDetails(courtCounterServiceOpeningHours.getOpeningTimesDetails()));
 
         if (courtCounterServiceOpeningHours.getCourtTypes() != null) {
             courtCounterServiceOpeningHours
                 .setCourtTypes(getValidatedCourtTypeIds(courtCounterServiceOpeningHours.getCourtTypes()));
         }
 
+        courtCounterServiceOpeningHoursRepository.deleteByCourtId(courtId);
+
         return courtCounterServiceOpeningHoursRepository.save(courtCounterServiceOpeningHours);
     }
 
     /**
      * Delete court opening hours.
-     * @param courtId The ID of the court to delete opening hours for.
-     * @param openingHoursTypeId The ID of the opening hours type to delete opening hours for.
+     * @param openingHoursId The ID of the opening hours type to delete opening hours for.
      */
     @Transactional
-    public void deleteCourtOpeningHours(UUID courtId, UUID openingHoursTypeId) {
+    public void deleteCourtOpeningHours(UUID courtId, UUID openingHoursId) {
         courtOpeningHoursRepository
-            .deleteByCourtIdAndOpeningHourTypeId(
-                courtService.getCourtById(courtId).getId(),
-                openingHoursTypeService.getOpeningHourTypeById(openingHoursTypeId).getId());
+            .deleteById(getOpeningHoursById(courtId, openingHoursId).getId());
     }
 
+    /**
+     * Delete court counter service opening hours.
+     * @param courtId The ID of the court to delete counter service opening hours for.
+     */
+    @Transactional
+    public void deleteCourtCounterServiceOpeningHours(UUID courtId) {
+        courtCounterServiceOpeningHoursRepository
+            .deleteByCourtId(
+                courtService.getCourtById(courtId).getId());
+    }
 
     /**
      * Normalizes a list of opening times details by enforcing the rule that if "everyday" is specified,

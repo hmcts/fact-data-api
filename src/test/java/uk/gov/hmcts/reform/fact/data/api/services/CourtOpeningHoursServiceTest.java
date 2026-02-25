@@ -106,6 +106,7 @@ class CourtOpeningHoursServiceTest {
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingTimesDetails(openingTimesDetails)
+                .openingHourTypeId(openingHourTypeId)
                 .build();
 
         counterServiceOpeningHours =
@@ -155,26 +156,24 @@ class CourtOpeningHoursServiceTest {
     @Test
     void getOpeningHoursByTypeIdReturnsOpeningHoursWhenFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(openingHoursTypeService.getOpeningHourTypeById(openingHourType.getId())).thenReturn(openingHourType);
-        when(courtOpeningHoursRepository.findByCourtIdAndOpeningHourTypeId(courtId, openingHourType.getId()))
+        when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, openingHours.getId()))
             .thenReturn(Optional.of(openingHours));
 
         CourtOpeningHours result = courtOpeningHoursService
-            .getOpeningHoursByTypeId(courtId, openingHourType.getId());
+            .getOpeningHoursById(courtId, openingHours.getId());
 
         assertThat(result).isEqualTo(openingHours);
     }
 
     @Test
-    void getOpeningHoursByTypeIdThrowsExceptionWhenNotFound() {
+    void getOpeningHoursByIdThrowsExceptionWhenNotFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(openingHoursTypeService.getOpeningHourTypeById(openingHourType.getId())).thenReturn(openingHourType);
-        when(courtOpeningHoursRepository.findByCourtIdAndOpeningHourTypeId(courtId, openingHourType.getId()))
+        when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, openingHours.getId()))
             .thenReturn(Optional.empty());
 
         assertThrows(
             CourtResourceNotFoundException.class,
-            () -> courtOpeningHoursService.getOpeningHoursByTypeId(courtId, openingHourType.getId())
+            () -> courtOpeningHoursService.getOpeningHoursById(courtId, openingHours.getId())
         );
     }
 
@@ -183,20 +182,19 @@ class CourtOpeningHoursServiceTest {
         when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
 
         assertThrows(NotFoundException.class, () ->
-            courtOpeningHoursService.getOpeningHoursByTypeId(courtId, openingHourType.getId())
+            courtOpeningHoursService.getOpeningHoursById(courtId, openingHours.getId())
         );
     }
 
     @Test
     void getOpeningHoursThrowsExceptionWhenOpeningHourTypeDoesNotExist() {
-        UUID typeId = UUID.randomUUID();
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(openingHoursTypeService.getOpeningHourTypeById(typeId))
-            .thenThrow(new NotFoundException(OPENING_HOUR_TYPE_NOT_FOUND_MESSAGE));
+        when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, openingHours.getId()))
+            .thenReturn(Optional.empty());
 
         assertThrows(
-            NotFoundException.class, () ->
-                courtOpeningHoursService.getOpeningHoursByTypeId(courtId, typeId)
+            CourtResourceNotFoundException.class, () ->
+                courtOpeningHoursService.getOpeningHoursById(courtId, openingHours.getId())
         );
     }
 
@@ -239,10 +237,10 @@ class CourtOpeningHoursServiceTest {
         when(courtOpeningHoursRepository.save(any())).thenReturn(openingHours);
 
         CourtOpeningHours result = courtOpeningHoursService
-            .setOpeningHours(courtId, openingHourType.getId(), openingHours);
+            .setOpeningHours(courtId, openingHours);
 
         assertThat(result).isEqualTo(openingHours);
-        verify(courtOpeningHoursRepository).deleteByCourtIdAndOpeningHourTypeId(courtId, openingHourType.getId());
+        verify(courtOpeningHoursRepository).deleteByCourtIdAndId(courtId, openingHours.getId());
         verify(courtOpeningHoursRepository).save(openingHours);
     }
 
@@ -287,10 +285,10 @@ class CourtOpeningHoursServiceTest {
         when(courtOpeningHoursRepository.save(any())).thenReturn(expectedHours);
 
         CourtOpeningHours result =
-            courtOpeningHoursService.setOpeningHours(courtId, openingHourTypeId, hours);
+            courtOpeningHoursService.setOpeningHours(courtId, hours);
 
         assertThat(result).isEqualTo(expectedHours);
-        verify(courtOpeningHoursRepository).deleteByCourtIdAndOpeningHourTypeId(courtId, openingHourType.getId());
+        verify(courtOpeningHoursRepository).deleteByCourtIdAndId(courtId, hours.getId());
         verify(courtOpeningHoursRepository).save(any());
     }
 
@@ -315,10 +313,10 @@ class CourtOpeningHoursServiceTest {
         when(courtOpeningHoursRepository.save(any())).thenReturn(updatedHours);
 
         CourtOpeningHours result = courtOpeningHoursService
-            .setOpeningHours(courtId, openingHourType.getId(), updatedHours);
+            .setOpeningHours(courtId, updatedHours);
 
         assertThat(result).isEqualTo(updatedHours);
-        verify(courtOpeningHoursRepository).deleteByCourtIdAndOpeningHourTypeId(courtId, openingHourType.getId());
+        verify(courtOpeningHoursRepository).deleteByCourtIdAndId(courtId, updatedHours.getId());
         verify(courtOpeningHoursRepository).save(updatedHours);
     }
 
@@ -328,20 +326,19 @@ class CourtOpeningHoursServiceTest {
 
         assertThrows(NotFoundException.class, () ->
             courtOpeningHoursService
-                .setOpeningHours(courtId, openingHourType.getId(), openingHours)
+                .setOpeningHours(courtId, openingHours)
         );
     }
 
     @Test
     void setOpeningHoursThrowsExceptionWhenOpeningHourTypeDoesNotExist() {
-        UUID typeId = UUID.randomUUID();
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(openingHoursTypeService.getOpeningHourTypeById(typeId))
+        when(openingHoursTypeService.getOpeningHourTypeById(openingHours.getOpeningHourTypeId()))
             .thenThrow(new NotFoundException(OPENING_HOUR_TYPE_NOT_FOUND_MESSAGE));
 
         assertThrows(
             NotFoundException.class, () ->
-                courtOpeningHoursService.setOpeningHours(courtId, typeId, openingHours)
+                courtOpeningHoursService.setOpeningHours(courtId, openingHours)
         );
     }
 
@@ -466,16 +463,13 @@ class CourtOpeningHoursServiceTest {
 
     @Test
     void deleteCourtOpeningHoursSuccessfullyDeletesHours() {
-        UUID typeId = UUID.randomUUID();
-        OpeningHourType type = new OpeningHourType();
-        type.setId(typeId);
-
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(openingHoursTypeService.getOpeningHourTypeById(typeId)).thenReturn(type);
+        when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, openingHours.getId()))
+            .thenReturn(Optional.of(openingHours));
 
-        courtOpeningHoursService.deleteCourtOpeningHours(courtId, typeId);
+        courtOpeningHoursService.deleteCourtOpeningHours(courtId, openingHours.getId());
 
-        verify(courtOpeningHoursRepository).deleteByCourtIdAndOpeningHourTypeId(courtId, typeId);
+        verify(courtOpeningHoursRepository).deleteById(openingHours.getId());
     }
 
     @Test
@@ -485,20 +479,19 @@ class CourtOpeningHoursServiceTest {
 
         assertThrows(
             NotFoundException.class, () ->
-                courtOpeningHoursService.deleteCourtOpeningHours(courtId, typeId)
+                courtOpeningHoursService.deleteCourtOpeningHours(courtId, openingHours.getId())
         );
     }
 
     @Test
     void deleteCourtOpeningHoursThrowsExceptionWhenOpeningHourTypeDoesNotExist() {
-        UUID typeId = UUID.randomUUID();
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(openingHoursTypeService.getOpeningHourTypeById(typeId))
-            .thenThrow(new NotFoundException(OPENING_HOUR_TYPE_NOT_FOUND_MESSAGE));
+        when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, openingHours.getId()))
+            .thenReturn(Optional.empty());
 
         assertThrows(
-            NotFoundException.class, () ->
-                courtOpeningHoursService.deleteCourtOpeningHours(courtId, typeId)
+            CourtResourceNotFoundException.class, () ->
+                courtOpeningHoursService.deleteCourtOpeningHours(courtId, openingHours.getId())
         );
     }
 }
