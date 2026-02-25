@@ -407,6 +407,7 @@ public class AuthFunctionalTest {
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(typeId)
+                .id(UUID.randomUUID())
                 .openingTimesDetails(List.of(
                     new OpeningTimesDetail(
                         DayOfTheWeek.MONDAY,
@@ -430,7 +431,7 @@ public class AuthFunctionalTest {
                 .appointmentNeeded(false)
                 .build();
 
-        Response putAdmin = http.doPut("/courts/" + courtId + "/v1/opening-hours/" + typeId, hours, adminToken);
+        Response putAdmin = http.doPut("/courts/" + courtId + "/v1/opening-hours/", hours, adminToken);
         assertThat(putAdmin.statusCode()).isEqualTo(200);
         Response counterAdmin = http.doPut(
             "/courts/" + courtId + "/v1/opening-hours/counter-service",
@@ -447,9 +448,9 @@ public class AuthFunctionalTest {
             "/courts/{courtId}/v1/opening-hours [GET]"
         );
         assertViewerAllowed(
-            http.doGet("/courts/" + courtId + "/v1/opening-hours/" + typeId, adminToken),
-            http.doGet("/courts/" + courtId + "/v1/opening-hours/" + typeId, viewerToken),
-            "/courts/{courtId}/v1/opening-hours/{openingHourTypeId} [GET]"
+            http.doGet("/courts/" + courtId + "/v1/opening-hours/" + hours.getId(), adminToken),
+            http.doGet("/courts/" + courtId + "/v1/opening-hours/" + hours.getId(), viewerToken),
+            "/courts/{courtId}/v1/opening-hours/{openingHoursId} [GET]"
         );
         assertViewerAllowed(
             http.doGet("/courts/" + courtId + "/v1/opening-hours/counter-service", adminToken),
@@ -457,16 +458,16 @@ public class AuthFunctionalTest {
             "/courts/{courtId}/v1/opening-hours/counter-service [GET]"
         );
         assertViewerForbidden(
-            http.doPut("/courts/" + courtId + "/v1/opening-hours/" + typeId, hours, viewerToken),
-            "/courts/{courtId}/v1/opening-hours/{openingHourTypeId} [PUT]"
+            http.doPut("/courts/" + courtId + "/v1/opening-hours/" + hours.getId(), hours, viewerToken),
+            "/courts/{courtId}/v1/opening-hours/{openingHoursId} [PUT]"
         );
         assertViewerForbidden(
             http.doPut("/courts/" + courtId + "/v1/opening-hours/counter-service", counter, viewerToken),
             "/courts/{courtId}/v1/opening-hours/counter-service [PUT]"
         );
         assertViewerForbidden(
-            http.doDelete("/courts/" + courtId + "/v1/opening-hours/" + typeId, viewerToken),
-            "/courts/{courtId}/v1/opening-hours/{openingHourTypeId} [DELETE]"
+            http.doDelete("/courts/" + courtId + "/v1/opening-hours/" + hours.getId(), viewerToken),
+            "/courts/{courtId}/v1/opening-hours/{openingHoursId} [DELETE]"
         );
     }
 
