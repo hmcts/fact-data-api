@@ -120,7 +120,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         openingHours.setOpeningHourTypeId(openingHourTypeId);
 
         final Response putResponse = http.doPut(
-            "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId,
+            "/courts/" + courtId + "/v1/opening-hours",
             openingHours
         );
         assertThat(putResponse.statusCode()).isEqualTo(OK.value());
@@ -184,30 +184,32 @@ public final class CourtOpeningHoursControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} creates new opening hours")
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours creates new opening hours")
     void shouldCreateNewOpeningHours() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Create Opening Hours");
         final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 2);
 
         final ZonedDateTime timestampBeforeCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
-        openingHours.setId(null);
-        openingHours.setCourtId(courtId);
-        openingHours.setOpeningHourTypeId(openingHourTypeId);
-        openingHours.setOpeningTimesDetails(List.of(
-            new OpeningTimesDetail(
-                DayOfTheWeek.MONDAY,
-                LocalTime.of(8, 30),
-                LocalTime.of(18, 0)),
-            new OpeningTimesDetail(
-                DayOfTheWeek.THURSDAY,
-                LocalTime.of(8, 30),
-                LocalTime.of(18, 0))
-        ));
+        CourtOpeningHours newOpeningHours =
+            CourtOpeningHours.builder()
+                .courtId(courtId)
+                .openingHourTypeId(openingHourTypeId)
+                .openingTimesDetails(List.of(
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(8, 30),
+                        LocalTime.of(18, 0)),
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.THURSDAY,
+                        LocalTime.of(8, 30),
+                        LocalTime.of(18, 0))
+                ))
+                .build();
 
         final Response putResponse = http.doPut(
-            "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId,
-            openingHours
+            "/courts/" + courtId + "/v1/opening-hours",
+            newOpeningHours
         );
         assertThat(putResponse.statusCode()).isEqualTo(OK.value());
 
@@ -230,7 +232,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                        .allMatch(detail ->
                                      detail.getClosingTime().equals(LocalTime.of(18, 0))));
 
-        final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId);
+        final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + createdHours.getId());
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
         final CourtOpeningHours retrievedHours = mapper.readValue(
@@ -249,25 +251,28 @@ public final class CourtOpeningHoursControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} replaces existing opening hours")
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHoursId} replaces existing opening hours")
     void shouldReplaceExistingOpeningHours() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Update Opening Hours");
         final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 3);
 
-        openingHours.setCourtId(courtId);
-        openingHours.setOpeningHourTypeId(openingHourTypeId);
-        openingHours.setOpeningTimesDetails(List.of(
-            new OpeningTimesDetail(
-                DayOfTheWeek.MONDAY,
-                LocalTime.of(9, 0),
-                LocalTime.of(17, 0)),
-            new OpeningTimesDetail(
-                DayOfTheWeek.TUESDAY,
-                LocalTime.of(9, 0),
-                LocalTime.of(17, 0))
-        ));
+        CourtOpeningHours newOpeningHours =
+            CourtOpeningHours.builder()
+                .courtId(courtId)
+                .openingHourTypeId(openingHourTypeId)
+                .openingTimesDetails(List.of(
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0)),
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.TUESDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0))
+                ))
+                .build();
 
-        http.doPut("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId, openingHours);
+        http.doPut("/courts/" + courtId + "/v1/opening-hours", newOpeningHours);
 
         final List<CourtOpeningHours> updatedHoursList = List.of(
             CourtOpeningHours.builder()
@@ -287,12 +292,18 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         );
 
         final Response putResponse = http.doPut(
-            "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId,
+            "/courts/" + courtId + "/v1/opening-hours",
             updatedHoursList.getFirst()
         );
+
         assertThat(putResponse.statusCode()).isEqualTo(OK.value());
 
-        final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId);
+        final CourtOpeningHours created = mapper.readValue(
+            putResponse.asString(),
+            new TypeReference<CourtOpeningHours>() {}
+        );
+
+        final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + created.getId());
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
         final CourtOpeningHours retrievedHours = mapper.readValue(
@@ -378,26 +389,26 @@ public final class CourtOpeningHoursControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/{openingHourTypeId} removes opening hours by type")
-    void shouldDeleteOpeningHoursByType() throws Exception {
+    @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/{openingHoursId} removes opening hours by type")
+    void shouldDeleteOpeningHoursById() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Delete Opening Hours");
         final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 4);
 
         openingHours.setCourtId(courtId);
         openingHours.setOpeningHourTypeId(openingHourTypeId);
 
-        http.doPut("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId, openingHours);
+        http.doPut("/courts/" + courtId + "/v1/opening-hours", openingHours);
         final Response getBeforeDelete = http.doGet("/courts/" + courtId + "/v1/opening-hours/"
-                                                        + openingHourTypeId);
+                                                        + openingHours.getId());
         assertThat(getBeforeDelete.statusCode()).isIn(OK.value(), NO_CONTENT.value());
 
         final Response deleteResponse = http.doDelete(
-            "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId
+            "/courts/" + courtId + "/v1/opening-hours/" + openingHours.getId()
         );
         assertThat(deleteResponse.statusCode()).isIn(OK.value(), NO_CONTENT.value());
 
         final Response getAfterDelete = http.doGet("/courts/" + courtId + "/v1/opening-hours/"
-                                                       + openingHourTypeId);
+                                                       + openingHours.getId());
         assertThat(getAfterDelete.statusCode()).isEqualTo(NO_CONTENT.value());
     }
 
@@ -421,7 +432,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} fails with invalid UUID format")
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours fails with invalid UUID format")
     void shouldFailPutWithInvalidUuidFormat() throws Exception {
         final String invalidUuid = "invalid-uuid-123";
 
@@ -429,7 +440,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         openingHours.setOpeningHourTypeId(UUID.randomUUID());
 
         final Response putResponse = http.doPut(
-            "/courts/" + invalidUuid + "/v1/opening-hours/" + UUID.randomUUID(),
+            "/courts/" + invalidUuid + "/v1/opening-hours",
             openingHours
         );
         assertThat(putResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
@@ -437,7 +448,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} fails with null opening hour")
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHoursId} fails with null opening hour")
     void shouldFailPutWithNullOpeningHour() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Null Opening Hour");
         final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 6);
@@ -449,7 +460,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         ));
 
         final Response putResponse = http.doPut(
-            "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId,
+            "/courts/" + courtId + "/v1/opening-hours",
             openingHours
         );
         assertThat(putResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
@@ -487,7 +498,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         ));
 
         final Response putResponse = http.doPut(
-            "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId,
+            "/courts/" + courtId + "/v1/opening-hours",
             openingHours
         );
         assertThat(putResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
@@ -495,29 +506,38 @@ public final class CourtOpeningHoursControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} "
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours"
         + "should successfully save when only EVERYDAY provided")
     void shouldSuccessfullySaveWhenOnlyEverydayProvided() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Everyday Only");
-        final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 8);
+        final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 1);
 
-        openingHours.setId(null);
-        openingHours.setCourtId(courtId);
-        openingHours.setOpeningHourTypeId(openingHourTypeId);
-        openingHours.setOpeningTimesDetails(List.of(
-            new OpeningTimesDetail(
-                DayOfTheWeek.EVERYDAY,
-                LocalTime.of(9, 0),
-                LocalTime.of(17, 0))
-        ));
+        CourtOpeningHours everydayOpeningHours =
+            CourtOpeningHours.builder()
+            .courtId(courtId)
+            .openingHourTypeId(openingHourTypeId)
+            .openingTimesDetails(List.of(
+                new OpeningTimesDetail(
+                    DayOfTheWeek.EVERYDAY,
+                    LocalTime.of(9, 0),
+                    LocalTime.of(17, 0))
+            ))
+            .build();
 
         final Response putResponse = http.doPut(
-            "/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId,
-            openingHours
+            "/courts/" + courtId + "/v1/opening-hours",
+            everydayOpeningHours
         );
         assertThat(putResponse.statusCode()).isEqualTo(OK.value());
 
-        final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/" + openingHourTypeId);
+        final CourtOpeningHours created = mapper.readValue(
+            putResponse.asString(),
+            new TypeReference<CourtOpeningHours>() {}
+        );
+
+        final Response getResponse = http.doGet(
+            "/courts/" + courtId + "/v1/opening-hours/" + created.getId()
+        );
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
         final CourtOpeningHours retrievedHours = mapper.readValue(
