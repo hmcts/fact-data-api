@@ -144,8 +144,8 @@ public class CourtOpeningHoursService {
      */
     @Transactional
     public void deleteCourtOpeningHours(UUID courtId, UUID openingHoursId) {
-        courtOpeningHoursRepository
-            .deleteById(getOpeningHoursById(courtId, openingHoursId).getId());
+        log.info("Deleting court opening hours for court ID: {} and opening hours ID: {}", courtId, openingHoursId);
+        courtOpeningHoursRepository.deleteById(openingHoursId);
     }
 
     /**
@@ -154,9 +154,7 @@ public class CourtOpeningHoursService {
      */
     @Transactional
     public void deleteCourtCounterServiceOpeningHours(UUID courtId) {
-        courtCounterServiceOpeningHoursRepository
-            .deleteByCourtId(
-                courtService.getCourtById(courtId).getId());
+        courtCounterServiceOpeningHoursRepository.deleteByCourtId(courtService.getCourtById(courtId).getId());
     }
 
     /**
