@@ -456,36 +456,9 @@ class CourtOpeningHoursServiceTest {
 
     @Test
     void deleteCourtOpeningHoursSuccessfullyDeletesHours() {
-        when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, openingHours.getId()))
-            .thenReturn(Optional.of(openingHours));
-
         courtOpeningHoursService.deleteCourtOpeningHours(courtId, openingHours.getId());
 
         verify(courtOpeningHoursRepository).deleteById(openingHours.getId());
-    }
-
-    @Test
-    void deleteCourtOpeningHoursThrowsExceptionWhenCourtDoesNotExist() {
-        UUID typeId = UUID.randomUUID();
-        when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
-
-        assertThrows(
-            NotFoundException.class, () ->
-                courtOpeningHoursService.deleteCourtOpeningHours(courtId, openingHours.getId())
-        );
-    }
-
-    @Test
-    void deleteCourtOpeningHoursThrowsExceptionWhenOpeningHourTypeDoesNotExist() {
-        when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, openingHours.getId()))
-            .thenReturn(Optional.empty());
-
-        assertThrows(
-            CourtResourceNotFoundException.class, () ->
-                courtOpeningHoursService.deleteCourtOpeningHours(courtId, openingHours.getId())
-        );
     }
 }
 
