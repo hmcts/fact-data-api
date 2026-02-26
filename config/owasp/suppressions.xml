@@ -16,7 +16,7 @@
     <cve>CVE-2025-15104</cve>
   </suppress>
   <suppress>
-    <notes>False positive: CVE-2020-29582 does not apply to kotlin-stdlib 1.9.25 (affects < 1.4.21)</notes>
+    <notes>False positive: CVE-2020-29582 does not apply to kotlin-stdlib 1.9.25 (affects 1.4.21)</notes>
     <cve>CVE-2020-29582</cve>
   </suppress>
   <!--End of false positives section -->
