@@ -108,9 +108,6 @@ public class CourtOpeningHoursService {
             normaliseOpeningTimesDetails(courtOpeningHours.getOpeningTimesDetails())
         );
 
-        courtOpeningHoursRepository
-            .deleteByCourtIdAndId(courtId, courtOpeningHours.getId());
-
         return courtOpeningHoursRepository.save(courtOpeningHours);
     }
 
@@ -135,7 +132,8 @@ public class CourtOpeningHoursService {
                 .setCourtTypes(getValidatedCourtTypeIds(courtCounterServiceOpeningHours.getCourtTypes()));
         }
 
-        courtCounterServiceOpeningHoursRepository.deleteByCourtId(courtId);
+        courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)
+            .ifPresent(existing -> courtCounterServiceOpeningHours.setId(existing.getId()));
 
         return courtCounterServiceOpeningHoursRepository.save(courtCounterServiceOpeningHours);
     }

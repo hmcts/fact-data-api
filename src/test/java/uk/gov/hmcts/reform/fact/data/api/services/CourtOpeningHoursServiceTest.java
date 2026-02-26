@@ -240,7 +240,6 @@ class CourtOpeningHoursServiceTest {
             .setOpeningHours(courtId, openingHours);
 
         assertThat(result).isEqualTo(openingHours);
-        verify(courtOpeningHoursRepository).deleteByCourtIdAndId(courtId, openingHours.getId());
         verify(courtOpeningHoursRepository).save(openingHours);
     }
 
@@ -288,7 +287,6 @@ class CourtOpeningHoursServiceTest {
             courtOpeningHoursService.setOpeningHours(courtId, hours);
 
         assertThat(result).isEqualTo(expectedHours);
-        verify(courtOpeningHoursRepository).deleteByCourtIdAndId(courtId, hours.getId());
         verify(courtOpeningHoursRepository).save(any());
     }
 
@@ -316,7 +314,6 @@ class CourtOpeningHoursServiceTest {
             .setOpeningHours(courtId, updatedHours);
 
         assertThat(result).isEqualTo(updatedHours);
-        verify(courtOpeningHoursRepository).deleteByCourtIdAndId(courtId, updatedHours.getId());
         verify(courtOpeningHoursRepository).save(updatedHours);
     }
 
@@ -352,7 +349,6 @@ class CourtOpeningHoursServiceTest {
             courtOpeningHoursService.setCounterServiceOpeningHours(courtId, counterServiceOpeningHours);
 
         assertThat(result).isEqualTo(counterServiceOpeningHours);
-        verify(courtCounterServiceOpeningHoursRepository).deleteByCourtId(courtId);
         verify(courtCounterServiceOpeningHoursRepository).save(counterServiceOpeningHours);
     }
 
@@ -409,7 +405,6 @@ class CourtOpeningHoursServiceTest {
             courtOpeningHoursService.setCounterServiceOpeningHours(courtId, hours);
 
         assertThat(result).isEqualTo(expectedHours);
-        verify(courtCounterServiceOpeningHoursRepository).deleteByCourtId(courtId);
         verify(courtCounterServiceOpeningHoursRepository).save(any());
     }
 
@@ -424,7 +419,6 @@ class CourtOpeningHoursServiceTest {
             courtOpeningHoursService.setCounterServiceOpeningHours(courtId, updatedHours);
 
         assertThat(result).isEqualTo(updatedHours);
-        verify(courtCounterServiceOpeningHoursRepository).deleteByCourtId(courtId);
         verify(courtCounterServiceOpeningHoursRepository).save(updatedHours);
     }
 
@@ -457,7 +451,6 @@ class CourtOpeningHoursServiceTest {
 
         assertThat(result.getCourtTypes()).isEqualTo(courtTypeIds);
         verify(typesService).getAllCourtTypesByIds(courtTypeIds);
-        verify(courtCounterServiceOpeningHoursRepository).deleteByCourtId(courtId);
         verify(courtCounterServiceOpeningHoursRepository).save(counterServiceOpeningHours);
     }
 

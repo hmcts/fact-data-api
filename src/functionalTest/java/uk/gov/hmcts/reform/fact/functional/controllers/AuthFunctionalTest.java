@@ -407,7 +407,6 @@ public class AuthFunctionalTest {
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(typeId)
-                .id(UUID.randomUUID())
                 .openingTimesDetails(List.of(
                     new OpeningTimesDetail(
                         DayOfTheWeek.MONDAY,
@@ -433,6 +432,8 @@ public class AuthFunctionalTest {
 
         Response putAdmin = http.doPut("/courts/" + courtId + "/v1/opening-hours", hours, adminToken);
         assertThat(putAdmin.statusCode()).isEqualTo(200);
+        hours = putAdmin.as(CourtOpeningHours.class);
+
         Response counterAdmin = http.doPut(
             "/courts/" + courtId + "/v1/opening-hours/counter-service",
             counter,
