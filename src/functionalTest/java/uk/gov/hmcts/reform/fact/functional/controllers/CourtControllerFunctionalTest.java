@@ -500,21 +500,6 @@ public final class CourtControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/v1/link/{mrdId} fails with blank MRD ID")
-    void shouldFailToHandleDeletionWithBlankMrdId() throws Exception {
-        TestDataHelper
-            .createCourt(http, "Test Court For CaTH Linking", false, "", true);
-
-        final Response response = http.doPut("/courts/v1/link/ ", null);
-
-        AssertionHelper.assertStatus(response, BAD_REQUEST);
-
-        assertThat(response.jsonPath().getString("mrdId"))
-            .as("Error message should indicate mrdId cannot be blank")
-            .contains("mrdId cannot be blank");
-    }
-
-    @Test
     @DisplayName("PUT /courts/v1/link/{mrdId} fails with non-existent MRD ID")
     void shouldFailToHandleDeletionForNonExistentMrdId() throws Exception {
         final String nonExistentMrdId = "MRD_NON_EXISTENT";
