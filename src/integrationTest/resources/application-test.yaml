@@ -23,6 +23,9 @@ os:
   url: https://api.os.uk
   key: a-key
 
+migration:
+  source-base-url: ${FACT_MIGRATION_SOURCE_BASE_URL:http://localhost:8080}
+
 # fact-data-api internal configuration
 fact:
   data-api:
