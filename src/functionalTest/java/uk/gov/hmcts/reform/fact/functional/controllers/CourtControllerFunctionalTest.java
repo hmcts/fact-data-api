@@ -16,13 +16,16 @@ import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 @Feature("Court Controller")
 @DisplayName("Court Controller")

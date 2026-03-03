@@ -118,19 +118,19 @@ public final class TestDataHelper {
      * @param http the HTTP client
      * @param courtName the name for the test court
      * @param isOpen whether the court is open
-     * @param MrdId the MRD ID
+     * @param mrdId the MRD ID
      * @param openOnCath whether the court is open on CaTH
      * @return the created court's UUID
      */
     public static UUID createCourt(
-        final HttpClient http, final String courtName, boolean isOpen, final String MrdId, boolean openOnCath) {
+        final HttpClient http, final String courtName, boolean isOpen, final String mrdId, boolean openOnCath) {
 
         final Court court = new Court();
         court.setName(courtName);
         court.setRegionId(UUID.fromString(fetchFirstRegionId(http)));
         court.setIsServiceCentre(true);
         court.setOpen(isOpen);
-        court.setMrdId(MrdId);
+        court.setMrdId(mrdId);
         court.setOpenOnCath(openOnCath);
 
         final Response createResponse = http.doPost("/courts/v1", court);
