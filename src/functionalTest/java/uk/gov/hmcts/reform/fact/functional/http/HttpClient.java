@@ -149,9 +149,11 @@ public final class HttpClient {
     }
 
     public Response doPost(final String path, final Object body, final String bearerToken) {
-        return requestWithOptionalAuthorization(bearerToken)
-            .contentType(ContentType.JSON)
-            .body(body)
+        RequestSpecification request = requestWithOptionalAuthorization(bearerToken);
+        if (body != null) {
+            request.contentType(ContentType.JSON).body(body);
+        }
+        return request
             .when()
             .post(path)
             .thenReturn();
@@ -162,9 +164,11 @@ public final class HttpClient {
     }
 
     public Response doPut(final String path, final Object body, final String bearerToken) {
-        return requestWithOptionalAuthorization(bearerToken)
-            .contentType(ContentType.JSON)
-            .body(body)
+        RequestSpecification request = requestWithOptionalAuthorization(bearerToken);
+        if (body != null) {
+            request.contentType(ContentType.JSON).body(body);
+        }
+        return request
             .when()
             .put(path)
             .thenReturn();

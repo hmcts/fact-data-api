@@ -71,6 +71,7 @@ public class AuthFunctionalTest {
         Court court = new Court();
         court.setName(name + " " + buildAlphabeticSuffix());
         court.setRegionId(UUID.fromString(getRegionId()));
+        court.setOpen(Boolean.FALSE);
         court.setIsServiceCentre(true);
         Response createResponse = http.doPost("/courts/v1", court, adminToken);
         assertThat(createResponse.statusCode()).isEqualTo(201);
@@ -150,6 +151,7 @@ public class AuthFunctionalTest {
         UUID courtId = createCourtAsAdmin("Test Court Auth Core");
         Court updateCourt = new Court();
         updateCourt.setName("Test Court Auth Updated");
+        updateCourt.setOpen(Boolean.FALSE);
         updateCourt.setRegionId(UUID.fromString(getRegionId()));
         updateCourt.setIsServiceCentre(true);
 
