@@ -30,6 +30,8 @@ static LinkedHashMap<String, Object> secret(String secretName, String envVar) {
 }
 
 withPipeline(type, product, component) {
+  env.FACT_MIGRATION_SOURCE_BASE_URL = 'http://fact-api-aat.service.core-compute-aat.internal'
+
   enableDbMigration('fact-kv')
 
   loadVaultSecrets(secrets)
@@ -42,12 +44,12 @@ withPipeline(type, product, component) {
     builder.gradle('allureReport')
 
     publishHTML target: [
-      allowMissing: true,
+      allowMissing         : true,
       alwaysLinkToLastBuild: true,
-      keepAll: true,
-      reportDir: 'build/reports/allure-report/allureReport',
-      reportFiles: 'index.html',
-      reportName: 'Allure Functional Test Report'
+      keepAll              : true,
+      reportDir            : 'build/reports/allure-report/allureReport',
+      reportFiles          : 'index.html',
+      reportName           : 'Allure Functional Test Report'
     ]
   }
 
@@ -55,12 +57,12 @@ withPipeline(type, product, component) {
     builder.gradle('allureReport')
 
     publishHTML target: [
-      allowMissing: true,
+      allowMissing         : true,
       alwaysLinkToLastBuild: true,
-      keepAll: true,
-      reportDir: 'build/reports/allure-report/allureReport',
-      reportFiles: 'index.html',
-      reportName: 'Allure Functional Test Report'
+      keepAll              : true,
+      reportDir            : 'build/reports/allure-report/allureReport',
+      reportFiles          : 'index.html',
+      reportName           : 'Allure Functional Test Report'
     ]
   }
 
