@@ -16,15 +16,13 @@ import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.*;
 
 @Feature("Court Controller")
 @DisplayName("Court Controller")
@@ -419,6 +417,115 @@ public final class CourtControllerFunctionalTest {
         assertThat(response.jsonPath().getString("message"))
             .as("Error message should indicate court not found by slug")
             .contains("Court not found, slug: non-existent-court");
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1/link links CaTH courts to FaCT successfully")
+    void shouldLinkCaTHCourtsToFaCTSuccessfully() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court For CaTH Linking", false);
+
+        final Response response = http.doPost("/courts/v1/link", java.util.List.of("MRD12345", "MRD67890"));
+
+        AssertionHelper.assertStatus(response, OK);
+
+        assertThat(response.contentType())
+            .as("Response content type should be JSON")
+            .contains("json");
+        assertThat(response.jsonPath().getMap("$"))
+            .as("Response should contain linking results")
+            .isNotNull();
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1/link returns matched and unmatched courts")
+    void shouldReturnMatchedAndUnmatchedCourtsInLinkResponse() throws Exception {
+        final Response response = http.doPost("/courts/v1/link", java.util.List.of("MRD11111", "MRD22222"));
+
+        AssertionHelper.assertStatus(response, OK);
+
+        assertThat(response.jsonPath().getList("matchedLocations"))
+            .as("Response should contain matched courts")
+            .isNotNull();
+        assertThat(response.jsonPath().getList("unmatchedLocations"))
+            .as("Response should contain unmatched courts")
+            .isNotNull();
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1/link fails with empty MRD IDs list")
+    void shouldFailToLinkCaTHCourtsWithEmptyMrdIdsList() throws Exception {
+        final Response response = http.doPost("/courts/v1/link", java.util.List.of());
+
+        AssertionHelper.assertStatus(response, BAD_REQUEST);
+
+        assertThat(response.jsonPath().getString("mrdIds"))
+            .as("Error message should indicate mrdIds cannot be empty")
+            .contains("mrdIds cannot be empty");
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1/link fails with blank MRD ID in list")
+    void shouldFailToLinkCaTHCourtsWithBlankMrdId() throws Exception {
+        final Response response = http.doPost("/courts/v1/link", java.util.List.of("MRD12345", ""));
+
+        AssertionHelper.assertStatus(response, BAD_REQUEST);
+
+        assertThat(response.jsonPath().getString("mrdIds"))
+            .as("Error message should indicate mrdId cannot be blank")
+            .contains("mrdId cannot be blank");
+    }
+
+    @Test
+    @DisplayName("PUT /courts/v1/link/{mrdId} handles CaTH court deletion successfully")
+    void shouldHandleCaTHCourtDeletionSuccessfully() throws Exception {
+        final UUID courtId = TestDataHelper
+            .createCourt(http,
+                         "Test Court For CaTH Linking",
+                         false,
+                         "MRD12",
+                         true);
+
+        final Response response = http.doPut("/courts/v1/link/MRD12", null);
+
+        AssertionHelper.assertStatus(response, NO_CONTENT);
+
+        final Response getResponse = http.doGet("/courts/" + courtId + "/v1");
+
+        assertThat(getResponse.jsonPath().getBoolean("openOnCath"))
+            .as("The court should no longer be marked as open on CaTH")
+            .isFalse();
+    }
+
+    @Test
+    @DisplayName("PUT /courts/v1/link/{mrdId} fails with blank MRD ID")
+    void shouldFailToHandleDeletionWithBlankMrdId() throws Exception {
+        TestDataHelper
+            .createCourt(http, "Test Court For CaTH Linking", false, "", true);
+
+        final Response response = http.doPut("/courts/v1/link/ ", null);
+
+        AssertionHelper.assertStatus(response, BAD_REQUEST);
+
+        assertThat(response.jsonPath().getString("mrdId"))
+            .as("Error message should indicate mrdId cannot be blank")
+            .contains("mrdId cannot be blank");
+    }
+
+    @Test
+    @DisplayName("PUT /courts/v1/link/{mrdId} fails with non-existent MRD ID")
+    void shouldFailToHandleDeletionForNonExistentMrdId() throws Exception {
+        final String nonExistentMrdId = "MRD_NON_EXISTENT";
+
+        TestDataHelper
+            .createCourt(http, "Test Court For CaTH Linking", false, nonExistentMrdId, true);
+
+        final Response response = http.doPut("/courts/v1/link/" + nonExistentMrdId, null);
+
+        AssertionHelper.assertStatus(response, NOT_FOUND);
+
+        assertThat(response.jsonPath().getString("message"))
+            .as("Error message should indicate court not found with MRD ID")
+            .contains("Court with given MRD ID not found");
     }
 
     @AfterAll
