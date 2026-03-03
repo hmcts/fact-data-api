@@ -182,7 +182,7 @@ dependencies {
   implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter', version: '6.1.0'
   implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-openfeign', version: '4.3.1'
 
-  implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.8.15'
+  implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.8.16'
 
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.7.10'
 
