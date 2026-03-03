@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -58,6 +59,8 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
      */
     List<Court> findByNameStartingWithIgnoreCase(String namePrefix);
 
+    Optional<Court> findByMrdId(String mrdId);
+    
     /**
      * Finds courts by name prefix and open flag ordered by name.
      *
