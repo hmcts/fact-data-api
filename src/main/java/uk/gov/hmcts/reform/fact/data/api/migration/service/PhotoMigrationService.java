@@ -18,6 +18,7 @@ import uk.gov.hmcts.reform.fact.data.api.services.CourtPhotoService;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URLConnection;
@@ -108,18 +109,18 @@ public class PhotoMigrationService {
     private MultipartFile getCurrentPhoto(String photoUrl) {
         try {
             URI uri = URI.create(photoUrl.replace(" ", "%20"));
-            byte[] bytes = uri.toURL().openStream().readAllBytes();
+            try (InputStream photoStream = uri.toURL().openStream()) {
+                byte[] bytes = photoStream.readAllBytes();
+                String filename = Paths.get(uri.getPath()).getFileName().toString();
+                String contentType = URLConnection.guessContentTypeFromStream(new ByteArrayInputStream(bytes));
 
-            String filename = Paths.get(uri.getPath()).getFileName().toString();
-            String contentType = URLConnection.guessContentTypeFromStream(new ByteArrayInputStream(bytes));
-
-            return new InMemoryMultipartFile(
-                "file",
-                filename,
-                contentType != null ? contentType : "application/octet-stream",
-                bytes
-            );
-
+                return new InMemoryMultipartFile(
+                    "file",
+                    filename,
+                    contentType != null ? contentType : "application/octet-stream",
+                    bytes
+                );
+            }
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to fetch photo from URL: " + photoUrl, e);
         }
