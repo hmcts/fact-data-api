@@ -485,10 +485,10 @@ public final class CourtControllerFunctionalTest {
             .createCourt(http,
                          "Test Court For CaTH Linking",
                          false,
-                         "MRD12",
+                         "MRD1234",
                          true);
 
-        final Response response = http.doPut("/courts/v1/link/MRD12", null);
+        final Response response = http.doPut("/courts/v1/link/MRD1234", null);
 
         AssertionHelper.assertStatus(response, NO_CONTENT);
 
@@ -504,16 +504,13 @@ public final class CourtControllerFunctionalTest {
     void shouldFailToHandleDeletionForNonExistentMrdId() throws Exception {
         final String nonExistentMrdId = "MRD_NON_EXISTENT";
 
-        TestDataHelper
-            .createCourt(http, "Test Court For CaTH Linking", false, nonExistentMrdId, true);
-
         final Response response = http.doPut("/courts/v1/link/" + nonExistentMrdId, null);
 
         AssertionHelper.assertStatus(response, NOT_FOUND);
 
         assertThat(response.jsonPath().getString("message"))
             .as("Error message should indicate court not found with MRD ID")
-            .contains("Court with given MRD ID not found");
+            .contains("Court not found, MRD ID:");
     }
 
     @AfterAll
