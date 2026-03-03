@@ -461,7 +461,7 @@ public final class CourtControllerFunctionalTest {
 
         AssertionHelper.assertStatus(response, BAD_REQUEST);
 
-        assertThat(response.jsonPath().getString("mrdIds"))
+        assertThat(response.jsonPath().getString("message"))
             .as("Error message should indicate mrdIds cannot be empty")
             .contains("mrdIds cannot be empty");
     }
@@ -469,11 +469,11 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/v1/link fails with blank MRD ID in list")
     void shouldFailToLinkCaTHCourtsWithBlankMrdId() throws Exception {
-        final Response response = http.doPost("/courts/v1/link", java.util.List.of("MRD12345", ""));
+        final Response response = http.doPost("/courts/v1/link", java.util.List.of("MRD1-2345", ""));
 
         AssertionHelper.assertStatus(response, BAD_REQUEST);
 
-        assertThat(response.jsonPath().getString("mrdIds"))
+        assertThat(response.jsonPath().getString("message"))
             .as("Error message should indicate mrdId cannot be blank")
             .contains("mrdId cannot be blank");
     }
@@ -485,10 +485,10 @@ public final class CourtControllerFunctionalTest {
             .createCourt(http,
                          "Test Court For CaTH Linking",
                          false,
-                         "MRD1234",
+                         "MRD12-34",
                          true);
 
-        final Response response = http.doPut("/courts/v1/link/MRD1234", null);
+        final Response response = http.doPut("/courts/v1/link/MRD12-34", null);
 
         AssertionHelper.assertStatus(response, NO_CONTENT);
 
