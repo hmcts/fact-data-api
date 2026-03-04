@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+@SuppressWarnings("java:S4684")
 @SecuredFactRestController(
     name = "Court Opening Hours",
     description = "Operations related to opening hours for courts"
