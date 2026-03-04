@@ -21,10 +21,11 @@ import java.util.UUID;
 import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 @Feature("Court Controller")
 @DisplayName("Court Controller")
@@ -43,6 +44,7 @@ public final class CourtControllerFunctionalTest {
         court.setName("Test Court Create Valid");
         court.setRegionId(UUID.fromString(regionId));
         court.setIsServiceCentre(true);
+        court.setOpen(false);
 
         final Response createResponse = http.doPost("/courts/v1", court);
 
@@ -76,6 +78,7 @@ public final class CourtControllerFunctionalTest {
         court.setName("Test Court Invalid Region");
         court.setRegionId(UUID.randomUUID());
         court.setIsServiceCentre(true);
+        court.setOpen(false);
 
         final Response response = http.doPost("/courts/v1", court);
 
@@ -119,7 +122,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1 updates existing court and verifies changes")
     void shouldUpdateExistingCourt() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Original");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Original", false);
 
         final ZonedDateTime timestampBeforeUpdate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
@@ -127,6 +130,7 @@ public final class CourtControllerFunctionalTest {
         updatedCourt.setName("Test Court Updated");
         updatedCourt.setRegionId(UUID.fromString(regionId));
         updatedCourt.setIsServiceCentre(true);
+        updatedCourt.setOpen(false);
 
         final Response updateResponse = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
 
@@ -159,6 +163,7 @@ public final class CourtControllerFunctionalTest {
         updatedCourt.setName("Test Court Non-Existent court ID");
         updatedCourt.setRegionId(UUID.fromString(regionId));
         updatedCourt.setIsServiceCentre(true);
+        updatedCourt.setOpen(false);
 
         final Response response = http.doPut("/courts/" + nonExistentCourtId + "/v1", updatedCourt);
 
@@ -172,12 +177,13 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1 update fails with non-existent regionId")
     void shouldFailToUpdateCourtWithNonExistentRegionId() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Update Non-Existent Region ID");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Update Non-Existent Region ID", false);
 
         final Court updatedCourt = new Court();
         updatedCourt.setName("Test Court Non-Existent Region ID Updated");
         updatedCourt.setRegionId(UUID.randomUUID());
         updatedCourt.setIsServiceCentre(true);
+        updatedCourt.setOpen(false);
 
         final Response response = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
 
@@ -209,7 +215,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 with filters returns created court in list")
     void shouldReturnCreatedCourtInFilteredList() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court for List Retrieval");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court for List Retrieval", false);
 
         final Response listResponse = http.doGet("/courts/v1?pageNumber=0&pageSize=200&includeClosed=true");
 
@@ -219,7 +225,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 with includeClosed=false returns only open courts")
     void shouldReturnOnlyActiveCourts() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Open");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Open", false);
 
         final Court updatedCourt = new Court();
         updatedCourt.setName("Test Court Open");
@@ -241,7 +247,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 filtered only by valid region id")
     void shouldReturnCourtsFilteredByValidRegionId() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court for regionId filtering");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court for regionId filtering", false);
 
         final Response listResponse = http.doGet(
             "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId
@@ -253,7 +259,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 filtered by partialCourtName")
     void shouldReturnCourtsFilteredByPartialCourtName() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Birmingham");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Birmingham", false);
 
         final Response listResponse = http.doGet(
             "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&partialCourtName=Birmingham"
@@ -265,7 +271,7 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/v1 filtered by combined filters (regionId + partialCourtName + includeClosed)")
     void shouldReturnCourtsFilteredByCombinedFilters() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Manchester");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Manchester", false);
 
         final Response listResponse = http.doGet(
             "/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId
@@ -414,6 +420,97 @@ public final class CourtControllerFunctionalTest {
         assertThat(response.jsonPath().getString("message"))
             .as("Error message should indicate court not found by slug")
             .contains("Court not found, slug: non-existent-court");
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1/link links CaTH courts to FaCT successfully")
+    void shouldLinkCaTHCourtsToFaCTSuccessfully() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court For CaTH Linking", false);
+
+        final Response response = http.doPost("/courts/v1/link", java.util.List.of("MRD12345", "MRD67890"));
+
+        AssertionHelper.assertStatus(response, OK);
+
+        assertThat(response.contentType())
+            .as("Response content type should be JSON")
+            .contains("json");
+        assertThat(response.jsonPath().getMap("$"))
+            .as("Response should contain linking results")
+            .isNotNull();
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1/link returns matched and unmatched courts")
+    void shouldReturnMatchedAndUnmatchedCourtsInLinkResponse() throws Exception {
+        final Response response = http.doPost("/courts/v1/link", java.util.List.of("MRD11111", "MRD22222"));
+
+        AssertionHelper.assertStatus(response, OK);
+
+        assertThat(response.jsonPath().getList("matchedLocations"))
+            .as("Response should contain matched courts")
+            .isNotNull();
+        assertThat(response.jsonPath().getList("unmatchedLocations"))
+            .as("Response should contain unmatched courts")
+            .isNotNull();
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1/link fails with empty MRD IDs list")
+    void shouldFailToLinkCaTHCourtsWithEmptyMrdIdsList() throws Exception {
+        final Response response = http.doPost("/courts/v1/link", java.util.List.of());
+
+        AssertionHelper.assertStatus(response, BAD_REQUEST);
+
+        assertThat(response.jsonPath().getString("message"))
+            .as("Error message should indicate mrdIds cannot be empty")
+            .contains("mrdIds cannot be empty");
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1/link fails with blank MRD ID in list")
+    void shouldFailToLinkCaTHCourtsWithBlankMrdId() throws Exception {
+        final Response response = http.doPost("/courts/v1/link", java.util.List.of("MRD1-2345", ""));
+
+        AssertionHelper.assertStatus(response, BAD_REQUEST);
+
+        assertThat(response.jsonPath().getString("message"))
+            .as("Error message should indicate mrdId cannot be blank")
+            .contains("mrdId cannot be blank");
+    }
+
+    @Test
+    @DisplayName("PUT /courts/v1/link/{mrdId} handles CaTH court deletion successfully")
+    void shouldHandleCaTHCourtDeletionSuccessfully() throws Exception {
+        final UUID courtId = TestDataHelper
+            .createCourt(http,
+                         "Test Court For CaTH Linking",
+                         false,
+                         "MRD12-34",
+                         true);
+
+        final Response response = http.doPut("/courts/v1/link/MRD12-34", null);
+
+        AssertionHelper.assertStatus(response, NO_CONTENT);
+
+        final Response getResponse = http.doGet("/courts/" + courtId + "/v1");
+
+        assertThat(getResponse.jsonPath().getBoolean("openOnCath"))
+            .as("The court should no longer be marked as open on CaTH")
+            .isFalse();
+    }
+
+    @Test
+    @DisplayName("PUT /courts/v1/link/{mrdId} fails with non-existent MRD ID")
+    void shouldFailToHandleDeletionForNonExistentMrdId() throws Exception {
+        final String nonExistentMrdId = "MRD_NON_EXISTENT";
+
+        final Response response = http.doPut("/courts/v1/link/" + nonExistentMrdId, null);
+
+        AssertionHelper.assertStatus(response, NOT_FOUND);
+
+        assertThat(response.jsonPath().getString("message"))
+            .as("Error message should indicate court not found with MRD ID")
+            .contains("Court not found, MRD ID:");
     }
 
     @AfterAll

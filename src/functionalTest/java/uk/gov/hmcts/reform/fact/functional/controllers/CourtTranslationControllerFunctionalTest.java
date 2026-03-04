@@ -57,7 +57,7 @@ public final class CourtTranslationControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/translation-services with email and phone")
     void shouldCreateTranslationWithEmailAndPhone() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Full");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Full", true);
 
         final ZonedDateTime timestampBeforeCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
@@ -93,7 +93,7 @@ public final class CourtTranslationControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/translation-services updates existing translation service")
     void shouldUpdateExistingTranslation() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Update");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Update", true);
 
         final CourtTranslation initialTranslation = new CourtTranslation();
         initialTranslation.setCourtId(courtId);
@@ -158,7 +158,7 @@ public final class CourtTranslationControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/translation-services fails with invalid email format")
     void shouldFailWithInvalidEmailFormat() {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Invalid Email");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Invalid Email", true);
 
         final CourtTranslation translation = new CourtTranslation();
         translation.setCourtId(courtId);
@@ -177,7 +177,7 @@ public final class CourtTranslationControllerFunctionalTest {
     @Test
     @DisplayName("POST /courts/{courtId}/v1/translation-services fails with invalid phone")
     void shouldFailWithInvalidPhoneFormat() {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Invalid Phone");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Invalid Phone", true);
 
         final CourtTranslation translation = new CourtTranslation();
         translation.setCourtId(courtId);
@@ -216,7 +216,7 @@ public final class CourtTranslationControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1/translation-services retrieves existing service")
     void shouldRetrieveExistingTranslation() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Get");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Translation Get", true);
 
         final CourtTranslation translation = new CourtTranslation();
         translation.setCourtId(courtId);
@@ -238,7 +238,7 @@ public final class CourtTranslationControllerFunctionalTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1/translation-services returns 204 when no translation exists")
     void shouldReturn204WhenNoTranslation() {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court No Translation");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court No Translation", true);
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/translation-services");
         assertThat(getResponse.statusCode())

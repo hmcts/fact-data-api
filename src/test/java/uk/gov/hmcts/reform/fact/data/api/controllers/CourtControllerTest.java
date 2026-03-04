@@ -19,12 +19,14 @@ import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -182,6 +184,30 @@ class CourtControllerTest {
         assertThrows(IllegalArgumentException.class, () ->
             courtController.updateCourt(INVALID_UUID, court)
         );
+    }
+
+    @Test
+    void linkCaTHCourtsReturns200() {
+        List<String> mrdIds = List.of("MRD123", "UNKNOWN");
+        Map<String, Object> responseBody = Map.of(
+            "matchedLocations", List.of(Map.of("mrdId", "MRD123", "isOpen", true)),
+            "unmatchedLocations", List.of("UNKNOWN")
+        );
+
+        when(courtService.linkCathCourtsToFact(mrdIds)).thenReturn(responseBody);
+
+        ResponseEntity<Map<String, Object>> response = courtController.linkCaTHCourtsToFaCT(mrdIds);
+
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(responseBody);
+    }
+
+    @Test
+    void handleCaTHCourtDeletionReturns204() {
+        ResponseEntity<Void> response = courtController.handleCaTHCourtDeletion("MRD123");
+
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.NO_CONTENT);
+        verify(courtService).handleCathCourtDeletion("MRD123");
     }
 
     private Court createCourt() {

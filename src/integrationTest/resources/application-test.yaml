@@ -31,3 +31,7 @@ fact:
   data-api:
     audit:
       retention-days: 0
+
+clients:
+  cath:
+    url: http://localhost:4747
