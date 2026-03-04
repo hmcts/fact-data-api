@@ -132,7 +132,7 @@ public class CourtOpeningHoursService {
             normaliseOpeningTimesDetails(courtCounterServiceOpeningHours.getOpeningTimesDetails()));
 
         Optional.ofNullable(courtCounterServiceOpeningHours.getCourtTypes())
-            .map(this::getValidatedCourtTypeIds)
+            .map(this::validateCourtTypeIds)
             .ifPresent(courtCounterServiceOpeningHours::setCourtTypes);
 
         courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)
@@ -188,7 +188,7 @@ public class CourtOpeningHoursService {
      * @param courtTypeIds List of UUIDs to validate
      * @return List of validated court type UUIDs
      */
-    private List<UUID> getValidatedCourtTypeIds(List<UUID> courtTypeIds) {
+    private List<UUID> validateCourtTypeIds(List<UUID> courtTypeIds) {
         courtTypeIds.forEach(typesService::getCourtTypeById);
         return courtTypeIds;
     }
