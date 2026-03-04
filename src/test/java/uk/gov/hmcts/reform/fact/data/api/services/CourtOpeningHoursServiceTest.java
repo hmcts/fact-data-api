@@ -172,7 +172,7 @@ class CourtOpeningHoursServiceTest {
             .thenReturn(Optional.empty());
 
         assertThrows(
-            CourtResourceNotFoundException.class,
+            NotFoundException.class,
             () -> courtOpeningHoursService.getOpeningHoursById(courtId, openingHours.getId())
         );
     }
@@ -193,7 +193,7 @@ class CourtOpeningHoursServiceTest {
             .thenReturn(Optional.empty());
 
         assertThrows(
-            CourtResourceNotFoundException.class, () ->
+            NotFoundException.class, () ->
                 courtOpeningHoursService.getOpeningHoursById(courtId, openingHours.getId())
         );
     }
@@ -435,6 +435,22 @@ class CourtOpeningHoursServiceTest {
     }
 
     @Test
+    void setCounterServiceOpeningHoursThrowsExceptionWhenCourtTypeDoesNotExist() {
+        UUID courtTypeId = UUID.randomUUID();
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(typesService.getCourtTypeById(courtTypeId))
+            .thenThrow(new NotFoundException("Court type not found"));
+        CourtCounterServiceOpeningHours hours = new CourtCounterServiceOpeningHours();
+        hours.setOpeningTimesDetails(List.of());
+        hours.setCourtTypes(List.of(courtTypeId));
+
+        assertThrows(
+            NotFoundException.class, () ->
+                courtOpeningHoursService.setCounterServiceOpeningHours(courtId, hours)
+        );
+    }
+
+    @Test
     void setCounterServiceOpeningHoursValidatesCourtTypes() {
         List<UUID> courtTypeIds = List.of(UUID.randomUUID());
         counterServiceOpeningHours.setCourtTypes(courtTypeIds);
@@ -442,7 +458,7 @@ class CourtOpeningHoursServiceTest {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         CourtType courtType = new CourtType();
         courtType.setId(courtTypeIds.getFirst());
-        when(typesService.getAllCourtTypesByIds(courtTypeIds)).thenReturn(List.of(courtType));
+        when(typesService.getCourtTypeById(any())).thenReturn(courtType);
         when(courtCounterServiceOpeningHoursRepository.save(any(CourtCounterServiceOpeningHours.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -450,7 +466,7 @@ class CourtOpeningHoursServiceTest {
             = courtOpeningHoursService.setCounterServiceOpeningHours(courtId, counterServiceOpeningHours);
 
         assertThat(result.getCourtTypes()).isEqualTo(courtTypeIds);
-        verify(typesService).getAllCourtTypesByIds(courtTypeIds);
+        verify(typesService).getCourtTypeById(courtTypeIds.getFirst());
         verify(courtCounterServiceOpeningHoursRepository).save(counterServiceOpeningHours);
     }
 

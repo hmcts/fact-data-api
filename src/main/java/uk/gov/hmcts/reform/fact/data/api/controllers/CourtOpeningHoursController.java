@@ -63,7 +63,7 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved court opening hours"),
         @ApiResponse(responseCode = "204", description = "No opening hours found for the court with this ID"),
         @ApiResponse(responseCode = "400", description = "Invalid court ID or opening hours ID supplied"),
-        @ApiResponse(responseCode = "404", description = "Court not found")
+        @ApiResponse(responseCode = "404", description = "Court or opening hours not found")
     })
     public ResponseEntity<CourtOpeningHours> getOpeningHoursById(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
@@ -122,7 +122,7 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "200", description = "Successfully created/updated opening hours"),
         @ApiResponse(responseCode = "204", description = "No Content"),
         @ApiResponse(responseCode = "400", description = "Invalid court ID or request body"),
-        @ApiResponse(responseCode = "404", description = "Court not found")
+        @ApiResponse(responseCode = "404", description = "Court or court type not found")
     })
     @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtCounterServiceOpeningHours> setCounterServiceOpeningHours(

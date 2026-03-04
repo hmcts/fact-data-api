@@ -5,15 +5,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCounterServiceOpeningHoursRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtOpeningHoursRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -58,19 +59,18 @@ public class CourtOpeningHoursService {
      * Get opening hours type by court ID.
      *
      * @param courtId The court ID to find the opening hours type for.
-     * @param openingHourId The ID for the opening hours to find.
+     * @param openingHoursId The ID for the opening hours to find.
      * @return The opening hours record.
      * @throws CourtResourceNotFoundException if no opening hours record of this type exists for the court.
      */
-    public CourtOpeningHours getOpeningHoursById(UUID courtId, UUID openingHourId) {
+    public CourtOpeningHours getOpeningHoursById(UUID courtId, UUID openingHoursId) {
         return courtOpeningHoursRepository
-            .findByCourtIdAndId(
-                courtService.getCourtById(courtId).getId(),
-                openingHourId)
+            .findByCourtIdAndId(courtService.getCourtById(courtId).getId(), openingHoursId)
             .orElseThrow(
-                () -> new CourtResourceNotFoundException(
-                "No opening hour found for court ID: " + courtId + " with ID: " + openingHourId));
+                () -> new NotFoundException(
+                "No opening hour found for court ID: " + courtId + " with ID: " + openingHoursId));
     }
+
 
     /**
      * Get counter-service opening hours by court ID.
@@ -108,6 +108,10 @@ public class CourtOpeningHoursService {
             normaliseOpeningTimesDetails(courtOpeningHours.getOpeningTimesDetails())
         );
 
+        courtOpeningHoursRepository.findByCourtIdAndId(courtId, courtOpeningHours.getId()).ifPresent(
+            existing -> courtOpeningHours.setId(existing.getId())
+        );
+
         return courtOpeningHoursRepository.save(courtOpeningHours);
     }
 
@@ -127,10 +131,9 @@ public class CourtOpeningHoursService {
         courtCounterServiceOpeningHours.setOpeningTimesDetails(
             normaliseOpeningTimesDetails(courtCounterServiceOpeningHours.getOpeningTimesDetails()));
 
-        if (courtCounterServiceOpeningHours.getCourtTypes() != null) {
-            courtCounterServiceOpeningHours
-                .setCourtTypes(getValidatedCourtTypeIds(courtCounterServiceOpeningHours.getCourtTypes()));
-        }
+        Optional.ofNullable(courtCounterServiceOpeningHours.getCourtTypes())
+            .map(this::getValidatedCourtTypeIds)
+            .ifPresent(courtCounterServiceOpeningHours::setCourtTypes);
 
         courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)
             .ifPresent(existing -> courtCounterServiceOpeningHours.setId(existing.getId()));
@@ -186,9 +189,7 @@ public class CourtOpeningHoursService {
      * @return List of validated court type UUIDs
      */
     private List<UUID> getValidatedCourtTypeIds(List<UUID> courtTypeIds) {
-        return typesService.getAllCourtTypesByIds(courtTypeIds)
-            .stream()
-            .map(CourtType::getId)
-            .toList();
+        courtTypeIds.forEach(typesService::getCourtTypeById);
+        return courtTypeIds;
     }
 }

@@ -57,6 +57,8 @@ spring:
   # regardless of their null/empty state
   jackson:
     default-property-inclusion: always
+    mapper:
+      default-view-inclusion: true
   cloud:
     azure:
       profile:
