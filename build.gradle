@@ -129,6 +129,10 @@ sonarqube {
     // entities are atomic in the repo and necessarily have some duplication that
     // we need to ignore.
     property "sonar.cpd.exclusions", "**/entities/*.java"
+    // we use entities as DTOs for our controllers
+    property "sonar.issue.ignore.multicriteria", "e1"
+    property "sonar.issue.ignore.multicriteria.e1.ruleKey", "java:S4684"
+    property "sonar.issue.ignore.multicriteria.e1.resourceKey", "uk/gov/hmcts/reform/fact/data/api/controllers/*.java"
   }
 }
 
