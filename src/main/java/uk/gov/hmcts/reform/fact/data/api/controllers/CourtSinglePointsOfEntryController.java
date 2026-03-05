@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 )
 @RequestMapping("/courts/{courtId}")
 @RequiredArgsConstructor
+@SuppressWarnings("java:S4684")
 public class CourtSinglePointsOfEntryController {
 
     private final CourtSinglePointsOfEntryService courtSinglePointOfEntryService;

@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
     description = "Operations related to court local authorities"
 )
 @RequestMapping("/courts/{courtId}")
+@SuppressWarnings("java:S4684")
 public class CourtLocalAuthoritiesController {
 
     private final CourtLocalAuthoritiesService courtLocalAuthoritiesService;

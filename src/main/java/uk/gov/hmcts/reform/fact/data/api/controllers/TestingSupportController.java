@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 @RequestMapping("/testing-support")
 @ConditionalOnProperty(prefix = "testingSupport", name = "enableApi", havingValue = "true")
+@SuppressWarnings("java:S4684")
 public class TestingSupportController {
 
     private final CourtService courtService;

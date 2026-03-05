@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
     description = "Operations related to Accessibility Options available for courts"
 )
 @RequestMapping("/courts/{courtId}")
+@SuppressWarnings("java:S4684")
 public class CourtAccessibilityOptionsController {
 
     private final CourtAccessibilityOptionsService courtAccessibilityOptionsService;

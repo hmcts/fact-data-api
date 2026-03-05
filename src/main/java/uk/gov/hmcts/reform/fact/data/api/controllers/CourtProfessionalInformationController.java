@@ -25,6 +25,7 @@ import java.util.UUID;
     description = "Operations related to professional services for courts"
 )
 @RequestMapping("/courts/{courtId}")
+@SuppressWarnings("java:S4684")
 public class CourtProfessionalInformationController {
 
     private final CourtProfessionalInformationService courtProfessionalInformationService;

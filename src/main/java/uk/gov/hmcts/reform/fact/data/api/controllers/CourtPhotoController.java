@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
     description = "Operations related to photos for courts"
 )
 @RequestMapping("/courts/{courtId}")
+@SuppressWarnings("java:S4684")
 public class CourtPhotoController {
 
     private final CourtPhotoService courtPhotoService;
