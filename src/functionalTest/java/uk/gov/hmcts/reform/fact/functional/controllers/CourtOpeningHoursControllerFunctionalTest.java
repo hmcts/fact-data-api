@@ -8,7 +8,6 @@ import io.qameta.allure.Feature;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -391,27 +390,33 @@ public final class CourtOpeningHoursControllerFunctionalTest {
 
     @Test
     @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/{openingHoursId} removes opening hours by type")
-    @Disabled
     void shouldDeleteOpeningHoursById() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Delete Opening Hours");
         final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 4);
 
+        openingHours.setId(null);
         openingHours.setCourtId(courtId);
         openingHours.setOpeningHourTypeId(openingHourTypeId);
 
-        http.doPut("/courts/" + courtId + "/v1/opening-hours", openingHours);
+        final Response putResp = http.doPut("/courts/" + courtId + "/v1/opening-hours", openingHours);
+        assertThat(putResp.statusCode()).isEqualTo(OK.value());
+        final CourtOpeningHours putHours = mapper.readValue(
+            putResp.asString(),
+            CourtOpeningHours.class
+        );
+
         final Response getBeforeDelete = http.doGet("/courts/" + courtId + "/v1/opening-hours/"
-                                                        + openingHours.getId());
+                                                        + putHours.getId());
         assertThat(getBeforeDelete.statusCode()).isIn(OK.value(), NO_CONTENT.value());
 
         final Response deleteResponse = http.doDelete(
-            "/courts/" + courtId + "/v1/opening-hours/" + openingHours.getId()
+            "/courts/" + courtId + "/v1/opening-hours/" + putHours.getId()
         );
         assertThat(deleteResponse.statusCode()).isIn(OK.value(), NO_CONTENT.value());
 
         final Response getAfterDelete = http.doGet("/courts/" + courtId + "/v1/opening-hours/"
-                                                       + openingHours.getId());
-        assertThat(getAfterDelete.statusCode()).isEqualTo(NO_CONTENT.value());
+                                                       + putHours.getId());
+        assertThat(getAfterDelete.statusCode()).isEqualTo(NOT_FOUND.value());
     }
 
     @Test
