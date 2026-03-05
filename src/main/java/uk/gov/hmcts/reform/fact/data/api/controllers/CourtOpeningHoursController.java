@@ -4,7 +4,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHour
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtOpeningHoursService;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
@@ -24,6 +23,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+@SuppressWarnings("java:S4684")
 @SecuredFactRestController(
     name = "Court Opening Hours",
     description = "Operations related to opening hours for courts"
@@ -54,25 +54,25 @@ public class CourtOpeningHoursController {
         return ResponseEntity.ok(courtOpeningHoursService.getOpeningHoursByCourtId(UUID.fromString(courtId)));
     }
 
-    @GetMapping("/v1/opening-hours/{openingHourTypeId}")
+    @GetMapping("/v1/opening-hours/{openingHoursId}")
     @Operation(
-        summary = "Get court opening hours by court ID and type ID",
-        description = "Fetch opening hours of a given type for a given court."
-            + "Returns 204 if no opening hours of type exists for the court."
+        summary = "Get court opening hours by court ID and opening hours ID",
+        description = "Fetch opening hours for a given court."
+            + "Returns 204 if no opening hours exist for the court with this ID."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved court opening hours"),
-        @ApiResponse(responseCode = "204", description = "No opening hours found for the court of this type"),
-        @ApiResponse(responseCode = "400", description = "Invalid court ID or opening hour type ID supplied"),
-        @ApiResponse(responseCode = "404", description = "Court not found")
+        @ApiResponse(responseCode = "204", description = "No opening hours found for the court with this ID"),
+        @ApiResponse(responseCode = "400", description = "Invalid court ID or opening hours ID supplied"),
+        @ApiResponse(responseCode = "404", description = "Court or opening hours not found")
     })
-    public ResponseEntity<List<CourtOpeningHours>> getOpeningHoursByTypeId(
+    public ResponseEntity<CourtOpeningHours> getOpeningHoursById(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
-        @Parameter(description = "UUID of the opening hours type", required = true)
-        @ValidUUID @PathVariable String openingHourTypeId) {
+        @Parameter(description = "UUID of the opening hours", required = true)
+        @ValidUUID @PathVariable String openingHoursId) {
         return ResponseEntity.ok(
             courtOpeningHoursService
-                .getOpeningHoursByTypeId(UUID.fromString(courtId), UUID.fromString(openingHourTypeId)));
+                .getOpeningHoursById(UUID.fromString(courtId), UUID.fromString(openingHoursId)));
     }
 
     @GetMapping("/v1/opening-hours/counter-service")
@@ -87,32 +87,30 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    public ResponseEntity<List<CourtCounterServiceOpeningHours>> getCounterServiceOpeningHoursByCourtId(
+    public ResponseEntity<CourtCounterServiceOpeningHours> getCounterServiceOpeningHoursByCourtId(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
         return ResponseEntity.ok(
             courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(UUID.fromString(courtId)));
     }
 
-    @PutMapping("/v1/opening-hours/{openingHourTypeId}")
+    @PutMapping("/v1/opening-hours")
     @Operation(
-        summary = "Set opening hours of type for a court",
-        description = "Creates a opening hours of type for a court or updates the existing one."
+        summary = "Set opening hours for a court",
+        description = "Creates a opening hours for a court or updates the existing one."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully created/updated opening hours"),
         @ApiResponse(responseCode = "204", description = "No Content"),
-        @ApiResponse(responseCode = "400", description = "Invalid court ID, opening hours type ID, or request body"),
+        @ApiResponse(responseCode = "400", description = "Invalid court ID, or request body"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
     @PreAuthorize("@authService.isAdmin()")
-    public ResponseEntity<List<CourtOpeningHours>> setOpeningHours(
+    public ResponseEntity<CourtOpeningHours> setOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
-        @Parameter(description = "UUID of the opening hours type", required = true)
-        @ValidUUID @PathVariable String openingHourTypeId,
-        @UniqueOpeningDays @Valid @RequestBody List<CourtOpeningHours> courtOpeningHours) {
+        @Valid @RequestBody CourtOpeningHours courtOpeningHours) {
         return ResponseEntity.ok(
             courtOpeningHoursService.setOpeningHours(
-                UUID.fromString(courtId), UUID.fromString(openingHourTypeId), courtOpeningHours)
+                UUID.fromString(courtId), courtOpeningHours)
         );
     }
 
@@ -125,34 +123,51 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "200", description = "Successfully created/updated opening hours"),
         @ApiResponse(responseCode = "204", description = "No Content"),
         @ApiResponse(responseCode = "400", description = "Invalid court ID or request body"),
-        @ApiResponse(responseCode = "404", description = "Court not found")
+        @ApiResponse(responseCode = "404", description = "Court or court type not found")
     })
     @PreAuthorize("@authService.isAdmin()")
-    public ResponseEntity<List<CourtCounterServiceOpeningHours>> setCounterServiceOpeningHours(
+    public ResponseEntity<CourtCounterServiceOpeningHours> setCounterServiceOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
-        @UniqueOpeningDays @Valid @RequestBody List<CourtCounterServiceOpeningHours> courtCounterServiceOpeningHours) {
+        @Valid @RequestBody CourtCounterServiceOpeningHours courtCounterServiceOpeningHours) {
         return ResponseEntity.ok(
             courtOpeningHoursService.setCounterServiceOpeningHours(
                 UUID.fromString(courtId), courtCounterServiceOpeningHours)
         );
     }
 
-    @DeleteMapping("/v1/opening-hours/{openingHourTypeId}")
+    @DeleteMapping("/v1/opening-hours/{openingHoursId}")
     @Operation(
-        summary = "Delete opening hours of given type for a court",
-        description = "Deletes opening hours of given type for a court."
+        summary = "Delete opening hours for a court",
+        description = "Deletes opening hours for a court."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully deleted opening hours"),
-        @ApiResponse(responseCode = "400", description = "Invalid court ID or opening hours type ID"),
+        @ApiResponse(responseCode = "400", description = "Invalid court ID or opening hours ID"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
     @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
-        @Parameter(description = "UUID of the opening hours type", required = true)
-        @ValidUUID @PathVariable String openingHourTypeId) {
-        courtOpeningHoursService.deleteCourtOpeningHours(UUID.fromString(courtId), UUID.fromString(openingHourTypeId));
+        @Parameter(description = "UUID of the opening hours", required = true)
+        @ValidUUID @PathVariable String openingHoursId) {
+        courtOpeningHoursService.deleteCourtOpeningHours(UUID.fromString(courtId), UUID.fromString(openingHoursId));
+        return ResponseEntity.ok().body(null);
+    }
+
+    @DeleteMapping("/v1/opening-hours/counter-service")
+    @Operation(
+        summary = "Delete counter service opening hours for a court",
+        description = "Deletes counter service opening hours for a court."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully deleted counter service opening hours"),
+        @ApiResponse(responseCode = "400", description = "Invalid court ID"),
+        @ApiResponse(responseCode = "404", description = "Court not found")
+    })
+    @PreAuthorize("@authService.isAdmin()")
+    public ResponseEntity<Void> deleteCounterServiceOpeningHours(
+        @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
+        courtOpeningHoursService.deleteCourtCounterServiceOpeningHours(UUID.fromString(courtId));
         return ResponseEntity.ok().body(null);
     }
 }

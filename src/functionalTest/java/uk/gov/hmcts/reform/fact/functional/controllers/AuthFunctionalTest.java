@@ -23,6 +23,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
@@ -404,31 +405,37 @@ public class AuthFunctionalTest {
     void courtOpeningHoursAuth() {
         UUID courtId = createCourtAsAdmin("Test Court Auth OH");
         UUID typeId = TestDataHelper.getOpeningHourTypeId(http, 0);
-        List<CourtOpeningHours> hours = List.of(
+        CourtOpeningHours hours =
             CourtOpeningHours.builder()
                 .courtId(courtId)
                 .openingHourTypeId(typeId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
-                .build()
-        );
-        List<CourtCounterServiceOpeningHours> counter = List.of(
+                .openingTimesDetails(List.of(
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0)
+                    )))
+                .build();
+        CourtCounterServiceOpeningHours counter =
             CourtCounterServiceOpeningHours.builder()
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(16, 0))
+                .openingTimesDetails(List.of(
+                    new OpeningTimesDetail(
+                        DayOfTheWeek.MONDAY,
+                        LocalTime.of(9, 0),
+                        LocalTime.of(17, 0)
+                    )))
                 .counterService(true)
                 .assistWithForms(true)
                 .assistWithDocuments(true)
                 .assistWithSupport(false)
                 .appointmentNeeded(false)
-                .build()
-        );
+                .build();
 
-        Response putAdmin = http.doPut("/courts/" + courtId + "/v1/opening-hours/" + typeId, hours, adminToken);
+        Response putAdmin = http.doPut("/courts/" + courtId + "/v1/opening-hours", hours, adminToken);
         assertThat(putAdmin.statusCode()).isEqualTo(200);
+        hours = putAdmin.as(CourtOpeningHours.class);
+
         Response counterAdmin = http.doPut(
             "/courts/" + courtId + "/v1/opening-hours/counter-service",
             counter,
@@ -444,9 +451,9 @@ public class AuthFunctionalTest {
             "/courts/{courtId}/v1/opening-hours [GET]"
         );
         assertViewerAllowed(
-            http.doGet("/courts/" + courtId + "/v1/opening-hours/" + typeId, adminToken),
-            http.doGet("/courts/" + courtId + "/v1/opening-hours/" + typeId, viewerToken),
-            "/courts/{courtId}/v1/opening-hours/{openingHourTypeId} [GET]"
+            http.doGet("/courts/" + courtId + "/v1/opening-hours/" + hours.getId(), adminToken),
+            http.doGet("/courts/" + courtId + "/v1/opening-hours/" + hours.getId(), viewerToken),
+            "/courts/{courtId}/v1/opening-hours/{openingHoursId} [GET]"
         );
         assertViewerAllowed(
             http.doGet("/courts/" + courtId + "/v1/opening-hours/counter-service", adminToken),
@@ -454,16 +461,16 @@ public class AuthFunctionalTest {
             "/courts/{courtId}/v1/opening-hours/counter-service [GET]"
         );
         assertViewerForbidden(
-            http.doPut("/courts/" + courtId + "/v1/opening-hours/" + typeId, hours, viewerToken),
-            "/courts/{courtId}/v1/opening-hours/{openingHourTypeId} [PUT]"
+            http.doPut("/courts/" + courtId + "/v1/opening-hours", hours, viewerToken),
+            "/courts/{courtId}/v1/opening-hours [PUT]"
         );
         assertViewerForbidden(
             http.doPut("/courts/" + courtId + "/v1/opening-hours/counter-service", counter, viewerToken),
             "/courts/{courtId}/v1/opening-hours/counter-service [PUT]"
         );
         assertViewerForbidden(
-            http.doDelete("/courts/" + courtId + "/v1/opening-hours/" + typeId, viewerToken),
-            "/courts/{courtId}/v1/opening-hours/{openingHourTypeId} [DELETE]"
+            http.doDelete("/courts/" + courtId + "/v1/opening-hours/" + hours.getId(), viewerToken),
+            "/courts/{courtId}/v1/opening-hours/{openingHoursId} [DELETE]"
         );
     }
 

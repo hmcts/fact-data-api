@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
@@ -20,13 +22,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CourtDetailsViewService {
 
     private final TypesService typesService;
-
-    public CourtDetailsViewService(TypesService typesService) {
-        this.typesService = typesService;
-    }
 
     /**
      * Prepares the court details response for the slug endpoint.

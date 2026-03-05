@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.qameta.allure.Feature;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHour
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtOpeningHoursService;
@@ -24,7 +26,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -33,6 +34,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Feature("Court Opening Hours Controller")
+@DisplayName("Court Opening Hours Controller")
 @WebMvcTest(CourtOpeningHoursController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class CourtOpeningHoursControllerTest {
@@ -51,8 +54,9 @@ class CourtOpeningHoursControllerTest {
     private UUID openingHourTypeId;
     private Court court;
     private OpeningHourType openingHourType;
-    private List<CourtOpeningHours> openingHours;
-    private List<CourtCounterServiceOpeningHours> counterServiceOpeningHours;
+    private CourtOpeningHours openingHours;
+    private CourtCounterServiceOpeningHours counterServiceOpeningHours;
+    private List<OpeningTimesDetail> openingTimesDetails;
 
     @BeforeEach
     public void setup() {
@@ -72,51 +76,66 @@ class CourtOpeningHoursControllerTest {
             .nameCy("nameCy")
             .build();
 
-        openingHours = List.of(
-            CourtOpeningHours.builder()
-                .id(UUID.randomUUID())
-                .courtId(courtId)
-                .openingHourTypeId(openingHourTypeId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0, 0))
-                .closingHour(LocalTime.of(17, 0, 0))
-                .build(),
-            CourtOpeningHours.builder()
-                .id(UUID.randomUUID())
-                .courtId(courtId)
-                .openingHourTypeId(openingHourTypeId)
-                .dayOfWeek(DayOfTheWeek.TUESDAY)
-                .openingHour(LocalTime.of(9, 0, 0))
-                .closingHour(LocalTime.of(17, 0, 0))
-                .build()
+        openingTimesDetails = List.of(
+            new OpeningTimesDetail(
+                DayOfTheWeek.MONDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(17, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.TUESDAY,
+                LocalTime.of(10, 0),
+                LocalTime.of(17, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.WEDNESDAY,
+                LocalTime.of(9, 0),
+                LocalTime.of(16, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.THURSDAY,
+                LocalTime.of(10, 0),
+                LocalTime.of(16, 0)
+            ),
+            new OpeningTimesDetail(
+                DayOfTheWeek.FRIDAY,
+                LocalTime.of(9, 30),
+                LocalTime.of(17, 0)
+            )
         );
 
-        counterServiceOpeningHours = List.of(
+        openingHours =
+            CourtOpeningHours.builder()
+                .id(UUID.randomUUID())
+                .courtId(courtId)
+                .openingHourTypeId(openingHourTypeId)
+                .openingTimesDetails(openingTimesDetails)
+                .build();
+
+        counterServiceOpeningHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0, 0))
-                .closingHour(LocalTime.of(17, 0, 0))
+                .openingTimesDetails(openingTimesDetails)
                 .appointmentContact("Test Contact")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
                 .assistWithSupport(true)
                 .appointmentNeeded(false)
-                .build()
-        );
+                .build();
     }
 
     @Test
     @DisplayName("GET /courts/{courtId}/v1/opening-hours returns opening hours successfully")
     void getOpeningHoursReturnsSuccessfully() throws Exception {
-        when(courtOpeningHoursService.getOpeningHoursByCourtId(courtId)).thenReturn(openingHours);
+        when(courtOpeningHoursService.getOpeningHoursByCourtId(courtId)).thenReturn(List.of(openingHours));
 
         mockMvc.perform(get("/courts/{courtId}/v1/opening-hours", courtId))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
-            .andExpect(jsonPath("$[0].openingHour").value("09:00:00"));
+            .andExpect(jsonPath("$[0].openingTimesDetails[0].dayOfWeek")
+                           .value(DayOfTheWeek.MONDAY.toString()))
+            .andExpect(jsonPath("$[0].openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
     @Test
@@ -147,57 +166,58 @@ class CourtOpeningHoursControllerTest {
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/opening-hours/{openingHourTypeId} returns opening hours successfully")
-    void getOpeningHoursByTypeIdReturnsSuccessfully() throws Exception {
-        when(courtOpeningHoursService.getOpeningHoursByTypeId(courtId, openingHourType.getId()))
+    @DisplayName("GET /courts/{courtId}/v1/opening-hours/{openingHoursId} returns opening hours successfully")
+    void getOpeningHoursByIdReturnsSuccessfully() throws Exception {
+        when(courtOpeningHoursService.getOpeningHoursById(courtId, openingHours.getId()))
                  .thenReturn(openingHours);
 
         mockMvc
             .perform(
                 get(
-                    "/courts/{courtId}/v1/opening-hours/{openingHourTypeId}",
+                    "/courts/{courtId}/v1/opening-hours/{openingHoursId}",
                     courtId,
-                    openingHourType.getId()))
+                    openingHours.getId()))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
-            .andExpect(jsonPath("$[0].openingHour").value("09:00:00"));
+            .andExpect(jsonPath("$.openingTimesDetails[0].dayOfWeek")
+                           .value(DayOfTheWeek.MONDAY.toString()))
+            .andExpect(jsonPath("$.openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/opening-hours/{openingHourTypeId} returns 404 if court does not exist")
-    void getOpeningHoursByTypeIdCourtNonExistentReturnsNotFound() throws Exception {
-        when(courtOpeningHoursService.getOpeningHoursByTypeId(nonExistentCourtId, openingHourTypeId))
+    @DisplayName("GET /courts/{courtId}/v1/opening-hours/{openingHoursId} returns 404 if court does not exist")
+    void getOpeningHoursByIdCourtNonExistentReturnsNotFound() throws Exception {
+        when(courtOpeningHoursService.getOpeningHoursById(nonExistentCourtId, openingHours.getId()))
             .thenThrow(new NotFoundException("Court not found"));
 
         mockMvc.perform(get(
-            "/courts/{courtId}/v1/opening-hours/{openingHourTypeId}",
-            nonExistentCourtId, openingHourTypeId))
+            "/courts/{courtId}/v1/opening-hours/{openingHoursId}",
+            nonExistentCourtId, openingHours.getId()))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/opening-hours/{openingHourTypeId}"
+    @DisplayName("GET /courts/{courtId}/v1/opening-hours/{openingHoursId}"
         + " returns 204 if opening hours does not exist")
-    void getOpeningHoursByTypeIdNonExistentCourtReturnsNoContent() throws Exception {
-        when(courtOpeningHoursService.getOpeningHoursByTypeId(courtId, openingHourTypeId))
+    void getOpeningHoursByIdNonExistentCourtReturnsNoContent() throws Exception {
+        when(courtOpeningHoursService.getOpeningHoursById(courtId, openingHours.getId()))
             .thenThrow(new CourtResourceNotFoundException("Opening hours not found"));
 
         mockMvc
             .perform(
                 get(
-                    "/courts/{courtId}/v1/opening-hours/{openingHourTypeId}",
-                    courtId, openingHourTypeId))
+                    "/courts/{courtId}/v1/opening-hours/{openingHoursId}",
+                    courtId, openingHours.getId()))
             .andExpect(status().isNoContent());
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/opening-hours/{openingHourTypeId} returns 400 for invalid UUID")
-    void getOpeningHoursByTypeIdInvalidUUID() throws Exception {
+    @DisplayName("GET /courts/{courtId}/v1/opening-hours/{openingHoursId} returns 400 for invalid UUID")
+    void getOpeningHoursByIdInvalidUUID() throws Exception {
         mockMvc
             .perform(
                 get(
-                    "/courts/{courtId}/v1/opening-hours/{openingHourTypeId}",
-                    "invalid-uuid", openingHourTypeId))
+                    "/courts/{courtId}/v1/opening-hours/{openingHoursId}",
+                    "invalid-uuid", openingHours.getId()))
             .andExpect(status().isBadRequest());
     }
 
@@ -209,9 +229,10 @@ class CourtOpeningHoursControllerTest {
 
         mockMvc.perform(get("/courts/{courtId}/v1/opening-hours/counter-service", courtId))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].dayOfWeek")
-                           .value(counterServiceOpeningHours.getFirst().getDayOfWeek().toString()))
-            .andExpect(jsonPath("$[0].openingHour")
+            .andExpect(jsonPath("$.openingTimesDetails[0].dayOfWeek")
+                           .value(counterServiceOpeningHours
+                                      .getOpeningTimesDetails().getFirst().getDayOfWeek().toString()))
+            .andExpect(jsonPath("$.openingTimesDetails[0].openingTime")
                            .value("09:00:00"));
     }
 
@@ -238,50 +259,51 @@ class CourtOpeningHoursControllerTest {
     @Test
     @DisplayName("GET /courts/{courtId}/v1/opening-hours/counter-service returns 400 for invalid UUID")
     void getCounterServiceOpeningHoursInvalidUUID() throws Exception {
-        mockMvc.perform(get("/courts/{courtId}/v1/opening-hours/counter-service", "invalid-uuid"))
+        mockMvc.perform(
+            get("/courts/{courtId}/v1/opening-hours/counter-service", "invalid-uuid"))
             .andExpect(status().isBadRequest());
     }
 
-
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} creates opening hours successfully")
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours creates opening hours successfully")
     void setOpeningHoursCreatesSuccessfully() throws Exception {
-        when(courtOpeningHoursService.setOpeningHours(any(UUID.class), any(UUID.class), anyList()))
+        when(courtOpeningHoursService.setOpeningHours(any(UUID.class), any()))
             .thenReturn(openingHours);
 
         mockMvc
             .perform(
-                put("/courts/{courtId}/v1/opening-hours/{openingHourTypeId}", courtId, openingHourTypeId)
+                put("/courts/{courtId}/v1/opening-hours", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(openingHours)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
-            .andExpect(jsonPath("$[0].openingHour").value("09:00:00"));
+            .andExpect(
+                jsonPath("$.openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
+            .andExpect(jsonPath("$.openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} returns 404 if court does not exist")
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours returns 404 if court does not exist")
     void setOpeningHoursNonExistentCourtReturnsNotFound() throws Exception {
-        when(courtOpeningHoursService.setOpeningHours(any(UUID.class), any(UUID.class), anyList()))
+        when(courtOpeningHoursService.setOpeningHours(any(UUID.class), any()))
             .thenThrow(new NotFoundException("Court not found"));
 
         mockMvc
             .perform(
                 put(
-                    "/courts/{courtId}/v1/opening-hours/{openingHourTypeId}",
-                    nonExistentCourtId, openingHourTypeId)
+                    "/courts/{courtId}/v1/opening-hours",
+                    nonExistentCourtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(openingHours)))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} returns 400 for invalid UUID")
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours returns 400 for invalid UUID")
     void setOpeningHoursInvalidUUID() throws Exception {
         mockMvc
             .perform(
                 put(
-                    "/courts/{courtId}/v1/opening-hours/{openingHourTypeId}",
+                    "/courts/{courtId}/v1/opening-hours",
                     "invalid-uuid", openingHourTypeId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(openingHours)))
@@ -289,63 +311,78 @@ class CourtOpeningHoursControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} returns 400 for null day of week")
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours returns 400 for null day of week")
     void setOpeningHoursNullDayOfWeekReturnsBadRequest() throws Exception {
         List<CourtOpeningHours> invalidOpeningHours = List.of(
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(null)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
+                .openingHourTypeId(openingHourTypeId)
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(null)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
                 .build()
         );
 
         mockMvc
             .perform(
-                put("/courts/{courtId}/v1/opening-hours/{openingHourTypeId}", courtId, openingHourTypeId)
+                put("/courts/{courtId}/v1/opening-hours", courtId, openingHourTypeId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalidOpeningHours)))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} returns 400 for null opening hour")
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours returns 400 for null opening hour")
     void setOpeningHoursNullOpeningHourReturnsBadRequest() throws Exception {
         List<CourtOpeningHours> invalidOpeningHours = List.of(
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(null)
-                .closingHour(LocalTime.of(17, 0))
+                .openingHourTypeId(openingHourTypeId)
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(null)
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
                 .build()
         );
 
         mockMvc
             .perform(
-                put("/courts/{courtId}/v1/opening-hours/{openingHourTypeId}", courtId, openingHourTypeId)
+                put("/courts/{courtId}/v1/opening-hours", courtId, openingHours.getId())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalidOpeningHours)))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/{openingHourTypeId} returns 400 for null closing hour")
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours returns 400 for null closing hour")
     void setOpeningHourNullClosingHourReturnsBadRequest() throws Exception {
         List<CourtOpeningHours> invalidOpeningHours = List.of(
             CourtOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(null)
+                .openingHourTypeId(openingHourTypeId)
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(null)
+                        .build()
+                ))
                 .build()
         );
 
         mockMvc
             .perform(
-                put("/courts/{courtId}/v1/opening-hours/{openingHourTypeId}", courtId, openingHourTypeId)
+                put("/courts/{courtId}/v1/opening-hours", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(invalidOpeningHours)))
             .andExpect(status().isBadRequest());
@@ -361,8 +398,8 @@ class CourtOpeningHoursControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(counterServiceOpeningHours)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
-            .andExpect(jsonPath("$[0].openingHour").value("09:00:00"));
+            .andExpect(jsonPath("$.openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
+            .andExpect(jsonPath("$.openingTimesDetails[0].openingTime").value("09:00:00"));
     }
 
     @Test
@@ -389,15 +426,18 @@ class CourtOpeningHoursControllerTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1/opening-hours/counter-service returns 400 for null day of week")
     void setCounterServiceOpeningHoursNullDayOfWeekReturnsBadRequest() throws Exception {
-        List<CourtCounterServiceOpeningHours> invalidOpeningHours = List.of(
+        CourtCounterServiceOpeningHours invalidOpeningHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(null)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(LocalTime.of(17, 0))
-                .build()
-        );
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(null)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
+                .build();
 
         mockMvc.perform(put("/courts/{courtId}/v1/opening-hours/counter-service", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -408,15 +448,18 @@ class CourtOpeningHoursControllerTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1/opening-hours/counter-service returns 400 for null opening hour")
     void setCounterServiceOpeningHoursNullOpeningHourReturnsBadRequest() throws Exception {
-        List<CourtCounterServiceOpeningHours> invalidOpeningHours = List.of(
+        CourtCounterServiceOpeningHours invalidOpeningHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(null)
-                .closingHour(LocalTime.of(17, 0))
-                .build()
-        );
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(null)
+                        .closingTime(LocalTime.of(17, 0))
+                        .build()
+                ))
+                .build();
 
         mockMvc.perform(put("/courts/{courtId}/v1/opening-hours/counter-service", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -427,15 +470,18 @@ class CourtOpeningHoursControllerTest {
     @Test
     @DisplayName("PUT /courts/{courtId}/v1/opening-hours/counter-service returns 400 for null closing hour")
     void setCounterServiceOpeningHoursNullClosingHourReturnsBadRequest() throws Exception {
-        List<CourtCounterServiceOpeningHours> invalidOpeningHours = List.of(
+        CourtCounterServiceOpeningHours invalidOpeningHours =
             CourtCounterServiceOpeningHours.builder()
                 .id(UUID.randomUUID())
                 .courtId(courtId)
-                .dayOfWeek(DayOfTheWeek.MONDAY)
-                .openingHour(LocalTime.of(9, 0))
-                .closingHour(null)
-                .build()
-        );
+                .openingTimesDetails(List.of(
+                    OpeningTimesDetail.builder()
+                        .dayOfWeek(DayOfTheWeek.MONDAY)
+                        .openingTime(LocalTime.of(9, 0))
+                        .closingTime(null)
+                        .build()
+                ))
+                .build();
 
         mockMvc.perform(put("/courts/{courtId}/v1/opening-hours/counter-service", courtId)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -444,37 +490,70 @@ class CourtOpeningHoursControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/{openingHourTypeId} deletes opening hours successfully")
+    @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/{openingHoursId} deletes opening hours successfully")
     void deleteOpeningHoursDeletesSuccessfully() throws Exception {
         mockMvc.perform(delete(
                 "/courts/{courtId}/v1/opening-hours/{openingHourTypeId}",
-                courtId, openingHourTypeId
+                courtId, openingHours.getId()
             ))
             .andExpect(status().isOk());
     }
 
     @Test
-    @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/{openingHourTypeId} returns 404 if court does not exist")
+    @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/{openingHoursId} returns 404 if court does not exist")
     void deleteOpeningHoursNonExistentCourtReturnsNotFound() throws Exception {
         doThrow(new NotFoundException("Court not found"))
             .when(courtOpeningHoursService)
-            .deleteCourtOpeningHours(nonExistentCourtId, openingHourTypeId);
+            .deleteCourtOpeningHours(nonExistentCourtId, openingHours.getId());
 
         mockMvc.perform(delete(
-                "/courts/{courtId}/v1/opening-hours/{openingHourTypeId}",
-                nonExistentCourtId, openingHourTypeId
+                "/courts/{courtId}/v1/opening-hours/{openingHoursId}",
+                nonExistentCourtId, openingHours.getId()
             ))
             .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/{openingHourTypeId} returns 400 for invalid UUID")
+    @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/{openingHoursId} returns 400 for invalid UUID")
     void deleteOpeningHoursInvalidUUID() throws Exception {
         mockMvc.perform(delete(
-                "/courts/{courtId}/v1/opening-hours/{openingHourTypeId}",
-                "invalid-uuid", openingHourTypeId
+                "/courts/{courtId}/v1/opening-hours/{openingHoursId}",
+                "invalid-uuid", openingHours.getId()
             ))
             .andExpect(status().isBadRequest());
     }
 
+    @Test
+    @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/counter-service deletes opening hours successfully")
+    void deleteCounterServiceOpeningHoursDeletesSuccessfully() throws Exception {
+        mockMvc.perform(delete(
+                "/courts/{courtId}/v1/opening-hours/counter-service",
+                courtId
+            ))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/counter-service returns 404 if court does not exist")
+    void deleteCounterServiceOpeningHoursNonExistentCourtReturnsNotFound() throws Exception {
+        doThrow(new NotFoundException("Court not found"))
+            .when(courtOpeningHoursService)
+            .deleteCourtCounterServiceOpeningHours(nonExistentCourtId);
+
+        mockMvc.perform(delete(
+                "/courts/{courtId}/v1/opening-hours/counter-service",
+                nonExistentCourtId
+            ))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/counter-service returns 400 for invalid UUID")
+    void deleteCounterServiceOpeningHoursInvalidUUID() throws Exception {
+        mockMvc.perform(delete(
+                "/courts/{courtId}/v1/opening-hours/counter-service",
+                "invalid-uuid"
+            ))
+            .andExpect(status().isBadRequest());
+    }
 }

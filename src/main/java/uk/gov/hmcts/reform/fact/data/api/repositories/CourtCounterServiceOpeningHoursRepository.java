@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.fact.data.api.repositories;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,7 +12,7 @@ import org.springframework.stereotype.Repository;
 public interface CourtCounterServiceOpeningHoursRepository
     extends JpaRepository<CourtCounterServiceOpeningHours, UUID> {
 
-    Optional<List<CourtCounterServiceOpeningHours>> findByCourtId(UUID courtId);
+    Optional<CourtCounterServiceOpeningHours> findByCourtId(UUID courtId);
 
     void deleteByCourtId(UUID courtId);
 }

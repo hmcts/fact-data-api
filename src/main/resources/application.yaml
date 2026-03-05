@@ -57,6 +57,8 @@ spring:
   # regardless of their null/empty state
   jackson:
     default-property-inclusion: always
+    mapper:
+      default-view-inclusion: true
   cloud:
     azure:
       profile:
@@ -99,7 +101,7 @@ os:
     postcode-search: /search/places/v1/postcode
 
 migration:
-  source-base-url: ${FACT_MIGRATION_SOURCE_BASE_URL}
+  source-base-url: ${FACT_MIGRATION_SOURCE_BASE_URL:}
 
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}

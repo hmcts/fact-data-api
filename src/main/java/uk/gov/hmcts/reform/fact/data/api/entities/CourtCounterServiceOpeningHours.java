@@ -1,16 +1,16 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
-import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
+import io.hypersistence.utils.hibernate.type.array.ListArrayType;
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,6 +18,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -26,11 +27,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
+import org.hibernate.type.SqlTypes;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
-import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidTimeOrder;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
 
 @Data
@@ -40,7 +43,6 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @Entity
 @EntityListeners(AuditableCourtEntityListener.class)
 @ValidConditional(selected = "appointmentNeeded", selectedValueForRequired = "true", required = "appointmentContact")
-@ValidTimeOrder(start = "openingHour", end = "closingHour")
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_counter_service_opening_hours")
 public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
@@ -62,6 +64,11 @@ public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "court_id", insertable = false, updatable = false)
     private Court court;
+
+    @Schema(description = "List of associated Court Type IDs")
+    @Type(ListArrayType.class)
+    @Column(columnDefinition = "uuid[]")
+    private List<UUID> courtTypes;
 
     @Schema(description = "Counter service availability status")
     @NotNull
@@ -91,17 +98,10 @@ public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
     )
     private String appointmentContact;
 
-    @Schema(description = "Day of the week")
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    private DayOfTheWeek dayOfWeek;
-
-    @Schema(description = "Opening hour")
-    @NotNull
-    private LocalTime openingHour;
-
-    @Schema(description = "Closing hour")
-    @NotNull
-    private LocalTime closingHour;
-
+    @Valid
+    @Type(JsonBinaryType.class)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "opening_times_details", columnDefinition = "jsonb")
+    @UniqueOpeningDays
+    private List<OpeningTimesDetail> openingTimesDetails;
 }

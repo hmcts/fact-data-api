@@ -7,6 +7,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
@@ -68,6 +69,17 @@ public class TypesService {
      */
     public List<CourtType> getCourtTypes() {
         return courtTypeRepository.findAll();
+    }
+
+    /**
+     * Get a single court type by its ID.
+     * @param courtTypeId The ID of the court type.
+     * @return The court type.
+     */
+    public CourtType getCourtTypeById(UUID courtTypeId) {
+        return courtTypeRepository.findById(courtTypeId).orElseThrow(
+            () -> new NotFoundException("Court type with ID " + courtTypeId + " not found")
+        );
     }
 
     /**
