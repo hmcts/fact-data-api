@@ -235,7 +235,7 @@ class CourtOpeningHoursServiceTest {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(openingHoursTypeService.getOpeningHourTypeById(openingHourType.getId())).thenReturn(openingHourType);
         when(courtOpeningHoursRepository.save(any())).thenReturn(openingHours);
-
+        openingHours.setId(null);
         CourtOpeningHours result = courtOpeningHoursService
             .setOpeningHours(courtId, openingHours);
 
@@ -248,7 +248,6 @@ class CourtOpeningHoursServiceTest {
 
         CourtOpeningHours hours =
             CourtOpeningHours.builder()
-                .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingHourTypeId(openingHourTypeId)
                 .openingTimesDetails(List.of(
@@ -294,7 +293,6 @@ class CourtOpeningHoursServiceTest {
     void setOpeningHoursSuccessfullyUpdatesExistingOpeningHours() {
         CourtOpeningHours updatedHours =
             CourtOpeningHours.builder()
-                .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingHourTypeId(openingHourType.getId())
                 .openingTimesDetails(List.of(
@@ -332,7 +330,7 @@ class CourtOpeningHoursServiceTest {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(openingHoursTypeService.getOpeningHourTypeById(openingHours.getOpeningHourTypeId()))
             .thenThrow(new NotFoundException(OPENING_HOUR_TYPE_NOT_FOUND_MESSAGE));
-
+        openingHours.setId(null);
         assertThrows(
             NotFoundException.class, () ->
                 courtOpeningHoursService.setOpeningHours(courtId, openingHours)
@@ -344,7 +342,7 @@ class CourtOpeningHoursServiceTest {
 
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(courtCounterServiceOpeningHoursRepository.save(any())).thenReturn(counterServiceOpeningHours);
-
+        counterServiceOpeningHours.setId(null);
         CourtCounterServiceOpeningHours result =
             courtOpeningHoursService.setCounterServiceOpeningHours(courtId, counterServiceOpeningHours);
 
@@ -357,7 +355,6 @@ class CourtOpeningHoursServiceTest {
 
         CourtCounterServiceOpeningHours hours =
             CourtCounterServiceOpeningHours.builder()
-                .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingTimesDetails(List.of(
                     OpeningTimesDetail.builder()
@@ -454,6 +451,7 @@ class CourtOpeningHoursServiceTest {
     void setCounterServiceOpeningHoursValidatesCourtTypes() {
         List<UUID> courtTypeIds = List.of(UUID.randomUUID());
         counterServiceOpeningHours.setCourtTypes(courtTypeIds);
+        counterServiceOpeningHours.setId(null);
 
         when(courtService.getCourtById(courtId)).thenReturn(court);
         CourtType courtType = new CourtType();

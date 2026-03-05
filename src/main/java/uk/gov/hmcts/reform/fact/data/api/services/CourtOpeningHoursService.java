@@ -95,14 +95,18 @@ public class CourtOpeningHoursService {
      * @return The created or updated opening hour entity.
      */
     @Transactional
-    public CourtOpeningHours setOpeningHours(
-        UUID courtId, CourtOpeningHours courtOpeningHours) {
+    public CourtOpeningHours setOpeningHours(UUID courtId, CourtOpeningHours courtOpeningHours) {
+
+        if (courtOpeningHours != null && courtOpeningHours.getId() != null) {
+            getOpeningHoursById(courtId, courtOpeningHours.getId());
+        }
 
         courtOpeningHours.setCourt(courtService.getCourtById(courtId));
         courtOpeningHours.setCourtId(courtId);
 
         courtOpeningHours.setOpeningHourType(
-            openingHoursTypeService.getOpeningHourTypeById(courtOpeningHours.getOpeningHourTypeId()));
+            openingHoursTypeService.getOpeningHourTypeById(courtOpeningHours.getOpeningHourTypeId())
+        );
 
         courtOpeningHours.setOpeningTimesDetails(
             normaliseOpeningTimesDetails(courtOpeningHours.getOpeningTimesDetails())
@@ -124,6 +128,14 @@ public class CourtOpeningHoursService {
     @Transactional
     public CourtCounterServiceOpeningHours setCounterServiceOpeningHours(
         UUID courtId, CourtCounterServiceOpeningHours courtCounterServiceOpeningHours) {
+
+        if (courtCounterServiceOpeningHours != null && courtCounterServiceOpeningHours.getId() != null) {
+            courtCounterServiceOpeningHoursRepository
+                .findById(courtCounterServiceOpeningHours.getId()).orElseThrow(
+                    () -> new NotFoundException(
+                        "No counter service opening hours found with ID: " + courtCounterServiceOpeningHours.getId()
+                    ));
+        }
 
         courtCounterServiceOpeningHours.setCourt(courtService.getCourtById(courtId));
         courtCounterServiceOpeningHours.setCourtId(courtId);
