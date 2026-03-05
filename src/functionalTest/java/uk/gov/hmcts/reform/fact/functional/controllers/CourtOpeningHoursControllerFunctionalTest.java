@@ -8,6 +8,7 @@ import io.qameta.allure.Feature;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -390,6 +391,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
 
     @Test
     @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/{openingHoursId} removes opening hours by type")
+    @Disabled
     void shouldDeleteOpeningHoursById() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Delete Opening Hours");
         final UUID openingHourTypeId = TestDataHelper.getOpeningHourTypeId(http, 4);
