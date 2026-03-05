@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
     description = "Operations related to Users"
 )
 @RequestMapping("/user")
+@SuppressWarnings("java:S4684")
 public class UserController {
 
     private final UserService userService;

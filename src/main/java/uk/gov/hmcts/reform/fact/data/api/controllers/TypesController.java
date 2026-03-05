@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
     description = "Operations related to types required for the functionality of both the admin portal and frontend"
 )
 @RequestMapping("/types")
+@SuppressWarnings("java:S4684")
 public class TypesController {
 
     private final TypesService typesService;

@@ -46,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 )
 @RequestMapping("/courts")
 @RequiredArgsConstructor
+@SuppressWarnings("java:S4684")
 public class CourtController {
 
     /**

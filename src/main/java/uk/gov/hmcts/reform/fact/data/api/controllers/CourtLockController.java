@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
     description = "Operations related to court lock services"
 )
 @RequestMapping("/courts/{courtId}")
+@SuppressWarnings("java:S4684")
 public class CourtLockController {
 
     private final CourtLockService courtLockService;
