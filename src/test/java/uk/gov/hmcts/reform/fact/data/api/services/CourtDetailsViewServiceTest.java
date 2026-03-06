@@ -10,6 +10,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtContactDetails;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
@@ -193,5 +194,32 @@ class CourtDetailsViewServiceTest {
         assertThat(courtAreasOfLaw.getAreasOfLawDetails().get(0).getName()).isNull();
         assertThat(courtAreasOfLaw.getAreasOfLawDetails().get(1).getId()).isEqualTo(areaId2);
         assertThat(courtAreasOfLaw.getAreasOfLawDetails().get(1).getName()).isEqualTo("Divorce");
+    }
+
+    @Test
+    void prepareDetailsViewPopulatesCounterServiceCourtTypesAndStubsMissing() {
+        UUID courtTypeId1 = UUID.randomUUID();
+        UUID courtTypeId2 = UUID.randomUUID();
+
+        CourtCounterServiceOpeningHours counterServiceOpeningHours = new CourtCounterServiceOpeningHours();
+        counterServiceOpeningHours.setCourtTypes(List.of(courtTypeId1, courtTypeId2));
+
+        CourtType courtType = new CourtType();
+        courtType.setId(courtTypeId1);
+        courtType.setName("Crown Court");
+
+        when(typesService.getAllCourtTypesByIds(List.of(courtTypeId1, courtTypeId2)))
+            .thenReturn(List.of(courtType));
+
+        CourtDetails courtDetails = new CourtDetails();
+        courtDetails.setCourtCounterServiceOpeningHours(List.of(counterServiceOpeningHours));
+
+        courtDetailsViewService.prepareDetailsView(courtDetails);
+
+        assertThat(counterServiceOpeningHours.getCourtTypeDetails()).hasSize(2);
+        assertThat(counterServiceOpeningHours.getCourtTypeDetails().get(0).getId()).isEqualTo(courtTypeId1);
+        assertThat(counterServiceOpeningHours.getCourtTypeDetails().get(0).getName()).isEqualTo("Crown Court");
+        assertThat(counterServiceOpeningHours.getCourtTypeDetails().get(1).getId()).isEqualTo(courtTypeId2);
+        assertThat(counterServiceOpeningHours.getCourtTypeDetails().get(1).getName()).isNull();
     }
 }

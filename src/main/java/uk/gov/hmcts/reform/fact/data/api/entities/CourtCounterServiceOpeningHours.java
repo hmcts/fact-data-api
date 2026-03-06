@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
@@ -18,6 +19,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -69,6 +71,21 @@ public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
     @Type(ListArrayType.class)
     @Column(columnDefinition = "uuid[]")
     private List<UUID> courtTypes;
+
+    @Transient
+    @JsonIgnore
+    private List<CourtType> courtTypeDetails;
+
+    @JsonView(CourtDetailsView.class)
+    @JsonProperty("courtTypes")
+    public List<?> getCourtTypesForView() {
+        return courtTypeDetails != null ? courtTypeDetails : courtTypes;
+    }
+
+    @JsonIgnore
+    public List<UUID> getCourtTypes() {
+        return courtTypes;
+    }
 
     @Schema(description = "Counter service availability status")
     @NotNull

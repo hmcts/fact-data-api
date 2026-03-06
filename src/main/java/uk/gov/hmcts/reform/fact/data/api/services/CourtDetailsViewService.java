@@ -8,6 +8,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtContactDetails;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
@@ -46,6 +47,7 @@ public class CourtDetailsViewService {
         enrichOpeningHourTypes(courtDetails.getCourtOpeningHours());
         enrichContactDescriptions(courtDetails.getCourtContactDetails());
         enrichAddressTypes(courtDetails.getCourtAddresses());
+        enrichCounterServiceCourtTypes(courtDetails.getCourtCounterServiceOpeningHours());
         enrichCourtAreasOfLaw(courtDetails.getCourtAreasOfLaw());
         return courtDetails;
     }
@@ -165,6 +167,35 @@ public class CourtDetailsViewService {
                     .toList()
             );
         });
+    }
+
+    /**
+     * Counter service opening hours store UUID arrays for court types; this expands those IDs into
+     * objects for the details response while preserving order and list length.
+     *
+     * @param counterServiceOpeningHours the counter service opening hours rows to expand
+     */
+    private void enrichCounterServiceCourtTypes(List<CourtCounterServiceOpeningHours> counterServiceOpeningHours) {
+        if (counterServiceOpeningHours == null || counterServiceOpeningHours.isEmpty()) {
+            return;
+        }
+
+        List<UUID> courtTypeIds = counterServiceOpeningHours.stream()
+            .flatMap(openingHours -> safeList(openingHours.getCourtTypes()).stream())
+            .distinct()
+            .toList();
+
+        Map<UUID, CourtType> courtTypesById = courtTypeIds.isEmpty()
+            ? Collections.emptyMap()
+            : typesService.getAllCourtTypesByIds(courtTypeIds).stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(CourtType::getId, Function.identity()));
+
+        counterServiceOpeningHours.forEach(openingHours -> openingHours.setCourtTypeDetails(
+            safeList(openingHours.getCourtTypes()).stream()
+                .map(id -> courtTypesById.getOrDefault(id, createCourtTypeStub(id)))
+                .toList()
+        ));
     }
 
     /**
