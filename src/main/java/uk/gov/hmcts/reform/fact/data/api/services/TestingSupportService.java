@@ -17,7 +17,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtSinglePointsOfEntry;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
@@ -25,34 +24,26 @@ import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.InMemoryMultipartFile;
+import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAccessibilityOptionsRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtContactDetailsRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCounterServiceOpeningHoursRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFacilitiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtOpeningHoursRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceRepository;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -99,7 +90,7 @@ public class TestingSupportService {
     // static data caches - we load these once and then reuse for all generated courts
 
     private static final List<UUID> REGION_IDS = new ArrayList<>();
-    private static final List<UUID> AREAS_OF_LAW_IDS = new ArrayList<>();
+    private static final List<AreaOfLawType> AREAS_OF_LAW = new ArrayList<>();
     private static final List<CourtType> COURT_TYPES = new ArrayList<>();
     private static final List<UUID> CONTACT_DESCRIPTION_IDS = new ArrayList<>();
     private static final List<UUID> LOCAL_AUTHORITY_TYPE_IDS = new ArrayList<>();
@@ -169,21 +160,20 @@ public class TestingSupportService {
 
     // Court Details repo is used for initial insertion and final retrieval
     private final CourtService courtService;
-    private final CourtAccessibilityOptionsRepository courtAccessibilityOptionsRepository;
-    private final CourtAddressRepository courtAddressRepository;
-    private final CourtAreasOfLawRepository courtAreasOfLawRepository;
-    private final CourtCodesRepository courtCodesRepository;
-    private final CourtContactDetailsRepository courtContactDetailsRepository;
-    private final CourtCounterServiceOpeningHoursRepository courtCounterServiceOpeningHoursRepository;
+    private final CourtAccessibilityOptionsService courtAccessibilityOptionsService;
+    private final CourtAddressService courtAddressService;
+    private final CourtAreasOfLawService courtAreasOfLawService;
+    private final CourtContactDetailsService courtContactDetailsService;
+    private final CourtOpeningHoursService courtOpeningHoursService;
+    private final CourtFacilitiesService courtFacilitiesService;
+    private final CourtSinglePointsOfEntryService courtSinglePointsOfEntryService;
+    private final CourtTranslationService courtTranslationService;
     private final CourtDxCodeRepository courtDxCodeRepository;
-    private final CourtFacilitiesRepository courtFacilitiesRepository;
+    private final CourtCodesRepository courtCodesRepository;
     private final CourtFaxRepository courtFaxRepository;
     private final CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
-    private final CourtOpeningHoursRepository courtOpeningHoursRepository;
     private final CourtProfessionalInformationRepository courtProfessionalInformationRepository;
     private final CourtServiceAreasRepository courtServiceAreasRepository;
-    private final CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
-    private final CourtTranslationRepository courtTranslationRepository;
     // for photos, we try the service first, then fall back to the repository if required
     private final CourtPhotoService courtPhotoService;
     private final CourtPhotoRepository courtPhotoRepository;
@@ -197,7 +187,6 @@ public class TestingSupportService {
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private final OpeningHoursTypeRepository openingHoursTypeRepository;
     private final RegionRepository regionRepository;
-    private final ServiceRepository serviceRepository;
     private final ServiceAreaRepository serviceAreaRepository;
 
     /**
@@ -216,7 +205,7 @@ public class TestingSupportService {
 
         Court court = createCourt(courtName, serviceCentre, random);
         UUID courtId = court.getId();
-        List<UUID> areasOfLaw = setAreasOfLaw(courtId, random);
+        List<AreaOfLawType> areasOfLaw = setAreasOfLaw(courtId, random);
         List<CourtType> courtTypes = COURT_TYPES.stream().filter(l -> random.nextBoolean()).toList();
         if (courtTypes.isEmpty()) {
             courtTypes = List.of(COURT_TYPES.get(random.nextInt(COURT_TYPES.size())));
@@ -257,49 +246,27 @@ public class TestingSupportService {
 
     @Synchronized
     private void initialiseCaches() {
+        // using region ids as the gate here
         if (REGION_IDS.isEmpty()) {
             REGION_IDS.addAll(regionRepository.findAll().stream().map(Region::getId).toList());
-            if (REGION_IDS.isEmpty()) {
-                throw new IllegalStateException("No regions were found");
-            }
-        }
-        if (AREAS_OF_LAW_IDS.isEmpty()) {
-            AREAS_OF_LAW_IDS.addAll(areaOfLawTypeRepository.findAll().stream().map(AreaOfLawType::getId).toList());
-        }
-        if (COURT_TYPES.isEmpty()) {
+            AREAS_OF_LAW.addAll(areaOfLawTypeRepository.findAll().stream().toList());
             COURT_TYPES.addAll(courtTypeRepository.findAll());
-            if (COURT_TYPES.isEmpty()) {
-                throw new IllegalStateException("No court types were found");
-            }
-        }
-        if (CONTACT_DESCRIPTION_IDS.isEmpty()) {
             CONTACT_DESCRIPTION_IDS.addAll(contactDescriptionTypeRepository.findAll().stream().map(
                 ContactDescriptionType::getId).toList()
             );
-            if (CONTACT_DESCRIPTION_IDS.isEmpty()) {
-                throw new IllegalStateException("No contact description types were found");
-            }
-        }
-        if (LOCAL_AUTHORITY_TYPE_IDS.isEmpty()) {
             LOCAL_AUTHORITY_TYPE_IDS.addAll(localAuthorityTypeRepository.findAll().stream().map(
                 LocalAuthorityType::getId).toList()
             );
-            if (LOCAL_AUTHORITY_TYPE_IDS.isEmpty()) {
-                throw new IllegalStateException("No local authority types were found");
-            }
-        }
-        if (OPENING_HOUR_TYPE_IDS.isEmpty()) {
             OPENING_HOUR_TYPE_IDS.addAll(openingHoursTypeRepository.findAll().stream().map(
                 OpeningHourType::getId).toList()
             );
-            if (OPENING_HOUR_TYPE_IDS.isEmpty()) {
-                throw new IllegalStateException("No opening hour types were found");
-            }
-        }
-        if (SERVICE_AREA_IDS.isEmpty()) {
             SERVICE_AREA_IDS.addAll(serviceAreaRepository.findAll().stream().map(ServiceArea::getId).toList());
-            if (SERVICE_AREA_IDS.isEmpty()) {
-                throw new IllegalStateException("No service areas were found");
+
+            if (REGION_IDS.isEmpty() || AREAS_OF_LAW.isEmpty() || COURT_TYPES.isEmpty()
+                || CONTACT_DESCRIPTION_IDS.isEmpty() || LOCAL_AUTHORITY_TYPE_IDS.isEmpty()
+                || OPENING_HOUR_TYPE_IDS.isEmpty() || SERVICE_AREA_IDS.isEmpty()) {
+                throw new IllegalStateException("Unable to initialize testing support service caches "
+                                                    + "- one or more required reference data tables are empty");
             }
         }
     }
@@ -330,48 +297,49 @@ public class TestingSupportService {
             courtAccessibilityOptions.setLiftDoorLimit(3000 + random.nextInt(5000));
         }
 
-
-        courtAccessibilityOptionsRepository.save(courtAccessibilityOptions);
+        courtAccessibilityOptionsService.setAccessibilityOptions(courtId, courtAccessibilityOptions);
     }
 
-    private void setAddresses(final UUID courtId, List<UUID> areasOfLaw, final Random random) {
+    private void setAddresses(final UUID courtId, List<AreaOfLawType> areasOfLaw, final Random random) {
 
         if (random.nextBoolean()) {
             // do a pair visit us and write to us addresses
             CourtAddress visitUsAddress = rndAddress(courtId, AddressType.VISIT_US, areasOfLaw, random);
-            courtAddressRepository.save(visitUsAddress);
+            courtAddressService.createAddress(courtId, visitUsAddress);
             CourtAddress writeToUsAddress = rndAddress(courtId, AddressType.WRITE_TO_US, areasOfLaw, random);
-            courtAddressRepository.save(writeToUsAddress);
+            courtAddressService.createAddress(courtId, writeToUsAddress);
         } else {
             // do a single main address
             CourtAddress mainAddress = rndAddress(courtId, AddressType.VISIT_OR_CONTACT_US, areasOfLaw, random);
-            courtAddressRepository.save(mainAddress);
+            courtAddressService.createAddress(courtId, mainAddress);
         }
 
         if (random.nextBoolean()) {
             // bonus address!
             AddressType addressType = AddressType.values()[random.nextInt(AddressType.values().length)];
-            List<UUID> aol = areasOfLaw.stream().filter(l -> random.nextBoolean()).toList();
+            List<AreaOfLawType> aol = areasOfLaw.stream().filter(l -> random.nextBoolean()).toList();
             CourtAddress bonusAddress = rndAddress(courtId, addressType, aol, random);
-            courtAddressRepository.save(bonusAddress);
+            courtAddressService.createAddress(courtId, bonusAddress);
         }
     }
 
-    private List<UUID> setAreasOfLaw(final UUID courtId, final Random random) {
-        final List<UUID> areasOfLaw = new ArrayList<>(AREAS_OF_LAW_IDS.stream()
-                                                          .filter(l -> random.nextInt(100) < 30)
-                                                          .toList());
+    private List<AreaOfLawType> setAreasOfLaw(final UUID courtId, final Random random) {
+        final List<AreaOfLawType> areasOfLaw = new ArrayList<>(
+            AREAS_OF_LAW.stream()
+                .filter(l -> random.nextInt(100) < 30)
+                .toList()
+        );
 
         if (areasOfLaw.isEmpty()) {
-            areasOfLaw.add(AREAS_OF_LAW_IDS.get(random.nextInt(AREAS_OF_LAW_IDS.size())));
+            areasOfLaw.add(AREAS_OF_LAW.get(random.nextInt(AREAS_OF_LAW.size())));
         }
 
         CourtAreasOfLaw courtAreasOfLaw = CourtAreasOfLaw.builder()
             .courtId(courtId)
-            .areasOfLaw(areasOfLaw)
+            .areasOfLaw(areasOfLaw.stream().map(AreaOfLawType::getId).toList())
             .build();
 
-        courtAreasOfLawRepository.save(courtAreasOfLaw);
+        courtAreasOfLawService.setCourtAreasOfLaw(courtId, courtAreasOfLaw);
 
         return areasOfLaw;
     }
@@ -418,7 +386,7 @@ public class TestingSupportService {
             .phoneNumber(rndPhoneNumber(random))
             .email(rndEmail(random))
             .build();
-        courtContactDetailsRepository.save(courtContactDetails);
+        courtContactDetailsService.createContactDetail(courtId, courtContactDetails);
     }
 
     private void setCounterServiceOpeningHours(final UUID courtId, List<CourtType> courtTypes, final Random random) {
@@ -443,7 +411,7 @@ public class TestingSupportService {
 
         setOpeningTimesDetails(random, openingHours::setOpeningTimesDetails);
 
-        courtCounterServiceOpeningHoursRepository.save(openingHours);
+        courtOpeningHoursService.setCounterServiceOpeningHours(courtId, openingHours);
     }
 
     private void setDxCodes(final UUID courtId, List<CourtType> courtTypes, final Random random) {
@@ -472,7 +440,7 @@ public class TestingSupportService {
             .waitingArea(random.nextBoolean())
             .build();
 
-        courtFacilitiesRepository.save(facilities);
+        courtFacilitiesService.setFacilities(courtId, facilities);
     }
 
     private void setFaxNumbers(final UUID courtId, final Random random) {
@@ -488,7 +456,7 @@ public class TestingSupportService {
         }
     }
 
-    private void setLocalAuthorities(final UUID courtId, List<UUID> areasOfLaw, final Random random) {
+    private void setLocalAuthorities(final UUID courtId, List<AreaOfLawType> areasOfLaw, final Random random) {
         int count = areasOfLaw.size() > 1 ? random.nextInt(1, areasOfLaw.size()) : 1;
         for (int i = 0; i < count; i++) {
             long laCount = random.nextInt(1, 5);
@@ -499,7 +467,7 @@ public class TestingSupportService {
                 CourtLocalAuthorities.builder()
                     .courtId(courtId)
                     .localAuthorityIds(laIds)
-                    .areaOfLawId(areasOfLaw.get(i))
+                    .areaOfLawId(areasOfLaw.get(i).getId())
                     .build()
             );
         }
@@ -518,7 +486,7 @@ public class TestingSupportService {
 
             setOpeningTimesDetails(random, openingHours::setOpeningTimesDetails);
 
-            courtOpeningHoursRepository.save(openingHours);
+            courtOpeningHoursService.setOpeningHours(courtId, openingHours);
         }
     }
 
@@ -581,20 +549,32 @@ public class TestingSupportService {
         courtServiceAreasRepository.save(serviceAreas);
     }
 
-    private void setSinglePointsOfEntry(final UUID courtId, final List<UUID> areasOfLaw, final Random random) {
+    private void setSinglePointsOfEntry(final UUID courtId, final List<AreaOfLawType> areasOfLaw, final Random random) {
         if (random.nextBoolean()) {
-
-            List<UUID> aolForSPoE = areasOfLaw.stream().filter(a -> random.nextBoolean()).toList();
+            List<String> allowedAols = Arrays.stream(AllowedLocalAuthorityAreasOfLaw.values())
+                .map(AllowedLocalAuthorityAreasOfLaw::getDisplayName).toList();
+            List<AreaOfLawType> aolForSPoE = areasOfLaw.stream()
+                .filter(aol -> allowedAols.contains(aol.getName()))
+                .filter(a -> random.nextBoolean())
+                .toList();
+            // if we didn't get any from the random selection, just pick one but still make sure it's an allowed value
             if (aolForSPoE.isEmpty()) {
-                aolForSPoE = List.of(areasOfLaw.get(random.nextInt(areasOfLaw.size())));
+                aolForSPoE = areasOfLaw.stream()
+                    .filter(aol -> allowedAols.contains(aol.getName()))
+                    .limit(1)
+                    .toList();
+            }
+            // if we still don't have any (e.g. because the court doesn't have any areas of
+            // law that are allowed for SPoE), then skip setting SPoE
+            if (aolForSPoE.isEmpty()) {
+                return;
             }
 
-            CourtSinglePointsOfEntry singlePointsOfEntry = CourtSinglePointsOfEntry.builder()
-                .courtId(courtId)
-                .areasOfLaw(aolForSPoE)
-                .build();
-
-            courtSinglePointsOfEntryRepository.save(singlePointsOfEntry);
+            List<AreaOfLawSelectionDto> dtos = aolForSPoE.stream()
+                .map(AreaOfLawSelectionDto::from)
+                .toList();
+            dtos.forEach(dto -> dto.setSelected(true));
+            courtSinglePointsOfEntryService.updateCourtSinglePointsOfEntry(courtId, dtos);
         }
     }
 
@@ -606,7 +586,7 @@ public class TestingSupportService {
                 .phoneNumber(rndPhoneNumber(random))
                 .build();
 
-            courtTranslationRepository.save(translation);
+            courtTranslationService.setTranslation(courtId, translation);
         }
     }
 
@@ -659,7 +639,7 @@ public class TestingSupportService {
     private static CourtAddress rndAddress(
         final UUID courtId,
         final AddressType addressType,
-        final List<UUID> areasOfLaw,
+        final List<AreaOfLawType> areasOfLaw,
         final Random random) {
         String city = LOCATION_MAP.keySet().stream().toList().get(random.nextInt(LOCATION_MAP.size()));
         List<UUID> courtTypes = COURT_TYPES.stream().filter(l -> random.nextBoolean()).map(CourtType::getId).toList();
@@ -674,7 +654,7 @@ public class TestingSupportService {
             .county(LOCATION_MAP.get(city))
             .postcode(POST_CODES.get(random.nextInt(POST_CODES.size())))
             .addressType(addressType)
-            .areasOfLaw(areasOfLaw)
+            .areasOfLaw(areasOfLaw.stream().map(AreaOfLawType::getId).toList())
             .courtTypes(courtTypes)
             .epimId(rndAlphaNumeric(random.nextInt(5, 10), random))
             .lat(BigDecimal.valueOf(random.nextDouble()))
