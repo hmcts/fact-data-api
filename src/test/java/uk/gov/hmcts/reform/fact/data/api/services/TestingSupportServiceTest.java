@@ -360,32 +360,32 @@ class TestingSupportServiceTest {
             .save(courtServiceAreasArgumentCaptor.getValue());
 
         // optional or multiple calls
-        courtAddressArgumentCaptor.getAllValues().forEach(v -> {
-            verify(courtAddressService, times(2)).createAddress(courtId, v);
-        });
-        courtOpeningHoursArgumentCaptor.getAllValues().forEach(v -> {
-            verify(courtOpeningHoursService, times(2)).setOpeningHours(courtId, v);
-        });
-        courtLocalAuthoritiesArgumentCaptor.getAllValues().forEach(v -> {
-            verify(courtLocalAuthoritiesRepository, times(2)).save(v);
-        });
-        courtTranslationArgumentCaptor.getAllValues().forEach(v -> {
-            verify(courtTranslationService, times(2)).setTranslation(courtId, v);
-        });
-        courtPhotoArgumentCaptor.getAllValues().forEach(v -> {
-            verify(courtPhotoRepository, times(2)).save(v);
-        });
-        aolSelectionDtoArgumentCaptor.getAllValues().forEach(v -> {
-            verify(courtSinglePointsOfEntryService, times(2)).updateCourtSinglePointsOfEntry(courtId, v);
-        });
-        courtCodesArgumentCaptor.getAllValues().forEach(v -> {
-            verify(courtCodesRepository, times(2)).save(v);
-        });
-        courtDxCodeArgumentCaptor.getAllValues().forEach(v -> {
-            verify(courtDxCodeRepository, times(2)).save(v);
-        });
-        courtFaxArgumentCaptor.getAllValues().forEach(v -> {
-            verify(courtFaxRepository, times(2)).save(v);
-        });
+        courtAddressArgumentCaptor.getAllValues().forEach(v ->
+            verify(courtAddressService, times(2)).createAddress(courtId, v)
+        );
+        courtOpeningHoursArgumentCaptor.getAllValues().forEach(v ->
+            verify(courtOpeningHoursService, times(2)).setOpeningHours(courtId, v)
+        );
+        courtLocalAuthoritiesArgumentCaptor.getAllValues().forEach(v ->
+            verify(courtLocalAuthoritiesRepository, times(2)).save(v)
+        );
+        courtTranslationArgumentCaptor.getAllValues().forEach(v ->
+            verify(courtTranslationService, times(2)).setTranslation(courtId, v)
+        );
+        courtPhotoArgumentCaptor.getAllValues().forEach(v ->
+            verify(courtPhotoRepository, times(2)).save(v)
+        );
+        aolSelectionDtoArgumentCaptor.getAllValues().forEach(v ->
+            verify(courtSinglePointsOfEntryService, times(2)).updateCourtSinglePointsOfEntry(courtId, v)
+        );
+        courtCodesArgumentCaptor.getAllValues().forEach(v ->
+            verify(courtCodesRepository, times(2)).save(v)
+        );
+        courtDxCodeArgumentCaptor.getAllValues().forEach(v ->
+            verify(courtDxCodeRepository, times(2)).save(v)
+        );
+        courtFaxArgumentCaptor.getAllValues().forEach(v ->
+            verify(courtFaxRepository, times(2)).save(v)
+        );
     }
 }
