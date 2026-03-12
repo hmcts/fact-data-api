@@ -23,6 +23,9 @@ public class SpringSecurityConfiguration {
     private final AuthService authService;
 
     @Bean
+    // Allowing S4502 here the test endpoints are only enabled in non-prod builds and enabling CSRF for them
+    // prevents them being used by automated tests, which is their primary purpose.
+    @SuppressWarnings("java:S4502")
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         return http.with(AadResourceServerHttpSecurityConfigurer.aadResourceServer(), Customizer.withDefaults())
             // ensure that there is at least a bearer token
