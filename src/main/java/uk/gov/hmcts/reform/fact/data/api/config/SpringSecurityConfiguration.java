@@ -33,8 +33,13 @@ public class SpringSecurityConfiguration {
                 .requestMatchers("/swagger-ui/*", "/v3/api-docs", "/v3/api-docs/*").permitAll()
                 // health endpoints are required by
                 .requestMatchers("/health/*", "/health").permitAll()
+                // testing endpoints are only available on non-prod builds
+                .requestMatchers("/testing-support/**").permitAll()
                 // everything else needs to have a valid Azure JWT
                 .anyRequest().authenticated())
+            .csrf(csrf -> csrf
+                // disable CSRF for the testing support endpoints (only enabled in non-prod builds)
+                .ignoringRequestMatchers("/testing-support/**"))
             .build();
     }
 }
