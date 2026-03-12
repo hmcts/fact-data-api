@@ -198,6 +198,7 @@ public class TestingSupportService {
      * @param serviceCentre whether the court should be marked as a service centre (true/false)
      * @return the slug of the created court entry
      **/
+    @SuppressWarnings("java:S2245") // not used for security purposes, only for generating test data
     public String createCourt(@NonNull String courtName, Long seed, boolean serviceCentre) {
         initialiseCaches();
 
