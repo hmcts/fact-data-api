@@ -649,7 +649,7 @@ public class AuthFunctionalTest {
     @DisplayName("Testing support endpoints don't require auth")
     void testingSupportEndpointAuth() {
         String endpoint = "/testing-support/courts?courtName=Auth Test Cleanup";
-        Response noToken = http.doPost(endpoint, adminToken);
+        Response noToken = http.doGet(endpoint);
         assertOpen(noToken, endpoint);
         endpoint = "/testing-support/courts/name-prefix/Auth Test Cleanup";
         noToken = http.doDelete(endpoint, "");
