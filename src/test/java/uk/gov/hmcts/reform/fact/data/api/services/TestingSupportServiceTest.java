@@ -12,22 +12,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import uk.gov.hmcts.reform.fact.data.api.dto.CourtProfessionalInformationDetailsDto;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOptions;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtCodes;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtDxCode;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtFax;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
@@ -37,14 +33,10 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
+import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
@@ -88,15 +80,9 @@ class TestingSupportServiceTest {
     @Mock
     private CourtTranslationService courtTranslationService;
     @Mock
-    private CourtDxCodeRepository courtDxCodeRepository;
+    private CourtProfessionalInformationService courtProfessionalInformationService;
     @Mock
-    private CourtCodesRepository courtCodesRepository;
-    @Mock
-    private CourtFaxRepository courtFaxRepository;
-    @Mock
-    private CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
-    @Mock
-    private CourtProfessionalInformationRepository courtProfessionalInformationRepository;
+    private CourtLocalAuthoritiesService courtLocalAuthoritiesService;
     @Mock
     private CourtServiceAreasRepository courtServiceAreasRepository;
     @Mock
@@ -233,22 +219,20 @@ class TestingSupportServiceTest {
         verify(courtContactDetailsService, times(1)).createContactDetail(any(), any());
         verify(courtOpeningHoursService, times(1)).setCounterServiceOpeningHours(any(), any());
         verify(courtFacilitiesService, times(1)).setFacilities(any(), any());
-        verify(courtProfessionalInformationRepository, times(1)).save(any());
+        verify(courtProfessionalInformationService, times(1)).setProfessionalInformation(any(), any());
         verify(courtServiceAreasRepository, times(1)).save(any());
         verify(courtPhotoService, times(1)).setCourtPhoto(any(), any());
 
         // things that are called at least once
         verify(courtOpeningHoursService, atLeast(1)).setOpeningHours(any(), any());
         verify(courtAddressService, atLeast(1)).createAddress(any(), any());
-        verify(courtLocalAuthoritiesRepository, atLeast(1)).save(any());
 
-        // things that are optional, but only called once if they are called
+        // things that are optional, but have a ceiling
+
+        verify(courtLocalAuthoritiesService, atMost(1)).setCourtLocalAuthorities(any(), any());
         verify(courtTranslationService, atMost(1)).setTranslation(any(), any());
         verify(courtPhotoRepository, atMost(1)).save(any());
         verify(courtSinglePointsOfEntryService, atMost(1)).updateCourtSinglePointsOfEntry(any(), any());
-        verify(courtCodesRepository, atMost(1)).save(any());
-        verify(courtDxCodeRepository, atMost(1)).save(any());
-        verify(courtFaxRepository, atMost(2)).save(any());
     }
 
     @Test
@@ -259,6 +243,8 @@ class TestingSupportServiceTest {
 
     @Captor
     private ArgumentCaptor<List<AreaOfLawSelectionDto>> aolSelectionDtoArgumentCaptor;
+    @Captor
+    private ArgumentCaptor<List<CourtLocalAuthorityDto>> courtLocalAuthorityDtoArgumentCaptor;
 
     @RepeatedTest(20)
     @SuppressWarnings("java:S5961")
@@ -299,10 +285,10 @@ class TestingSupportServiceTest {
             ArgumentCaptor.forClass(CourtFacilities.class);
         verify(courtFacilitiesService, times(1))
             .setFacilities(eq(courtId), courtFacilitiesArgumentCaptor.capture());
-        ArgumentCaptor<CourtProfessionalInformation> courtProfessionalInformationArgumentCaptor =
-            ArgumentCaptor.forClass(CourtProfessionalInformation.class);
-        verify(courtProfessionalInformationRepository, times(1))
-            .save(courtProfessionalInformationArgumentCaptor.capture());
+        ArgumentCaptor<CourtProfessionalInformationDetailsDto> courtProfessionalInformationArgumentCaptor =
+            ArgumentCaptor.forClass(CourtProfessionalInformationDetailsDto.class);
+        verify(courtProfessionalInformationService, times(1))
+            .setProfessionalInformation(eq(courtId), courtProfessionalInformationArgumentCaptor.capture());
         ArgumentCaptor<CourtServiceAreas> courtServiceAreasArgumentCaptor =
             ArgumentCaptor.forClass(CourtServiceAreas.class);
         verify(courtServiceAreasRepository, times(1))
@@ -317,12 +303,10 @@ class TestingSupportServiceTest {
             ArgumentCaptor.forClass(CourtOpeningHours.class);
         verify(courtOpeningHoursService, atLeast(1))
             .setOpeningHours(eq(courtId), courtOpeningHoursArgumentCaptor.capture());
-        ArgumentCaptor<CourtLocalAuthorities> courtLocalAuthoritiesArgumentCaptor =
-            ArgumentCaptor.forClass(CourtLocalAuthorities.class);
-        verify(courtLocalAuthoritiesRepository, atLeast(1))
-            .save(courtLocalAuthoritiesArgumentCaptor.capture());
 
         // things that are optional, but only called once if they are called
+        verify(courtLocalAuthoritiesService, atMost(1))
+            .setCourtLocalAuthorities(eq(courtId), courtLocalAuthorityDtoArgumentCaptor.capture());
         ArgumentCaptor<CourtTranslation> courtTranslationArgumentCaptor =
             ArgumentCaptor.forClass(CourtTranslation.class);
         verify(courtTranslationService, atMost(1))
@@ -331,12 +315,6 @@ class TestingSupportServiceTest {
         verify(courtPhotoRepository, atMost(1)).save(courtPhotoArgumentCaptor.capture());
         verify(courtSinglePointsOfEntryService, atMost(1))
             .updateCourtSinglePointsOfEntry(eq(courtId), aolSelectionDtoArgumentCaptor.capture());
-        ArgumentCaptor<CourtCodes> courtCodesArgumentCaptor = ArgumentCaptor.forClass(CourtCodes.class);
-        verify(courtCodesRepository, atMost(1)).save(courtCodesArgumentCaptor.capture());
-        ArgumentCaptor<CourtDxCode> courtDxCodeArgumentCaptor = ArgumentCaptor.forClass(CourtDxCode.class);
-        verify(courtDxCodeRepository, atMost(1)).save(courtDxCodeArgumentCaptor.capture());
-        ArgumentCaptor<CourtFax> courtFaxArgumentCaptor = ArgumentCaptor.forClass(CourtFax.class);
-        verify(courtFaxRepository, atMost(2)).save(courtFaxArgumentCaptor.capture());
 
         // second call with same seed should generate same results
         testingSupportService.createCourt(courtName, seed, false);
@@ -354,8 +332,8 @@ class TestingSupportServiceTest {
             .setCounterServiceOpeningHours(courtId, courtCounterServiceOpeningHoursArgumentCaptor.getValue());
         verify(courtFacilitiesService, times(2))
             .setFacilities(courtId, courtFacilitiesArgumentCaptor.getValue());
-        verify(courtProfessionalInformationRepository, times(2))
-            .save(courtProfessionalInformationArgumentCaptor.getValue());
+        verify(courtProfessionalInformationService, times(2))
+            .setProfessionalInformation(courtId, courtProfessionalInformationArgumentCaptor.getValue());
         verify(courtServiceAreasRepository, times(2))
             .save(courtServiceAreasArgumentCaptor.getValue());
 
@@ -366,8 +344,8 @@ class TestingSupportServiceTest {
         courtOpeningHoursArgumentCaptor.getAllValues().forEach(v ->
             verify(courtOpeningHoursService, times(2)).setOpeningHours(courtId, v)
         );
-        courtLocalAuthoritiesArgumentCaptor.getAllValues().forEach(v ->
-            verify(courtLocalAuthoritiesRepository, times(2)).save(v)
+        courtLocalAuthorityDtoArgumentCaptor.getAllValues().forEach(v ->
+            verify(courtLocalAuthoritiesService, times(2)).setCourtLocalAuthorities(courtId, v)
         );
         courtTranslationArgumentCaptor.getAllValues().forEach(v ->
             verify(courtTranslationService, times(2)).setTranslation(courtId, v)
@@ -377,15 +355,6 @@ class TestingSupportServiceTest {
         );
         aolSelectionDtoArgumentCaptor.getAllValues().forEach(v ->
             verify(courtSinglePointsOfEntryService, times(2)).updateCourtSinglePointsOfEntry(courtId, v)
-        );
-        courtCodesArgumentCaptor.getAllValues().forEach(v ->
-            verify(courtCodesRepository, times(2)).save(v)
-        );
-        courtDxCodeArgumentCaptor.getAllValues().forEach(v ->
-            verify(courtDxCodeRepository, times(2)).save(v)
-        );
-        courtFaxArgumentCaptor.getAllValues().forEach(v ->
-            verify(courtFaxRepository, times(2)).save(v)
         );
     }
 }

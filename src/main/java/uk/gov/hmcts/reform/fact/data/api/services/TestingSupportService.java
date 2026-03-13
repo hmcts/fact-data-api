@@ -1,21 +1,21 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import uk.gov.hmcts.reform.fact.data.api.dto.CourtCodesDto;
+import uk.gov.hmcts.reform.fact.data.api.dto.CourtDxCodeDto;
+import uk.gov.hmcts.reform.fact.data.api.dto.CourtFaxDto;
+import uk.gov.hmcts.reform.fact.data.api.dto.CourtProfessionalInformationDetailsDto;
+import uk.gov.hmcts.reform.fact.data.api.dto.ProfessionalInformationDto;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOptions;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtCodes;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHours;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtDxCode;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtFax;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
@@ -30,14 +30,11 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipm
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.InMemoryMultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
+import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
+import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
@@ -168,11 +165,8 @@ public class TestingSupportService {
     private final CourtFacilitiesService courtFacilitiesService;
     private final CourtSinglePointsOfEntryService courtSinglePointsOfEntryService;
     private final CourtTranslationService courtTranslationService;
-    private final CourtDxCodeRepository courtDxCodeRepository;
-    private final CourtCodesRepository courtCodesRepository;
-    private final CourtFaxRepository courtFaxRepository;
-    private final CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
-    private final CourtProfessionalInformationRepository courtProfessionalInformationRepository;
+    private final CourtProfessionalInformationService courtProfessionalInformationService;
+    private final CourtLocalAuthoritiesService courtLocalAuthoritiesService;
     private final CourtServiceAreasRepository courtServiceAreasRepository;
     // for photos, we try the service first, then fall back to the repository if required
     private final CourtPhotoService courtPhotoService;
@@ -215,11 +209,8 @@ public class TestingSupportService {
         setAccessibilityOptions(courtId, random);
         setAddresses(courtId, areasOfLaw, random);
         setContactDetails(courtId, random);
-        setCodes(courtId, random);
         setCounterServiceOpeningHours(courtId, courtTypes, random);
-        setDxCodes(courtId, courtTypes, random);
         setFacilities(courtId, random);
-        setFaxNumbers(courtId, random);
         setLocalAuthorities(courtId, areasOfLaw, random);
         setOpeningHours(courtId, random);
         setProfessionalInformation(courtId, random);
@@ -345,40 +336,6 @@ public class TestingSupportService {
         return areasOfLaw;
     }
 
-    private void setCodes(final UUID courtId, final Random random) {
-        if (random.nextBoolean()) {
-            CourtCodes courtCodes = CourtCodes.builder()
-                .courtId(courtId)
-                .build();
-
-            if (random.nextBoolean()) {
-                courtCodes.setMagistrateCourtCode(random.nextInt(1000));
-            }
-
-            if (random.nextBoolean()) {
-                courtCodes.setFamilyCourtCode(random.nextInt(1000));
-            }
-
-            if (random.nextBoolean()) {
-                courtCodes.setTribunalCode(random.nextInt(1000));
-            }
-
-            if (random.nextBoolean()) {
-                courtCodes.setCountyCourtCode(random.nextInt(1000));
-            }
-
-            if (random.nextBoolean()) {
-                courtCodes.setCrownCourtCode(random.nextInt(1000));
-            }
-
-            if (random.nextBoolean()) {
-                courtCodes.setGbs(rndAlphaNumeric(10, random));
-            }
-
-            courtCodesRepository.save(courtCodes);
-        }
-    }
-
     private void setContactDetails(final UUID courtId, final Random random) {
         CourtContactDetails courtContactDetails = CourtContactDetails.builder()
             .courtId(courtId)
@@ -415,17 +372,6 @@ public class TestingSupportService {
         courtOpeningHoursService.setCounterServiceOpeningHours(courtId, openingHours);
     }
 
-    private void setDxCodes(final UUID courtId, List<CourtType> courtTypes, final Random random) {
-        if (random.nextBoolean()) {
-            CourtDxCode code = CourtDxCode.builder()
-                .courtId(courtId)
-                .dxCode(rndAlphaNumeric(6, random))
-                .explanation(courtTypes.stream().findAny().map(CourtType::getName).orElse("General") + " DX code")
-                .build();
-            courtDxCodeRepository.save(code);
-        }
-    }
-
     private void setFacilities(final UUID courtId, final Random random) {
         CourtFacilities facilities = CourtFacilities.builder()
             .courtId(courtId)
@@ -444,32 +390,44 @@ public class TestingSupportService {
         courtFacilitiesService.setFacilities(courtId, facilities);
     }
 
-    private void setFaxNumbers(final UUID courtId, final Random random) {
-        int faxCount = random.nextInt(3);
-        for (int i = 0; i < faxCount; i++) {
-            courtFaxRepository.save(
-                CourtFax.builder()
-                    .courtId(courtId)
-                    .faxNumber(rndPhoneNumber(random))
-                    .description(i == 0 ? "Fax number" : "Urgent documents fax number")
-                    .build()
-            );
-        }
-    }
-
     private void setLocalAuthorities(final UUID courtId, List<AreaOfLawType> areasOfLaw, final Random random) {
-        int count = areasOfLaw.size() > 1 ? random.nextInt(1, areasOfLaw.size()) : 1;
-        for (int i = 0; i < count; i++) {
-            long laCount = random.nextInt(1, 5);
-            ArrayList<UUID> lats = new ArrayList<>(LOCAL_AUTHORITY_TYPE_IDS);
-            Collections.shuffle(lats, random);
-            List<UUID> laIds = lats.stream().limit(laCount).toList();
-            courtLocalAuthoritiesRepository.save(
-                CourtLocalAuthorities.builder()
-                    .courtId(courtId)
-                    .localAuthorityIds(laIds)
-                    .areaOfLawId(areasOfLaw.get(i).getId())
-                    .build()
+        if (random.nextBoolean()) {
+            List<String> allowedAols = Arrays.stream(AllowedLocalAuthorityAreasOfLaw.values())
+                .map(AllowedLocalAuthorityAreasOfLaw::getDisplayName).toList();
+            List<AreaOfLawType> aolForLas = areasOfLaw.stream()
+                .filter(aol -> allowedAols.contains(aol.getName()))
+                .toList();
+            // there's a chance that this court doesn't have AOLs that allow local authorities
+            // if that's the case, we just skip setting local authorities for this court
+            if (aolForLas.isEmpty()) {
+                return;
+            }
+
+            List<CourtLocalAuthorityDto> courtLocalAuthorityDtos = new ArrayList<>();
+            for (AreaOfLawType areaOfLawType : aolForLas) {
+                List<UUID> laSelection = LOCAL_AUTHORITY_TYPE_IDS.stream().filter(l -> random.nextBoolean()).toList();
+                if (laSelection.isEmpty()) {
+                    laSelection = List.of(LOCAL_AUTHORITY_TYPE_IDS.get(
+                        random.nextInt(LOCAL_AUTHORITY_TYPE_IDS.size()))
+                    );
+                }
+
+                List<LocalAuthoritySelectionDto> courtLocalAuthorities = laSelection.stream()
+                    .map(laId -> {
+                        LocalAuthoritySelectionDto lasd = new LocalAuthoritySelectionDto();
+                        lasd.setId(laId);
+                        lasd.setName("Local Authority " + laId.toString().substring(0, 5));
+                        lasd.setSelected(true);
+                        return lasd;
+                    })
+                    .toList();
+
+                courtLocalAuthorityDtos.add(CourtLocalAuthorityDto.from(areaOfLawType, courtLocalAuthorities));
+            }
+
+            courtLocalAuthoritiesService.setCourtLocalAuthorities(
+                courtId,
+                courtLocalAuthorityDtos
             );
         }
     }
@@ -519,20 +477,94 @@ public class TestingSupportService {
     }
 
     private void setProfessionalInformation(final UUID courtId, final Random random) {
-        CourtProfessionalInformation info = CourtProfessionalInformation.builder()
-            .courtId(courtId)
+        CourtProfessionalInformationDetailsDto dto = CourtProfessionalInformationDetailsDto.builder()
+            .professionalInformation(createProfessionalInformation(random))
+            .codes(createCodes(random).orElse(null))
+            .dxCodes(createDxCodes(random))
+            .faxNumbers(createFaxNumbers(random))
+            .build();
+
+        courtProfessionalInformationService.setProfessionalInformation(courtId, dto);
+    }
+
+    private ProfessionalInformationDto createProfessionalInformation(final Random random) {
+
+        ProfessionalInformationDto dto = ProfessionalInformationDto.builder()
             .accessScheme(random.nextBoolean())
             .commonPlatform(random.nextBoolean())
             .videoHearings(random.nextBoolean())
             .interviewRooms(random.nextBoolean())
             .build();
 
-        if (info.getInterviewRooms().booleanValue()) {
-            info.setInterviewRoomCount(random.nextInt(1, 5));
-            info.setInterviewPhoneNumber(rndPhoneNumber(random));
+        if (dto.getInterviewRooms().booleanValue()) {
+            dto.setInterviewRoomCount(random.nextInt(1, 5));
+            dto.setInterviewPhoneNumber(rndPhoneNumber(random));
         }
 
-        courtProfessionalInformationRepository.save(info);
+        return dto;
+    }
+
+    private Optional<CourtCodesDto> createCodes(final Random random) {
+        if (random.nextBoolean()) {
+            CourtCodesDto courtCodes = CourtCodesDto.builder()
+                .build();
+
+            if (random.nextBoolean()) {
+                courtCodes.setMagistrateCourtCode(random.nextInt(1000));
+            }
+
+            if (random.nextBoolean()) {
+                courtCodes.setFamilyCourtCode(random.nextInt(1000));
+            }
+
+            if (random.nextBoolean()) {
+                courtCodes.setTribunalCode(random.nextInt(1000));
+            }
+
+            if (random.nextBoolean()) {
+                courtCodes.setCountyCourtCode(random.nextInt(1000));
+            }
+
+            if (random.nextBoolean()) {
+                courtCodes.setCrownCourtCode(random.nextInt(1000));
+            }
+
+            if (random.nextBoolean()) {
+                courtCodes.setGbs(rndAlphaNumeric(10, random));
+            }
+
+            return Optional.of(courtCodes);
+        }
+        return Optional.empty();
+    }
+
+    private List<CourtDxCodeDto> createDxCodes(final Random random) {
+        List<CourtDxCodeDto> dxCodes = new ArrayList<>();
+        int dxCodeCount = random.nextInt(3);
+        for (int i = 0; i < dxCodeCount; i++) {
+            if (random.nextBoolean()) {
+                CourtDxCodeDto code = CourtDxCodeDto.builder()
+                    .dxCode(rndAlphaNumeric(6, random))
+                    .explanation(COURT_TYPES.stream().findAny().map(CourtType::getName).orElse("General") + " DX code")
+                    .build();
+                dxCodes.add(code);
+            }
+        }
+        return dxCodes;
+    }
+
+    private List<CourtFaxDto> createFaxNumbers(final Random random) {
+        List<CourtFaxDto> faxNumbers = new ArrayList<>();
+        int faxCount = random.nextInt(3);
+        for (int i = 0; i < faxCount; i++) {
+            faxNumbers.add(
+                CourtFaxDto.builder()
+                    .faxNumber(rndPhoneNumber(random))
+                    .description(i == 0 ? "Fax number" : "Urgent documents fax number")
+                    .build()
+            );
+        }
+        return faxNumbers;
     }
 
     private void setServiceAreas(final UUID courtId, final Random random) {
