@@ -23,7 +23,7 @@ public class ValidationConstants {
     public static final int PHONE_NO_MAX_LENGTH = 20;
     public static final String PHONE_NO_MAX_LENGTH_MESSAGE = "Phone number should be no more than {max} characters";
 
-    public static final String GENERIC_DESCRIPTION_REGEX = "^[A-Za-z0-9 ()':,-]+$";
+    public static final String GENERIC_DESCRIPTION_REGEX = "^[A-Za-z0-9 ()':,\\-;.]+$";
     public static final String GENERIC_DESCRIPTION_REGEX_MESSAGE = "Value contains invalid characters";
 
     public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 ()':,.-]+$)$";
@@ -32,7 +32,7 @@ public class ValidationConstants {
 
     public static final String EPIM_ID_REGEX = "^[A-Za-z0-9 -]+$";
     public static final String EPIM_ID_REGEX_MESSAGE = "EPIM ID contains invalid characters";
-  
+
     public static final String COURT_SLUG_REGEX = "^[a-z0-9-]+$";
     public static final String COURT_SLUG_REGEX_MESSAGE =
         "Slug must match the regex '^[a-z0-9-]+$'";

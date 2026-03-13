@@ -37,7 +37,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
@@ -109,6 +111,12 @@ public class AuthFunctionalTest {
         assertThat(invalidTokenResponse.statusCode())
             .as("Invalid token should return 401 for %s", endpoint)
             .isEqualTo(UNAUTHORIZED.value());
+    }
+
+    private static void assertOpen(Response noTokenResponse, String endpoint) {
+        assertThat(noTokenResponse.statusCode())
+            .as("No token should return 2XX for %s", endpoint)
+            .isIn(OK.value(), NO_CONTENT.value(), CREATED.value());
     }
 
     @Test
@@ -638,14 +646,14 @@ public class AuthFunctionalTest {
     }
 
     @Test
-    @DisplayName("Testing support endpoint requires auth and allows both roles")
+    @DisplayName("Testing support endpoints don't require auth")
     void testingSupportEndpointAuth() {
-        String endpoint = "/testing-support/courts/name-prefix/Auth Test Cleanup";
-        Response admin = http.doDelete(endpoint, adminToken);
-        Response viewer = http.doDelete(endpoint, viewerToken);
-        Response noToken = http.doDelete(endpoint, "");
-        assertViewerAllowed(admin, viewer, endpoint);
-        assertUnauthenticated(noToken, endpoint);
+        String endpoint = "/testing-support/courts?courtName=Auth Test Cleanup";
+        Response noToken = http.doGet(endpoint);
+        assertOpen(noToken, endpoint);
+        endpoint = "/testing-support/courts/name-prefix/Auth Test Cleanup";
+        noToken = http.doDelete(endpoint, "");
+        assertOpen(noToken, endpoint);
     }
 
     @AfterAll
