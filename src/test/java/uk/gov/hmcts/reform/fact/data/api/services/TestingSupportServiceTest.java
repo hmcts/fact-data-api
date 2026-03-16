@@ -207,7 +207,7 @@ class TestingSupportServiceTest {
             return c;
         });
 
-        String result = testingSupportService.createCourt(courtName, null, false);
+        String result = testingSupportService.createCourt(courtName, null, false, true);
 
         assertNotNull(result);
         assertEquals("test-court", result);
@@ -238,7 +238,7 @@ class TestingSupportServiceTest {
     @Test
     void createCourtWithEmptyNameThrowsException() {
         String courtName = "";
-        assertThrows(NullPointerException.class, () -> testingSupportService.createCourt(courtName, null, false));
+        assertThrows(NullPointerException.class, () -> testingSupportService.createCourt(courtName, null, false, true));
     }
 
     @Captor
@@ -260,7 +260,7 @@ class TestingSupportServiceTest {
             return c;
         });
 
-        testingSupportService.createCourt(courtName, seed, false);
+        testingSupportService.createCourt(courtName, seed, false, true);
 
         // things that are always called once
         verify(courtService, times(1)).createCourt(any());
@@ -317,7 +317,7 @@ class TestingSupportServiceTest {
             .updateCourtSinglePointsOfEntry(eq(courtId), aolSelectionDtoArgumentCaptor.capture());
 
         // second call with same seed should generate same results
-        testingSupportService.createCourt(courtName, seed, false);
+        testingSupportService.createCourt(courtName, seed, false, true);
 
         verify(courtService, times(2)).createCourt(any());
 
