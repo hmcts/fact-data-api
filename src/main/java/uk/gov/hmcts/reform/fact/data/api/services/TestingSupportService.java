@@ -208,7 +208,7 @@ public class TestingSupportService {
 
         setAccessibilityOptions(courtId, random);
         setAddresses(courtId, areasOfLaw, random);
-        if(open) {
+        if (open) {
             openCourt(court);
         }
         setContactDetails(courtId, random);
