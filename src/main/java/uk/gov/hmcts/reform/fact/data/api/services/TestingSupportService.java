@@ -193,7 +193,7 @@ public class TestingSupportService {
      * @return the slug of the created court entry
      **/
     @SuppressWarnings("java:S2245") // not used for security purposes, only for generating test data
-    public String createCourt(@NonNull String courtName, Long seed, boolean serviceCentre) {
+    public String createCourt(@NonNull String courtName, Long seed, boolean serviceCentre, boolean open) {
         initialiseCaches();
 
         Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
@@ -208,6 +208,9 @@ public class TestingSupportService {
 
         setAccessibilityOptions(courtId, random);
         setAddresses(courtId, areasOfLaw, random);
+        if (open) {
+            openCourt(court);
+        }
         setContactDetails(courtId, random);
         setCounterServiceOpeningHours(courtId, courtTypes, random);
         setFacilities(courtId, random);
@@ -234,6 +237,11 @@ public class TestingSupportService {
             .build();
 
         return courtService.createCourt(court);
+    }
+
+    private void openCourt(final Court court) {
+        court.setOpen(true);
+        courtService.updateCourt(court.getId(), court);
     }
 
     @Synchronized

@@ -53,6 +53,7 @@ public class TestingSupportControllerTest {
 
         // make sure that expected data is there (everything else is optional)
         assertThat(retrievedCourt.getId()).isEqualTo(createdCourt.getId());
+        assertThat(retrievedCourt.getOpen()).isTrue();
         assertThat(retrievedCourt.getCourtAddresses()).isNotEmpty();
         assertThat(retrievedCourt.getCourtAccessibilityOptions()).isNotEmpty();
         assertThat(retrievedCourt.getCourtContactDetails()).isNotEmpty();
