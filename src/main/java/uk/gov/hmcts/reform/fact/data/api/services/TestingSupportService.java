@@ -25,6 +25,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
@@ -585,6 +586,7 @@ public class TestingSupportService {
         CourtServiceAreas serviceAreas = CourtServiceAreas.builder()
             .courtId(courtId)
             .serviceAreaId(serviceAreaIds)
+            .catchmentType(CatchmentType.values()[random.nextInt(CatchmentType.values().length)])
             .build();
 
         courtServiceAreasRepository.save(serviceAreas);

@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
 import java.util.List;
@@ -22,6 +23,9 @@ class ServiceAreaServiceTest {
 
     @Mock
     private ServiceAreaRepository serviceAreaRepository;
+
+    @Mock
+    private CourtServiceAreasRepository courtServiceAreasRepository;
 
     @InjectMocks
     private ServiceAreaService serviceAreaService;
