@@ -79,6 +79,7 @@ import org.springframework.stereotype.Service;
 @ConditionalOnProperty(prefix = "testingSupport", name = "enableApi", havingValue = "true")
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("java:S2245") // test helper uses seeded pseudorandom data intentionally
 public class TestingSupportService {
 
     // used to generate alphanumeric strings
@@ -201,7 +202,6 @@ public class TestingSupportService {
      * @param serviceCentre whether the court should be marked as a service centre (true/false)
      * @return the slug of the created court entry
      **/
-    @SuppressWarnings("java:S2245") // not used for security purposes, only for generating test data
     public String createCourt(
         @NonNull String courtName,
         Long seed,
