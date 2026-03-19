@@ -114,6 +114,14 @@ public class TestingSupportService {
         "Feedback and complaints handling"
     );
 
+    public static final List<String> WARNING_NOTICE_VALUES = List.of(
+        "Court temporarily closed for maintenance",
+        "Limited access due to ongoing construction",
+        "Hearing delays expected due to staff shortages",
+        "Parking restrictions in effect",
+        "COVID-19 safety protocols in place"
+    );
+
     private static final List<String> ADDRESS_LINE_1 = List.of(
         "1 Main Street", "2 High Road", "3 Market Place", "4 Station Avenue", "5 Park Lane",
         "6 Church Street", "7 Victoria Road", "8 King Street", "9 Queen's Parade", "10 Mill Lane"
@@ -194,12 +202,18 @@ public class TestingSupportService {
      * @return the slug of the created court entry
      **/
     @SuppressWarnings("java:S2245") // not used for security purposes, only for generating test data
-    public String createCourt(@NonNull String courtName, Long seed, boolean serviceCentre, boolean open) {
+    public String createCourt(
+        @NonNull String courtName,
+        Long seed,
+        boolean serviceCentre,
+        boolean open,
+        boolean addWarningNotice
+    ) {
         initialiseCaches();
 
         Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
 
-        Court court = createCourt(courtName, serviceCentre, random);
+        Court court = createCourt(courtName, serviceCentre, addWarningNotice, random);
         UUID courtId = court.getId();
         List<AreaOfLawType> areasOfLaw = setAreasOfLaw(courtId, random);
         List<CourtType> courtTypes = COURT_TYPES.stream().filter(l -> random.nextBoolean()).toList();
@@ -227,7 +241,7 @@ public class TestingSupportService {
         return court.getSlug();
     }
 
-    private Court createCourt(String name, boolean serviceCenter, Random random) {
+    private Court createCourt(String name, boolean serviceCenter, boolean addWarningNotice, Random random) {
         Court court = Court.builder()
             .name(name)
             .isServiceCentre(serviceCenter)
@@ -235,6 +249,11 @@ public class TestingSupportService {
             .mrdId(rndAlphaNumeric(random.nextInt(16, 32), random))
             .open(false)
             .openOnCath(false)
+            .warningNotice(
+                addWarningNotice
+                    ? WARNING_NOTICE_VALUES.get(random.nextInt(WARNING_NOTICE_VALUES.size()))
+                    : null
+            )
             .build();
 
         return courtService.createCourt(court);

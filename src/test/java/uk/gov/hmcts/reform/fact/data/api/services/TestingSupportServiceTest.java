@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -207,7 +208,7 @@ class TestingSupportServiceTest {
             return c;
         });
 
-        String result = testingSupportService.createCourt(courtName, null, false, true);
+        String result = testingSupportService.createCourt(courtName, null, false, false, true);
 
         assertNotNull(result);
         assertEquals("test-court", result);
@@ -236,9 +237,50 @@ class TestingSupportServiceTest {
     }
 
     @Test
+    void createCourtWithWarningNotice() {
+        String courtName = "Test Court";
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court c = Court.class.cast(inv.getArguments()[0]);
+            c.setSlug("test-court");
+            return c;
+        });
+
+        String result = testingSupportService.createCourt(courtName, null, false, false, true);
+
+        assertNotNull(result);
+        assertEquals("test-court", result);
+
+        ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
+        verify(courtService, times(1)).createCourt(captor.capture());
+        assertThat(captor.getValue().getWarningNotice()).isNotNull();
+    }
+
+    @Test
+    void createCourtWithoutWarningNotice() {
+        String courtName = "Test Court";
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court c = Court.class.cast(inv.getArguments()[0]);
+            c.setSlug("test-court");
+            return c;
+        });
+
+        String result = testingSupportService.createCourt(courtName, null, false, false, false);
+
+        assertNotNull(result);
+        assertEquals("test-court", result);
+
+        ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
+        verify(courtService, times(1)).createCourt(captor.capture());
+        assertThat(captor.getValue().getWarningNotice()).isNull();
+    }
+
+    @Test
     void createCourtWithEmptyNameThrowsException() {
         String courtName = "";
-        assertThrows(NullPointerException.class, () -> testingSupportService.createCourt(courtName, null, false, true));
+        assertThrows(
+            NullPointerException.class,
+            () -> testingSupportService.createCourt(courtName, null, false, false, true)
+        );
     }
 
     @Captor
@@ -260,7 +302,7 @@ class TestingSupportServiceTest {
             return c;
         });
 
-        testingSupportService.createCourt(courtName, seed, false, true);
+        testingSupportService.createCourt(courtName, seed, false, false, true);
 
         // things that are always called once
         verify(courtService, times(1)).createCourt(any());
@@ -317,7 +359,7 @@ class TestingSupportServiceTest {
             .updateCourtSinglePointsOfEntry(eq(courtId), aolSelectionDtoArgumentCaptor.capture());
 
         // second call with same seed should generate same results
-        testingSupportService.createCourt(courtName, seed, false, true);
+        testingSupportService.createCourt(courtName, seed, false, false, true);
 
         verify(courtService, times(2)).createCourt(any());
 
@@ -339,22 +381,37 @@ class TestingSupportServiceTest {
 
         // optional or multiple calls
         courtAddressArgumentCaptor.getAllValues().forEach(v ->
-            verify(courtAddressService, times(2)).createAddress(courtId, v)
+                                                              verify(courtAddressService, times(2)).createAddress(
+                                                                  courtId,
+                                                                  v
+                                                              )
         );
         courtOpeningHoursArgumentCaptor.getAllValues().forEach(v ->
-            verify(courtOpeningHoursService, times(2)).setOpeningHours(courtId, v)
+                                                                   verify(
+                                                                       courtOpeningHoursService,
+                                                                       times(2)
+                                                                   ).setOpeningHours(courtId, v)
         );
         courtLocalAuthorityDtoArgumentCaptor.getAllValues().forEach(v ->
-            verify(courtLocalAuthoritiesService, times(2)).setCourtLocalAuthorities(courtId, v)
+                                                                        verify(
+                                                                            courtLocalAuthoritiesService,
+                                                                            times(2)
+                                                                        ).setCourtLocalAuthorities(courtId, v)
         );
         courtTranslationArgumentCaptor.getAllValues().forEach(v ->
-            verify(courtTranslationService, times(2)).setTranslation(courtId, v)
+                                                                  verify(
+                                                                      courtTranslationService,
+                                                                      times(2)
+                                                                  ).setTranslation(courtId, v)
         );
         courtPhotoArgumentCaptor.getAllValues().forEach(v ->
-            verify(courtPhotoRepository, times(2)).save(v)
+                                                            verify(courtPhotoRepository, times(2)).save(v)
         );
         aolSelectionDtoArgumentCaptor.getAllValues().forEach(v ->
-            verify(courtSinglePointsOfEntryService, times(2)).updateCourtSinglePointsOfEntry(courtId, v)
+                                                                 verify(
+                                                                     courtSinglePointsOfEntryService,
+                                                                     times(2)
+                                                                 ).updateCourtSinglePointsOfEntry(courtId, v)
         );
     }
 }
