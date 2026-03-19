@@ -9,6 +9,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -229,9 +230,8 @@ class TestingSupportServiceTest {
         verify(courtAddressService, atLeast(1)).createAddress(any(), any());
 
         // things that are optional, but have a ceiling
-
         verify(courtLocalAuthoritiesService, atMost(1)).setCourtLocalAuthorities(any(), any());
-        verify(courtTranslationService, atMost(1)).setTranslation(any(), any());
+        verify(courtTranslationService, times(1)).setTranslation(any(), any());
         verify(courtPhotoRepository, atMost(1)).save(any());
         verify(courtSinglePointsOfEntryService, atMost(1)).updateCourtSinglePointsOfEntry(any(), any());
     }
@@ -282,6 +282,39 @@ class TestingSupportServiceTest {
             () -> testingSupportService.createCourt(courtName, null, false, false, true)
         );
     }
+
+    @Test
+    void createCourtWithoutTranslationsSkipsTranslationService() {
+        String courtName = "Test Court";
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court c = Court.class.cast(inv.getArguments()[0]);
+            c.setSlug("test-court");
+            return c;
+        });
+
+        String result = testingSupportService.createCourt(courtName, null, false, false, true, false);
+
+        assertNotNull(result);
+        assertEquals("test-court", result);
+        verify(courtTranslationService, never()).setTranslation(any(), any());
+    }
+
+    @Test
+    void createCourtWithoutEnquiriesContactSkipsContactCreation() {
+        String courtName = "Test Court";
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court c = Court.class.cast(inv.getArguments()[0]);
+            c.setSlug("test-court");
+            return c;
+        });
+
+        String result = testingSupportService.createCourt(courtName, null, false, false, true, true, false);
+
+        assertNotNull(result);
+        assertEquals("test-court", result);
+        verify(courtContactDetailsService, never()).createContactDetail(any(), any());
+    }
+
 
     @Captor
     private ArgumentCaptor<List<AreaOfLawSelectionDto>> aolSelectionDtoArgumentCaptor;
@@ -351,7 +384,7 @@ class TestingSupportServiceTest {
             .setCourtLocalAuthorities(eq(courtId), courtLocalAuthorityDtoArgumentCaptor.capture());
         ArgumentCaptor<CourtTranslation> courtTranslationArgumentCaptor =
             ArgumentCaptor.forClass(CourtTranslation.class);
-        verify(courtTranslationService, atMost(1))
+        verify(courtTranslationService, times(1))
             .setTranslation(eq(courtId), courtTranslationArgumentCaptor.capture());
         ArgumentCaptor<CourtPhoto> courtPhotoArgumentCaptor = ArgumentCaptor.forClass(CourtPhoto.class);
         verify(courtPhotoRepository, atMost(1)).save(courtPhotoArgumentCaptor.capture());

@@ -66,8 +66,18 @@ public class TestingSupportController {
         @RequestParam(required = false) Long seed,
         @RequestParam(required = false, defaultValue = "false") boolean serviceCenter,
         @RequestParam(required = false, defaultValue = "true") boolean open,
-        @RequestParam(required = false, defaultValue = "false") boolean addWarningNotice) {
-        String courtSlug = testingSupportService.createCourt(courtName, seed, serviceCenter, open, addWarningNotice);
+        @RequestParam(required = false, defaultValue = "false") boolean addWarningNotice,
+        @RequestParam(required = false, defaultValue = "true") boolean withTranslations,
+        @RequestParam(required = false, defaultValue = "true") boolean withEnquiriesContact) {
+        String courtSlug = testingSupportService.createCourt(
+            courtName,
+            seed,
+            serviceCenter,
+            open,
+            addWarningNotice,
+            withTranslations,
+            withEnquiriesContact
+        );
         CourtDetails details = courtService.getCourtDetailsBySlug(courtSlug);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(details);

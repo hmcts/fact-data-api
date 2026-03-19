@@ -8,9 +8,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.services.TestingSupportService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,6 +26,8 @@ class TestingSupportControllerTest {
 
     @Mock
     private CourtService courtService;
+    @Mock
+    private TestingSupportService testingSupportService;
 
     @InjectMocks
     private TestingSupportController testingSupportController;
@@ -44,5 +50,23 @@ class TestingSupportControllerTest {
         assertThrows(IllegalArgumentException.class, () ->
             testingSupportController.deleteCourtsByNamePrefix(BLANK_PREFIX)
         );
+    }
+
+    @Test
+    void createSampleCourtPassesTranslationOverride() {
+        when(testingSupportService.createCourt(
+            anyString(),
+            anyLong(),
+            anyBoolean(),
+            anyBoolean(),
+            anyBoolean(),
+            anyBoolean(),
+            anyBoolean()
+        ))
+            .thenReturn("test-court");
+
+        testingSupportController.createSampleCourt("Test Court", 1L, false, true, false, false, false);
+
+        verify(testingSupportService).createCourt("Test Court", 1L, false, true, false, false, false);
     }
 }
