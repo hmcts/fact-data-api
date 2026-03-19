@@ -16,7 +16,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
-import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;

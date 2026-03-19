@@ -14,7 +14,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtTranslationService;
 
 import java.util.UUID;

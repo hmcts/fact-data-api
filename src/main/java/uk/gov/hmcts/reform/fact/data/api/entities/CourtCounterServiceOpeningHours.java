@@ -6,7 +6,6 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -68,7 +67,7 @@ public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
     private Court court;
 
     @Schema(description = "List of associated Court Type IDs")
-    @Type(ListArrayType.class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "uuid[]")
     private List<UUID> courtTypes;
 

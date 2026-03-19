@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 public interface CourtServiceAreasRepository extends JpaRepository<CourtServiceAreas, UUID> {
     /**
      * Finds court service area links for a service area id.
-     * Note that @Type(ListArrayType.class) requires for this instance we use a native query.
+     * Note that this query still uses native SQL to match against the Postgres array column with ANY(...).
      *
      * @param id the service area id
      * @return matching court service areas

@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +24,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.TimeZoneStorage;
 import org.hibernate.annotations.TimeZoneStorageType;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -55,7 +55,7 @@ public class User {
     private UUID ssoId;
 
     @Schema(description = "The User's favourite Courts")
-    @Type(ListArrayType.class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "uuid[]")
     private List<UUID> favouriteCourts;
 

@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.entities;
 
-import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,10 +13,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Type;
-
 import java.util.List;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -50,7 +49,7 @@ public class LegacyService {
     private String descriptionCy;
 
     @Schema(description = "Associated service areas")
-    @Type(ListArrayType.class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "service_areas", columnDefinition = "uuid[]")
     private List<UUID> serviceAreas;
 }

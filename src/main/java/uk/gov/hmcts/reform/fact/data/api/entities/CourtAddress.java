@@ -14,7 +14,6 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
-import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,7 +33,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
@@ -118,12 +118,12 @@ public class CourtAddress implements AuditableCourtEntity {
     private AddressType addressType;
 
     @Schema(description = "the list of associated Area of Law IDs")
-    @Type(ListArrayType.class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "uuid[]")
     private List<UUID> areasOfLaw;
 
     @Schema(description = "the list of associated Court Type IDs")
-    @Type(ListArrayType.class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "uuid[]")
     private List<UUID> courtTypes;
 
