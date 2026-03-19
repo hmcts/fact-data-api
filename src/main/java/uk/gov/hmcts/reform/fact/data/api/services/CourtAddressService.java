@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
-import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +12,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 
 import java.math.BigDecimal;
 import java.util.List;

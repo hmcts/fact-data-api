@@ -3,7 +3,6 @@ package uk.gov.hmcts.reform.fact.data.api.entities;
 import java.util.List;
 import java.util.UUID;
 
-import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,7 +16,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -43,7 +43,7 @@ public class LocalAuthorityType {
     @Column(name = "custodian_code", nullable = false, unique = true)
     private Integer custodianCode;
 
-    @Type(ListArrayType.class)
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Schema(description = "Child custodian codes that should map to this parent authority, if any")
     @Column(
         name = "child_custodian_codes",

@@ -17,7 +17,10 @@ import java.util.List;
 @Builder
 public class CourtProfessionalInformationDetailsDto {
 
-    @Schema(description = "Primary professional information for the court", required = true)
+    @Schema(
+        description = "Primary professional information for the court",
+        requiredMode = Schema.RequiredMode.REQUIRED
+    )
     @Valid
     @NotNull
     private ProfessionalInformationDto professionalInformation;

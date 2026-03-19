@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CourtProfessionalInformationService {
 
     private final CourtProfessionalInformationRepository courtProfessionalInformationRepository;
@@ -37,19 +39,6 @@ public class CourtProfessionalInformationService {
     private final CourtFaxRepository courtFaxRepository;
     private final CourtService courtService;
 
-    public CourtProfessionalInformationService(
-        CourtProfessionalInformationRepository courtProfessionalInformationRepository,
-        CourtCodesRepository courtCodesRepository,
-        CourtDxCodeRepository courtDxCodeRepository,
-        CourtFaxRepository courtFaxRepository,
-        CourtService courtService
-    ) {
-        this.courtProfessionalInformationRepository = courtProfessionalInformationRepository;
-        this.courtCodesRepository = courtCodesRepository;
-        this.courtDxCodeRepository = courtDxCodeRepository;
-        this.courtFaxRepository = courtFaxRepository;
-        this.courtService = courtService;
-    }
 
     /**
      * Get professional information by court id. A court will only ever have zero or one record.
@@ -132,8 +121,8 @@ public class CourtProfessionalInformationService {
         return CourtProfessionalInformationDetailsDto.builder()
             .professionalInformation(ProfessionalInformationDto.fromEntity(professionalInformation))
             .codes(CourtCodesDto.fromEntity(codes))
-            .dxCodes(safeDxCodes.stream().map(CourtDxCodeDto::fromEntity).collect(Collectors.toList()))
-            .faxNumbers(safeFaxNumbers.stream().map(CourtFaxDto::fromEntity).collect(Collectors.toList()))
+            .dxCodes(safeDxCodes.stream().map(CourtDxCodeDto::fromEntity).toList())
+            .faxNumbers(safeFaxNumbers.stream().map(CourtFaxDto::fromEntity).toList())
             .build();
     }
 
