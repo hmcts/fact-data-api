@@ -60,4 +60,60 @@ class CourtServiceAreaServiceTest {
         verify(serviceAreaService).getServiceAreaByName("Money Claims");
         verify(courtServiceAreasRepository).findByServiceAreaId(serviceAreaId);
     }
+
+    @Test
+    void findByServiceAreaIdShouldEnrichCourtServiceAreasWithNameAndSlug() {
+        UUID serviceAreaId = UUID.randomUUID();
+        UUID courtId = UUID.randomUUID();
+        CourtServiceAreas csa = new CourtServiceAreas();
+        csa.setCourtId(courtId);
+        List<CourtServiceAreas> results = List.of(csa);
+        when(courtServiceAreasRepository.findByServiceAreaId(serviceAreaId)).thenReturn(results);
+        when(courtRepository.findNameAndSlugById(courtId))
+            .thenReturn(java.util.Optional.of(new CourtRepository.NameAndSlug("Court Name", "court-slug")));
+
+        List<CourtServiceAreas> response = courtServiceAreaService.findByServiceAreaId(serviceAreaId);
+
+        assertThat(response.getFirst().getCourtName()).isEqualTo("Court Name");
+        assertThat(response.getFirst().getCourtSlug()).isEqualTo("court-slug");
+        verify(courtRepository).findNameAndSlugById(courtId);
+    }
+
+    @Test
+    void findByServiceAreaNameShouldEnrichCourtServiceAreasWithNameAndSlug() {
+        UUID serviceAreaId = UUID.randomUUID();
+        UUID courtId = UUID.randomUUID();
+        ServiceArea area = new ServiceArea();
+        area.setId(serviceAreaId);
+        CourtServiceAreas csa = new CourtServiceAreas();
+        csa.setCourtId(courtId);
+        List<CourtServiceAreas> results = List.of(csa);
+        when(serviceAreaService.getServiceAreaByName("Money Claims")).thenReturn(area);
+        when(courtServiceAreasRepository.findByServiceAreaId(serviceAreaId)).thenReturn(results);
+        when(courtRepository.findNameAndSlugById(courtId))
+            .thenReturn(java.util.Optional.of(new CourtRepository.NameAndSlug("Court Name", "court-slug")));
+
+        List<CourtServiceAreas> response = courtServiceAreaService.findByServiceAreaName("Money Claims");
+
+        assertThat(response.getFirst().getCourtName()).isEqualTo("Court Name");
+        assertThat(response.getFirst().getCourtSlug()).isEqualTo("court-slug");
+        verify(courtRepository).findNameAndSlugById(courtId);
+    }
+
+    @Test
+    void enrichmentShouldHandleMissingCourtNameAndSlug() {
+        UUID serviceAreaId = UUID.randomUUID();
+        UUID courtId = UUID.randomUUID();
+        CourtServiceAreas csa = new CourtServiceAreas();
+        csa.setCourtId(courtId);
+        List<CourtServiceAreas> results = List.of(csa);
+        when(courtServiceAreasRepository.findByServiceAreaId(serviceAreaId)).thenReturn(results);
+        when(courtRepository.findNameAndSlugById(courtId)).thenReturn(java.util.Optional.empty());
+
+        List<CourtServiceAreas> response = courtServiceAreaService.findByServiceAreaId(serviceAreaId);
+
+        assertThat(response.getFirst().getCourtName()).isNull();
+        assertThat(response.getFirst().getCourtSlug()).isNull();
+        verify(courtRepository).findNameAndSlugById(courtId);
+    }
 }
