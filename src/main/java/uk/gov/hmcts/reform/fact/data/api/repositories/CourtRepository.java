@@ -15,6 +15,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CourtRepository extends JpaRepository<Court, UUID> {
+
+    record NameAndSlug(String name, String slug) {}
+
     /**
      * Finds courts by region ids and partial name, case-insensitive.
      *
@@ -60,7 +63,7 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
     List<Court> findByNameStartingWithIgnoreCase(String namePrefix);
 
     Optional<Court> findByMrdId(String mrdId);
-    
+
     /**
      * Finds courts by name prefix and open flag ordered by name.
      *
@@ -119,4 +122,12 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
             """, nativeQuery = true
     )
     List<Court> searchOpenByNameOrAddress(@Param("query") String query);
+
+    /**
+     * Retrieve just the name and slug for a court by its ID.
+     *
+     * @param id the ID of the court.
+     * @return the NameAndSlug object
+     */
+    Optional<NameAndSlug> findNameAndSlugById(UUID id);
 }

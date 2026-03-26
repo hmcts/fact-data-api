@@ -43,6 +43,8 @@ class SearchServiceAreaControllerTest {
         area.setCourtId(COURT_ID);
         area.setServiceAreaId(List.of(SERVICE_AREA_ID));
         area.setCatchmentType(CatchmentType.REGIONAL);
+        area.setCourtName("court name");
+        area.setCourtSlug("court-name");
 
         when(courtServiceAreaService.findByServiceAreaName("Family"))
             .thenReturn(List.of(area));
@@ -50,7 +52,9 @@ class SearchServiceAreaControllerTest {
         mockMvc.perform(get("/search/service-area/v1/{serviceAreaName}", "Family"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].courtId").value(COURT_ID.toString()))
-            .andExpect(jsonPath("$[0].catchmentType").value("REGIONAL"));
+            .andExpect(jsonPath("$[0].catchmentType").value("REGIONAL"))
+            .andExpect(jsonPath("$[0].courtName").value("court name"))
+            .andExpect(jsonPath("$[0].courtSlug").value("court-name"));
     }
 
     @Test

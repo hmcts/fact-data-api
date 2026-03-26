@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,6 +21,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -64,5 +66,26 @@ public class CourtServiceAreas implements AuditableCourtEntity {
     @Schema(description = "The catchment type")
     @Enumerated(EnumType.STRING)
     private CatchmentType catchmentType;
+
+    @Transient
+    private String courtName;
+
+    @Transient
+    private String courtSlug;
+
+    // jackson will ignore the above transient fields, so we need to
+    // explicitly add them as properties for the API response
+
+    @Schema(description = "Has associated court with LOCAL catchment")
+    @JsonProperty("courtName")
+    public String getCourtName() {
+        return courtName;
+    }
+
+    @Schema(description = "Has associated court with NATIONAL catchment")
+    @JsonProperty("courtSlug")
+    public String getCourtSlug() {
+        return courtSlug;
+    }
 
 }
