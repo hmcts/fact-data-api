@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 
 import java.util.List;
@@ -21,6 +22,9 @@ class CourtServiceAreaServiceTest {
 
     @Mock
     private CourtServiceAreasRepository courtServiceAreasRepository;
+
+    @Mock
+    private CourtRepository courtRepository;
 
     @Mock
     private ServiceAreaService serviceAreaService;
