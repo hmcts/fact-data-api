@@ -260,7 +260,7 @@ public class TestingSupportService {
         setLocalAuthorities(courtId, areasOfLaw, random);
         setOpeningHours(courtId, random);
         setProfessionalInformation(courtId, random);
-        if(associateServiceAreas) {
+        if (associateServiceAreas) {
             setServiceAreas(courtId, random);
         }
         setSinglePointsOfEntry(courtId, areasOfLaw, random);
