@@ -220,9 +220,13 @@ public class TestingSupportService {
         boolean addWarningNotice,
         boolean withTranslations
     ) {
-        return createCourt(courtName, seed, serviceCentre, open, addWarningNotice, withTranslations, true);
+        return createCourt(courtName, seed, serviceCentre, open, addWarningNotice, withTranslations, true, false);
     }
 
+    // Suppressing the "too many params" warning for now as this is a test setup
+    // though it's probably a good idea to convert this to a context object if
+    // we add many more
+    @SuppressWarnings("java:S107")
     public String createCourt(
         @NonNull String courtName,
         Long seed,
@@ -230,7 +234,8 @@ public class TestingSupportService {
         boolean open,
         boolean addWarningNotice,
         boolean withTranslations,
-        boolean withEnquiriesContact
+        boolean withEnquiriesContact,
+        boolean associateServiceAreas
     ) {
         initialiseCaches();
 
@@ -255,7 +260,9 @@ public class TestingSupportService {
         setLocalAuthorities(courtId, areasOfLaw, random);
         setOpeningHours(courtId, random);
         setProfessionalInformation(courtId, random);
-        setServiceAreas(courtId, random);
+        if(associateServiceAreas) {
+            setServiceAreas(courtId, random);
+        }
         setSinglePointsOfEntry(courtId, areasOfLaw, random);
         setTranslations(courtId, random, withTranslations);
         setPhotos(courtId, courtName);
