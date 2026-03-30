@@ -315,6 +315,38 @@ class TestingSupportServiceTest {
         verify(courtContactDetailsService, never()).createContactDetail(any(), any());
     }
 
+    @Test
+    void createCourtWithoutAssociateServiceAreasSkipsServiceAreaAssociation() {
+        String courtName = "Test Court";
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court c = Court.class.cast(inv.getArguments()[0]);
+            c.setSlug("test-court");
+            return c;
+        });
+
+        String result = testingSupportService.createCourt(courtName, null, false, false, true, true, false, false);
+
+        assertNotNull(result);
+        assertEquals("test-court", result);
+        verify(courtServiceAreasRepository, never()).save(any());
+    }
+
+    @Test
+    void createCourtWithAssociateServiceAreasPerformsServiceAreaAssociation() {
+        String courtName = "Test Court";
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court c = Court.class.cast(inv.getArguments()[0]);
+            c.setSlug("test-court");
+            return c;
+        });
+
+        String result = testingSupportService.createCourt(courtName, null, false, false, true, true, false, true);
+
+        assertNotNull(result);
+        assertEquals("test-court", result);
+        verify(courtServiceAreasRepository, times(1)).save(any());
+    }
+
 
     @Captor
     private ArgumentCaptor<List<AreaOfLawSelectionDto>> aolSelectionDtoArgumentCaptor;
