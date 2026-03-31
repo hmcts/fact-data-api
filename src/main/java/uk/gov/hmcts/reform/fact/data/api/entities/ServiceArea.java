@@ -100,6 +100,9 @@ public class ServiceArea {
     @Transient
     private boolean hasNational;
 
+    @Transient
+    private boolean hasRegional;
+
     // jackson will ignore the above transient fields, so we need to
     // explicitly add them as properties for the API response
 
@@ -113,5 +116,11 @@ public class ServiceArea {
     @JsonProperty("hasNational")
     public boolean hasNational() {
         return hasNational;
+    }
+
+    @Schema(description = "Has associated court with REGIONAL catchment")
+    @JsonProperty("hasRegional")
+    public boolean hasRegional() {
+        return hasRegional;
     }
 }
