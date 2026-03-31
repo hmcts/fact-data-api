@@ -61,12 +61,13 @@ class TestingSupportControllerTest {
             anyBoolean(),
             anyBoolean(),
             anyBoolean(),
+            anyBoolean(),
             anyBoolean()
         ))
             .thenReturn("test-court");
 
-        testingSupportController.createSampleCourt("Test Court", 1L, false, true, false, false, false);
+        testingSupportController.createSampleCourt("Test Court", 1L, false, true, false, false, false, false);
 
-        verify(testingSupportService).createCourt("Test Court", 1L, false, true, false, false, false);
+        verify(testingSupportService).createCourt("Test Court", 1L, false, true, false, false, false, false);
     }
 }

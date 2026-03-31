@@ -222,7 +222,6 @@ class TestingSupportServiceTest {
         verify(courtOpeningHoursService, times(1)).setCounterServiceOpeningHours(any(), any());
         verify(courtFacilitiesService, times(1)).setFacilities(any(), any());
         verify(courtProfessionalInformationService, times(1)).setProfessionalInformation(any(), any());
-        verify(courtServiceAreasRepository, times(1)).save(any());
         verify(courtPhotoService, times(1)).setCourtPhoto(any(), any());
 
         // things that are called at least once
@@ -230,6 +229,7 @@ class TestingSupportServiceTest {
         verify(courtAddressService, atLeast(1)).createAddress(any(), any());
 
         // things that are optional, but have a ceiling
+        verify(courtServiceAreasRepository, atMost(1)).save(any());
         verify(courtLocalAuthoritiesService, atMost(1)).setCourtLocalAuthorities(any(), any());
         verify(courtTranslationService, times(1)).setTranslation(any(), any());
         verify(courtPhotoRepository, atMost(1)).save(any());
@@ -308,11 +308,43 @@ class TestingSupportServiceTest {
             return c;
         });
 
-        String result = testingSupportService.createCourt(courtName, null, false, false, true, true, false);
+        String result = testingSupportService.createCourt(courtName, null, false, false, true, true, false, false);
 
         assertNotNull(result);
         assertEquals("test-court", result);
         verify(courtContactDetailsService, never()).createContactDetail(any(), any());
+    }
+
+    @Test
+    void createCourtWithoutAssociateServiceAreasSkipsServiceAreaAssociation() {
+        String courtName = "Test Court";
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court c = Court.class.cast(inv.getArguments()[0]);
+            c.setSlug("test-court");
+            return c;
+        });
+
+        String result = testingSupportService.createCourt(courtName, null, false, false, true, true, false, false);
+
+        assertNotNull(result);
+        assertEquals("test-court", result);
+        verify(courtServiceAreasRepository, never()).save(any());
+    }
+
+    @Test
+    void createCourtWithAssociateServiceAreasPerformsServiceAreaAssociation() {
+        String courtName = "Test Court";
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court c = Court.class.cast(inv.getArguments()[0]);
+            c.setSlug("test-court");
+            return c;
+        });
+
+        String result = testingSupportService.createCourt(courtName, null, false, false, true, true, false, true);
+
+        assertNotNull(result);
+        assertEquals("test-court", result);
+        verify(courtServiceAreasRepository, times(1)).save(any());
     }
 
 
@@ -364,10 +396,6 @@ class TestingSupportServiceTest {
             ArgumentCaptor.forClass(CourtProfessionalInformationDetailsDto.class);
         verify(courtProfessionalInformationService, times(1))
             .setProfessionalInformation(eq(courtId), courtProfessionalInformationArgumentCaptor.capture());
-        ArgumentCaptor<CourtServiceAreas> courtServiceAreasArgumentCaptor =
-            ArgumentCaptor.forClass(CourtServiceAreas.class);
-        verify(courtServiceAreasRepository, times(1))
-            .save(courtServiceAreasArgumentCaptor.capture());
 
         // can't check court photo
 
@@ -390,6 +418,10 @@ class TestingSupportServiceTest {
         verify(courtPhotoRepository, atMost(1)).save(courtPhotoArgumentCaptor.capture());
         verify(courtSinglePointsOfEntryService, atMost(1))
             .updateCourtSinglePointsOfEntry(eq(courtId), aolSelectionDtoArgumentCaptor.capture());
+        ArgumentCaptor<CourtServiceAreas> courtServiceAreasArgumentCaptor =
+            ArgumentCaptor.forClass(CourtServiceAreas.class);
+        verify(courtServiceAreasRepository, atMost(1))
+            .save(courtServiceAreasArgumentCaptor.capture());
 
         // second call with same seed should generate same results
         testingSupportService.createCourt(courtName, seed, false, false, true);
@@ -409,8 +441,6 @@ class TestingSupportServiceTest {
             .setFacilities(courtId, courtFacilitiesArgumentCaptor.getValue());
         verify(courtProfessionalInformationService, times(2))
             .setProfessionalInformation(courtId, courtProfessionalInformationArgumentCaptor.getValue());
-        verify(courtServiceAreasRepository, times(2))
-            .save(courtServiceAreasArgumentCaptor.getValue());
 
         // optional or multiple calls
         courtAddressArgumentCaptor.getAllValues().forEach(v ->
@@ -446,5 +476,9 @@ class TestingSupportServiceTest {
                                                                      times(2)
                                                                  ).updateCourtSinglePointsOfEntry(courtId, v)
         );
+        courtServiceAreasArgumentCaptor.getAllValues().forEach(v -> verify(
+            courtServiceAreasRepository,
+            times(2)
+        ).save(v));
     }
 }
