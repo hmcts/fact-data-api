@@ -52,4 +52,7 @@ public class Service {
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "uuid[]")
     private List<UUID> serviceAreas;
+
+    @Schema(description = "Sort order priority")
+    private Integer sortOrder;
 }
