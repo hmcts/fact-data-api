@@ -41,9 +41,10 @@ class SearchServiceControllerTest {
     void getServicesReturnsOk() throws Exception {
         Service service = new Service();
         service.setName("Civil");
+        service.setSortOrder(1);
         List<Service> services = List.of(service);
 
-        when(serviceRepository.findAll()).thenReturn(services);
+        when(serviceRepository.findAllByOrderBySortOrderAsc()).thenReturn(services);
 
         mockMvc.perform(get("/search/services/v1"))
             .andExpect(status().isOk())

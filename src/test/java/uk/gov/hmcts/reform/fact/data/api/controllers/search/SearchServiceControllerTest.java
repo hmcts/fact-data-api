@@ -36,13 +36,13 @@ class SearchServiceControllerTest {
         service.setName("Money Claims");
         List<Service> services = List.of(service);
 
-        when(serviceRepository.findAll()).thenReturn(services);
+        when(serviceRepository.findAllByOrderBySortOrderAsc()).thenReturn(services);
 
         ResponseEntity<List<Service>> response = controller.getServices();
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo(services);
-        verify(serviceRepository).findAll();
+        verify(serviceRepository).findAllByOrderBySortOrderAsc();
     }
 
     @Test
