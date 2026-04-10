@@ -215,7 +215,7 @@ dependencies {
   smokeTestImplementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.7'
   functionalTestImplementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.21.2'
   functionalTestImplementation group: 'io.qameta.allure', name: 'allure-junit5', version: '2.34.0'
-  functionalTestImplementation group: 'io.qameta.allure', name: 'allure-rest-assured', version: '2.33.0'
+  functionalTestImplementation group: 'io.qameta.allure', name: 'allure-rest-assured', version: '2.34.0'
 }
 
 tasks.named('test') {
