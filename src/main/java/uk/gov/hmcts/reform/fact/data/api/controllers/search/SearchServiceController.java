@@ -42,7 +42,7 @@ public class SearchServiceController {
             description = "Successfully retrieved service areas based on provided name.")
     })
     public ResponseEntity<List<Service>> getServices() {
-        return ResponseEntity.ok(serviceRepository.findAll());
+        return ResponseEntity.ok(serviceRepository.findAllByOrderBySortOrderAsc());
     }
 
     @GetMapping("/v1/{serviceName}/service-areas")
