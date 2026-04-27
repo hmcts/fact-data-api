@@ -8,14 +8,12 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCodes;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDxCode;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFax;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtPostcode;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFacilitiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPostcodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 
@@ -52,8 +50,6 @@ class CourtLastUpdatedTimeTest {
     @Autowired
     CourtCodesRepository courtCodesRepository;
 
-    @Autowired
-    CourtPostcodeRepository courtPostcodeRepository;
 
     @Autowired
     CourtFaxRepository courtFaxRepository;
@@ -82,7 +78,6 @@ class CourtLastUpdatedTimeTest {
         courtFacilitiesRepository.deleteAll();
         courtDxCodeRepository.deleteAll();
         courtFaxRepository.deleteAll();
-        courtPostcodeRepository.deleteAll();
         courtCodesRepository.deleteAll();
         regionRepository.deleteAll();
         courtRepository.deleteAll();
@@ -96,12 +91,6 @@ class CourtLastUpdatedTimeTest {
         Thread.sleep(1);
         CourtCodes codes = CourtCodes.builder().courtId(courts.court.getId()).build();
         courtCodesRepository.save(codes);
-        refreshCourtsAndCheckTimestamps();
-
-        // as above for court postcodes
-        Thread.sleep(1);
-        CourtPostcode postcode = CourtPostcode.builder().courtId(courts.court.getId()).postcode("WR9 8JS").build();
-        courtPostcodeRepository.save(postcode);
         refreshCourtsAndCheckTimestamps();
     }
 
