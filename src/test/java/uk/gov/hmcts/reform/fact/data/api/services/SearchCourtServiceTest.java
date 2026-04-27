@@ -27,7 +27,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -102,7 +104,7 @@ class SearchCourtServiceTest {
     }
 
     @Test
-    void searchWithServiceAreaShouldDelegateToSpoeForChildcare() {
+    void searchWithServiceAreaShouldDelegateToSpoeForChildcareWhenActionIsDocuments() {
         OsLocationData locationData = OsLocationData.builder()
             .latitude(51.5)
             .longitude(-0.1)
@@ -126,6 +128,45 @@ class SearchCourtServiceTest {
         assertThat(response).isEqualTo(results);
         verify(courtSinglePointOfEntryService).getCourtsSpoe(51.5, -0.1, "Children");
         verify(searchExecuter, never()).executeSearchStrategy(any(), any(), any(), any(), anyInt());
+    }
+
+    @Test
+    void searchWithServiceAreaShouldNotDelegateToSpoeForChildcareWhenActionIsNearest() {
+        OsLocationData locationData = OsLocationData.builder()
+            .latitude(51.5)
+            .longitude(-0.1)
+            .authorityName("Authority")
+            .postcode("SW1A 1")
+            .build();
+        ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
+        List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
+
+        when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+        when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
+        when(searchExecuter.executeSearchStrategy(
+            locationData,
+            area,
+            SearchStrategy.DEFAULT_AOL_DISTANCE,
+            SearchAction.NEAREST,
+            5
+        )).thenReturn(results);
+
+        List<CourtWithDistance> response = searchCourtService.searchWithServiceArea(
+            "SW1A 1AA",
+            CHILDCARE_SERVICE_AREA,
+            SearchAction.NEAREST,
+            5
+        );
+
+        assertThat(response).isEqualTo(results);
+        verify(courtSinglePointOfEntryService, never()).getCourtsSpoe(anyDouble(), anyDouble(), anyString());
+        verify(searchExecuter).executeSearchStrategy(
+            locationData,
+            area,
+            SearchStrategy.DEFAULT_AOL_DISTANCE,
+            SearchAction.NEAREST,
+            5
+        );
     }
 
     @Test

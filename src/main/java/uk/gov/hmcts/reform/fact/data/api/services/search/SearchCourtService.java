@@ -104,7 +104,7 @@ public class SearchCourtService {
         OsLocationData osLocationData = osService.getOsLonLatDistrictByPartial(postcode);
         ServiceArea serviceAreaFound = serviceAreaService.getServiceAreaByName(serviceArea);
 
-        if (serviceArea.equalsIgnoreCase(CHILDCARE_SERVICE_AREA)) {
+        if (serviceArea.equalsIgnoreCase(CHILDCARE_SERVICE_AREA) && action != NEAREST) {
             return courtSinglePointOfEntryService
                 .getCourtsSpoe(osLocationData.getLatitude(), osLocationData.getLongitude(), CHILDCARE_AOL);
         }
