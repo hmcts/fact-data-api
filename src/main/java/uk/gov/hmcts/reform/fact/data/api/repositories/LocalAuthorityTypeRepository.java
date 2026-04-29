@@ -11,8 +11,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LocalAuthorityTypeRepository extends JpaRepository<LocalAuthorityType, UUID> {
-    
-    Optional<LocalAuthorityType> findByName(String name);
+
+    Optional<LocalAuthorityType> findByNameIgnoreCase(String name);
 
     /**
      * Finds the parent or child authority by custodian code.

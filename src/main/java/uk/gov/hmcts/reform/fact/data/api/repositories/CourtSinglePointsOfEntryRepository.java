@@ -66,5 +66,61 @@ public interface CourtSinglePointsOfEntryRepository extends JpaRepository<CourtS
         @Param("areaOfLawName") String areaOfLawName
     );
 
+    /**
+     * Finds the nearest SPOE court that services the given local authority for the Children area of law.
+     *
+     * @param lat the latitude to search from
+     * @param lon the longitude to search from
+     * @param localAuthorityId the Local Authority ID to filter by
+     * @return the nearest court with distance data
+     */
+    @Query(
+        value = """
+            WITH children_aol AS (
+              SELECT id
+              FROM area_of_law_types
+              WHERE name = :areaOfLawName
+              LIMIT 1
+            ),
+            spoe_courts AS (
+              SELECT DISTINCT ON (c.id)
+                c.id   AS courtId,
+                c.name AS courtName,
+                c.slug AS courtSlug,
+                (
+                  point(CAST(ca.lon AS float8), CAST(ca.lat AS float8))
+                  <@>
+                  point(CAST(:lon AS float8), CAST(:lat AS float8))
+                ) AS distance
+              FROM court c
+              JOIN court_single_points_of_entry spoe
+                ON spoe.court_id = c.id
+              JOIN children_aol aol
+                ON aol.id = ANY(spoe.areas_of_law)
+              JOIN court_address ca
+                ON ca.court_id = c.id
+              JOIN court_local_authorities cla
+                ON cla.court_id = c.id AND cla.area_of_law_id = aol.id
+              WHERE c.open = true
+                AND ca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
+                AND ca.lat IS NOT NULL
+                AND ca.lon IS NOT NULL
+                AND CAST(:localAuthorityId AS uuid) = ANY(cla.local_authority_ids)
+              ORDER BY c.id, distance
+            )
+            SELECT courtId, courtName, courtSlug, distance
+            FROM spoe_courts
+            ORDER BY distance
+            LIMIT 1
+            """,
+        nativeQuery = true
+    )
+    List<CourtWithDistance> findNearestCourtBySpoeAndChildrenAreaOfLawAndLocalAuthorityId(
+        @Param("lat") double lat,
+        @Param("lon") double lon,
+        @Param("areaOfLawName") String areaOfLawName,
+        @Param("localAuthorityId") UUID localAuthorityId
+    );
+
     Optional<CourtSinglePointsOfEntry> findByCourtId(UUID courtId);
 }
