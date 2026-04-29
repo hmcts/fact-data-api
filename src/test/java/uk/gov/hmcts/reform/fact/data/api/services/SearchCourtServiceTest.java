@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -7,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
+import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
@@ -18,10 +21,13 @@ import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
+import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchExecuter;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +63,9 @@ class SearchCourtServiceTest {
 
     @Mock
     private SearchExecuter searchExecuter;
+
+    @Mock
+    LocalAuthorityTypeRepository localAuthorityTypeRepository;
 
     @InjectMocks
     private SearchCourtService searchCourtService;
@@ -101,72 +110,6 @@ class SearchCourtServiceTest {
         assertThat(response).isEqualTo(results);
         verify(osService).getOsAddressByFullPostcode("SW1A 1AA");
         verify(courtAddressService).findCourtWithDistanceByOsData(51.5, -0.1, 10);
-    }
-
-    @Test
-    void searchWithServiceAreaShouldDelegateToSpoeForChildcareWhenActionIsDocuments() {
-        OsLocationData locationData = OsLocationData.builder()
-            .latitude(51.5)
-            .longitude(-0.1)
-            .authorityName("Authority")
-            .postcode("SW1A 1")
-            .build();
-        ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
-        List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
-
-        when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
-        when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
-        when(courtSinglePointOfEntryService.getCourtsSpoe(51.5, -0.1, "Children")).thenReturn(results);
-
-        List<CourtWithDistance> response = searchCourtService.searchWithServiceArea(
-            "SW1A 1AA",
-            CHILDCARE_SERVICE_AREA,
-            SearchAction.DOCUMENTS,
-            5
-        );
-
-        assertThat(response).isEqualTo(results);
-        verify(courtSinglePointOfEntryService).getCourtsSpoe(51.5, -0.1, "Children");
-        verify(searchExecuter, never()).executeSearchStrategy(any(), any(), any(), any(), anyInt());
-    }
-
-    @Test
-    void searchWithServiceAreaShouldNotDelegateToSpoeForChildcareWhenActionIsNearest() {
-        OsLocationData locationData = OsLocationData.builder()
-            .latitude(51.5)
-            .longitude(-0.1)
-            .authorityName("Authority")
-            .postcode("SW1A 1")
-            .build();
-        ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
-        List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
-
-        when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
-        when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
-        when(searchExecuter.executeSearchStrategy(
-            locationData,
-            area,
-            SearchStrategy.DEFAULT_AOL_DISTANCE,
-            SearchAction.NEAREST,
-            5
-        )).thenReturn(results);
-
-        List<CourtWithDistance> response = searchCourtService.searchWithServiceArea(
-            "SW1A 1AA",
-            CHILDCARE_SERVICE_AREA,
-            SearchAction.NEAREST,
-            5
-        );
-
-        assertThat(response).isEqualTo(results);
-        verify(courtSinglePointOfEntryService, never()).getCourtsSpoe(anyDouble(), anyDouble(), anyString());
-        verify(searchExecuter).executeSearchStrategy(
-            locationData,
-            area,
-            SearchStrategy.DEFAULT_AOL_DISTANCE,
-            SearchAction.NEAREST,
-            5
-        );
     }
 
     @Test
@@ -283,6 +226,151 @@ class SearchCourtServiceTest {
         );
 
         assertThat(strategy).isEqualTo(SearchStrategy.FAMILY_NON_REGIONAL);
+    }
+
+    @Nested
+    @DisplayName("SPoE Service Area search tests")
+    class SpoeTests {
+        @Test
+        void shouldDelegateToSpoeForChildcareWhenActionIsDocuments() {
+            OsLocationData locationData = OsLocationData.builder()
+                .latitude(51.5)
+                .longitude(-0.1)
+                .authorityName("Authority")
+                .postcode("SW1A 1")
+                .build();
+            ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
+            LocalAuthorityType localAuthorityType = LocalAuthorityType.builder()
+                .id(UUID.randomUUID())
+                .name("Authority")
+                .build();
+            List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
+
+            when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+            when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
+            when(localAuthorityTypeRepository.findByNameIgnoreCase(localAuthorityType.getName()))
+                .thenReturn(Optional.of(localAuthorityType));
+            when(courtSinglePointOfEntryService.getCourtsSpoe(51.5, -0.1, "Children", localAuthorityType.getId()))
+                .thenReturn(results);
+
+            List<CourtWithDistance> response = searchCourtService.searchWithServiceArea(
+                "SW1A 1AA",
+                CHILDCARE_SERVICE_AREA,
+                SearchAction.DOCUMENTS,
+                5
+            );
+
+            assertThat(response).isEqualTo(results);
+            verify(courtSinglePointOfEntryService).getCourtsSpoe(51.5, -0.1, "Children", localAuthorityType.getId());
+            verify(searchExecuter, never()).executeSearchStrategy(any(), any(), any(), any(), anyInt());
+        }
+
+        @Test
+        void shouldFallbackToClosestSpoeForChildcareWhenActionIsDocumentsAndNoResultForLocalAuthority() {
+            OsLocationData locationData = OsLocationData.builder()
+                .latitude(51.5)
+                .longitude(-0.1)
+                .authorityName("Authority")
+                .postcode("SW1A 1")
+                .build();
+            ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
+            LocalAuthorityType localAuthorityType = LocalAuthorityType.builder()
+                .id(UUID.randomUUID())
+                .name("Authority")
+                .build();
+            List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
+
+            when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+            when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
+            when(localAuthorityTypeRepository.findByNameIgnoreCase(localAuthorityType.getName()))
+                .thenReturn(Optional.of(localAuthorityType));
+            when(courtSinglePointOfEntryService.getCourtsSpoe(51.5, -0.1, "Children", localAuthorityType.getId()))
+                .thenReturn(Collections.emptyList());
+            when(courtSinglePointOfEntryService.getCourtsSpoe(51.5, -0.1, "Children"))
+                .thenReturn(results);
+
+            List<CourtWithDistance> response = searchCourtService.searchWithServiceArea(
+                "SW1A 1AA",
+                CHILDCARE_SERVICE_AREA,
+                SearchAction.DOCUMENTS,
+                5
+            );
+
+            assertThat(response).isEqualTo(results);
+            verify(courtSinglePointOfEntryService).getCourtsSpoe(51.5, -0.1, "Children");
+            verify(courtSinglePointOfEntryService).getCourtsSpoe(51.5, -0.1, "Children", localAuthorityType.getId());
+            verify(searchExecuter, never()).executeSearchStrategy(any(), any(), any(), any(), anyInt());
+        }
+
+        @Test
+        void shouldShortcutToClosestSpoeForChildcareWhenLocalAuthorityIsMissing() {
+            OsLocationData locationData = OsLocationData.builder()
+                .latitude(51.5)
+                .longitude(-0.1)
+                .authorityName("Authority")
+                .postcode("SW1A 1")
+                .build();
+            ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
+            List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
+
+            when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+            when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
+            when(localAuthorityTypeRepository.findByNameIgnoreCase(anyString())).thenReturn(Optional.empty());
+            when(courtSinglePointOfEntryService.getCourtsSpoe(51.5, -0.1, "Children"))
+                .thenReturn(results);
+
+            List<CourtWithDistance> response = searchCourtService.searchWithServiceArea(
+                "SW1A 1AA",
+                CHILDCARE_SERVICE_AREA,
+                SearchAction.DOCUMENTS,
+                5
+            );
+
+            assertThat(response).isEqualTo(results);
+            verify(courtSinglePointOfEntryService).getCourtsSpoe(51.5, -0.1, "Children");
+            verify(courtSinglePointOfEntryService, never())
+                .getCourtsSpoe(anyDouble(), anyDouble(), anyString(), any(UUID.class));
+            verify(searchExecuter, never()).executeSearchStrategy(any(), any(), any(), any(), anyInt());
+        }
+
+        @Test
+        void shouldNotDelegateToSpoeForChildcareWhenActionIsNearest() {
+            OsLocationData locationData = OsLocationData.builder()
+                .latitude(51.5)
+                .longitude(-0.1)
+                .authorityName("Authority")
+                .postcode("SW1A 1")
+                .build();
+            ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
+            List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
+
+            when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+            when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
+            when(searchExecuter.executeSearchStrategy(
+                locationData,
+                area,
+                SearchStrategy.DEFAULT_AOL_DISTANCE,
+                SearchAction.NEAREST,
+                5
+            )).thenReturn(results);
+
+            List<CourtWithDistance> response = searchCourtService.searchWithServiceArea(
+                "SW1A 1AA",
+                CHILDCARE_SERVICE_AREA,
+                SearchAction.NEAREST,
+                5
+            );
+
+            assertThat(response).isEqualTo(results);
+            verify(courtSinglePointOfEntryService, never()).getCourtsSpoe(anyDouble(), anyDouble(), anyString());
+            verify(searchExecuter).executeSearchStrategy(
+                locationData,
+                area,
+                SearchStrategy.DEFAULT_AOL_DISTANCE,
+                SearchAction.NEAREST,
+                5
+            );
+        }
     }
 
     private OsData osDataWithLatLon(double lat, double lon) {

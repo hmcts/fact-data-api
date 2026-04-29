@@ -3,19 +3,23 @@ package uk.gov.hmcts.reform.fact.data.api.services.search;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
+import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
+import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtAddressService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtServiceAreaService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtSinglePointOfEntryService;
 import uk.gov.hmcts.reform.fact.data.api.services.OsService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceAreaService;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod.LOCAL_AUTHORITY;
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType.REGIONAL;
@@ -35,6 +39,7 @@ public class SearchCourtService {
     private final CourtServiceAreaService courtServiceAreaService;
     private final CourtAddressService courtAddressService;
     private final SearchExecuter searchExecuter;
+    private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private static final String CHILDCARE_SERVICE_AREA = "Childcare arrangements if you separate from your partner";
     private static final String CHILDCARE_AOL = "Children";
 
@@ -43,13 +48,15 @@ public class SearchCourtService {
                               CourtSinglePointOfEntryService courtSinglePointOfEntryService,
                               CourtServiceAreaService courtServiceAreaService,
                               CourtAddressService courtAddressService,
-                              SearchExecuter searchExecuter) {
+                              SearchExecuter searchExecuter,
+                              LocalAuthorityTypeRepository localAuthorityTypeRepository) {
         this.osService = osService;
         this.serviceAreaService = serviceAreaService;
         this.courtSinglePointOfEntryService = courtSinglePointOfEntryService;
         this.courtServiceAreaService = courtServiceAreaService;
         this.courtAddressService = courtAddressService;
         this.searchExecuter = searchExecuter;
+        this.localAuthorityTypeRepository = localAuthorityTypeRepository;
     }
 
     /**
@@ -105,8 +112,26 @@ public class SearchCourtService {
         ServiceArea serviceAreaFound = serviceAreaService.getServiceAreaByName(serviceArea);
 
         if (serviceArea.equalsIgnoreCase(CHILDCARE_SERVICE_AREA) && action != NEAREST) {
-            return courtSinglePointOfEntryService
-                .getCourtsSpoe(osLocationData.getLatitude(), osLocationData.getLongitude(), CHILDCARE_AOL);
+            List<CourtWithDistance> spoeResult = Collections.emptyList();
+            // initially search using the local authority information as the ideal result
+            // is the nearest SPoE court that services the local authority
+            Optional<LocalAuthorityType> lat =
+                localAuthorityTypeRepository.findByNameIgnoreCase(osLocationData.getAuthorityName());
+
+            if (lat.isPresent()) {
+                spoeResult = courtSinglePointOfEntryService
+                    .getCourtsSpoe(osLocationData.getLatitude(), osLocationData.getLongitude(), CHILDCARE_AOL,
+                                   lat.get().getId());
+            }
+
+            if (spoeResult.isEmpty()) {
+                // if the local authority information was not present, or there were no matching courts found that
+                // service it, fall back to finding the nearest SPoE court regarldess of authority.
+                spoeResult = courtSinglePointOfEntryService
+                    .getCourtsSpoe(osLocationData.getLatitude(), osLocationData.getLongitude(), CHILDCARE_AOL);
+            }
+
+            return spoeResult;
         }
 
         return searchExecuter.executeSearchStrategy(
