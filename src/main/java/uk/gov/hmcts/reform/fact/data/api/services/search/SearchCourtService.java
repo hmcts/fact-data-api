@@ -17,6 +17,7 @@ import uk.gov.hmcts.reform.fact.data.api.services.CourtSinglePointOfEntryService
 import uk.gov.hmcts.reform.fact.data.api.services.OsService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceAreaService;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -111,7 +112,7 @@ public class SearchCourtService {
         ServiceArea serviceAreaFound = serviceAreaService.getServiceAreaByName(serviceArea);
 
         if (serviceArea.equalsIgnoreCase(CHILDCARE_SERVICE_AREA) && action != NEAREST) {
-            List<CourtWithDistance> spoeResult = null;
+            List<CourtWithDistance> spoeResult = Collections.emptyList();
             // initially search using the local authority information as the ideal result
             // is the nearest SPoE court that services the local authority
             Optional<LocalAuthorityType> lat =
