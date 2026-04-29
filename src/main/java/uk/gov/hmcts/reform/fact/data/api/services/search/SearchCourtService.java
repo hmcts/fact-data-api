@@ -124,7 +124,7 @@ public class SearchCourtService {
                                    lat.get().getId());
             }
 
-            if (spoeResult == null || spoeResult.isEmpty()) {
+            if (spoeResult.isEmpty()) {
                 // if the local authority information was not present, or there were no matching courts found that
                 // service it, fall back to finding the nearest SPoE court regarldess of authority.
                 spoeResult = courtSinglePointOfEntryService
