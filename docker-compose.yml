@@ -18,7 +18,7 @@ services:
       - TESTING_SUPPORT_ENABLE_API=${TESTING_SUPPORT_ENABLE_API}
       - OS_KEY=${OS_KEY}
   fact-database:
-    image: hmctsprod.azurecr.io/imported/postgres:16-alpine
+    image: hmctsprod.azurecr.io/imported/postgres:17-alpine
     environment:
       POSTGRES_DB: fact
       POSTGRES_USER: fact
