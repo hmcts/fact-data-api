@@ -1,8 +1,13 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
+import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.services.RegionService;
 import uk.gov.hmcts.reform.fact.data.api.services.TestingSupportService;
+
+import java.util.List;
+import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class TestingSupportController {
 
     private final CourtService courtService;
+    private final RegionService regionService;
     private final TestingSupportService testingSupportService;
 
     @DeleteMapping("/courts/name-prefix/{courtNamePrefix}")
@@ -53,6 +59,18 @@ public class TestingSupportController {
                       + " court(s) with prefix " + courtNamePrefix + " deleted successfully");
     }
 
+    @GetMapping("/regions")
+    @Operation(
+        summary = "Get regions for testing support",
+        description = "Fetch all regions and their IDs for use with testing support endpoints."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved regions"),
+    })
+    public ResponseEntity<List<Region>> getRegions() {
+        return ResponseEntity.ok(regionService.getAllRegions());
+    }
+
     @GetMapping("/courts")
     @Operation(
         summary = "Create sample court",
@@ -63,6 +81,7 @@ public class TestingSupportController {
     })
     public ResponseEntity<CourtDetails> createSampleCourt(
         @RequestParam(required = true) String courtName,
+        @RequestParam(required = false) UUID regionId,
         @RequestParam(required = false) Long seed,
         @RequestParam(required = false, defaultValue = "false") boolean serviceCenter,
         @RequestParam(required = false, defaultValue = "true") boolean open,
@@ -72,6 +91,7 @@ public class TestingSupportController {
         @RequestParam(required = false, defaultValue = "false") boolean withServiceAreaAssociation) {
         String courtSlug = testingSupportService.createCourt(
             courtName,
+            regionId,
             seed,
             serviceCenter,
             open,

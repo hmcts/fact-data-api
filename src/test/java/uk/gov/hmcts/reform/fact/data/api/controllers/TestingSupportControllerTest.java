@@ -7,14 +7,20 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.services.RegionService;
 import uk.gov.hmcts.reform.fact.data.api.services.TestingSupportService;
+
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -26,6 +32,8 @@ class TestingSupportControllerTest {
 
     @Mock
     private CourtService courtService;
+    @Mock
+    private RegionService regionService;
     @Mock
     private TestingSupportService testingSupportService;
 
@@ -53,9 +61,23 @@ class TestingSupportControllerTest {
     }
 
     @Test
+    void getRegionsReturns200() {
+        UUID regionId = UUID.randomUUID();
+        List<Region> regions = List.of(Region.builder().id(regionId).name("London").build());
+        when(regionService.getAllRegions()).thenReturn(regions);
+
+        ResponseEntity<List<Region>> response = testingSupportController.getRegions();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsExactlyElementsOf(regions);
+        verify(regionService).getAllRegions();
+    }
+
+    @Test
     void createSampleCourtPassesTranslationOverride() {
         when(testingSupportService.createCourt(
             anyString(),
+            eq((UUID) null),
             anyLong(),
             anyBoolean(),
             anyBoolean(),
@@ -66,8 +88,31 @@ class TestingSupportControllerTest {
         ))
             .thenReturn("test-court");
 
-        testingSupportController.createSampleCourt("Test Court", 1L, false, true, false, false, false, false);
+        testingSupportController.createSampleCourt("Test Court", null, 1L, false, true, false, false, false, false);
 
-        verify(testingSupportService).createCourt("Test Court", 1L, false, true, false, false, false, false);
+        verify(testingSupportService).createCourt("Test Court", null, 1L, false, true, false, false, false, false);
+    }
+
+    @Test
+    void createSampleCourtPassesRegionIdOverride() {
+        UUID regionId = UUID.randomUUID();
+        when(testingSupportService.createCourt(
+            anyString(),
+            eq(regionId),
+            anyLong(),
+            anyBoolean(),
+            anyBoolean(),
+            anyBoolean(),
+            anyBoolean(),
+            anyBoolean(),
+            anyBoolean()
+        ))
+            .thenReturn("test-court");
+
+        testingSupportController.createSampleCourt("Test Court", regionId, 1L, false, true, false, false, false,
+                                                   false);
+
+        verify(testingSupportService).createCourt("Test Court", regionId, 1L, false, true, false, false, false,
+                                                  false);
     }
 }
