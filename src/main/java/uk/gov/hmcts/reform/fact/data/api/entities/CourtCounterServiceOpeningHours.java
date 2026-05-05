@@ -113,7 +113,6 @@ public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
     private String appointmentContact;
 
     @Valid
-    //@Type(JsonBinaryType.class)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "opening_times_details", columnDefinition = "jsonb")
     @UniqueOpeningDays
