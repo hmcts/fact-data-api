@@ -20,6 +20,10 @@ plugins {
   id 'io.qameta.allure' version '4.0.1'
 }
 
+lombok {
+  version.set("1.18.46")
+}
+
 application {
   mainClass = 'uk.gov.hmcts.reform.fact.data.api.Application'
   group = 'uk.gov.hmcts.reform'
