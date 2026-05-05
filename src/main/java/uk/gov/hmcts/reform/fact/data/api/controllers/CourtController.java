@@ -26,8 +26,6 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -73,6 +71,22 @@ public class CourtController {
         @Parameter(description = "UUID of the court", required = true)
         @ValidUUID @PathVariable String courtId) {
         return ResponseEntity.ok(courtService.getCourtDetailsById(UUID.fromString(courtId)));
+    }
+
+    @GetMapping(value = "/{courtId}/entity/v1")
+    @Operation(
+        summary = "Get court entity by ID",
+        description = "Fetch the court entity for a given court ID."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court entity"),
+        @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
+        @ApiResponse(responseCode = "404", description = "Court not found")
+    })
+    public ResponseEntity<Court> getCourtById(
+        @Parameter(description = "UUID of the court", required = true)
+        @ValidUUID @PathVariable String courtId) {
+        return ResponseEntity.ok(courtService.getCourtById(UUID.fromString(courtId)));
     }
 
     @GetMapping(value = {"/slug/{courtSlug}/v1", "/slug/{courtSlug}.json"})
@@ -133,14 +147,18 @@ public class CourtController {
             message = "Partial court name may "
                 + "only contain letters, spaces, apostrophes, hyphens, ampersands, and parentheses"
         )
-        String partialCourtName) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        String partialCourtName,
+        @RequestParam(name = "sortBy", required = false) String sortBy,
+        @RequestParam(name = "sortOrder", required = false) String sortOrder) {
         return ResponseEntity.ok(
             courtService.getFilteredAndPaginatedCourts(
-                pageable,
+                pageNumber,
+                pageSize,
                 includeClosed,
                 regionId,
-                partialCourtName
+                partialCourtName,
+                sortBy,
+                sortOrder
             )
         );
     }

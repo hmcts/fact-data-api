@@ -8,13 +8,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import uk.gov.hmcts.reform.fact.data.api.clients.CathClient;
 import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
@@ -150,67 +153,67 @@ class CourtServiceTest {
 
     @Test
     void getFilteredAndPaginatedCourtsShouldReturnOpenCourtsWhenIncludeClosedIsFalse() {
-        final Pageable pageable = Pageable.unpaged();
         UUID regionId = UUID.randomUUID();
         Region region = new Region();
         region.setId(regionId);
         List<Region> allRegions = List.of(region);
         Court court = new Court();
         court.setName("Example Court");
+        PageRequest expectedPageable = PageRequest.of(0, 25);
 
         when(regionService.getAllRegions()).thenReturn(allRegions);
         when(courtRepository.findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
-            anyList(), anyString(), eq(pageable))
+            anyList(), anyString(), eq(expectedPageable))
         ).thenReturn(new PageImpl<>(List.of(court)));
 
         Page<Court> result =
-            courtService.getFilteredAndPaginatedCourts(pageable, false, null, "Example");
+            courtService.getFilteredAndPaginatedCourts(0, 25, false, null, "Example", null, null);
 
         assertThat(result.getContent()).hasSize(1);
         verify(courtRepository).findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
-            anyList(), eq("Example"), eq(pageable)
+            anyList(), eq("Example"), eq(expectedPageable)
         );
     }
 
     @Test
     void getFilteredAndPaginatedCourtsShouldReturnAllCourtsWhenIncludeClosedIsTrue() {
-        final Pageable pageable = Pageable.unpaged();
         UUID regionId = UUID.randomUUID();
         Region region = new Region();
         region.setId(regionId);
         List<Region> allRegions = List.of(region);
         Court court = new Court();
         court.setName("Example Court");
+        PageRequest expectedPageable = PageRequest.of(0, 25);
 
         when(regionService.getAllRegions()).thenReturn(allRegions);
         when(courtRepository.findByRegionIdInAndNameContainingIgnoreCase(
-            anyList(), anyString(), eq(pageable))
+            anyList(), anyString(), eq(expectedPageable))
         ).thenReturn(new PageImpl<>(List.of(court)));
 
         Page<Court> result =
-            courtService.getFilteredAndPaginatedCourts(pageable, true, null, "Example");
+            courtService.getFilteredAndPaginatedCourts(0, 25, true, null, "Example", null, null);
 
         assertThat(result.getContent()).hasSize(1);
         verify(courtRepository).findByRegionIdInAndNameContainingIgnoreCase(
-            anyList(), eq("Example"), eq(pageable)
+            anyList(), eq("Example"), eq(expectedPageable)
         );
     }
 
     @Test
     void getFilteredAndPaginatedCourtsShouldFilterByRegionWhenRegionIdProvided() {
-        final Pageable pageable = Pageable.unpaged();
         UUID regionId = UUID.randomUUID();
         Region region = new Region();
         region.setId(regionId);
         Court court = new Court();
+        PageRequest expectedPageable = PageRequest.of(0, 25);
 
         when(regionService.getRegionById(regionId)).thenReturn(region);
         when(courtRepository.findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
-            anyList(), anyString(), eq(pageable))
+            anyList(), anyString(), eq(expectedPageable))
         ).thenReturn(new PageImpl<>(List.of(court)));
 
         Page<Court> result =
-            courtService.getFilteredAndPaginatedCourts(pageable, null, regionId.toString(), "Partial");
+            courtService.getFilteredAndPaginatedCourts(0, 25, null, regionId.toString(), "Partial", null, null);
 
         assertThat(result.getContent()).hasSize(1);
         verify(regionService).getRegionById(regionId);
@@ -218,37 +221,86 @@ class CourtServiceTest {
 
     @Test
     void getFilteredAndPaginatedCourtsShouldDefaultNameFilterWhenPartialNameIsNull() {
-        Pageable pageable = Pageable.unpaged();
         Region region = new Region();
         region.setId(UUID.randomUUID());
+        PageRequest expectedPageable = PageRequest.of(0, 25);
 
         when(regionService.getAllRegions()).thenReturn(List.of(region));
         when(courtRepository.findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
-            anyList(), eq(""), eq(pageable))
+            anyList(), eq(""), eq(expectedPageable))
         ).thenReturn(Page.empty());
 
-        courtService.getFilteredAndPaginatedCourts(pageable, null, null, null);
+        courtService.getFilteredAndPaginatedCourts(0, 25, null, null, null, null, null);
 
         verify(courtRepository).findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
-            anyList(), eq(""), eq(pageable)
+            anyList(), eq(""), eq(expectedPageable)
         );
     }
 
     @Test
     void getFilteredAndPaginatedCourtsShouldTreatBlankRegionIdAsAllRegions() {
-        Pageable pageable = Pageable.unpaged();
         Region region = new Region();
         region.setId(UUID.randomUUID());
+        PageRequest expectedPageable = PageRequest.of(0, 25);
 
         when(regionService.getAllRegions()).thenReturn(List.of(region));
         when(courtRepository.findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
-            anyList(), anyString(), eq(pageable))
+            anyList(), anyString(), eq(expectedPageable))
         ).thenReturn(Page.empty());
 
-        courtService.getFilteredAndPaginatedCourts(pageable, null, "   ", "Name");
+        courtService.getFilteredAndPaginatedCourts(0, 25, null, "   ", "Name", null, null);
 
         verify(regionService).getAllRegions();
         verify(regionService, never()).getRegionById(any());
+    }
+
+    @Test
+    void getFilteredAndPaginatedCourtsShouldSortByNameWhenRequested() {
+        Region region = new Region();
+        region.setId(UUID.randomUUID());
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+        when(regionService.getAllRegions()).thenReturn(List.of(region));
+        when(courtRepository.findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
+            anyList(), anyString(), pageableCaptor.capture())
+        ).thenReturn(Page.empty());
+
+        courtService.getFilteredAndPaginatedCourts(0, 25, null, null, "Name", "name", "desc");
+
+        assertThat(pageableCaptor.getValue().getSort()).isEqualTo(Sort.by(
+            Sort.Order.desc("name"),
+            Sort.Order.desc("id")
+        ));
+    }
+
+    @Test
+    void getFilteredAndPaginatedCourtsShouldSortByLastUpdatedWhenRequested() {
+        Region region = new Region();
+        region.setId(UUID.randomUUID());
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+        when(regionService.getAllRegions()).thenReturn(List.of(region));
+        when(courtRepository.findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
+            anyList(), anyString(), pageableCaptor.capture())
+        ).thenReturn(Page.empty());
+
+        courtService.getFilteredAndPaginatedCourts(0, 25, null, null, "Name", "lastUpdated", null);
+
+        assertThat(pageableCaptor.getValue().getSort()).isEqualTo(Sort.by(
+            Sort.Order.asc("lastUpdatedAt"),
+            Sort.Order.asc("name"),
+            Sort.Order.asc("id")
+        ));
+    }
+
+    @Test
+    void getFilteredAndPaginatedCourtsShouldRejectSortOrderWithoutSortBy() {
+        InvalidParameterCombinationException exception = assertThrows(
+            InvalidParameterCombinationException.class,
+            () -> courtService.getFilteredAndPaginatedCourts(0, 25, null, null, "Name", null, "asc")
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("sortOrder cannot be provided without sortBy");
     }
 
     @Test

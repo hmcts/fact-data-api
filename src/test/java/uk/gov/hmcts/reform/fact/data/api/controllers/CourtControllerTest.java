@@ -7,7 +7,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -24,7 +23,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -85,6 +83,34 @@ class CourtControllerTest {
     }
 
     @Test
+    void getCourtByIdReturns200() {
+        Court court = createCourt();
+
+        when(courtService.getCourtById(COURT_ID)).thenReturn(court);
+
+        ResponseEntity<Court> response = courtController.getCourtById(COURT_ID.toString());
+
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(court);
+    }
+
+    @Test
+    void getCourtByIdThrowsNotFoundException() {
+        when(courtService.getCourtById(UNKNOWN_COURT_ID)).thenThrow(new NotFoundException("Court not found"));
+
+        assertThrows(NotFoundException.class, () ->
+            courtController.getCourtById(UNKNOWN_COURT_ID.toString())
+        );
+    }
+
+    @Test
+    void getCourtByIdThrowsIllegalArgumentExceptionForInvalidUUID() {
+        assertThrows(IllegalArgumentException.class, () ->
+            courtController.getCourtById(INVALID_UUID)
+        );
+    }
+
+    @Test
     void getCourtDetailsBySlugReturns200() {
         CourtDetails courtDetails = createCourtDetails();
 
@@ -113,10 +139,13 @@ class CourtControllerTest {
         Page<Court> courtPage = new PageImpl<>(List.of(court));
 
         when(courtService.getFilteredAndPaginatedCourts(
-            any(Pageable.class),
+            eq(PAGE_NUMBER),
+            eq(PAGE_SIZE),
             eq(INCLUDE_CLOSED),
             eq(REGION_ID),
-            eq(PARTIAL_COURT_NAME)
+            eq(PARTIAL_COURT_NAME),
+            eq(null),
+            eq(null)
         )).thenReturn(courtPage);
 
         ResponseEntity<Page<Court>> response = courtController.getFilteredAndPaginatedCourts(
@@ -124,11 +153,39 @@ class CourtControllerTest {
             PAGE_SIZE,
             INCLUDE_CLOSED,
             REGION_ID,
-            PARTIAL_COURT_NAME
+            PARTIAL_COURT_NAME,
+            null,
+            null
         );
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(courtPage);
+    }
+
+    @Test
+    void getFilteredAndPaginatedCourtsPassesSortingArgumentsToService() {
+        Court court = createCourt();
+        Page<Court> courtPage = new PageImpl<>(List.of(court));
+
+        when(courtService.getFilteredAndPaginatedCourts(
+            eq(PAGE_NUMBER),
+            eq(PAGE_SIZE),
+            eq(INCLUDE_CLOSED),
+            eq(REGION_ID),
+            eq(PARTIAL_COURT_NAME),
+            eq("name"),
+            eq("desc")
+        )).thenReturn(courtPage);
+
+        courtController.getFilteredAndPaginatedCourts(
+            PAGE_NUMBER,
+            PAGE_SIZE,
+            INCLUDE_CLOSED,
+            REGION_ID,
+            PARTIAL_COURT_NAME,
+            "name",
+            "desc"
+        );
     }
 
     @Test
