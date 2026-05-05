@@ -209,7 +209,7 @@ public class TestingSupportService {
         boolean open,
         boolean addWarningNotice
     ) {
-        return createCourt(courtName, seed, serviceCentre, open, addWarningNotice, true);
+        return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, true, true, false);
     }
 
     public String createCourt(
@@ -220,7 +220,8 @@ public class TestingSupportService {
         boolean addWarningNotice,
         boolean withTranslations
     ) {
-        return createCourt(courtName, seed, serviceCentre, open, addWarningNotice, withTranslations, true, false);
+        return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, withTranslations, true,
+                           false);
     }
 
     // Suppressing the "too many params" warning for now as this is a test setup
@@ -237,11 +238,30 @@ public class TestingSupportService {
         boolean withEnquiriesContact,
         boolean associateServiceAreas
     ) {
+        return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, withTranslations,
+                           withEnquiriesContact, associateServiceAreas);
+    }
+
+    // Suppressing the "too many params" warning for now as this is a test setup
+    // though it's probably a good idea to convert this to a context object if
+    // we add many more
+    @SuppressWarnings("java:S107")
+    public String createCourt(
+        @NonNull String courtName,
+        UUID regionId,
+        Long seed,
+        boolean serviceCentre,
+        boolean open,
+        boolean addWarningNotice,
+        boolean withTranslations,
+        boolean withEnquiriesContact,
+        boolean associateServiceAreas
+    ) {
         initialiseCaches();
 
         Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
 
-        Court court = createCourt(courtName, serviceCentre, addWarningNotice, random);
+        Court court = createCourt(courtName, regionId, serviceCentre, addWarningNotice, random);
         UUID courtId = court.getId();
         List<AreaOfLawType> areasOfLaw = setAreasOfLaw(courtId, random);
         List<CourtType> courtTypes = COURT_TYPES.stream().filter(l -> random.nextBoolean()).toList();
@@ -271,11 +291,15 @@ public class TestingSupportService {
         return court.getSlug();
     }
 
-    private Court createCourt(String name, boolean serviceCenter, boolean addWarningNotice, Random random) {
+    private Court createCourt(String name,
+                              UUID regionId,
+                              boolean serviceCenter,
+                              boolean addWarningNotice,
+                              Random random) {
         Court court = Court.builder()
             .name(name)
             .isServiceCentre(serviceCenter)
-            .regionId(REGION_IDS.get(random.nextInt(REGION_IDS.size())))
+            .regionId(Optional.ofNullable(regionId).orElseGet(() -> REGION_IDS.get(random.nextInt(REGION_IDS.size()))))
             .mrdId(rndAlphaNumeric(random.nextInt(16, 32), random))
             .open(false)
             .openOnCath(false)
