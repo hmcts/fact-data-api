@@ -21,7 +21,7 @@ plugins {
 }
 
 lombok {
-  version.set("1.18.46")
+  version.set("1.18.32")
 }
 
 application {
@@ -212,7 +212,6 @@ dependencies {
   //Solves CVE-2025-48976
   implementation group: 'commons-fileupload', name: 'commons-fileupload', version: '1.6.0'
 
-  testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-webmvc-test'
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-webmvc-test'
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator-test'
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa-test'
