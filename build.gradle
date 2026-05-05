@@ -20,10 +20,6 @@ plugins {
   id 'io.qameta.allure' version '4.0.1'
 }
 
-lombok {
-  version = "1.18.32"
-}
-
 application {
   mainClass = 'uk.gov.hmcts.reform.fact.data.api.Application'
   group = 'uk.gov.hmcts.reform'
@@ -269,5 +265,6 @@ dependencyManagement {
   dependencies {
     // CVE-2025-48976
     dependency group: 'commons-fileupload', name: 'commons-fileupload', version: '1.6.0'
+    dependency "org.projectlombok:lombok:1.18.32"
   }
 }
