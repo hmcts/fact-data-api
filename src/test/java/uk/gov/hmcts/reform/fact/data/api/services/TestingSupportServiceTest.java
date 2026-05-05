@@ -275,6 +275,27 @@ class TestingSupportServiceTest {
     }
 
     @Test
+    void createCourtWithRegionIdUsesProvidedRegion() {
+        String courtName = "Test Court";
+        UUID regionId = UUID.randomUUID();
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court c = Court.class.cast(inv.getArguments()[0]);
+            c.setSlug("test-court");
+            return c;
+        });
+
+        String result = testingSupportService.createCourt(courtName, regionId, null, false, false, true,
+                                                          true, false, false);
+
+        assertNotNull(result);
+        assertEquals("test-court", result);
+
+        ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
+        verify(courtService, times(1)).createCourt(captor.capture());
+        assertThat(captor.getValue().getRegionId()).isEqualTo(regionId);
+    }
+
+    @Test
     void createCourtWithEmptyNameThrowsException() {
         String courtName = "";
         assertThrows(
