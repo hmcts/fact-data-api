@@ -10,7 +10,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -20,6 +19,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
@@ -30,11 +30,14 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -94,6 +97,36 @@ class CourtControllerTest {
     @DisplayName("GET /courts/{courtId}/v1 returns 400 for invalid UUID")
     void getCourtByIdReturnsBadRequestForInvalidUuid() throws Exception {
         mockMvc.perform(get("/courts/{courtId}/v1", "invalid-uuid"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /courts/{courtId}/entity/v1 returns court entity")
+    void getCourtEntityByIdReturnsCourt() throws Exception {
+        Court court = buildCourt(COURT_ID);
+
+        when(courtService.getCourtById(COURT_ID)).thenReturn(court);
+
+        mockMvc.perform(get("/courts/{courtId}/entity/v1", COURT_ID))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(COURT_ID.toString()))
+            .andExpect(jsonPath("$.name").value("Test Court"))
+            .andExpect(jsonPath("$.regionId").value(REGION_ID.toString()));
+    }
+
+    @Test
+    @DisplayName("GET /courts/{courtId}/entity/v1 returns 404 when court missing")
+    void getCourtEntityByIdReturnsNotFound() throws Exception {
+        when(courtService.getCourtById(UNKNOWN_COURT_ID)).thenThrow(new NotFoundException("Court not found"));
+
+        mockMvc.perform(get("/courts/{courtId}/entity/v1", UNKNOWN_COURT_ID))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /courts/{courtId}/entity/v1 returns 400 for invalid UUID")
+    void getCourtEntityByIdReturnsBadRequestForInvalidUuid() throws Exception {
+        mockMvc.perform(get("/courts/{courtId}/entity/v1", "invalid-uuid"))
             .andExpect(status().isBadRequest());
     }
 
@@ -186,10 +219,13 @@ class CourtControllerTest {
         Page<Court> courts = new PageImpl<>(List.of(court));
 
         when(courtService.getFilteredAndPaginatedCourts(
-            any(Pageable.class),
+            anyInt(),
+            anyInt(),
             anyBoolean(),
             anyString(),
-            anyString()
+            anyString(),
+            nullable(String.class),
+            nullable(String.class)
         )).thenReturn(courts);
 
         mockMvc.perform(get("/courts/v1")
@@ -201,6 +237,64 @@ class CourtControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value(COURT_ID.toString()))
             .andExpect(jsonPath("$.content[0].name").value("Test Court"));
+    }
+
+    @Test
+    @DisplayName("GET /courts/v1 applies requested sorting")
+    void getFilteredAndPaginatedCourtsAppliesSorting() throws Exception {
+        Court court = buildCourt(COURT_ID);
+        Page<Court> courts = new PageImpl<>(List.of(court));
+
+        when(courtService.getFilteredAndPaginatedCourts(
+            anyInt(),
+            anyInt(),
+            anyBoolean(),
+            anyString(),
+            anyString(),
+            nullable(String.class),
+            nullable(String.class)
+        )).thenReturn(courts);
+
+        mockMvc.perform(get("/courts/v1")
+                            .param("pageNumber", "0")
+                            .param("pageSize", "25")
+                            .param("includeClosed", "true")
+                            .param("regionId", REGION_ID.toString())
+                            .param("partialCourtName", "Test")
+                            .param("sortBy", "lastUpdated")
+                            .param("sortOrder", "desc"))
+            .andExpect(status().isOk());
+
+        verify(courtService).getFilteredAndPaginatedCourts(
+            eq(0),
+            eq(25),
+            eq(true),
+            eq(REGION_ID.toString()),
+            eq("Test"),
+            eq("lastUpdated"),
+            eq("desc")
+        );
+    }
+
+    @Test
+    @DisplayName("GET /courts/v1 rejects sortOrder without sortBy")
+    void getFilteredAndPaginatedCourtsRejectsSortOrderWithoutSortBy() throws Exception {
+        when(courtService.getFilteredAndPaginatedCourts(
+            eq(0),
+            eq(25),
+            eq(null),
+            eq(null),
+            eq(null),
+            eq(null),
+            eq("asc")
+        )).thenThrow(new InvalidParameterCombinationException("sortOrder cannot be provided without sortBy"));
+
+        mockMvc.perform(get("/courts/v1")
+                            .param("pageNumber", "0")
+                            .param("pageSize", "25")
+                            .param("sortOrder", "asc"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("sortOrder cannot be provided without sortBy"));
     }
 
     @Test

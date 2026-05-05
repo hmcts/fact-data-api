@@ -2,9 +2,11 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
@@ -15,7 +17,9 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +32,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class CourtService {
+
+    private static final String SORT_BY_NAME = "name";
+    private static final String SORT_BY_LAST_UPDATED = "lastupdated";
+    private static final String SORT_ORDER_ASC = "asc";
+    private static final String SORT_ORDER_DESC = "desc";
 
     private final CourtRepository courtRepository;
     private final CourtDetailsRepository courtDetailsRepository;
@@ -62,22 +71,27 @@ public class CourtService {
     /**
      * Get a paginated list of courts with optional filters.
      *
-     * @param pageable         The pagination information.
+     * @param pageNumber       The page number.
+     * @param pageSize         The page size.
      * @param includeClosed    Whether to include closed courts.
      * @param regionId         The region ID to filter by.
      * @param partialCourtName A partial court name to filter by.
+     * @param sortBy           The requested sort field.
+     * @param sortOrder        The requested sort order.
      * @return A paginated list of courts.
      */
-    public Page<Court> getFilteredAndPaginatedCourts(Pageable pageable, Boolean includeClosed,
-                                                     String regionId, String partialCourtName) {
+    public Page<Court> getFilteredAndPaginatedCourts(int pageNumber, int pageSize, Boolean includeClosed,
+                                                     String regionId, String partialCourtName,
+                                                     String sortBy, String sortOrder) {
+        Pageable pageable = buildPageable(pageNumber, pageSize, sortBy, sortOrder);
 
         String nameFilter = partialCourtName != null ? partialCourtName : "";
 
         List<UUID> regionIds = (regionId != null && !regionId.isBlank())
             ? List.of(regionService.getRegionById(UUID.fromString(regionId)).getId())
             : regionService.getAllRegions().stream()
-            .map(Region::getId)
-            .toList();
+              .map(Region::getId)
+              .toList();
 
         return (includeClosed != null && includeClosed)
             ? courtRepository.findByRegionIdInAndNameContainingIgnoreCase(regionIds, nameFilter, pageable)
@@ -174,9 +188,6 @@ public class CourtService {
         return courtsToDelete.size();
     }
 
-
-    // -- Court Details --
-
     /**
      * Get a court details by id.
      *
@@ -200,7 +211,7 @@ public class CourtService {
     public CourtDetails getCourtDetailsBySlug(String courtSlug) {
         return courtDetailsRepository.findBySlug(courtSlug)
             .orElseThrow(() -> new NotFoundException("Court not found, slug: " + courtSlug)
-        );
+            );
     }
 
     /**
@@ -211,8 +222,6 @@ public class CourtService {
     public List<CourtDetails> getAllCourtDetails() {
         return courtDetailsRepository.findAll();
     }
-
-    // -- Utilities --
 
     /**
      * Marks courts received from CaTH as open and records which MRD IDs could not be matched.
@@ -225,14 +234,16 @@ public class CourtService {
         List<String> unmatchedIds = new ArrayList<>();
 
         mrdIds.forEach(mrdId -> {
-            courtRepository.findByMrdId(mrdId).ifPresentOrElse(court -> {
-                court.setOpenOnCath(true);
-                courtRepository.save(court);
-                matchedLocations.add(Map.of(
-                    "mrdId", mrdId,
-                    "isOpen", court.getOpen()
-                ));
-            }, () -> unmatchedIds.add(mrdId));
+            courtRepository.findByMrdId(mrdId).ifPresentOrElse(
+                court -> {
+                    court.setOpenOnCath(true);
+                    courtRepository.save(court);
+                    matchedLocations.add(Map.of(
+                        "mrdId", mrdId,
+                        "isOpen", court.getOpen()
+                    ));
+                }, () -> unmatchedIds.add(mrdId)
+            );
         });
 
         return Map.of(
@@ -252,6 +263,22 @@ public class CourtService {
             .orElseThrow(() -> new NotFoundException("Court not found, MRD ID: " + mrdId));
         court.setOpenOnCath(Boolean.FALSE);
         courtRepository.save(court);
+    }
+
+    /**
+     * Util method to convert Court name to slug format.
+     *
+     * <p>
+     * Further checks need to be made to ensure the value is unique before assigning to a court entity.
+     *
+     * @param name the court name
+     * @return the slug representation of the name
+     */
+    public String toSlugFormat(String name) {
+        return name.toLowerCase()
+            .replaceAll("[^a-z\\s-]", "")
+            .replaceAll("[\\s-]+", "-")
+            .replaceAll("(^-)|(-$)", "");
     }
 
     /**
@@ -277,7 +304,7 @@ public class CourtService {
      * Handles notification to CaTH when a court's open status changes and it is linked to CaTH.
      *
      * @param previousOpen the previous open status of the court.
-     * @param court the up-to-date court entity.
+     * @param court        the up-to-date court entity.
      */
     private void handleCathNotification(Boolean previousOpen, Court court) {
         boolean shouldNotify =
@@ -316,18 +343,36 @@ public class CourtService {
     }
 
     /**
-     * Util method to convert Court name to slug format.
+     * Builds the pageable used by the court listing endpoint, applying sorting only when requested.
      *
-     * <p>
-     * Further checks need to be made to ensure the value is unique before assigning to a court entity.
-     *
-     * @param name the court name
-     * @return the slug representation of the name
+     * @param pageNumber the zero-based page number.
+     * @param pageSize the number of records per page.
+     * @param sortBy the requested sort field.
+     * @param sortOrder the requested sort direction.
+     * @return the pageable to use for the repository query.
      */
-    public String toSlugFormat(String name) {
-        return name.toLowerCase()
-            .replaceAll("[^a-z\\s-]", "")
-            .replaceAll("[\\s-]+", "-")
-            .replaceAll("(^-)|(-$)", "");
+    private Pageable buildPageable(int pageNumber, int pageSize, String sortBy, String sortOrder) {
+        if (StringUtils.isBlank(sortBy)) {
+            if (!StringUtils.isBlank(sortOrder)) {
+                throw new InvalidParameterCombinationException("sortOrder cannot be provided without sortBy");
+            }
+            return PageRequest.of(pageNumber, pageSize);
+        }
+
+        Sort.Direction direction = StringUtils.isBlank(sortOrder) ? Sort.Direction.ASC
+            : switch (sortOrder.trim().toLowerCase()) {
+            case SORT_ORDER_ASC -> Sort.Direction.ASC;
+            case SORT_ORDER_DESC -> Sort.Direction.DESC;
+            default -> throw new InvalidParameterCombinationException("sortOrder must be one of: asc, desc");
+        };
+
+        Sort sort = switch (sortBy.trim().toLowerCase()) {
+            case SORT_BY_NAME -> Sort.by(direction, "name", "id");
+            case SORT_BY_LAST_UPDATED -> Sort.by(direction, "lastUpdatedAt")
+                .and(Sort.by(Sort.Direction.ASC, "name", "id"));
+            default -> throw new InvalidParameterCombinationException("sortBy must be one of: name, lastUpdated");
+        };
+
+        return PageRequest.of(pageNumber, pageSize, sort);
     }
 }
