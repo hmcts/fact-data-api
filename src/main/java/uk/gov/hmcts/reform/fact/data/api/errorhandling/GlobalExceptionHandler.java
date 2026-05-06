@@ -2,12 +2,14 @@ package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.JsonConvertException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.time.LocalDateTime;
@@ -203,6 +205,13 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidAreaOfLawException ex) {
         log.error("400, invalid area of law. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(JsonConvertException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ExceptionResponse handle(JsonConvertException ex) {
+        log.error("400, JSON conversion error. Details: {}", ex.getMessage());
         return generateExceptionResponse(ex.getMessage());
     }
 

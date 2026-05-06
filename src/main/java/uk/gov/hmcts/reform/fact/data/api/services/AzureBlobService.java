@@ -3,9 +3,11 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
+import uk.gov.hmcts.reform.fact.data.api.models.StringMultipartFile;
 
 import java.io.IOException;
 
@@ -52,5 +54,25 @@ public class AzureBlobService {
         BlobClient blobClient = blobContainerClient.getBlobClient(imageId);
 
         blobClient.delete();
+    }
+
+
+    public void createCsvFileAndUpload(String containerName, String blobName, JsonNode jsonNodeData) {
+        try {
+            uploadFile(blobName,
+                       createCsvFile(blobName, new CsvUtil().convertJsonToCsv(jsonNodeData))
+            );
+        } catch (IOException ex) {
+            throw new AzureUploadException(ex.getMessage());
+        }
+    }
+
+    public StringMultipartFile createCsvFile(String blobName, String csvString) {
+        return new StringMultipartFile(
+            blobName,
+            blobName,
+            "text/csv",
+            csvString
+        );
     }
 }
