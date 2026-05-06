@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
 import uk.gov.hmcts.reform.fact.data.api.models.StringMultipartFile;
+import uk.gov.hmcts.reform.fact.data.api.utils.CsvUtil;
 
 import java.io.IOException;
 
@@ -58,13 +59,9 @@ public class AzureBlobService {
 
 
     public void createCsvFileAndUpload(String containerName, String blobName, JsonNode jsonNodeData) {
-        try {
-            uploadFile(blobName,
-                       createCsvFile(blobName, new CsvUtil().convertJsonToCsv(jsonNodeData))
-            );
-        } catch (IOException ex) {
-            throw new AzureUploadException(ex.getMessage());
-        }
+        uploadFile(blobName,
+                   createCsvFile(blobName, new CsvUtil().convertJsonToCsv(jsonNodeData))
+        );
     }
 
     public StringMultipartFile createCsvFile(String blobName, String csvString) {

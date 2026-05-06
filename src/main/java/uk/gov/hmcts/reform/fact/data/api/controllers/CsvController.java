@@ -1,12 +1,9 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.CsvService;
-
-import java.util.List;
 
 @SecuredFactRestController(
     name = "CSV",
@@ -21,8 +18,8 @@ public class CsvController {
         this.csvService = csvService;
     }
 
-    @GetMapping("/files")
-    public ResponseEntity<List<String>> getCsvFiles() {
-        return ResponseEntity.ok(csvService.getCsvFiles());
+    @PostMapping("/files")
+    public void createCsvFiles() {
+        csvService.createCsvFiles();
     }
 }

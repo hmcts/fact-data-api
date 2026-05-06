@@ -6,19 +6,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.reform.fact.data.api.services.AzureBlobService;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import uk.gov.hmcts.reform.fact.data.api.services.CsvService;
 
 @Component
 @Slf4j
 public class CsvGenerator implements CommandLineRunner {
 
     private final AzureBlobService azureService;
-    private final CourtService courtService;
+    private final CsvService csvService;
 
     public CsvGenerator(@Autowired AzureBlobService azureService,
-                        @Autowired CourtService courtService) {
+                        @Autowired CsvService csvService) {
         this.azureService = azureService;
-        this.courtService = courtService;
+        this.csvService = csvService;
     }
 
     /**
@@ -39,7 +39,7 @@ public class CsvGenerator implements CommandLineRunner {
     }
 
     public void createCsvAndUpload() {
-        JsonNode courtData = courtService.getCourtData();
+        JsonNode courtData = csvService.convertCourtDataToJson();
         azureService.createCsvFileAndUpload("csv", "courts-and-tribunals-data.csv", courtData);
     }
 }
