@@ -16,6 +16,7 @@ plugins {
   id 'org.sonarqube' version '7.3.0.8198'
   id 'uk.gov.hmcts.java' version '0.12.68'
   id 'io.freefair.lombok' version '9.5.0'
+  id 'maven-publish'
   id 'org.flywaydb.flyway' version '12.5.0'
   id 'io.qameta.allure' version '3.2.0'
 }
@@ -64,6 +65,18 @@ flyway {
   baselineVersion = '000'
 }
 
+publishing {
+  repositories {
+    maven {
+      name = "AzureArtifacts"
+      url = uri("https://pkgs.dev.azure.com/hmcts/Artifacts/_packaging/hmcts-lib/maven/v1")
+      credentials {
+        username = System.getenv("AZURE_DEVOPS_ARTIFACT_USERNAME")
+        password = System.getenv("AZURE_DEVOPS_ARTIFACT_TOKEN")
+        }
+      }
+    }
+}
 tasks.register('migratePostgresDatabase', FlywayMigrateTask) {
   baselineOnMigrate = true
   if (project.hasProperty("dburl")) {
