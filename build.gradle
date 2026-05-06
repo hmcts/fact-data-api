@@ -184,7 +184,6 @@ dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security-oauth2-client'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security-oauth2-resource-server'
   implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter', version: '7.2.0'
-  implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-openfeign', version: '5.0.1'
 
   implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '3.0.3'
 
