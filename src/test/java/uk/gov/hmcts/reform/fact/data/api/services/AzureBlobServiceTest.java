@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,11 +28,15 @@ import static org.mockito.Mockito.when;
 class AzureBlobServiceTest {
 
     private static final String IMAGE_ID = "test-image-id";
+    private static final String CONTAINER_NAME = "csv";
     private static final String CONTENT_TYPE = "image/jpeg";
     private static final String BLOB_URL = "https://example.com/blob/test-image-id";
 
     @Mock
     private BlobContainerClient blobContainerClient;
+
+    @Mock
+    private BlobServiceClient blobServiceClient;
 
     @Mock
     private BlobClient blobClient;
@@ -84,5 +89,56 @@ class AzureBlobServiceTest {
         azureBlobService.deleteBlob(IMAGE_ID);
 
         verify(blobClient).delete();
+    }
+
+    @Test
+    void uploadFileWithContainerShouldUploadToProvidedContainer() throws IOException {
+        byte[] fileBytes = "dummy payload".getBytes(StandardCharsets.UTF_8);
+        InputStream inputStream = new ByteArrayInputStream(fileBytes);
+
+        when(blobServiceClient.getBlobContainerClient(CONTAINER_NAME)).thenReturn(blobContainerClient);
+        when(blobContainerClient.exists()).thenReturn(true);
+        when(blobContainerClient.getBlobClient(IMAGE_ID)).thenReturn(blobClient);
+        when(multipartFile.getInputStream()).thenReturn(inputStream);
+        when(multipartFile.getSize()).thenReturn((long) fileBytes.length);
+        when(multipartFile.getContentType()).thenReturn(CONTENT_TYPE);
+
+        azureBlobService.uploadFile(CONTAINER_NAME, IMAGE_ID, multipartFile);
+
+        verify(blobClient).upload(inputStream, fileBytes.length, true);
+        verify(blobClient).setHttpHeaders(org.mockito.ArgumentMatchers.any(BlobHttpHeaders.class));
+    }
+
+    @Test
+    void uploadFileWithContainerShouldCreateContainerWhenMissing() throws IOException {
+        byte[] fileBytes = "dummy payload".getBytes(StandardCharsets.UTF_8);
+        InputStream inputStream = new ByteArrayInputStream(fileBytes);
+
+        when(blobServiceClient.getBlobContainerClient(CONTAINER_NAME)).thenReturn(blobContainerClient);
+        when(blobContainerClient.exists()).thenReturn(false);
+        when(blobContainerClient.getBlobClient(IMAGE_ID)).thenReturn(blobClient);
+        when(multipartFile.getInputStream()).thenReturn(inputStream);
+        when(multipartFile.getSize()).thenReturn((long) fileBytes.length);
+        when(multipartFile.getContentType()).thenReturn(CONTENT_TYPE);
+
+        azureBlobService.uploadFile(CONTAINER_NAME, IMAGE_ID, multipartFile);
+
+        verify(blobContainerClient).create();
+        verify(blobClient).upload(inputStream, fileBytes.length, true);
+        verify(blobClient).setHttpHeaders(org.mockito.ArgumentMatchers.any(BlobHttpHeaders.class));
+    }
+
+    @Test
+    void uploadFileWithContainerShouldThrowAzureUploadExceptionWhenReadingFails() throws IOException {
+        when(blobServiceClient.getBlobContainerClient(CONTAINER_NAME)).thenReturn(blobContainerClient);
+        when(blobContainerClient.exists()).thenReturn(true);
+        when(blobContainerClient.getBlobClient(IMAGE_ID)).thenReturn(blobClient);
+        when(multipartFile.getInputStream()).thenThrow(new IOException("Read failure"));
+
+        assertThrows(AzureUploadException.class, () ->
+            azureBlobService.uploadFile(CONTAINER_NAME, IMAGE_ID, multipartFile)
+        );
+
+        verify(blobClient, never()).setHttpHeaders(org.mockito.ArgumentMatchers.any(BlobHttpHeaders.class));
     }
 }

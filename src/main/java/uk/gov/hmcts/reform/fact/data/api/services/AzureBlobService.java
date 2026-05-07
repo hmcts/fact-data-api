@@ -2,23 +2,25 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
-import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
-import uk.gov.hmcts.reform.fact.data.api.models.StringMultipartFile;
-import uk.gov.hmcts.reform.fact.data.api.utils.CsvUtil;
 
 import java.io.IOException;
 
+@Slf4j
 @Service
 public class AzureBlobService {
 
     private final BlobContainerClient blobContainerClient;
+    private final BlobServiceClient blobServiceClient;
 
-    public AzureBlobService(BlobContainerClient blobContainerClient) {
+    public AzureBlobService(BlobContainerClient blobContainerClient, BlobServiceClient blobServiceClient) {
         this.blobContainerClient = blobContainerClient;
+        this.blobServiceClient = blobServiceClient;
     }
 
     /**
@@ -46,6 +48,27 @@ public class AzureBlobService {
         return blobClient.getBlobUrl();
     }
 
+    public void uploadFile(String containerName, String blobName, MultipartFile file) {
+        BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(containerName);
+        if (!containerClient.exists()) {
+            containerClient.create();
+            log.info("Created Azure blob container {}", containerName);
+        }
+        BlobClient blobClient = containerClient.getBlobClient(blobName);
+        try {
+            blobClient.upload(file.getInputStream(), file.getSize(), true);
+
+            BlobHttpHeaders headers = new BlobHttpHeaders()
+                .setContentType(file.getContentType());
+
+            blobClient.setHttpHeaders(headers);
+            log.info("Uploaded file {} to {}", file.getOriginalFilename(), containerName);
+
+        } catch (IOException e) {
+            throw new AzureUploadException("Could not upload provided file to Azure");
+        }
+    }
+
     /**
      * Delete a blob from the blob store by the imageId.
      *
@@ -55,21 +78,5 @@ public class AzureBlobService {
         BlobClient blobClient = blobContainerClient.getBlobClient(imageId);
 
         blobClient.delete();
-    }
-
-
-    public void createCsvFileAndUpload(String containerName, String blobName, JsonNode jsonNodeData) {
-        uploadFile(blobName,
-                   createCsvFile(blobName, new CsvUtil().convertJsonToCsv(jsonNodeData))
-        );
-    }
-
-    public StringMultipartFile createCsvFile(String blobName, String csvString) {
-        return new StringMultipartFile(
-            blobName,
-            blobName,
-            "text/csv",
-            csvString
-        );
     }
 }

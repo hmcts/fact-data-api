@@ -76,25 +76,32 @@ public class CsvUtil {
 
     private Map<String, Object> flattenCourtNode(JsonNode node) {
         Map<String, Object> flatMap = new LinkedHashMap<>();
+        JsonNode courtCode = getFirstArrayItem(node, "courtCodes");
+        JsonNode primaryAddress = getFirstArrayItem(node, "courtAddresses");
 
         flatMap.put("name", node.path("name").asText());
-        flatMap.put("lat", node.path("lat").asDouble());
-        flatMap.put("lon", node.path("lon").asDouble());
-        flatMap.put("number", node.path("number").asInt());
-        flatMap.put("cci_code", node.path("cci_code").asInt());
-        flatMap.put("magistrate_code", node.path("magistrate_code").asInt());
+        flatMap.put("lat", readDecimal(node, primaryAddress, "lat"));
+        flatMap.put("lon", readDecimal(node, primaryAddress, "lon"));
+        flatMap.put("number", readInteger(node, "number"));
+        flatMap.put("cci_code", readInteger(courtCode, "countyCourtCode", "cci_code"));
+        flatMap.put("magistrate_code", readInteger(courtCode, "magistrateCourtCode", "magistrate_code",
+                                                    "magistrate_court_code"));
         flatMap.put("slug", node.path("slug").asText());
-        flatMap.put("types", stringifyArray(node.path("types")));
-        flatMap.put("open", node.path("displayed").asBoolean());
-        flatMap.put("dx_number", node.path("dx_number").asText());
+        flatMap.put("types", flattenTypes(node));
+        flatMap.put("open", readBoolean(node, "open", "displayed"));
+        flatMap.put("dx_number", flattenDxCodes(node));
 
-        flatMap.put("areas_of_law", flattenAreasOfLaw(node.path("areas_of_law")));
-        flatMap.put("addresses", flattenAddresses(node.path("addresses")));
+        flatMap.put("areas_of_law", flattenAreasOfLaw(node.path("courtAreasOfLaw"), node.path("areas_of_law")));
+        flatMap.put("addresses", flattenAddresses(node.path("courtAddresses"), node.path("addresses")));
 
         return flatMap;
     }
 
-    private String flattenAreasOfLaw(JsonNode areasOfLawNode) {
+    private String flattenAreasOfLaw(JsonNode... candidateNodes) {
+        JsonNode areasOfLawNode = getFirstArrayCandidate(candidateNodes);
+        if (areasOfLawNode == null) {
+            return "No areas of law available";
+        }
         if (!areasOfLawNode.isArray() || areasOfLawNode.isEmpty()) {
             return "No areas of law available";
         }
@@ -115,7 +122,11 @@ public class CsvUtil {
         return String.join(" | ", areas);
     }
 
-    private String flattenAddresses(JsonNode addressesNode) {
+    private String flattenAddresses(JsonNode... candidateNodes) {
+        JsonNode addressesNode = getFirstArrayCandidate(candidateNodes);
+        if (addressesNode == null) {
+            return "No address available";
+        }
         if (!addressesNode.isArray() || addressesNode.isEmpty()) {
             return "No address available";
         }
@@ -124,14 +135,14 @@ public class CsvUtil {
         for (JsonNode address : addressesNode) {
             String addressDetails = String.format(
                 "Town: %s, Postcode: %s, Address: %s, Type: %s, County: %s, %s, Description: %s, EPIM ID: %s",
-                safeText(address, "town"),
+                safeText(address, "townCity", "town"),
                 safeText(address, "postcode"),
-                flattenAddressLines(address.path("address_lines")),
-                safeText(address, "type"),
+                flattenAddressLines(address.path("addressLines"), address.path("address_lines"), address),
+                safeText(address, "addressType", "type"),
                 safeText(address, "county"),
-                flattenFieldsOfLaw(address.path("fields_of_law")),
+                flattenFieldsOfLaw(address.path("fieldsOfLaw"), address.path("fields_of_law"), address),
                 safeText(address, "description"),
-                safeText(address, "epim_id")
+                safeText(address, "epimId", "epim_id")
             );
 
             addresses.add(addressDetails);
@@ -140,8 +151,21 @@ public class CsvUtil {
         return String.join(" | ", addresses);
     }
 
-    private String flattenAddressLines(JsonNode lines) {
-        if (!lines.isArray() || lines.isEmpty()) {
+    private String flattenAddressLines(JsonNode... candidateNodes) {
+        JsonNode lines = getFirstArrayCandidate(candidateNodes);
+        if ((lines == null || !lines.isArray())
+            && candidateNodes.length > 0
+            && candidateNodes[candidateNodes.length - 1].isObject()) {
+            JsonNode address = candidateNodes[candidateNodes.length - 1];
+            List<String> implicitLines = new ArrayList<>();
+            addIfPresent(implicitLines, safeText(address, "addressLine1"));
+            addIfPresent(implicitLines, safeText(address, "addressLine2"));
+            if (!implicitLines.isEmpty()) {
+                return String.join(", ", implicitLines);
+            }
+        }
+
+        if (lines == null || !lines.isArray() || lines.isEmpty()) {
             return "No address lines";
         }
 
@@ -150,8 +174,26 @@ public class CsvUtil {
         return String.join(", ", lineList);
     }
 
-    private String flattenFieldsOfLaw(JsonNode fieldsOfLawNode) {
+    private String flattenFieldsOfLaw(JsonNode... candidateNodes) {
+        JsonNode fieldsOfLawNode = getFirstObjectCandidate(candidateNodes);
+        if (fieldsOfLawNode == null) {
+            JsonNode addressNode = candidateNodes.length > 0 ? candidateNodes[candidateNodes.length - 1] : null;
+            if (addressNode != null && addressNode.isObject()) {
+                List<String> parts = new ArrayList<>();
+                addNamesFromArray(parts, addressNode.path("areasOfLaw"), "Areas of Law");
+                addNamesFromArray(parts, addressNode.path("courtTypes"), "Courts");
+                return parts.isEmpty() ? "N/A" : String.join(", ", parts);
+            }
+            return "N/A";
+        }
         if (!fieldsOfLawNode.isObject()) {
+            JsonNode addressNode = candidateNodes.length > 0 ? candidateNodes[candidateNodes.length - 1] : null;
+            if (addressNode != null && addressNode.isObject()) {
+                List<String> parts = new ArrayList<>();
+                addNamesFromArray(parts, addressNode.path("areasOfLaw"), "Areas of Law");
+                addNamesFromArray(parts, addressNode.path("courtTypes"), "Courts");
+                return parts.isEmpty() ? "N/A" : String.join(", ", parts);
+            }
             return "N/A";
         }
 
@@ -174,6 +216,113 @@ public class CsvUtil {
         return String.join(", ", parts);
     }
 
+    private String flattenDxCodes(JsonNode node) {
+        JsonNode dxCodes = node.path("courtDxCodes");
+        if (dxCodes.isArray() && !dxCodes.isEmpty()) {
+            List<String> values = new ArrayList<>();
+            for (JsonNode dxCode : dxCodes) {
+                String value = safeText(dxCode, "dxCode", "dx_number");
+                if (!"N/A".equals(value)) {
+                    values.add(value);
+                }
+            }
+            if (!values.isEmpty()) {
+                return String.join(" | ", values);
+            }
+        }
+        return node.path("dx_number").asText();
+    }
+
+    private String flattenTypes(JsonNode node) {
+        if (node.path("types").isArray()) {
+            return stringifyArray(node.path("types"));
+        }
+
+        List<String> types = new ArrayList<>();
+        JsonNode addresses = node.path("courtAddresses");
+        if (addresses.isArray()) {
+            for (JsonNode address : addresses) {
+                JsonNode courtTypes = address.path("courtTypes");
+                if (courtTypes.isArray()) {
+                    for (JsonNode courtType : courtTypes) {
+                        if (courtType.isTextual()) {
+                            types.add(courtType.asText());
+                        } else {
+                            String name = safeText(courtType, "name");
+                            if (!"N/A".equals(name)) {
+                                types.add(name);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return String.join(" | ", types);
+    }
+
+    private JsonNode getFirstArrayItem(JsonNode node, String field) {
+        JsonNode array = node.path(field);
+        if (array.isArray() && !array.isEmpty()) {
+            return array.get(0);
+        }
+        return null;
+    }
+
+    private JsonNode getFirstArrayCandidate(JsonNode... nodes) {
+        for (JsonNode candidate : nodes) {
+            if (candidate != null && candidate.isArray()) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private JsonNode getFirstObjectCandidate(JsonNode... nodes) {
+        for (JsonNode candidate : nodes) {
+            if (candidate != null && candidate.isObject()) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private Double readDecimal(JsonNode primary, JsonNode secondary, String field) {
+        JsonNode value = primary.path(field);
+        if (value.isNumber()) {
+            return value.asDouble();
+        }
+        if (secondary != null) {
+            value = secondary.path(field);
+            if (value.isNumber()) {
+                return value.asDouble();
+            }
+        }
+        return null;
+    }
+
+    private Integer readInteger(JsonNode node, String... fields) {
+        if (node == null) {
+            return null;
+        }
+        for (String field : fields) {
+            JsonNode value = node.path(field);
+            if (value.isNumber()) {
+                return value.asInt();
+            }
+        }
+        return null;
+    }
+
+    private Boolean readBoolean(JsonNode node, String... fields) {
+        for (String field : fields) {
+            JsonNode value = node.path(field);
+            if (value.isBoolean()) {
+                return value.asBoolean();
+            }
+        }
+        return false;
+    }
+
     private String stringifyArray(JsonNode arrayNode) {
         if (arrayNode == null || !arrayNode.isArray()) {
             return "";
@@ -183,8 +332,41 @@ public class CsvUtil {
         return String.join(" | ", items);
     }
 
-    private String safeText(JsonNode node, String fieldName) {
-        JsonNode field = node.path(fieldName);
-        return field.isMissingNode() || field.isNull() ? "N/A" : field.asText();
+    private String safeText(JsonNode node, String... fieldNames) {
+        if (node == null) {
+            return "N/A";
+        }
+        for (String fieldName : fieldNames) {
+            JsonNode field = node.path(fieldName);
+            if (!field.isMissingNode() && !field.isNull()) {
+                return field.asText();
+            }
+        }
+        return "N/A";
+    }
+
+    private void addIfPresent(List<String> values, String value) {
+        if (value != null && !value.isBlank() && !"N/A".equals(value)) {
+            values.add(value);
+        }
+    }
+
+    private void addNamesFromArray(List<String> parts, JsonNode arrayNode, String label) {
+        if (arrayNode.isArray() && !arrayNode.isEmpty()) {
+            List<String> names = new ArrayList<>();
+            arrayNode.forEach(item -> {
+                if (item.isTextual()) {
+                    names.add(item.asText());
+                } else {
+                    String name = safeText(item, "name");
+                    if (!"N/A".equals(name)) {
+                        names.add(name);
+                    }
+                }
+            });
+            if (!names.isEmpty()) {
+                parts.add(label + ": " + String.join(" | ", names));
+            }
+        }
     }
 }
