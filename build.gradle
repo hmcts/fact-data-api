@@ -64,7 +64,6 @@ flyway {
   baselineVersion = '000'
 }
 
-
 tasks.register('migratePostgresDatabase', FlywayMigrateTask) {
   baselineOnMigrate = true
   if (project.hasProperty("dburl")) {
