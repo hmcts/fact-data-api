@@ -45,10 +45,12 @@ public class CsvService {
 
     public void createAndUploadCsv() {
         List<String> actions = new ArrayList<>();
-        StringMultipartFile csvFile = createCsvFile(actions);
-        uploadCsvToAzureBlob(actions, csvFile);
-
-        sendSlackSummary(actions);
+        try {
+            StringMultipartFile csvFile = createCsvFile(actions);
+            uploadCsvToAzureBlob(actions, csvFile);
+        } finally {
+            sendSlackSummary(actions);
+        }
     }
 
     public void uploadCsvToAzureBlob(List<String> actions, StringMultipartFile stringMultipartFile) {

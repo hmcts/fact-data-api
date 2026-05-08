@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -77,6 +78,33 @@ class CsvServiceTest {
         verify(azureBlobService).uploadFile(org.mockito.ArgumentMatchers.eq(CSV_CONTAINER_NAME),
             org.mockito.ArgumentMatchers.eq(CSV_FILE_NAME), any(StringMultipartFile.class));
         verify(slackClient, never()).sendSlackMessage(any());
+    }
+
+    @Test
+    void createAndUploadCsvShouldSendSlackMessageAndThrowWhenCsvCreationFails() {
+        CsvService csvService = buildService();
+        when(courtService.getAllCourtDetails()).thenThrow(new RuntimeException("court failure"));
+
+        RuntimeException exception = assertThrows(RuntimeException.class, csvService::createAndUploadCsv);
+
+        assertThat(exception.getMessage()).isEqualTo("Failed to create CSV file");
+        verify(slackClient).sendSlackMessage(contains("Failed to create CSV file. Check App insights."));
+    }
+
+    @Test
+    void createAndUploadCsvShouldSendSlackMessageAndThrowWhenUploadFails() {
+        CsvService csvService = buildService();
+        when(courtService.getAllCourtDetails()).thenReturn(Collections.emptyList());
+        doThrow(new RuntimeException("azure failure"))
+            .when(azureBlobService)
+            .uploadFile(org.mockito.ArgumentMatchers.eq(CSV_CONTAINER_NAME),
+                org.mockito.ArgumentMatchers.eq(CSV_FILE_NAME), any(StringMultipartFile.class));
+
+        RuntimeException exception = assertThrows(RuntimeException.class, csvService::createAndUploadCsv);
+
+        assertThat(exception.getMessage()).isEqualTo("Failed to upload CSV file to Azure Blob Storage");
+        verify(slackClient)
+            .sendSlackMessage(contains("Failed to upload CSV file to Azure Blob Storage. Check App insights."));
     }
 
     private CsvService buildService() {
