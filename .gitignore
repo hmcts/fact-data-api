@@ -26,4 +26,5 @@ applicationinsights-agent-*.jar
 
 .env
 AGENTS.md
+
 scripts/
