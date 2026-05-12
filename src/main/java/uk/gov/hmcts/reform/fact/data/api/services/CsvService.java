@@ -27,16 +27,19 @@ public class CsvService {
 
     private final String csvContainerName;
     private final CourtService courtService;
+    private final CourtDetailsViewService courtDetailsViewService;
     private final AzureBlobService azureBlobService;
     private final ObjectMapper objectMapper;
     private final SlackClient slackClient;
 
     public CsvService(CourtService courtService,
+                      CourtDetailsViewService courtDetailsViewService,
                       AzureBlobService azureBlobService,
                       ObjectMapper objectMapper,
                       SlackClient slackClient,
                       @Value("${fact.data-api.csv-container-name:csv}") String csvContainerName) {
         this.courtService = courtService;
+        this.courtDetailsViewService = courtDetailsViewService;
         this.azureBlobService = azureBlobService;
         this.objectMapper = objectMapper;
         this.slackClient = slackClient;
@@ -70,7 +73,12 @@ public class CsvService {
                 CSV_FILE_NAME,
                 CSV_FILE_NAME,
                 CSV_CONTENT_TYPE,
-                new CsvUtil().convertJsonToCsv(objectMapper.valueToTree(courtService.getAllCourtDetails()))
+                new CsvUtil()
+                    .convertJsonToCsv(
+                        objectMapper.valueToTree(
+                            courtService.getAllCourtDetails().stream().map(
+                                courtDetailsViewService::prepareDetailsView)
+                                .toList()))
             );
         } catch (Exception e) {
             log.error("Error while creating CSV file", e);

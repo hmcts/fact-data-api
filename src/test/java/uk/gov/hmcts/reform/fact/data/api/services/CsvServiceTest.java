@@ -31,6 +31,9 @@ class CsvServiceTest {
     private CourtService courtService;
 
     @Mock
+    private CourtDetailsViewService courtDetailsViewService;
+
+    @Mock
     private AzureBlobService azureBlobService;
 
     @Mock
@@ -108,6 +111,7 @@ class CsvServiceTest {
     }
 
     private CsvService buildService() {
-        return new CsvService(courtService, azureBlobService, objectMapper, slackClient, CSV_CONTAINER_NAME);
+        return new CsvService(
+            courtService, courtDetailsViewService, azureBlobService, objectMapper, slackClient, CSV_CONTAINER_NAME);
     }
 }
