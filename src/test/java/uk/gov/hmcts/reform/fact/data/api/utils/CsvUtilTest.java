@@ -12,7 +12,6 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -213,7 +212,8 @@ class CsvUtilTest {
 
         String csv = csvUtil.convertJsonToCsv(root);
 
-        assertThat(csv).contains("name,lat,lon,number,cci_code,magistrate_code,slug,types,open,dx_number,areas_of_law,addresses");
+        assertThat(csv)
+            .contains("name,lat,lon,number,cci_code,magistrate_code,slug,types,open,dx_number,areas_of_law,addresses");
         assertThat(csv).contains("Test Court");
         assertThat(csv).contains("test-court");
     }
@@ -293,7 +293,8 @@ class CsvUtilTest {
         CsvMapper mockCsvMapper = mock(CsvMapper.class);
         CsvUtil utilWithMock = new CsvUtil(mockCsvMapper);
 
-        when(mockCsvMapper.writer(org.mockito.ArgumentMatchers.any(com.fasterxml.jackson.dataformat.csv.CsvSchema.class)))
+        when(mockCsvMapper.writer(org.mockito.ArgumentMatchers.any(
+            com.fasterxml.jackson.dataformat.csv.CsvSchema.class)))
             .thenThrow(new RuntimeException("Mock failure"));
 
         ArrayNode root = mapper.createArrayNode();
