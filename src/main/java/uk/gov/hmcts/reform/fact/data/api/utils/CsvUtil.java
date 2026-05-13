@@ -34,6 +34,8 @@ public class CsvUtil {
     private static final String LON = "lon";
     private static final String SLUG = "slug";
     private static final String TYPES = "types";
+    private static final String CCI_CODE = "cci_code";
+    private static final String MAGISTRATE_CODE = "magistrate_code";
     private static final String AREAS_OF_LAW = "areas_of_law";
     private static final String ADDRESSES = "addresses";
     private static final String COURT_ADDRESSES = "courtAddresses";
@@ -78,8 +80,8 @@ public class CsvUtil {
             .addColumn(LAT)
             .addColumn(LON)
             .addColumn("number")
-            .addColumn("cci_code")
-            .addColumn("magistrate_code")
+            .addColumn(CCI_CODE)
+            .addColumn(MAGISTRATE_CODE)
             .addColumn(SLUG)
             .addColumn(TYPES)
             .addColumn("open")
@@ -99,9 +101,9 @@ public class CsvUtil {
         flatMap.put(LAT, readDecimal(node, primaryAddress, LAT));
         flatMap.put(LON, readDecimal(node, primaryAddress, LON));
         flatMap.put("number", readInteger(courtCode, "crownCourtCode", "crown_court_code"));
-        flatMap.put("cci_code", readInteger(courtCode, "countyCourtCode", "cci_code"));
-        flatMap.put("magistrate_code", readInteger(courtCode, "magistrateCourtCode", "magistrate_code",
-                                                    "magistrate_court_code"));
+        flatMap.put(CCI_CODE, readInteger(courtCode, "countyCourtCode", "county_court_code", CCI_CODE));
+        flatMap.put(MAGISTRATE_CODE, readInteger(
+            courtCode, "magistrateCourtCode", "magistrate_court_code", MAGISTRATE_CODE));
         flatMap.put(SLUG, node.path(SLUG).asText());
         flatMap.put(TYPES, flattenTypes(node));
         flatMap.put("open", readBoolean(node, "open", "displayed", "openOnCath"));
