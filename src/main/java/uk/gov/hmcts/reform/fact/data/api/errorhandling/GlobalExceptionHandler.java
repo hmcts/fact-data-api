@@ -1,6 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.errorhandling;
 
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CsvCreationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.JsonConvertException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
@@ -212,6 +214,20 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(JsonConvertException ex) {
         log.error("400, JSON conversion error. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(AzureUploadException.class)
+    @ResponseStatus(HttpStatus.BAD_GATEWAY)
+    public ExceptionResponse handle(AzureUploadException ex) {
+        log.error("502, error while uploading CSV to Azure. Details: {}", ex.getMessage());
+        return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(CsvCreationException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ExceptionResponse handle(CsvCreationException ex) {
+        log.error("500, error while creating CSV file. Details: {}", ex.getMessage());
         return generateExceptionResponse(ex.getMessage());
     }
 

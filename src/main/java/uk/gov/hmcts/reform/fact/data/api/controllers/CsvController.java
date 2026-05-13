@@ -28,7 +28,8 @@ public class CsvController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "CSV file created and uploaded successfully"),
-        @ApiResponse(responseCode = "500", description = "Failed to create or upload CSV file")
+        @ApiResponse(responseCode = "500", description = "Failed to create CSV file"),
+        @ApiResponse(responseCode = "502", description = "Failed to upload CSV file to storage")
     })
     public void createAndUploadCsv() {
         csvService.createAndUploadCsv();
