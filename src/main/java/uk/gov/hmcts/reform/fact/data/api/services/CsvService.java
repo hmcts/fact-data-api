@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CsvCreationException;
 import uk.gov.hmcts.reform.fact.data.api.models.StringMultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.utils.CsvUtil;
 
@@ -63,7 +65,7 @@ public class CsvService {
         } catch (Exception e) {
             log.error("Error while uploading CSV", e);
             actions.add("Failed to upload CSV file to Azure Blob Storage. Check App insights.");
-            throw new RuntimeException("Failed to upload CSV file to Azure Blob Storage", e);
+            throw new AzureUploadException("Failed to upload CSV file to Azure Blob Storage", e);
         }
     }
 
@@ -83,7 +85,7 @@ public class CsvService {
         } catch (Exception e) {
             log.error("Error while creating CSV file", e);
             actions.add("Failed to create CSV file. Check App insights.");
-            throw new RuntimeException("Failed to create CSV file", e);
+            throw new CsvCreationException("Failed to create CSV file", e);
         }
     }
 

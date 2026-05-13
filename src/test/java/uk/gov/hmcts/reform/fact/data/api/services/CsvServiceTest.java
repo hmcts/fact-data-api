@@ -6,6 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CsvCreationException;
 import uk.gov.hmcts.reform.fact.data.api.models.StringMultipartFile;
 
 import java.util.ArrayList;
@@ -63,7 +65,7 @@ class CsvServiceTest {
             .when(azureBlobService)
             .uploadFile(CSV_CONTAINER_NAME, CSV_FILE_NAME, csvFile);
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () ->
+        AzureUploadException exception = assertThrows(AzureUploadException.class, () ->
             csvService.uploadCsvToAzureBlob(actions, csvFile)
         );
 
@@ -88,7 +90,7 @@ class CsvServiceTest {
         CsvService csvService = buildService();
         when(courtService.getAllCourtDetails()).thenThrow(new RuntimeException("court failure"));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, csvService::createAndUploadCsv);
+        CsvCreationException exception = assertThrows(CsvCreationException.class, csvService::createAndUploadCsv);
 
         assertThat(exception.getMessage()).isEqualTo("Failed to create CSV file");
         verify(slackClient).sendSlackMessage(contains("Failed to create CSV file. Check App insights."));
@@ -103,7 +105,7 @@ class CsvServiceTest {
             .uploadFile(org.mockito.ArgumentMatchers.eq(CSV_CONTAINER_NAME),
                 org.mockito.ArgumentMatchers.eq(CSV_FILE_NAME), any(StringMultipartFile.class));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, csvService::createAndUploadCsv);
+        AzureUploadException exception = assertThrows(AzureUploadException.class, csvService::createAndUploadCsv);
 
         assertThat(exception.getMessage()).isEqualTo("Failed to upload CSV file to Azure Blob Storage");
         verify(slackClient)
