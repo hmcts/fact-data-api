@@ -88,4 +88,112 @@ class CsvUtilTest {
 
         assertThat(result.get("open")).isEqualTo(true);
     }
+
+    @Test
+    void shouldReturnNotAvailableIfNoNodesProvided() {
+        Map<String, Object> result = csvUtil.flattenCourtNode(mapper.createObjectNode());
+        assertThat(result.get("addresses").toString()).isEqualTo("No address available");
+    }
+
+    @Test
+    void shouldFlattenTypesFromAddresses() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode addresses = root.putArray("courtAddresses");
+        ObjectNode address = addresses.addObject();
+        ArrayNode courtTypes = address.putArray("courtTypes");
+        courtTypes.add("County Court");
+        ObjectNode type2 = courtTypes.addObject();
+        type2.put("name", "Tribunal");
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+
+        assertThat(result.get("types").toString()).isEqualTo("County Court | Tribunal");
+    }
+
+    @Test
+    void shouldFlattenTypesFromCounterService() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode counterService = root.putArray("courtCounterServiceOpeningHours");
+        ObjectNode service = counterService.addObject();
+        ArrayNode courtTypes = service.putArray("courtTypes");
+        courtTypes.add("Magistrates' Court");
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+
+        assertThat(result.get("types").toString()).isEqualTo("Magistrates' Court");
+    }
+
+    @Test
+    void shouldAvoidDuplicateTypesFromCounterService() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode counterService = root.putArray("courtCounterServiceOpeningHours");
+
+        ObjectNode service1 = counterService.addObject();
+        service1.putArray("courtTypes").add("Magistrates' Court");
+
+        ObjectNode service2 = counterService.addObject();
+        service2.putArray("courtTypes").add("Magistrates' Court");
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+
+        assertThat(result.get("types").toString()).isEqualTo("Magistrates' Court");
+    }
+
+    @Test
+    void shouldFlattenFieldsOfLawWithAreasAndCourts() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode addresses = root.putArray("courtAddresses");
+        ObjectNode address = addresses.addObject();
+        ObjectNode fieldsOfLaw = address.putObject("fieldsOfLaw");
+
+        ArrayNode areas = fieldsOfLaw.putArray("areasOfLaw");
+        ObjectNode a1 = areas.addObject();
+        a1.put("name", "Family");
+
+        ArrayNode courts = fieldsOfLaw.putArray("courts");
+        ObjectNode c1 = courts.addObject();
+        c1.put("name", "High Court");
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+        String addressesStr = result.get("addresses").toString();
+        assertThat(addressesStr).contains("Areas of Law: Family");
+        assertThat(addressesStr).contains("Courts: High Court");
+    }
+
+    @Test
+    void shouldFlattenFieldsOfLawWithTextualAreasAndCourts() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode addresses = root.putArray("courtAddresses");
+        ObjectNode address = addresses.addObject();
+        ObjectNode fieldsOfLaw = address.putObject("fieldsOfLaw");
+
+        ArrayNode areas = fieldsOfLaw.putArray("areasOfLaw");
+        areas.add("Family");
+
+        ArrayNode courts = fieldsOfLaw.putArray("courts");
+        courts.add("High Court");
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+        String addressesStr = result.get("addresses").toString();
+        assertThat(addressesStr).contains("Areas of Law: Family");
+        assertThat(addressesStr).contains("Courts: High Court");
+    }
+
+    @Test
+    void shouldFallbackToAddressNodeWhenFieldsOfLawNodeMissing() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode addresses = root.putArray("courtAddresses");
+        ObjectNode address = addresses.addObject();
+
+        ArrayNode addressAreas = address.putArray("areasOfLaw");
+        addressAreas.add("Crime");
+
+        ArrayNode addressTypes = address.putArray("courtTypes");
+        addressTypes.add("Crown Court");
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+        String addressesStr = result.get("addresses").toString();
+        assertThat(addressesStr).contains("Areas of Law: Crime");
+        assertThat(addressesStr).contains("Courts: Crown Court");
+    }
 }

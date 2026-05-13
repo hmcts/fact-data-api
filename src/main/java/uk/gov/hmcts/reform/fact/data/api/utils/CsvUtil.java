@@ -37,6 +37,7 @@ public class CsvUtil {
     private static final String CCI_CODE = "cci_code";
     private static final String MAGISTRATE_CODE = "magistrate_code";
     private static final String AREAS_OF_LAW = "areas_of_law";
+    private static final String AREAS_OF_LAW_PATH = "areasOfLaw";
     private static final String ADDRESSES = "addresses";
     private static final String COURT_ADDRESSES = "courtAddresses";
     private static final String COURT_TYPES = "courtTypes";
@@ -123,7 +124,7 @@ public class CsvUtil {
 
         List<String> areas = new ArrayList<>();
         for (JsonNode courtArea : courtAreasOfLaw) {
-            JsonNode areaList = courtArea.path("areasOfLaw");
+            JsonNode areaList = courtArea.path(AREAS_OF_LAW_PATH);
             if (areaList.isArray()) {
                 for (JsonNode area : areaList) {
                     String areaDetails = String.format(
@@ -197,19 +198,29 @@ public class CsvUtil {
     private String flattenFieldsOfLaw(JsonNode... candidateNodes) {
         JsonNode fieldsOfLawNode = getFirstObjectCandidate(candidateNodes);
         if (fieldsOfLawNode == null || !fieldsOfLawNode.isObject()) {
-            JsonNode addressNode = candidateNodes.length > 0 ? candidateNodes[candidateNodes.length - 1] : null;
-            if (addressNode != null && addressNode.isObject()) {
-                List<String> parts = new ArrayList<>();
-                addNamesFromArray(parts, addressNode.path("areasOfLaw"), AREAS_OF_LAW_LABEL);
-                addNamesFromArray(parts, addressNode.path(COURT_TYPES), COURTS_LABEL);
-                return parts.isEmpty() ? NOT_AVAILABLE : String.join(", ", parts);
-            }
-            return NOT_AVAILABLE;
+            return flattenFieldsOfLawFromAddress(candidateNodes);
         }
 
         List<String> parts = new ArrayList<>();
+        addFieldsOfLawAreas(parts, fieldsOfLawNode);
+        addFieldsOfLawCourts(parts, fieldsOfLawNode);
 
-        JsonNode areas = fieldsOfLawNode.path("areasOfLaw");
+        return parts.isEmpty() ? NOT_AVAILABLE : String.join(", ", parts);
+    }
+
+    private String flattenFieldsOfLawFromAddress(JsonNode... candidateNodes) {
+        JsonNode addressNode = candidateNodes.length > 0 ? candidateNodes[candidateNodes.length - 1] : null;
+        if (addressNode != null && addressNode.isObject()) {
+            List<String> parts = new ArrayList<>();
+            addNamesFromArray(parts, addressNode.path(AREAS_OF_LAW_PATH), AREAS_OF_LAW_LABEL);
+            addNamesFromArray(parts, addressNode.path(COURT_TYPES), COURTS_LABEL);
+            return parts.isEmpty() ? NOT_AVAILABLE : String.join(", ", parts);
+        }
+        return NOT_AVAILABLE;
+    }
+
+    private void addFieldsOfLawAreas(List<String> parts, JsonNode fieldsOfLawNode) {
+        JsonNode areas = fieldsOfLawNode.path(AREAS_OF_LAW_PATH);
         if (areas.isMissingNode()) {
             areas = fieldsOfLawNode.path(AREAS_OF_LAW);
         }
@@ -218,7 +229,9 @@ public class CsvUtil {
             areas.forEach(a -> names.add(a.isTextual() ? a.asText() : safeText(a, NAME)));
             parts.add(AREAS_OF_LAW_LABEL + ": " + String.join(PIPE_SEPARATOR, names));
         }
+    }
 
+    private void addFieldsOfLawCourts(List<String> parts, JsonNode fieldsOfLawNode) {
         JsonNode courts = fieldsOfLawNode.path("courts");
         if (courts.isMissingNode()) {
             courts = fieldsOfLawNode.path(COURT_TYPES);
@@ -228,8 +241,6 @@ public class CsvUtil {
             courts.forEach(c -> names.add(c.isTextual() ? c.asText() : safeText(c, NAME)));
             parts.add(COURTS_LABEL + ": " + String.join(PIPE_SEPARATOR, names));
         }
-
-        return String.join(", ", parts);
     }
 
     private String flattenDxCodes(JsonNode node) {
@@ -255,43 +266,46 @@ public class CsvUtil {
         }
 
         List<String> types = new ArrayList<>();
-        JsonNode addresses = node.path(COURT_ADDRESSES);
+        collectTypesFromAddresses(node.path(COURT_ADDRESSES), types);
+
+        if (types.isEmpty()) {
+            collectTypesFromCounterService(node.path("courtCounterServiceOpeningHours"), types);
+        }
+
+        return String.join(PIPE_SEPARATOR, types);
+    }
+
+    private void collectTypesFromAddresses(JsonNode addresses, List<String> types) {
         if (addresses.isArray()) {
             for (JsonNode address : addresses) {
                 JsonNode courtTypes = address.path(COURT_TYPES);
                 if (courtTypes.isArray()) {
                     for (JsonNode courtType : courtTypes) {
-                        if (courtType.isTextual()) {
-                            types.add(courtType.asText());
-                        } else {
-                            String name = safeText(courtType, NAME);
-                            if (!NOT_AVAILABLE.equals(name)) {
-                                types.add(name);
-                            }
-                        }
+                        addTypeNameToList(courtType, types);
                     }
                 }
             }
         }
+    }
 
-        if (types.isEmpty()) {
-            JsonNode counterServiceOpeningHours = node.path("courtCounterServiceOpeningHours");
-            if (counterServiceOpeningHours.isArray()) {
-                for (JsonNode openingHour : counterServiceOpeningHours) {
-                    JsonNode courtTypes = openingHour.path(COURT_TYPES);
-                    if (courtTypes.isArray()) {
-                        for (JsonNode courtType : courtTypes) {
-                            String name = courtType.isTextual() ? courtType.asText() : safeText(courtType, NAME);
-                            if (!NOT_AVAILABLE.equals(name) && !types.contains(name)) {
-                                types.add(name);
-                            }
-                        }
+    private void collectTypesFromCounterService(JsonNode counterServiceOpeningHours, List<String> types) {
+        if (counterServiceOpeningHours.isArray()) {
+            for (JsonNode openingHour : counterServiceOpeningHours) {
+                JsonNode courtTypes = openingHour.path(COURT_TYPES);
+                if (courtTypes.isArray()) {
+                    for (JsonNode courtType : courtTypes) {
+                        addTypeNameToList(courtType, types);
                     }
                 }
             }
         }
+    }
 
-        return String.join(PIPE_SEPARATOR, types);
+    private void addTypeNameToList(JsonNode courtType, List<String> types) {
+        String name = courtType.isTextual() ? courtType.asText() : safeText(courtType, NAME);
+        if (!NOT_AVAILABLE.equals(name) && !types.contains(name)) {
+            types.add(name);
+        }
     }
 
     private JsonNode getFirstArrayItem(JsonNode node, String field) {
