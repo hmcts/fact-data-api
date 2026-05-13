@@ -82,7 +82,7 @@ public class CsvUtil {
         flatMap.put("name", node.path("name").asText());
         flatMap.put("lat", readDecimal(node, primaryAddress, "lat"));
         flatMap.put("lon", readDecimal(node, primaryAddress, "lon"));
-        flatMap.put("number", readInteger(node, "number"));
+        flatMap.put("number", readInteger(courtCode, "crownCourtCode", "crown_court_code"));
         flatMap.put("cci_code", readInteger(courtCode, "countyCourtCode", "cci_code"));
         flatMap.put("magistrate_code", readInteger(courtCode, "magistrateCourtCode", "magistrate_code",
                                                     "magistrate_court_code"));
