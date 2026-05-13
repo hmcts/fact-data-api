@@ -59,14 +59,15 @@ class CsvUtilTest {
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
 
         String addressesStr = result.get("addresses").toString();
-        assertThat(addressesStr).contains("Address: 10 High St");
-        assertThat(addressesStr).contains("Town: London");
-        assertThat(addressesStr).contains("Postcode: SW1 1AA");
-        assertThat(addressesStr).contains("Areas of Law: Crime");
-        assertThat(addressesStr).contains("Courts: Crown Court");
+        assertThat(addressesStr)
+            .contains("Address: 10 High St")
+            .contains("Town: London")
+            .contains("Postcode: SW1 1AA")
+            .contains("Areas of Law: Crime")
+            .contains("Courts: Crown Court");
 
         // Verify types flattening as well
-        assertThat(result.get("types").toString()).isEqualTo("Crown Court");
+        assertThat(result.get("types")).hasToString("Crown Court");
     }
 
     @Test
@@ -82,7 +83,7 @@ class CsvUtilTest {
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
 
-        assertThat(result.get("types").toString()).isEqualTo("Magistrates' Court");
+        assertThat(result.get("types")).hasToString("Magistrates' Court");
     }
 
     @Test
@@ -98,7 +99,7 @@ class CsvUtilTest {
     @Test
     void shouldReturnNotAvailableIfNoNodesProvided() {
         Map<String, Object> result = csvUtil.flattenCourtNode(mapper.createObjectNode());
-        assertThat(result.get("addresses").toString()).isEqualTo("No address available");
+        assertThat(result.get("addresses")).hasToString("No address available");
     }
 
     @Test
@@ -113,7 +114,7 @@ class CsvUtilTest {
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
 
-        assertThat(result.get("types").toString()).isEqualTo("County Court | Tribunal");
+        assertThat(result.get("types")).hasToString("County Court | Tribunal");
     }
 
     @Test
@@ -126,7 +127,7 @@ class CsvUtilTest {
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
 
-        assertThat(result.get("types").toString()).isEqualTo("Magistrates' Court");
+        assertThat(result.get("types")).hasToString("Magistrates' Court");
     }
 
     @Test
@@ -142,7 +143,7 @@ class CsvUtilTest {
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
 
-        assertThat(result.get("types").toString()).isEqualTo("Magistrates' Court");
+        assertThat(result.get("types")).hasToString("Magistrates' Court");
     }
 
     @Test
