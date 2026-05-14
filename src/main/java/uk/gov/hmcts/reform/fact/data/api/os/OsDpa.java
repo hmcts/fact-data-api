@@ -23,6 +23,9 @@ public class OsDpa {
     @JsonProperty("ADDRESS")
     private String address;
 
+    @JsonProperty("ORGANISATION_NAME")
+    private String organisationName;
+
     @JsonProperty("BUILDING_NUMBER")
     private String buildingNumber;
 
