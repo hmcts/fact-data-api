@@ -4,6 +4,7 @@ import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -28,7 +29,8 @@ import static org.mockito.Mockito.when;
 class AzureBlobServiceTest {
 
     private static final String IMAGE_ID = "test-image-id";
-    private static final String CONTAINER_NAME = "csv";
+    private static final String CSV_CONTAINER_NAME = "csv";
+    private static final String PHOTOS_CONTAINER_NAME = "photos";
     private static final String CONTENT_TYPE = "image/jpeg";
     private static final String BLOB_URL = "https://example.com/blob/test-image-id";
 
@@ -47,12 +49,16 @@ class AzureBlobServiceTest {
     @InjectMocks
     private AzureBlobService azureBlobService;
 
+    @BeforeEach
+    void setUp() {
+        when(blobContainerClient.getBlobClient(IMAGE_ID)).thenReturn(blobClient);
+    }
+
     @Test
     void uploadFileShouldUploadAndReturnUrl() throws IOException {
         byte[] fileBytes = "dummy payload".getBytes(StandardCharsets.UTF_8);
         InputStream inputStream = new ByteArrayInputStream(fileBytes);
 
-        when(blobContainerClient.getBlobClient(IMAGE_ID)).thenReturn(blobClient);
         when(multipartFile.getInputStream()).thenReturn(inputStream);
         when(multipartFile.getSize()).thenReturn((long) fileBytes.length);
         when(multipartFile.getContentType()).thenReturn(CONTENT_TYPE);
@@ -71,7 +77,6 @@ class AzureBlobServiceTest {
 
     @Test
     void uploadFileShouldThrowAzureUploadExceptionWhenReadingFails() throws IOException {
-        when(blobContainerClient.getBlobClient(IMAGE_ID)).thenReturn(blobClient);
         when(multipartFile.getInputStream()).thenThrow(new IOException("Read failure"));
 
         assertThrows(AzureUploadException.class, () ->
@@ -84,8 +89,6 @@ class AzureBlobServiceTest {
 
     @Test
     void deleteBlobShouldDeleteBlobById() {
-        when(blobContainerClient.getBlobClient(IMAGE_ID)).thenReturn(blobClient);
-
         azureBlobService.deleteBlob(IMAGE_ID);
 
         verify(blobClient).delete();
@@ -96,15 +99,14 @@ class AzureBlobServiceTest {
         byte[] fileBytes = "dummy payload".getBytes(StandardCharsets.UTF_8);
         InputStream inputStream = new ByteArrayInputStream(fileBytes);
 
-        when(blobServiceClient.getBlobContainerClient(CONTAINER_NAME)).thenReturn(blobContainerClient);
-        when(blobContainerClient.exists()).thenReturn(true);
-        when(blobContainerClient.getBlobClient(IMAGE_ID)).thenReturn(blobClient);
         when(multipartFile.getInputStream()).thenReturn(inputStream);
         when(multipartFile.getSize()).thenReturn((long) fileBytes.length);
         when(multipartFile.getContentType()).thenReturn(CONTENT_TYPE);
+        when(blobClient.getBlobUrl()).thenReturn(BLOB_URL);
 
-        azureBlobService.uploadFile(CONTAINER_NAME, IMAGE_ID, multipartFile);
+        String result = azureBlobService.uploadFile(IMAGE_ID, multipartFile);
 
+        assertThat(result).isEqualTo(BLOB_URL);
         verify(blobClient).upload(inputStream, fileBytes.length, true);
         verify(blobClient).setHttpHeaders(org.mockito.ArgumentMatchers.any(BlobHttpHeaders.class));
     }
@@ -114,29 +116,24 @@ class AzureBlobServiceTest {
         byte[] fileBytes = "dummy payload".getBytes(StandardCharsets.UTF_8);
         InputStream inputStream = new ByteArrayInputStream(fileBytes);
 
-        when(blobServiceClient.getBlobContainerClient(CONTAINER_NAME)).thenReturn(blobContainerClient);
-        when(blobContainerClient.exists()).thenReturn(false);
-        when(blobContainerClient.getBlobClient(IMAGE_ID)).thenReturn(blobClient);
         when(multipartFile.getInputStream()).thenReturn(inputStream);
         when(multipartFile.getSize()).thenReturn((long) fileBytes.length);
         when(multipartFile.getContentType()).thenReturn(CONTENT_TYPE);
+        when(blobClient.getBlobUrl()).thenReturn(BLOB_URL);
 
-        azureBlobService.uploadFile(CONTAINER_NAME, IMAGE_ID, multipartFile);
+        String result = azureBlobService.uploadFile(IMAGE_ID, multipartFile);
 
-        verify(blobContainerClient).create();
+        assertThat(result).isEqualTo(BLOB_URL);
         verify(blobClient).upload(inputStream, fileBytes.length, true);
         verify(blobClient).setHttpHeaders(org.mockito.ArgumentMatchers.any(BlobHttpHeaders.class));
     }
 
     @Test
     void uploadFileWithContainerShouldThrowAzureUploadExceptionWhenReadingFails() throws IOException {
-        when(blobServiceClient.getBlobContainerClient(CONTAINER_NAME)).thenReturn(blobContainerClient);
-        when(blobContainerClient.exists()).thenReturn(true);
-        when(blobContainerClient.getBlobClient(IMAGE_ID)).thenReturn(blobClient);
         when(multipartFile.getInputStream()).thenThrow(new IOException("Read failure"));
 
         assertThrows(AzureUploadException.class, () ->
-            azureBlobService.uploadFile(CONTAINER_NAME, IMAGE_ID, multipartFile)
+            azureBlobService.uploadFile(IMAGE_ID, multipartFile)
         );
 
         verify(blobClient, never()).setHttpHeaders(org.mockito.ArgumentMatchers.any(BlobHttpHeaders.class));

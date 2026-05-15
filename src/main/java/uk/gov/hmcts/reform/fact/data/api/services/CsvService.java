@@ -2,7 +2,6 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
@@ -17,6 +16,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+
 /**
  * Service for handling CSV file operations.
  */
@@ -27,7 +28,6 @@ public class CsvService {
     private static final String CSV_FILE_NAME = "courts-and-tribunals-data.csv";
     private static final String CSV_CONTENT_TYPE = "text/csv";
 
-    private final String csvContainerName;
     private final CourtService courtService;
     private final CourtDetailsViewService courtDetailsViewService;
     private final AzureBlobService azureBlobService;
@@ -36,16 +36,14 @@ public class CsvService {
 
     public CsvService(CourtService courtService,
                       CourtDetailsViewService courtDetailsViewService,
-                      AzureBlobService azureBlobService,
+                      @Qualifier("csvAzureBlobService") AzureBlobService azureBlobService,
                       ObjectMapper objectMapper,
-                      SlackClient slackClient,
-                      @Value("${fact.data-api.csv-container-name:csv}") String csvContainerName) {
+                      SlackClient slackClient) {
         this.courtService = courtService;
         this.courtDetailsViewService = courtDetailsViewService;
         this.azureBlobService = azureBlobService;
         this.objectMapper = objectMapper;
         this.slackClient = slackClient;
-        this.csvContainerName = csvContainerName;
     }
 
     public void createAndUploadCsv() {
@@ -61,7 +59,7 @@ public class CsvService {
     public void uploadCsvToAzureBlob(List<String> actions, StringMultipartFile stringMultipartFile) {
         try {
             azureBlobService
-                .uploadFile(csvContainerName, CSV_FILE_NAME, stringMultipartFile);
+                .uploadFile(CSV_FILE_NAME, stringMultipartFile);
         } catch (Exception e) {
             log.error("Error while uploading CSV", e);
             actions.add("Failed to upload CSV file to Azure Blob Storage. Check App insights.");

@@ -9,6 +9,8 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+
 @Slf4j
 @Service
 public class CourtPhotoService {
@@ -18,7 +20,8 @@ public class CourtPhotoService {
     private final AzureBlobService azureBlobService;
 
     public CourtPhotoService(CourtPhotoRepository courtPhotoRepository,
-                             CourtService courtService, AzureBlobService azureBlobService) {
+                             CourtService courtService,
+                             @Qualifier("photoAzureBlobService") AzureBlobService azureBlobService) {
         this.courtPhotoRepository = courtPhotoRepository;
         this.courtService = courtService;
         this.azureBlobService = azureBlobService;

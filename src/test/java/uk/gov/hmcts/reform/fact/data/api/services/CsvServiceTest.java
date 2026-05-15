@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CsvServiceTest {
 
-    private static final String CSV_CONTAINER_NAME = "csv-container";
+    private static final String CSV_CONTAINER_NAME = "csv";
     private static final String CSV_FILE_NAME = "courts-and-tribunals-data.csv";
 
     @Mock
@@ -51,7 +51,7 @@ class CsvServiceTest {
 
         csvService.uploadCsvToAzureBlob(actions, csvFile);
 
-        verify(azureBlobService).uploadFile(CSV_CONTAINER_NAME, CSV_FILE_NAME, csvFile);
+        verify(azureBlobService).uploadFile(CSV_FILE_NAME, csvFile);
         assertThat(actions).isEmpty();
     }
 
@@ -63,7 +63,7 @@ class CsvServiceTest {
 
         doThrow(new RuntimeException("azure failure"))
             .when(azureBlobService)
-            .uploadFile(CSV_CONTAINER_NAME, CSV_FILE_NAME, csvFile);
+            .uploadFile(CSV_FILE_NAME, csvFile);
 
         AzureUploadException exception = assertThrows(AzureUploadException.class, () ->
             csvService.uploadCsvToAzureBlob(actions, csvFile)
@@ -80,8 +80,8 @@ class CsvServiceTest {
 
         csvService.createAndUploadCsv();
 
-        verify(azureBlobService).uploadFile(org.mockito.ArgumentMatchers.eq(CSV_CONTAINER_NAME),
-            org.mockito.ArgumentMatchers.eq(CSV_FILE_NAME), any(StringMultipartFile.class));
+        verify(azureBlobService)
+            .uploadFile(org.mockito.ArgumentMatchers.eq(CSV_FILE_NAME), any(StringMultipartFile.class));
         verify(slackClient, never()).sendSlackMessage(any());
     }
 
@@ -102,8 +102,7 @@ class CsvServiceTest {
         when(courtService.getAllCourtDetails()).thenReturn(Collections.emptyList());
         doThrow(new RuntimeException("azure failure"))
             .when(azureBlobService)
-            .uploadFile(org.mockito.ArgumentMatchers.eq(CSV_CONTAINER_NAME),
-                org.mockito.ArgumentMatchers.eq(CSV_FILE_NAME), any(StringMultipartFile.class));
+            .uploadFile(org.mockito.ArgumentMatchers.eq(CSV_FILE_NAME), any(StringMultipartFile.class));
 
         AzureUploadException exception = assertThrows(AzureUploadException.class, csvService::createAndUploadCsv);
 
@@ -114,6 +113,6 @@ class CsvServiceTest {
 
     private CsvService buildService() {
         return new CsvService(
-            courtService, courtDetailsViewService, azureBlobService, objectMapper, slackClient, CSV_CONTAINER_NAME);
+            courtService, courtDetailsViewService, azureBlobService, objectMapper, slackClient);
     }
 }

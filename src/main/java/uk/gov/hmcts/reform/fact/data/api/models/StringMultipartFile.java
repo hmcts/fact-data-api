@@ -1,61 +1,57 @@
 package uk.gov.hmcts.reform.fact.data.api.models;
 
+import lombok.Getter;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+/**
+ * An implementation of the {@link MultipartFile} interface that wraps a {@link String} content.
+ *
+ * <p>This class is used to represent a file created from a string, which can be then treated as a standard
+ * multipart file for operations like uploading to cloud storage.</p>
+ */
+@Getter
 public class StringMultipartFile implements MultipartFile {
 
     private final String name;
-    private final String originalFileName;
+    private final String originalFilename;
     private final String contentType;
-    private final byte[] content;
+    private final byte[] bytes;
 
-    public StringMultipartFile(String name, String originalFileName, String contentType, String content) {
+    /**
+     * Constructs a new StringMultipartFile.
+     *
+     * @param name the name of the file
+     * @param originalFilename the original filename
+     * @param contentType the content type of the file
+     * @param content the string content of the file
+     */
+    public StringMultipartFile(String name, String originalFilename, String contentType, String content) {
         this.name = name;
-        this.originalFileName = originalFileName;
+        this.originalFilename = originalFilename;
         this.contentType = contentType;
-        this.content = content.getBytes();
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String getOriginalFilename() {
-        return originalFileName;
-    }
-
-    @Override
-    public String getContentType() {
-        return contentType;
+        this.bytes = content.getBytes();
     }
 
     @Override
     public boolean isEmpty() {
-        return content.length == 0;
+        return bytes.length == 0;
     }
 
     @Override
     public long getSize() {
-        return content.length;
-    }
-
-    @Override
-    public byte[] getBytes() {
-        return content;
+        return bytes.length;
     }
 
     @Override
     public InputStream getInputStream() {
-        return new ByteArrayInputStream(content);
+        return new ByteArrayInputStream(bytes);
     }
 
     @Override
     public void transferTo(java.io.File dest) throws IllegalStateException {
-        // Optionally, you can implement the logic to transfer the content to a file here.
+        // This implementation is currently empty as it's not required for current use cases,
+        // but the override is necessary for the interface.
     }
 }

@@ -23,6 +23,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CourtPhotoServiceTest {
 
+    private static final String CONTAINER_NAME = "photos";
+
     @Mock
     private CourtPhotoRepository courtPhotoRepository;
 
@@ -76,8 +78,10 @@ class CourtPhotoServiceTest {
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
         when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.empty());
-        when(azureBlobService.uploadFile(eq(courtId.toString()), eq(multipartFile))).thenReturn(uploadedLink);
-        when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(azureBlobService
+                 .uploadFile(eq(courtId.toString()), eq(multipartFile))).thenReturn(uploadedLink);
+        when(courtPhotoRepository
+                 .save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
 
         CourtPhoto result = courtPhotoService.setCourtPhoto(courtId, multipartFile);
 
@@ -95,8 +99,10 @@ class CourtPhotoServiceTest {
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
         when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(existing));
-        when(azureBlobService.uploadFile(eq(courtId.toString()), eq(multipartFile))).thenReturn("new-link");
-        when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(azureBlobService
+                 .uploadFile(eq(courtId.toString()), eq(multipartFile))).thenReturn("new-link");
+        when(courtPhotoRepository
+                 .save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
 
         CourtPhoto result = courtPhotoService.setCourtPhoto(courtId, multipartFile);
 
