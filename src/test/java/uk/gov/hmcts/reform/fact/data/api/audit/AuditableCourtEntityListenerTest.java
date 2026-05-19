@@ -12,8 +12,9 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 
 import java.util.UUID;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,7 @@ class AuditableCourtEntityListenerTest {
     private static final UUID COURT_ID = UUID.randomUUID();
 
     @Spy
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = JsonMapper.builder().build();
 
     @Mock
     private ApplicationContext applicationContext;
@@ -121,7 +122,7 @@ class AuditableCourtEntityListenerTest {
         courtCurrent.setName("Court Name Updated");
 
         when(entityManager.find(Court.class, courtCurrent.getId())).thenReturn(courtPrevious);
-        when(objectMapper.writeValueAsString(courtPrevious)).thenThrow(new JsonParseException("test exception"));
+        when(objectMapper.writeValueAsString(courtPrevious)).thenThrow(new StreamReadException("test exception"));
 
         listener.beforeUpdate(courtCurrent);
 
