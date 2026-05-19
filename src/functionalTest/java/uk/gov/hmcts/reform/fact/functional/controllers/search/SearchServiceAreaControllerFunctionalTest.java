@@ -36,7 +36,7 @@ public final class SearchServiceAreaControllerFunctionalTest {
      */
     @Test
     @DisplayName("GET /search/service-area/v1/{serviceAreaName} returns empty list when no courts are linked")
-    void shouldReturnEmptyListForServiceAreaWithNoCourts() throws Exception {
+    void shouldReturnEmptyListForServiceAreaWithNoCourts() {
         final String serviceAreaName = "Tax";
         final Response response = http.doGet("/search/service-area/v1/" + serviceAreaName);
 

@@ -33,7 +33,7 @@ public class TestingSupportControllerTest {
         "TSC Auth Test A", "TSC Auth Test B", "TSC Auth Test C", "TSC Auth Test D", "TSC Auth Test E",
         "TSC Auth Test F", "TSC Auth Test G", "TSC Auth Test H", "TSC Auth Test I", "TSC Auth Test J"
     })
-    void testingSupportEndpointAuth(String courtName) throws Exception {
+    void testingSupportEndpointAuth(String courtName) {
         String endpoint = "/testing-support/courts?courtName=" + courtName;
         Response response = http.doGet(endpoint);
 

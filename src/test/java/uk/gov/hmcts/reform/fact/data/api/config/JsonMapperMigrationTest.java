@@ -13,7 +13,7 @@ import tools.jackson.databind.json.JsonMapper;
 class JsonMapperMigrationTest {
 
     @Test
-    void shouldSerializeJavaTimeTypesWithoutExtraModules() throws Exception {
+    void shouldSerializeJavaTimeTypesWithoutExtraModules() {
         ObjectMapper mapper = JsonMapper.builder()
             .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
             .build();
