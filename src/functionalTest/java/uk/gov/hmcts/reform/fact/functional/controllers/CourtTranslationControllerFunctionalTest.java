@@ -1,8 +1,8 @@
 package uk.gov.hmcts.reform.fact.functional.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
@@ -28,9 +28,9 @@ import static org.springframework.http.HttpStatus.OK;
 public final class CourtTranslationControllerFunctionalTest {
 
     private static final HttpClient http = new HttpClient();
-    private static final ObjectMapper mapper = new ObjectMapper()
-        .registerModule(new JavaTimeModule())
-        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    private static final ObjectMapper mapper = JsonMapper.builder()
+        .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .build();
 
     private void assertTranslationFields(CourtTranslation translation, UUID expectedId, UUID expectedCourtId,
                                          String expectedEmail, String expectedPhone) {

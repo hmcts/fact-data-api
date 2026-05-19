@@ -1,10 +1,9 @@
 package uk.gov.hmcts.reform.fact.functional.controllers.search;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.DisplayName;
@@ -23,9 +22,9 @@ import static org.springframework.http.HttpStatus.OK;
 public final class SearchServiceAreaControllerFunctionalTest {
 
     private static final HttpClient http = new HttpClient();
-    private static final ObjectMapper mapper = new ObjectMapper()
-        .registerModule(new JavaTimeModule())
-        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    private static final ObjectMapper mapper = JsonMapper.builder()
+        .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .build();
 
     /**
      * This test asserts for an empty list at the moment because there is currently no API endpoint
@@ -37,7 +36,7 @@ public final class SearchServiceAreaControllerFunctionalTest {
      */
     @Test
     @DisplayName("GET /search/service-area/v1/{serviceAreaName} returns empty list when no courts are linked")
-    void shouldReturnEmptyListForServiceAreaWithNoCourts() throws JsonProcessingException {
+    void shouldReturnEmptyListForServiceAreaWithNoCourts() throws Exception {
         final String serviceAreaName = "Tax";
         final Response response = http.doGet("/search/service-area/v1/" + serviceAreaName);
 

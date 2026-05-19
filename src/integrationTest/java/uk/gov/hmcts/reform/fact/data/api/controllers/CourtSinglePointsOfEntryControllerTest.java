@@ -21,7 +21,7 @@ import uk.gov.hmcts.reform.fact.data.api.services.CourtSinglePointsOfEntryServic
 import java.util.List;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
