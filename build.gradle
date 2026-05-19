@@ -195,9 +195,9 @@ dependencies {
 
   implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.2.0'
 
-
   implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-hibernate7', version: '2.21.3'
   implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-csv', version: '2.21.3'
+  implementation group: 'tools.jackson.datatype', name: 'jackson-datatype-hibernate7'
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '8.0.0'
 
@@ -216,7 +216,6 @@ dependencies {
   integrationTestImplementation group: 'org.testcontainers', name: 'postgresql', version: '1.21.4'
 
   smokeTestImplementation group: 'io.rest-assured', name: 'rest-assured', version: '6.0.0'
-  functionalTestImplementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.21.3'
   functionalTestImplementation group: 'io.qameta.allure', name: 'allure-junit5', version: '2.34.0'
   functionalTestImplementation group: 'io.qameta.allure', name: 'allure-rest-assured', version: '2.34.0'
 }

@@ -6,10 +6,9 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +23,9 @@ import org.springframework.http.HttpStatus;
 @Slf4j
 public class TestingSupportControllerTest {
     private static final HttpClient http = new HttpClient();
-    private static final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(
-        SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    private static final ObjectMapper mapper = JsonMapper.builder()
+        .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .build();
 
     @ParameterizedTest
     @DisplayName("Test random court generation works")
@@ -33,7 +33,7 @@ public class TestingSupportControllerTest {
         "TSC Auth Test A", "TSC Auth Test B", "TSC Auth Test C", "TSC Auth Test D", "TSC Auth Test E",
         "TSC Auth Test F", "TSC Auth Test G", "TSC Auth Test H", "TSC Auth Test I", "TSC Auth Test J"
     })
-    void testingSupportEndpointAuth(String courtName) throws JsonProcessingException {
+    void testingSupportEndpointAuth(String courtName) {
         String endpoint = "/testing-support/courts?courtName=" + courtName;
         Response response = http.doGet(endpoint);
 
