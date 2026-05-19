@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -18,6 +19,7 @@ import uk.gov.hmcts.reform.fact.data.api.services.CourtAddressService;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -137,6 +139,26 @@ class CourtAddressControllerTest {
                             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.addressLine1").value(ADDRESS_LINE_1));
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/address creates address successfully (with aols)")
+    void createAddressReturnsCreatedWithAol() throws Exception {
+        CourtAddress request = buildAddress();
+        request.setAreasOfLaw(List.of(UUID.randomUUID(), UUID.randomUUID()));
+        request.setId(UUID.randomUUID());
+
+        ArgumentCaptor<CourtAddress> captor = ArgumentCaptor.forClass(CourtAddress.class);
+        when(courtAddressService.createAddress(any(UUID.class), captor.capture()))
+            .thenReturn(buildAddress());
+
+        mockMvc.perform(post(ADDRESSES_V1_PATH, courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.addressLine1").value(ADDRESS_LINE_1));
+
+        assertThat(captor.getValue().getAreasOfLaw()).isNotNull().containsAll(request.getAreasOfLaw());
     }
 
     @Test
