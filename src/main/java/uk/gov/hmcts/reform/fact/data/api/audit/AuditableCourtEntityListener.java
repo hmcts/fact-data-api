@@ -19,9 +19,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreRemove;
@@ -32,6 +29,9 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Entity listener implementation for all {@link AuditableCourtEntity} derived entities.
@@ -161,7 +161,7 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
                     diffs.add(new Change(key, previousMap.get(key), value));
                 }
             });
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             log.warn("Failed to extract diffs for an entity during auditing", e);
         }
         return diffs;

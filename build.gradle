@@ -215,7 +215,6 @@ dependencies {
   integrationTestImplementation group: 'org.testcontainers', name: 'postgresql', version: '1.21.4'
 
   smokeTestImplementation group: 'io.rest-assured', name: 'rest-assured', version: '6.0.0'
-  functionalTestImplementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.21.3'
   functionalTestImplementation group: 'io.qameta.allure', name: 'allure-junit5', version: '2.34.0'
   functionalTestImplementation group: 'io.qameta.allure', name: 'allure-rest-assured', version: '2.34.0'
 }

@@ -12,8 +12,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 
 import java.util.UUID;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +23,8 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationContext;
+import tools.jackson.core.exc.StreamWriteException;
+import tools.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 class AuditableCourtEntityListenerTest {
@@ -121,7 +121,8 @@ class AuditableCourtEntityListenerTest {
         courtCurrent.setName("Court Name Updated");
 
         when(entityManager.find(Court.class, courtCurrent.getId())).thenReturn(courtPrevious);
-        when(objectMapper.writeValueAsString(courtPrevious)).thenThrow(new JsonParseException("test exception"));
+        when(objectMapper.writeValueAsString(courtPrevious))
+            .thenThrow(new StreamWriteException(null, "test exception"));
 
         listener.beforeUpdate(courtCurrent);
 
