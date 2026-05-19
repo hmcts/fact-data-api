@@ -33,6 +33,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.jackson.Jacksonized;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
@@ -42,6 +43,7 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
+@Jacksonized
 @Builder
 @Entity
 @EntityListeners(AuditableCourtEntityListener.class)
