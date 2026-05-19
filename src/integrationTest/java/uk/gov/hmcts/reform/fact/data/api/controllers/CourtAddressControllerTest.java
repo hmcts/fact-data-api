@@ -142,10 +142,11 @@ class CourtAddressControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/v1/address creates address successfully (with aols)")
-    void createAddressReturnsCreatedWithAol() throws Exception {
+    @DisplayName("POST /courts/{courtId}/v1/address creates address successfully (with aols and court types)")
+    void createAddressReturnsCreatedWithAolAndCourtTypes() throws Exception {
         CourtAddress request = buildAddress();
         request.setAreasOfLaw(List.of(UUID.randomUUID(), UUID.randomUUID()));
+        request.setCourtTypes(List.of(UUID.randomUUID(), UUID.randomUUID()));
         request.setId(UUID.randomUUID());
 
         ArgumentCaptor<CourtAddress> captor = ArgumentCaptor.forClass(CourtAddress.class);
@@ -159,6 +160,7 @@ class CourtAddressControllerTest {
             .andExpect(jsonPath("$.addressLine1").value(ADDRESS_LINE_1));
 
         assertThat(captor.getValue().getAreasOfLaw()).isNotNull().containsAll(request.getAreasOfLaw());
+        assertThat(captor.getValue().getCourtTypes()).isNotNull().containsAll(request.getCourtTypes());
     }
 
     @Test
@@ -281,5 +283,4 @@ class CourtAddressControllerTest {
             .andExpect(status().isBadRequest());
     }
 }
-
 

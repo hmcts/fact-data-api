@@ -5,6 +5,7 @@ import io.qameta.allure.Feature;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -25,12 +26,13 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -400,6 +402,25 @@ class CourtOpeningHoursControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.openingTimesDetails[0].dayOfWeek").value(DayOfTheWeek.MONDAY.toString()))
             .andExpect(jsonPath("$.openingTimesDetails[0].openingTime").value("09:00:00"));
+    }
+
+    @Test
+    @DisplayName("PUT /courts/{courtId}/v1/opening-hours/counter-service preserves court types")
+    void setCounterServiceOpeningHoursPreservesCourtTypes() throws Exception {
+        List<UUID> courtTypes = List.of(UUID.randomUUID(), UUID.randomUUID());
+        counterServiceOpeningHours.setCourtTypes(courtTypes);
+
+        ArgumentCaptor<CourtCounterServiceOpeningHours> captor =
+            ArgumentCaptor.forClass(CourtCounterServiceOpeningHours.class);
+        when(courtOpeningHoursService.setCounterServiceOpeningHours(any(UUID.class), captor.capture()))
+            .thenReturn(counterServiceOpeningHours);
+
+        mockMvc.perform(put("/courts/{courtId}/v1/opening-hours/counter-service", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(counterServiceOpeningHours)))
+            .andExpect(status().isOk());
+
+        assertThat(captor.getValue().getCourtTypes()).isNotNull().containsAll(courtTypes);
     }
 
     @Test

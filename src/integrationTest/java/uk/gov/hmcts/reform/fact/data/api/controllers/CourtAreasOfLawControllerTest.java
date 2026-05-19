@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -15,9 +16,11 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtAreasOfLawService;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -100,6 +103,26 @@ class CourtAreasOfLawControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.courtId").value(courtId.toString()));
+    }
+
+    @Test
+    @DisplayName("PUT /courts/{courtId}/v1/areas-of-law preserves area IDs")
+    void shouldPreserveAreaIdsForCourtAreasOfLaw() throws Exception {
+        List<UUID> areasOfLaw = List.of(UUID.randomUUID(), UUID.randomUUID());
+        CourtAreasOfLaw courtAreasOfLaw = new CourtAreasOfLaw();
+        courtAreasOfLaw.setCourtId(courtId);
+        courtAreasOfLaw.setAreasOfLaw(areasOfLaw);
+
+        ArgumentCaptor<CourtAreasOfLaw> captor = ArgumentCaptor.forClass(CourtAreasOfLaw.class);
+        when(courtAreasOfLawService.setCourtAreasOfLaw(eq(courtId), captor.capture()))
+            .thenReturn(courtAreasOfLaw);
+
+        mockMvc.perform(put("/courts/{courtId}/v1/areas-of-law", courtId)
+                            .content(objectMapper.writeValueAsString(courtAreasOfLaw))
+                            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isCreated());
+
+        assertThat(captor.getValue().getAreasOfLaw()).isNotNull().containsAll(areasOfLaw);
     }
 
     @Test
