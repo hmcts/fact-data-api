@@ -196,7 +196,7 @@ dependencies {
   implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.2.0'
 
 
-  implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-hibernate7', version: '2.21.3'
+  implementation group: 'tools.jackson.datatype', name: 'jackson-datatype-hibernate7', version: '3.1.2'
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '8.0.0'
 
