@@ -29,8 +29,6 @@ import static org.mockito.Mockito.when;
 class AzureBlobServiceTest {
 
     private static final String IMAGE_ID = "test-image-id";
-    private static final String CSV_CONTAINER_NAME = "csv";
-    private static final String PHOTOS_CONTAINER_NAME = "photos";
     private static final String CONTENT_TYPE = "image/jpeg";
     private static final String BLOB_URL = "https://example.com/blob/test-image-id";
 

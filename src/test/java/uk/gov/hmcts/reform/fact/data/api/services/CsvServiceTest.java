@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CsvServiceTest {
 
-    private static final String CSV_CONTAINER_NAME = "csv";
     private static final String CSV_FILE_NAME = "courts-and-tribunals-data.csv";
 
     @Mock
