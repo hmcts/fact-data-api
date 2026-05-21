@@ -1,10 +1,10 @@
 package uk.gov.hmcts.reform.fact.data.api.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.dataformat.csv.CsvMapper;
+import tools.jackson.dataformat.csv.CsvSchema;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.JsonConvertException;
 
 import java.util.ArrayList;
@@ -56,8 +56,9 @@ public class CsvUtil {
     }
 
     public CsvUtil() {
-        this.csvMapper = new CsvMapper();
-        this.csvMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        this.csvMapper = CsvMapper.builder()
+            .enable(SerializationFeature.INDENT_OUTPUT)
+            .build();
     }
 
     public String convertJsonToCsv(JsonNode jsonArrayNode) {
@@ -70,7 +71,7 @@ public class CsvUtil {
 
         try {
             return csvMapper.writer(schema).writeValueAsString(flatList);
-        } catch (RuntimeException | JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             throw new JsonConvertException("Failed to convert JSON to CSV: " + ex.getMessage());
         }
     }

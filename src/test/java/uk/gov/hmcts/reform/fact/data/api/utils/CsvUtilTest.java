@@ -1,9 +1,11 @@
 package uk.gov.hmcts.reform.fact.data.api.utils;
 
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JacksonException;
+import tools.jackson.dataformat.csv.CsvMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.JsonConvertException;
 
@@ -17,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 class CsvUtilTest {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = JsonMapper.builder().build();
     private final CsvUtil csvUtil = new CsvUtil();
 
     @Test
@@ -295,8 +297,8 @@ class CsvUtilTest {
         CsvUtil utilWithMock = new CsvUtil(mockCsvMapper);
 
         when(mockCsvMapper.writer(org.mockito.ArgumentMatchers.any(
-            com.fasterxml.jackson.dataformat.csv.CsvSchema.class)))
-            .thenThrow(new RuntimeException("Mock failure"));
+            tools.jackson.dataformat.csv.CsvSchema.class)))
+            .thenThrow(new JacksonException("Mock failure") {});
 
         ArrayNode root = mapper.createArrayNode();
         root.addObject();

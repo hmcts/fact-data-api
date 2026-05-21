@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -40,7 +41,7 @@ class CsvServiceTest {
     @Mock
     private SlackClient slackClient;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = JsonMapper.builder().build();
 
     @Test
     void uploadCsvToAzureBlobShouldUseConfiguredContainerName() {
