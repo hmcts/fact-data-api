@@ -95,7 +95,7 @@ class CsvUtilTest {
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
 
-        assertThat(result.get("open")).isEqualTo(true);
+        assertThat(result).containsEntry("open", true);
     }
 
     @Test
@@ -165,8 +165,9 @@ class CsvUtilTest {
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
         String addressesStr = result.get("addresses").toString();
-        assertThat(addressesStr).contains("Areas of Law: Family");
-        assertThat(addressesStr).contains("Courts: High Court");
+        assertThat(addressesStr)
+            .contains("Areas of Law: Family")
+            .contains("Courts: High Court");
     }
 
     @Test
@@ -184,8 +185,9 @@ class CsvUtilTest {
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
         String addressesStr = result.get("addresses").toString();
-        assertThat(addressesStr).contains("Areas of Law: Family");
-        assertThat(addressesStr).contains("Courts: High Court");
+        assertThat(addressesStr)
+            .contains("Areas of Law: Family")
+            .contains("Courts: High Court");
     }
 
     @Test
@@ -202,8 +204,9 @@ class CsvUtilTest {
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
         String addressesStr = result.get("addresses").toString();
-        assertThat(addressesStr).contains("Areas of Law: Crime");
-        assertThat(addressesStr).contains("Courts: Crown Court");
+        assertThat(addressesStr)
+            .contains("Areas of Law: Crime")
+            .contains("Courts: Crown Court");
     }
 
     @Test
@@ -217,8 +220,9 @@ class CsvUtilTest {
 
         assertThat(csv)
             .contains("name,lat,lon,number,cci_code,magistrate_code,slug,types,open,dx_number,areas_of_law,addresses");
-        assertThat(csv).contains("Test Court");
-        assertThat(csv).contains("test-court");
+        assertThat(csv)
+            .contains("Test Court")
+            .contains("test-court");
     }
 
     @Test
@@ -246,14 +250,14 @@ class CsvUtilTest {
         root.put("dx_number", "DX 123");
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
-        assertThat(result.get("dx_number")).isEqualTo("DX 123");
+        assertThat(result).containsEntry("dx_number", "DX 123");
 
         ArrayNode dxCodes = root.putArray("courtDxCodes");
         ObjectNode dx1 = dxCodes.addObject();
         dx1.put("dxCode", "DX 456");
 
         result = csvUtil.flattenCourtNode(root);
-        assertThat(result.get("dx_number")).isEqualTo("DX 456");
+        assertThat(result).containsEntry("dx_number", "DX 456");
     }
 
     @Test
@@ -273,12 +277,12 @@ class CsvUtilTest {
         address.put("lon", -0.1);
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
-        assertThat(result.get("open")).isEqualTo(true);
-        assertThat(result.get("number")).isEqualTo(123);
-        assertThat(result.get("cci_code")).isEqualTo(456);
-        assertThat(result.get("magistrate_code")).isEqualTo(789);
-        assertThat(result.get("lat")).isEqualTo(51.5);
-        assertThat(result.get("lon")).isEqualTo(-0.1);
+        assertThat(result).containsEntry("open",true);
+        assertThat(result).containsEntry("number", 123);
+        assertThat(result).containsEntry("cci_code", 456);
+        assertThat(result).containsEntry("magistrate_code", 789);
+        assertThat(result).containsEntry("lat", 51.5);
+        assertThat(result).containsEntry("lon", -0.1);
     }
 
     @Test
@@ -288,7 +292,7 @@ class CsvUtilTest {
 
         assertThat(result.get("lat")).isNull();
         assertThat(result.get("number")).isNull();
-        assertThat(result.get("open")).isEqualTo(false);
+        assertThat(result).containsEntry("open", false);
     }
 
     @Test
