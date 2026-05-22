@@ -5,12 +5,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -52,17 +55,31 @@ class AuditControllerTest {
     AuditRepository auditRepository;
 
     @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    AuditUserContext auditUserContext;
+
+    @Autowired
     private MockMvc mvc;
 
     List<Region> regions;
 
     @BeforeEach
     void setUp() {
+        auditUserContext.suppressAudit();
         // we're going to need these
         regions = regionRepository.findAll();
         // and clear these down
         courtRepository.deleteAll();
         auditRepository.deleteAll();
+        auditUserContext.clear();
+
+        User user = userRepository.save(User.builder()
+            .email("audit-controller-test-" + UUID.randomUUID() + "@justice.gov.uk")
+            .ssoId(UUID.randomUUID())
+            .build());
+        auditUserContext.setUserId(user.getId());
     }
 
     @Test

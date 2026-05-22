@@ -8,12 +8,14 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.AuditService;
 
 import java.time.Duration;
@@ -66,6 +68,14 @@ class AuditingTest {
     @Autowired
     AuditService auditService;
 
+    @Autowired
+    AuditUserContext auditUserContext;
+
+    @Autowired
+    UserRepository userRepository;
+
+    private UUID currentAuditUserId;
+
     @BeforeEach
     void setUp() {
         // and clear these down
@@ -75,6 +85,13 @@ class AuditingTest {
 
         // do this one last
         auditRepository.deleteAll();
+
+        User user = userRepository.save(User.builder()
+            .email("audit-test-" + UUID.randomUUID() + "@justice.gov.uk")
+            .ssoId(UUID.randomUUID())
+            .build());
+        currentAuditUserId = user.getId();
+        auditUserContext.setUserId(currentAuditUserId);
     }
 
     @Test
@@ -138,6 +155,7 @@ class AuditingTest {
         CourtPhoto courtPhoto = CourtPhoto.builder()
             .courtId(court.getId())
             .fileLink("https://example.com/image.png")
+            .updatedByUserId(currentAuditUserId)
             .build();
         courtPhotoRepository.save(courtPhoto);
 
@@ -166,6 +184,7 @@ class AuditingTest {
         final CourtPhoto courtPhoto = CourtPhoto.builder()
             .courtId(court.getId())
             .fileLink("https://example.com/image.png")
+            .updatedByUserId(currentAuditUserId)
             .build();
         courtPhotoRepository.save(courtPhoto);
 
@@ -180,6 +199,7 @@ class AuditingTest {
 
         // make changes
         Thread threadA = new Thread(() -> {
+            auditUserContext.setUserId(currentAuditUserId);
             synchronized (latch) {
                 try {
                     latch.await(5, TimeUnit.SECONDS);
@@ -197,6 +217,7 @@ class AuditingTest {
         });
 
         Thread threadB = new Thread(() -> {
+            auditUserContext.setUserId(currentAuditUserId);
             synchronized (latch) {
                 try {
                     latch.await(5, TimeUnit.SECONDS);
@@ -214,6 +235,7 @@ class AuditingTest {
         });
 
         Thread threadC = new Thread(() -> {
+            auditUserContext.setUserId(currentAuditUserId);
             synchronized (latch) {
                 try {
                     latch.await(5, TimeUnit.SECONDS);

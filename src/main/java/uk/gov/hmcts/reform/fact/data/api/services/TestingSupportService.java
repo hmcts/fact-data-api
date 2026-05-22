@@ -5,6 +5,7 @@ import uk.gov.hmcts.reform.fact.data.api.dto.CourtDxCodeDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtFaxDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtProfessionalInformationDetailsDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.ProfessionalInformationDto;
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -23,6 +24,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
@@ -84,6 +86,8 @@ public class TestingSupportService {
 
     // used to generate alphanumeric strings
     private static final char[] ALPHA_NUMERICS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
+    private static final String TESTING_SUPPORT_USER_EMAIL = "testing-support-not-a-real-user@justice.gov.uk";
+    private static final UUID TESTING_SUPPORT_USER_SSO_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
 
     // ------------------------------------------------------------------------
     // static data caches - we load these once and then reuse for all generated courts
@@ -181,6 +185,8 @@ public class TestingSupportService {
     // for photos, we try the service first, then fall back to the repository if required
     private final CourtPhotoService courtPhotoService;
     private final CourtPhotoRepository courtPhotoRepository;
+    private final AuditUserContext auditUserContext;
+    private final UserService userService;
 
     // ------------------------------------------------------------------------
     // Services and repositories required for supporting data
@@ -258,6 +264,7 @@ public class TestingSupportService {
         boolean associateServiceAreas
     ) {
         initialiseCaches();
+        auditUserContext.setUserId(getTestingSupportUserId());
 
         Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
 
@@ -311,6 +318,15 @@ public class TestingSupportService {
             .build();
 
         return courtService.createCourt(court);
+    }
+
+    private UUID getTestingSupportUserId() {
+        User user = User.builder()
+            .email(TESTING_SUPPORT_USER_EMAIL)
+            .ssoId(TESTING_SUPPORT_USER_SSO_ID)
+            .build();
+
+        return userService.createOrUpdateLastLoginUser(user).getId();
     }
 
     private void openCourt(final Court court) {
@@ -557,6 +573,7 @@ public class TestingSupportService {
             CourtPhoto photo = CourtPhoto.builder()
                 .courtId(courtId)
                 .fileLink("http://localhost:3000/photos/" + courtId.toString() + ".jpg")
+                .updatedByUserId(auditUserContext.requireUserId())
                 .build();
             courtPhotoRepository.save(photo);
         }
