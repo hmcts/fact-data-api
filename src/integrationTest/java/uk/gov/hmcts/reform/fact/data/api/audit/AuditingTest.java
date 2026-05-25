@@ -10,6 +10,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
@@ -89,6 +90,7 @@ class AuditingTest {
         User user = userRepository.save(User.builder()
             .email("audit-test-" + UUID.randomUUID() + "@justice.gov.uk")
             .ssoId(UUID.randomUUID())
+            .role(UserRole.ADMIN)
             .build());
         currentAuditUserId = user.getId();
         auditUserContext.setUserId(currentAuditUserId);
