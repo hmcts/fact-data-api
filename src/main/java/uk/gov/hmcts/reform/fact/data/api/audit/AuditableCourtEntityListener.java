@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,6 +44,7 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
 
     private ApplicationContext applicationContext;
     private final AtomicReference<EntityManager> entityManagerRef = new AtomicReference<>();
+    private final AtomicReference<AuditUserContext> auditUserContextRef = new AtomicReference<>();
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor((ThreadFactory) r -> new Thread(
         r,
@@ -83,7 +83,20 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
         return entityManagerRef.get() != null;
     }
 
+    private boolean ensureAuditUserContext() {
+        synchronized (auditUserContextRef) {
+            if (auditUserContextRef.get() == null && applicationContext != null) {
+                auditUserContextRef.set(applicationContext.getBean(AuditUserContext.class));
+            }
+        }
+        return auditUserContextRef.get() != null;
+    }
+
     private void writeAudit(AuditableCourtEntity entity, AuditActionType auditActionType) {
+        if (ensureAuditUserContext() && auditUserContextRef.get().isAuditSuppressed()) {
+            return;
+        }
+
         if (ensureEntityManager()) {
             AuditableCourtEntity previousEntity = auditActionType == AuditActionType.INSERT
                 ? null
@@ -122,25 +135,23 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
         }
     }
 
-    private final void writeAuditRecord(AuditableCourtEntity entity, AuditableCourtEntity previous,
-                                        AuditActionType operationType) {
+    private void writeAuditRecord(AuditableCourtEntity entity, AuditableCourtEntity previous,
+                                  AuditActionType operationType) {
+        if (auditUserContextRef.get() == null && !ensureAuditUserContext()) {
+            log.error("No audit user context available during an audit operation");
+            throw new IllegalStateException("No audit user context available during an audit operation");
+        }
+
         Audit.AuditBuilder audit = Audit.builder()
             .courtId(entity.getCourtId())
             .actionType(operationType)
             .actionEntity(entity.getClass().getSimpleName())
             .createdAt(ZonedDateTime.now())
-            .userId(getSSOUserId());
+            .userId(auditUserContextRef.get().requireUserId());
         if (operationType != AuditActionType.DELETE) {
             audit.actionDataDiff(generateDiffs(previous, entity));
         }
         entityManagerRef.get().persist(audit.build());
-    }
-
-    private static UUID getSSOUserId() {
-        // FIXME: this will need to be determined for the given session. Either
-        //        via the security context, or some other mechanism yet to be
-        //        determined
-        return UUID.fromString("00000000-0000-0000-0000-000000000000");
     }
 
     private List<Change> generateDiffs(AuditableCourtEntity previous, AuditableCourtEntity current) {

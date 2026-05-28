@@ -12,6 +12,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
@@ -143,6 +144,7 @@ class UserControllerTest {
         user.setId(userId);
         user.setEmail("email@justice.gov.uk");
         user.setSsoId(UUID.randomUUID());
+        user.setRole(UserRole.ADMIN);
         when(userService.createOrUpdateLastLoginUser(any(User.class))).thenReturn(user);
 
         mockMvc.perform(post("/user/v1")

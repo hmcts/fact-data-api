@@ -9,6 +9,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
@@ -69,6 +70,7 @@ public final class TestDataHelper {
         final User user = User.builder()
             .email(emailPrefix + "." + System.currentTimeMillis() + "@justice.gov.uk")
             .ssoId(UUID.randomUUID())
+            .role(UserRole.ADMIN)
             .build();
 
         final Response createResponse = http.doPost("/user/v1", user);

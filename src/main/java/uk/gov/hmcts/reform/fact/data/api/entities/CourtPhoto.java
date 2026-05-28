@@ -72,7 +72,7 @@ public class CourtPhoto implements AuditableCourtEntity {
     private ZonedDateTime lastUpdatedAt;
 
     @Schema(description = "The ID of the associated Court")
-    // @NotNull(message = "user ID must be specified") TODO: Uncomment when user is implemented
+    @NotNull(message = "user ID must be specified")
     @Column(name = "updated_by_user_id")
     private UUID updatedByUserId;
 

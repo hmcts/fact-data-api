@@ -14,6 +14,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtProfessionalInformationDetailsDto;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
@@ -33,6 +34,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
@@ -47,6 +49,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -92,6 +95,10 @@ class TestingSupportServiceTest {
     @Mock
     private CourtPhotoRepository courtPhotoRepository;
     @Mock
+    private AuditUserContext auditUserContext;
+    @Mock
+    private UserService userService;
+    @Mock
     private AreaOfLawTypeRepository areaOfLawTypeRepository;
     @Mock
     private ContactDescriptionTypeRepository contactDescriptionTypeRepository;
@@ -112,6 +119,7 @@ class TestingSupportServiceTest {
     // Randomised UUID lists for the type repos
     private final List<UUID> regionIds = randomUuidList();
     private final List<AreaOfLawType> areasOfLaw = randomAreasOfLaw();
+    private final UUID auditUserId = UUID.randomUUID();
 
 
     private final List<CourtType> courtTypes = randomCourtTypes();
@@ -198,6 +206,13 @@ class TestingSupportServiceTest {
         lenient().when(serviceAreaRepository.findAll()).thenReturn(
             serviceAreaIds.stream().map(id -> ServiceArea.builder().id(id).build()).toList()
         );
+        lenient().when(auditUserContext.getUserId()).thenReturn(Optional.of(auditUserId));
+        lenient().when(auditUserContext.requireUserId()).thenReturn(auditUserId);
+        lenient().when(userService.createOrUpdateLastLoginUser(any(User.class))).thenAnswer(inv -> {
+            User user = inv.getArgument(0);
+            user.setId(auditUserId);
+            return user;
+        });
     }
 
     @Test
@@ -234,6 +249,7 @@ class TestingSupportServiceTest {
         verify(courtTranslationService, times(1)).setTranslation(any(), any());
         verify(courtPhotoRepository, atMost(1)).save(any());
         verify(courtSinglePointsOfEntryService, atMost(1)).updateCourtSinglePointsOfEntry(any(), any());
+        verify(auditUserContext).setUserId(auditUserId);
     }
 
     @Test

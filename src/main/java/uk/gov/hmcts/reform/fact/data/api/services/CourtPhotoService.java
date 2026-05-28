@@ -1,28 +1,26 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 
 import java.util.UUID;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class CourtPhotoService {
 
     private final CourtPhotoRepository courtPhotoRepository;
     private final CourtService courtService;
     private final AzureBlobService azureBlobService;
-
-    public CourtPhotoService(CourtPhotoRepository courtPhotoRepository,
-                             CourtService courtService, AzureBlobService azureBlobService) {
-        this.courtPhotoRepository = courtPhotoRepository;
-        this.courtService = courtService;
-        this.azureBlobService = azureBlobService;
-    }
+    private final AuditUserContext auditUserContext;
 
     /**
      * Get a court photo by court id.
@@ -52,10 +50,8 @@ public class CourtPhotoService {
             .orElse(new CourtPhoto());
 
         courtPhoto.setCourtId(courtId);
-
         courtPhoto.setFileLink(azureBlobService.uploadFile(courtId.toString(), file));
-
-        //TODO: Set user ID when implemented
+        courtPhoto.setUpdatedByUserId(auditUserContext.requireUserId());
 
         return courtPhotoRepository.save(courtPhoto);
     }
