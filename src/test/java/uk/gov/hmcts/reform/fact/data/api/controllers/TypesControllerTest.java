@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
+import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
@@ -175,6 +176,30 @@ class TypesControllerTest {
         when(typesService.getServiceAreas()).thenReturn(emptyList);
 
         ResponseEntity<List<ServiceArea>> response = typesController.getServiceAreas();
+
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEmpty();
+    }
+
+    @Test
+    void getLocalAuthoritiesReturns200() {
+        List<LocalAuthorityType> serviceAreas = List.of(
+            LocalAuthorityType.builder().id(TYPE_ID).name("Name").build());
+
+        when(typesService.getLocalAuthorities()).thenReturn(serviceAreas);
+
+        ResponseEntity<List<LocalAuthorityType>> response = typesController.getLocalAuthorities();
+
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(serviceAreas);
+    }
+
+    @Test
+    void getLocalAuthoritiesReturnsEmptyList() {
+        List<LocalAuthorityType> emptyList = List.of();
+        when(typesService.getLocalAuthorities()).thenReturn(emptyList);
+
+        ResponseEntity<List<LocalAuthorityType>> response = typesController.getLocalAuthorities();
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEmpty();

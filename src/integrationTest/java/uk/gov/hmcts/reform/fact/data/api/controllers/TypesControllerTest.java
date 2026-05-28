@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
+import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
@@ -202,6 +203,32 @@ class TypesControllerTest {
         when(typesService.getServiceAreas()).thenReturn(List.of());
 
         mockMvc.perform(get("/types/v1/service-areas"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/local-authorities returns local authorities successfully")
+    void getLocalAuthoritiesReturnsSuccessfully() throws Exception {
+        List<LocalAuthorityType> localAuthorities = List.of(
+            LocalAuthorityType.builder()
+                .id(UUID.randomUUID())
+                .name("Name")
+                .build());
+
+        when(typesService.getLocalAuthorities()).thenReturn(localAuthorities);
+
+        mockMvc.perform(get("/types/v1/local-authorities"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].name").value("Name"));
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/local-authorities returns empty list if local authorities do not exist")
+    void getLocalAuthoritiesReturnsNoContent() throws Exception {
+        when(typesService.getLocalAuthorities()).thenReturn(List.of());
+
+        mockMvc.perform(get("/types/v1/local-authorities"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isEmpty());
     }
