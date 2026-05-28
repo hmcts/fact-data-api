@@ -87,6 +87,7 @@ public class MigrationService {
             courtCodesRepository,
             courtDxCodeRepository,
             courtFaxRepository,
+            areaOfLawTypeRepository,
             legacyCourtMappingRepository,
             courtService
         );

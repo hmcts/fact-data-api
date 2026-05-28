@@ -18,6 +18,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
@@ -156,7 +157,7 @@ class MigrationServiceTest {
         lenient().when(areaOfLawTypeRepository.findByName(anyString())).thenAnswer(invocation -> {
             String name = invocation.getArgument(0);
             return Optional.of(AreaOfLawType.builder()
-                .id(UUID.randomUUID())
+                .id(AREA_OF_LAW_ID)
                 .name(name)
                 .nameCy(name + " CY")
                 .build());
@@ -164,7 +165,7 @@ class MigrationServiceTest {
         lenient().when(areaOfLawTypeRepository.findByNameIgnoreCase(anyString())).thenAnswer(invocation -> {
             String name = invocation.getArgument(0);
             return Optional.of(AreaOfLawType.builder()
-                .id(UUID.randomUUID())
+                .id(AREA_OF_LAW_ID)
                 .name(name)
                 .nameCy(name + " CY")
                 .build());
@@ -235,6 +236,7 @@ class MigrationServiceTest {
 
     @Test
     void shouldPersistLegacyDataAndReturnSummary() {
+
         LegacyExportResponse response = new LegacyExportResponse(
             List.of(courtDto()),
             List.of(new LocalAuthorityTypeDto(1, "Local Authority")),
@@ -248,6 +250,11 @@ class MigrationServiceTest {
         );
 
         when(legacyFactClient.fetchExport()).thenReturn(response);
+
+        when(areaOfLawTypeRepository.findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames()))
+            .thenReturn(List.of(
+                AreaOfLawType.builder().id(AREA_OF_LAW_ID).name("Children").build()
+            ));
 
         MigrationSummary summary = migrationService.migrate();
         MigrationResult result = summary.getResult();

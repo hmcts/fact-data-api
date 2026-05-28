@@ -15,11 +15,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDxCode;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtAreasOfLawDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDxCodeDto;
@@ -27,6 +30,7 @@ import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtProfessionalInformationDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtServiceAreaDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtSinglePointOfEntryDto;
+import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
@@ -51,6 +55,7 @@ class CourtMigrationHelperTest {
     @Mock private CourtCodesRepository courtCodesRepository;
     @Mock private CourtDxCodeRepository courtDxCodeRepository;
     @Mock private CourtFaxRepository courtFaxRepository;
+    @Mock private AreaOfLawTypeRepository areaOfLawTypeRepository;
     @Mock private LegacyCourtMappingRepository legacyCourtMappingRepository;
     @Mock private CourtService courtService;
 
@@ -69,6 +74,7 @@ class CourtMigrationHelperTest {
             courtCodesRepository,
             courtDxCodeRepository,
             courtFaxRepository,
+            areaOfLawTypeRepository,
             legacyCourtMappingRepository,
             courtService
         );
@@ -79,8 +85,19 @@ class CourtMigrationHelperTest {
     void shouldPersistCourtRelationshipsAndIncrementCounters() {
         UUID regionId = UUID.randomUUID();
         UUID courtId = UUID.randomUUID();
+
+        UUID childrenAolID = UUID.randomUUID();
+        UUID adoptionAolID = UUID.randomUUID();
+        UUID divorceAolID = UUID.randomUUID();
+        when(areaOfLawTypeRepository.findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames()))
+            .thenReturn(List.of(
+                AreaOfLawType.builder().id(childrenAolID).name("Children").build(),
+                AreaOfLawType.builder().id(adoptionAolID).name("Adoption").build(),
+                AreaOfLawType.builder().id(divorceAolID).name("Divorce").build()
+            ));
+
         context.getRegionIds().put(1, regionId);
-        context.getAreaOfLawIds().put(10, UUID.randomUUID());
+        context.getAreaOfLawIds().put(10, childrenAolID);
         context.getServiceAreaIds().put(100, UUID.randomUUID());
         context.getLocalAuthorityTypeIds().put(20, List.of(UUID.randomUUID()));
         when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
@@ -268,8 +285,19 @@ class CourtMigrationHelperTest {
         UUID courtId = UUID.randomUUID();
         UUID northNorthamptonshireId = UUID.randomUUID();
         UUID westNorthamptonshireId = UUID.randomUUID();
+
+        UUID childrenAolID = UUID.randomUUID();
+        UUID adoptionAolID = UUID.randomUUID();
+        UUID divorceAolID = UUID.randomUUID();
+        when(areaOfLawTypeRepository.findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames()))
+            .thenReturn(List.of(
+                AreaOfLawType.builder().id(childrenAolID).name("Children").build(),
+                AreaOfLawType.builder().id(adoptionAolID).name("Adoption").build(),
+                AreaOfLawType.builder().id(divorceAolID).name("Divorce").build()
+            ));
+
         context.getRegionIds().put(1, UUID.randomUUID());
-        context.getAreaOfLawIds().put(10, UUID.randomUUID());
+        context.getAreaOfLawIds().put(10, childrenAolID);
         context.getLocalAuthorityTypeIds().put(397392, List.of(northNorthamptonshireId, westNorthamptonshireId));
         when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
             Court court = invocation.getArgument(0);
