@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.repositories;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
 
@@ -13,4 +14,6 @@ public interface CourtLocalAuthoritiesRepository extends JpaRepository<CourtLoca
     Optional<CourtLocalAuthorities> findByCourtIdAndAreaOfLawId(UUID courtId, UUID areaOfLawId);
 
     void deleteByCourtId(UUID courtId);
+
+    void deleteByAreaOfLawIdNotIn(List<UUID> areaOfLawIds);
 }

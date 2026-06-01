@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
@@ -12,20 +13,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CourtAreasOfLawService {
 
     private final CourtAreasOfLawRepository courtAreasOfLawRepository;
     private final CourtService courtService;
     private final TypesService typesService;
-
-    public CourtAreasOfLawService(
-        CourtAreasOfLawRepository courtAreasOfLawRepository,
-        CourtService courtService,
-        TypesService typesService) {
-        this.courtAreasOfLawRepository = courtAreasOfLawRepository;
-        this.courtService = courtService;
-        this.typesService = typesService;
-    }
+    private final CourtLocalAuthoritiesService courtLocalAuthoritiesService;
 
     /**
      * Get areas of law by court id.
@@ -78,6 +72,8 @@ public class CourtAreasOfLawService {
             .map(CourtAreasOfLaw::getId)
             .ifPresent(courtAreasOfLaw::setId);
 
-        return courtAreasOfLawRepository.save(courtAreasOfLaw);
+        CourtAreasOfLaw response = courtAreasOfLawRepository.save(courtAreasOfLaw);
+        courtLocalAuthoritiesService.performHousekeeping(courtId);
+        return response;
     }
 }
