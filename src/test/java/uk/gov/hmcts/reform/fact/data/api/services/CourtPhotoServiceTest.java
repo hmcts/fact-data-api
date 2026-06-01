@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
@@ -23,7 +24,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CourtPhotoServiceTest {
 
-    private static final String CONTAINER_NAME = "photos";
+    private static final UUID USER_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
 
     @Mock
     private CourtPhotoRepository courtPhotoRepository;
@@ -36,6 +37,9 @@ class CourtPhotoServiceTest {
 
     @Mock
     private MultipartFile multipartFile;
+
+    @Mock
+    private AuditUserContext auditUserContext;
 
     @InjectMocks
     private CourtPhotoService courtPhotoService;
@@ -78,15 +82,15 @@ class CourtPhotoServiceTest {
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
         when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.empty());
-        when(azureBlobService
-                 .uploadFile(eq(courtId.toString()), eq(multipartFile))).thenReturn(uploadedLink);
-        when(courtPhotoRepository
-                 .save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(azureBlobService.uploadFile(eq(courtId.toString()), eq(multipartFile))).thenReturn(uploadedLink);
+        when(auditUserContext.requireUserId()).thenReturn(USER_ID);
+        when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
 
         CourtPhoto result = courtPhotoService.setCourtPhoto(courtId, multipartFile);
 
         assertThat(result.getCourtId()).isEqualTo(courtId);
         assertThat(result.getFileLink()).isEqualTo(uploadedLink);
+        assertThat(result.getUpdatedByUserId()).isEqualTo(USER_ID);
         verify(courtPhotoRepository).save(result);
     }
 
@@ -99,15 +103,15 @@ class CourtPhotoServiceTest {
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
         when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(existing));
-        when(azureBlobService
-                 .uploadFile(eq(courtId.toString()), eq(multipartFile))).thenReturn("new-link");
-        when(courtPhotoRepository
-                 .save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(azureBlobService.uploadFile(eq(courtId.toString()), eq(multipartFile))).thenReturn("new-link");
+        when(auditUserContext.requireUserId()).thenReturn(USER_ID);
+        when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
 
         CourtPhoto result = courtPhotoService.setCourtPhoto(courtId, multipartFile);
 
         assertThat(result.getCourtId()).isEqualTo(courtId);
         assertThat(result.getFileLink()).isEqualTo("new-link");
+        assertThat(result.getUpdatedByUserId()).isEqualTo(USER_ID);
         verify(courtPhotoRepository).save(result);
     }
 

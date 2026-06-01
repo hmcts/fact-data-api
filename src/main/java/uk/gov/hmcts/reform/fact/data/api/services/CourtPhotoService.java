@@ -1,15 +1,16 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 
 import java.util.UUID;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -18,13 +19,16 @@ public class CourtPhotoService {
     private final CourtPhotoRepository courtPhotoRepository;
     private final CourtService courtService;
     private final AzureBlobService azureBlobService;
+    private final AuditUserContext auditUserContext;
 
     public CourtPhotoService(CourtPhotoRepository courtPhotoRepository,
                              CourtService courtService,
-                             @Qualifier("photoAzureBlobService") AzureBlobService azureBlobService) {
+                             @Qualifier("photoAzureBlobService") AzureBlobService azureBlobService,
+                             AuditUserContext auditUserContext) {
         this.courtPhotoRepository = courtPhotoRepository;
         this.courtService = courtService;
         this.azureBlobService = azureBlobService;
+        this.auditUserContext = auditUserContext;
     }
 
     /**
@@ -55,10 +59,8 @@ public class CourtPhotoService {
             .orElse(new CourtPhoto());
 
         courtPhoto.setCourtId(courtId);
-
         courtPhoto.setFileLink(azureBlobService.uploadFile(courtId.toString(), file));
-
-        //TODO: Set user ID when implemented
+        courtPhoto.setUpdatedByUserId(auditUserContext.requireUserId());
 
         return courtPhotoRepository.save(courtPhoto);
     }

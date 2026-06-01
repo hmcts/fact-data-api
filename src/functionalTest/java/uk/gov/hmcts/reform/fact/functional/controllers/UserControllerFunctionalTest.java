@@ -12,6 +12,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
@@ -40,6 +41,7 @@ public final class UserControllerFunctionalTest {
         final User user = User.builder()
             .email("test.user." + System.currentTimeMillis() + "@justice.gov.uk")
             .ssoId(UUID.randomUUID())
+            .role(UserRole.ADMIN)
             .build();
 
         final Response createResponse = http.doPost("/user/v1", user);

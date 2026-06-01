@@ -1,0 +1,6 @@
+ALTER TABLE users
+  ADD COLUMN role VARCHAR NOT NULL DEFAULT 'ADMIN';
+
+ALTER TABLE users
+  ADD CONSTRAINT ck_users_role
+    CHECK (role IN ('ADMIN', 'SUPER_ADMIN'));

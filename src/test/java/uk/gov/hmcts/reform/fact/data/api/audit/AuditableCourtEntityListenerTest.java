@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.audit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,6 +32,7 @@ import org.springframework.context.ApplicationContext;
 class AuditableCourtEntityListenerTest {
 
     private static final UUID COURT_ID = UUID.randomUUID();
+    private static final UUID USER_ID = UUID.randomUUID();
 
     @Spy
     private ObjectMapper objectMapper = JsonMapper.builder().build();
@@ -41,6 +43,9 @@ class AuditableCourtEntityListenerTest {
     @Mock
     private EntityManager entityManager;
 
+    @Mock
+    private AuditUserContext auditUserContext;
+
     @InjectMocks
     private AuditableCourtEntityListener listener;
 
@@ -50,6 +55,8 @@ class AuditableCourtEntityListenerTest {
     @BeforeEach
     void setUp() {
         when(applicationContext.getBean(EntityManager.class)).thenReturn(entityManager);
+        lenient().when(applicationContext.getBean(AuditUserContext.class)).thenReturn(auditUserContext);
+        lenient().when(auditUserContext.requireUserId()).thenReturn(USER_ID);
         listener.setApplicationContext(applicationContext);
     }
 
@@ -110,6 +117,7 @@ class AuditableCourtEntityListenerTest {
         verify(entityManager, times(1)).persist(auditCaptor.capture());
         verify(entityManager, times(1)).find(Court.class, courtCurrent.getId());
         Audit audit = auditCaptor.getValue();
+        assertEquals(USER_ID, audit.getUserId());
         assertEquals(1, audit.getActionDataDiff().size());
         assertEquals("name", audit.getActionDataDiff().getFirst().field());
     }

@@ -25,6 +25,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
@@ -64,6 +65,7 @@ public class AuthFunctionalTest {
         User user = User.builder()
             .email(prefix + "." + System.currentTimeMillis() + "@justice.gov.uk")
             .ssoId(UUID.randomUUID())
+            .role(UserRole.ADMIN)
             .build();
         Response response = http.doPost("/user/v1", user, adminToken);
         assertThat(response.statusCode()).isEqualTo(201);
@@ -599,6 +601,7 @@ public class AuthFunctionalTest {
         final User postBody = User.builder()
             .email("test.user.auth.write." + System.currentTimeMillis() + "@justice.gov.uk")
             .ssoId(UUID.randomUUID())
+            .role(UserRole.ADMIN)
             .build();
 
         assertViewerForbidden(

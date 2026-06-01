@@ -5,6 +5,7 @@ import static io.restassured.RestAssured.given;
 import java.io.File;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.azure.core.credential.AccessToken;
@@ -18,6 +19,8 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import lombok.extern.slf4j.Slf4j;
+import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 
 /**
  * Simple HTTP wrapper for functional tests.
@@ -25,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class HttpClient {
 
+    private static final String USER_ID_HEADER = "X-User-Id";
     private static final String ADMIN_CLIENT_APP_REG_ID = "ADMIN_CLIENT_APP_REG_ID";
     private static final String VIEWER_CLIENT_APP_REG_ID = "VIEWER_CLIENT_APP_REG_ID";
     private static final String ADMIN_AZURE_CLIENT_SECRET = "ADMIN_AZURE_CLIENT_SECRET";
@@ -33,6 +37,7 @@ public final class HttpClient {
     private final String baseUrl;
     private static final AtomicReference<String> factAdminBearerToken = new AtomicReference<>();
     private static final AtomicReference<String> factViewerBearerToken = new AtomicReference<>();
+    private static final AtomicReference<String> factAdminUserId = new AtomicReference<>();
 
     public HttpClient() {
         this.baseUrl = System.getenv().getOrDefault("TEST_URL", "http://localhost:8989");
@@ -100,6 +105,11 @@ public final class HttpClient {
     }
 
     private RequestSpecification requestWithOptionalAuthorization(final String bearerToken) {
+        return requestWithOptionalAuthorization(bearerToken, true);
+    }
+
+    private RequestSpecification requestWithOptionalAuthorization(final String bearerToken,
+                                                                 final boolean includeUserIdHeader) {
         RequestSpecification request = given()
             .filter(new AllureRestAssured())
             .baseUri(baseUrl);
@@ -108,7 +118,40 @@ public final class HttpClient {
             request = request.header("Authorization", "Bearer " + bearerToken);
         }
 
+        if (includeUserIdHeader && bearerToken != null && bearerToken.equals(getAdminBearerToken())) {
+            request = request.header(USER_ID_HEADER, getFactAdminUserId());
+        }
+
         return request;
+    }
+
+    private String getFactAdminUserId() {
+        synchronized (factAdminUserId) {
+            if (factAdminUserId.get() == null) {
+                final User user = User.builder()
+                    .email("functional.admin." + System.currentTimeMillis() + "@justice.gov.uk")
+                    .ssoId(UUID.randomUUID())
+                    .role(UserRole.ADMIN)
+                    .build();
+
+                final Response response = requestWithOptionalAuthorization(getAdminBearerToken(), false)
+                    .contentType(ContentType.JSON)
+                    .body(user)
+                    .when()
+                    .post("/user/v1")
+                    .thenReturn();
+
+                if (response.statusCode() != 201) {
+                    throw new IllegalStateException(
+                        "Failed to create functional admin user. Status: "
+                            + response.statusCode() + ", body: " + response.asString()
+                    );
+                }
+
+                factAdminUserId.set(response.jsonPath().getString("id"));
+            }
+            return factAdminUserId.get();
+        }
     }
 
     public Response doGet(final String path) {
