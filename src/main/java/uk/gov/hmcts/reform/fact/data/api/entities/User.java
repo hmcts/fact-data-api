@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -9,6 +10,8 @@ import java.util.UUID;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -54,6 +57,11 @@ public class User {
     @NotNull
     private UUID ssoId;
 
+    @Schema(description = "The User's role", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
+
     @Schema(description = "The User's favourite Courts")
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(columnDefinition = "uuid[]")
@@ -62,5 +70,4 @@ public class User {
     @Schema(description = "The User's last login date/time")
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)
     private ZonedDateTime lastLogin;
-
 }

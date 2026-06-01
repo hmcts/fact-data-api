@@ -110,6 +110,7 @@ public class UserService {
                     user.setEmail(existing.getEmail());
                     user.setSsoId(existing.getSsoId());
                     user.setFavouriteCourts(existing.getFavouriteCourts());
+                    user.setRole(Optional.ofNullable(user.getRole()).orElse(existing.getRole()));
                 }
         );
 

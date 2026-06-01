@@ -183,7 +183,7 @@ dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security-oauth2-client'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security-oauth2-resource-server'
-  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter', version: '7.2.0'
+  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter', version: '7.3.0'
 
   implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '3.0.3'
 
@@ -193,7 +193,7 @@ dependencies {
   implementation group: 'org.flywaydb', name: 'flyway-core', version: '12.6.2'
   implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '12.6.2'
 
-  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.2.0'
+  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.3.0'
 
 
   implementation group: 'tools.jackson.datatype', name: 'jackson-datatype-hibernate7'

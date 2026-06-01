@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 
@@ -129,6 +130,7 @@ class UserServiceTest {
     @Test
     void createOrUpdateUserShouldSaveUserWithCurrentLoginTime() {
         User user = new User();
+        user.setRole(UserRole.ADMIN);
         ZonedDateTime beforeSave = ZonedDateTime.now();
 
         when(userRepository.save(user)).thenReturn(user);
@@ -142,6 +144,7 @@ class UserServiceTest {
     @Test
     void createOrUpdateUserShouldThrowExceptionWhenSaveFails() {
         User user = new User();
+        user.setRole(UserRole.ADMIN);
         when(userRepository.save(any())).thenThrow(new RuntimeException("Database error"));
 
         assertThrows(RuntimeException.class, () -> userService.createOrUpdateLastLoginUser(user));
@@ -156,12 +159,14 @@ class UserServiceTest {
         existingUser.setId(userId);
         existingUser.setEmail("existing@email.com");
         existingUser.setSsoId(existingSsoId);
+        existingUser.setRole(UserRole.ADMIN);
         existingUser.setFavouriteCourts(new ArrayList<>());
 
         User updatedUser = new User();
         updatedUser.setId(userId);
         updatedUser.setEmail("new@email.com");
         updatedUser.setSsoId(UUID.randomUUID());
+        updatedUser.setRole(UserRole.SUPER_ADMIN);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
 
@@ -170,6 +175,7 @@ class UserServiceTest {
             assertThat(savedUser.getId()).isEqualTo(userId);
             assertThat(savedUser.getEmail()).isEqualTo("existing@email.com");
             assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
+            assertThat(savedUser.getRole()).isEqualTo(UserRole.SUPER_ADMIN);
             assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
             assertThat(savedUser.getLastLogin()).isNotNull();
             return savedUser;
@@ -188,12 +194,14 @@ class UserServiceTest {
         existingUser.setId(userId);
         existingUser.setEmail(existingEmail);
         existingUser.setSsoId(existingSsoId);
+        existingUser.setRole(UserRole.ADMIN);
         existingUser.setFavouriteCourts(new ArrayList<>());
 
         User updatedUser = new User();
         updatedUser.setId(userId);
         updatedUser.setEmail("new@email.com");
         updatedUser.setSsoId(UUID.randomUUID());
+        updatedUser.setRole(UserRole.SUPER_ADMIN);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
 
@@ -202,6 +210,7 @@ class UserServiceTest {
             assertThat(savedUser.getId()).isEqualTo(userId);
             assertThat(savedUser.getEmail()).isEqualTo(existingEmail);
             assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
+            assertThat(savedUser.getRole()).isEqualTo(UserRole.SUPER_ADMIN);
             assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
             assertThat(savedUser.getLastLogin()).isNotNull();
             return savedUser;
@@ -220,11 +229,13 @@ class UserServiceTest {
         existingUser.setId(existingId);
         existingUser.setEmail(existingEmail);
         existingUser.setSsoId(existingSsoId);
+        existingUser.setRole(UserRole.ADMIN);
         existingUser.setFavouriteCourts(new ArrayList<>());
 
         User updatedUser = new User();
         updatedUser.setEmail(existingEmail);
         updatedUser.setSsoId(UUID.randomUUID());
+        updatedUser.setRole(UserRole.SUPER_ADMIN);
 
         when(userRepository.findByEmail(existingEmail)).thenReturn(Optional.of(existingUser));
 
@@ -233,6 +244,7 @@ class UserServiceTest {
             assertThat(savedUser.getId()).isEqualTo(existingId);
             assertThat(savedUser.getEmail()).isEqualTo(existingEmail);
             assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
+            assertThat(savedUser.getRole()).isEqualTo(UserRole.SUPER_ADMIN);
             assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
             assertThat(savedUser.getLastLogin()).isNotNull();
             return savedUser;
@@ -251,11 +263,13 @@ class UserServiceTest {
         existingUser.setId(existingId);
         existingUser.setEmail(existingEmail);
         existingUser.setSsoId(existingSsoId);
+        existingUser.setRole(UserRole.ADMIN);
         existingUser.setFavouriteCourts(new ArrayList<>());
 
         User updatedUser = new User();
         updatedUser.setSsoId(existingSsoId);
         updatedUser.setEmail("new@email.com");
+        updatedUser.setRole(UserRole.SUPER_ADMIN);
 
         when(userRepository.findBySsoId(existingSsoId)).thenReturn(Optional.of(existingUser));
 
@@ -264,6 +278,7 @@ class UserServiceTest {
             assertThat(savedUser.getId()).isEqualTo(existingId);
             assertThat(savedUser.getEmail()).isEqualTo(existingEmail);
             assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
+            assertThat(savedUser.getRole()).isEqualTo(UserRole.SUPER_ADMIN);
             assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
             assertThat(savedUser.getLastLogin()).isNotNull();
             return savedUser;
@@ -283,4 +298,3 @@ class UserServiceTest {
         verify(userRepository).deleteAll(inactiveUsers);
     }
 }
-
