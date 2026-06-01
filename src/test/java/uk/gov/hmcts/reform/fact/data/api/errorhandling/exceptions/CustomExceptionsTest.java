@@ -47,4 +47,16 @@ class CustomExceptionsTest {
         InvalidAreaOfLawException exception = new InvalidAreaOfLawException(TEST_MESSAGE);
         assertEquals(TEST_MESSAGE, exception.getMessage(), ASSERTION_MESSAGE);
     }
+
+    @Test
+    void testCreationOfCsvCreationException() {
+        CsvCreationException exception = new CsvCreationException(TEST_MESSAGE);
+        assertEquals(TEST_MESSAGE, exception.getMessage(), ASSERTION_MESSAGE);
+    }
+
+    @Test
+    void testCreationOfAzureUploadException() {
+        AzureUploadException exception = new AzureUploadException(TEST_MESSAGE);
+        assertEquals(TEST_MESSAGE, exception.getMessage(), ASSERTION_MESSAGE);
+    }
 }
