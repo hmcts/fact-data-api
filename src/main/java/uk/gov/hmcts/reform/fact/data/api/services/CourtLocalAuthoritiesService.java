@@ -125,8 +125,8 @@ public class CourtLocalAuthoritiesService {
 
     private @NonNull List<UUID> buildValidUUIDsFromAolAssignment(final UUID courtId) {
         // The set of currently associated Aol UUIDs
-        List<UUID> existingAreaOfLawIDs = courtAreasOfLawRepository.findByCourtId(courtId).map(CourtAreasOfLaw::getAreasOfLaw).orElse(
-            List.of());
+        List<UUID> existingAreaOfLawIDs = courtAreasOfLawRepository.findByCourtId(courtId)
+            .map(CourtAreasOfLaw::getAreasOfLaw).orElse(List.of());
 
         // the set of UUIDs that it's okay to have local authority data for
         List<UUID> allowedAreaUUIDs =
