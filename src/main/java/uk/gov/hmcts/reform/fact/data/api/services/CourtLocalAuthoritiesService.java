@@ -105,7 +105,6 @@ public class CourtLocalAuthoritiesService {
      *
      * @param courtId the id of the court
      */
-    @Transactional
     void performHousekeeping(UUID courtId) {
         try {
 

@@ -264,39 +264,44 @@ public class TestingSupportService {
         boolean withEnquiriesContact,
         boolean associateServiceAreas
     ) {
-        initialiseCaches();
-        auditUserContext.setUserId(getTestingSupportUserId());
+        try {
+            initialiseCaches();
+            auditUserContext.setUserId(getTestingSupportUserId());
 
-        Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
+            Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
 
-        Court court = createCourt(courtName, regionId, serviceCentre, addWarningNotice, random);
-        UUID courtId = court.getId();
-        List<AreaOfLawType> areasOfLaw = setAreasOfLaw(courtId, random);
-        List<CourtType> courtTypes = COURT_TYPES.stream().filter(l -> random.nextBoolean()).toList();
-        if (courtTypes.isEmpty()) {
-            courtTypes = List.of(COURT_TYPES.get(random.nextInt(COURT_TYPES.size())));
+            Court court = createCourt(courtName, regionId, serviceCentre, addWarningNotice, random);
+            UUID courtId = court.getId();
+            List<AreaOfLawType> areasOfLaw = setAreasOfLaw(courtId, random);
+            List<CourtType> courtTypes = COURT_TYPES.stream().filter(l -> random.nextBoolean()).toList();
+            if (courtTypes.isEmpty()) {
+                courtTypes = List.of(COURT_TYPES.get(random.nextInt(COURT_TYPES.size())));
+            }
+
+            setAccessibilityOptions(courtId, random);
+            setAddresses(courtId, areasOfLaw, random);
+            if (open) {
+                openCourt(court);
+            }
+            setContactDetails(courtId, random, withEnquiriesContact);
+            setCounterServiceOpeningHours(courtId, courtTypes, random);
+            setFacilities(courtId, random);
+            setLocalAuthorities(courtId, areasOfLaw, random);
+            setOpeningHours(courtId, random);
+            setProfessionalInformation(courtId, random);
+            if (associateServiceAreas) {
+                setServiceAreas(courtId, random);
+            }
+            setSinglePointsOfEntry(courtId, areasOfLaw, random);
+            setTranslations(courtId, random, withTranslations);
+            setPhotos(courtId, courtName);
+
+            // return the unique slug for the created court
+            return court.getSlug();
+        } catch (Exception e) {
+            log.error("error while creating court", e);
+            throw e;
         }
-
-        setAccessibilityOptions(courtId, random);
-        setAddresses(courtId, areasOfLaw, random);
-        if (open) {
-            openCourt(court);
-        }
-        setContactDetails(courtId, random, withEnquiriesContact);
-        setCounterServiceOpeningHours(courtId, courtTypes, random);
-        setFacilities(courtId, random);
-        setLocalAuthorities(courtId, areasOfLaw, random);
-        setOpeningHours(courtId, random);
-        setProfessionalInformation(courtId, random);
-        if (associateServiceAreas) {
-            setServiceAreas(courtId, random);
-        }
-        setSinglePointsOfEntry(courtId, areasOfLaw, random);
-        setTranslations(courtId, random, withTranslations);
-        setPhotos(courtId, courtName);
-
-        // return the unique slug for the created court
-        return court.getSlug();
     }
 
     private Court createCourt(String name,
