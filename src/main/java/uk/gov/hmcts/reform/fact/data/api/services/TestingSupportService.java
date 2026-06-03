@@ -216,7 +216,7 @@ public class TestingSupportService {
         boolean open,
         boolean addWarningNotice
     ) {
-        return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, true, true, false);
+        return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, true, true, false, false);
     }
 
     public String createCourt(
@@ -228,7 +228,7 @@ public class TestingSupportService {
         boolean withTranslations
     ) {
         return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, withTranslations, true,
-                           false);
+                           false, false);
     }
 
     // Suppressing the "too many params" warning for now as this is a test setup
@@ -246,7 +246,7 @@ public class TestingSupportService {
         boolean associateServiceAreas
     ) {
         return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, withTranslations,
-                           withEnquiriesContact, associateServiceAreas);
+                           withEnquiriesContact, associateServiceAreas, false);
     }
 
     // Suppressing the "too many params" warning for now as this is a test setup
@@ -262,7 +262,8 @@ public class TestingSupportService {
         boolean addWarningNotice,
         boolean withTranslations,
         boolean withEnquiriesContact,
-        boolean associateServiceAreas
+        boolean associateServiceAreas,
+        boolean forceFamilyCourt
     ) {
         try {
             initialiseCaches();
@@ -288,7 +289,7 @@ public class TestingSupportService {
             setFacilities(courtId, random);
             setLocalAuthorities(courtId, areasOfLaw, random);
             setOpeningHours(courtId, random);
-            setProfessionalInformation(courtId, random);
+            setProfessionalInformation(courtId, forceFamilyCourt, random);
             if (associateServiceAreas) {
                 setServiceAreas(courtId, random);
             }
@@ -586,10 +587,10 @@ public class TestingSupportService {
         }
     }
 
-    private void setProfessionalInformation(final UUID courtId, final Random random) {
+    private void setProfessionalInformation(final UUID courtId, final boolean forceFamilyCourt, final Random random) {
         CourtProfessionalInformationDetailsDto dto = CourtProfessionalInformationDetailsDto.builder()
             .professionalInformation(createProfessionalInformation(random))
-            .codes(createCodes(random).orElse(null))
+            .codes(createCodes(forceFamilyCourt, random).orElse(null))
             .dxCodes(createDxCodes(random))
             .faxNumbers(createFaxNumbers(random))
             .build();
@@ -614,7 +615,7 @@ public class TestingSupportService {
         return dto;
     }
 
-    private Optional<CourtCodesDto> createCodes(final Random random) {
+    private Optional<CourtCodesDto> createCodes(final boolean forceFamilyCourt, final Random random) {
         if (random.nextBoolean()) {
             CourtCodesDto courtCodes = CourtCodesDto.builder()
                 .build();
@@ -623,7 +624,7 @@ public class TestingSupportService {
                 courtCodes.setMagistrateCourtCode(random.nextInt(1000));
             }
 
-            if (random.nextBoolean()) {
+            if (forceFamilyCourt || random.nextBoolean()) {
                 courtCodes.setFamilyCourtCode(random.nextInt(1000));
             }
 
@@ -642,10 +643,13 @@ public class TestingSupportService {
             if (random.nextBoolean()) {
                 courtCodes.setGbs(rndAlphaNumeric(10, random));
             }
-
             return Optional.of(courtCodes);
+        } else if (forceFamilyCourt) {
+            return Optional.of(CourtCodesDto.builder()
+                .familyCourtCode(random.nextInt(1000))
+                .build());
         }
-        return Optional.empty();
+         return Optional.empty();
     }
 
     private List<CourtDxCodeDto> createDxCodes(final Random random) {
