@@ -153,9 +153,9 @@ public class TypesService {
     }
 
     /**
-     * Get all service areas.
+     * Get all local authorities.
      *
-     * @return The service areas.
+     * @return The local authorities.
      */
     public List<LocalAuthorityType> getLocalAuthorities() {
         return localAuthorityTypeRepository.findAll();
