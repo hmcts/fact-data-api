@@ -84,13 +84,16 @@ class TestingSupportControllerTest {
             anyBoolean(),
             anyBoolean(),
             anyBoolean(),
+            anyBoolean(),
             anyBoolean()
         ))
             .thenReturn("test-court");
 
-        testingSupportController.createSampleCourt("Test Court", null, 1L, false, true, false, false, false, false);
+        testingSupportController.createSampleCourt("Test Court", null, 1L, false, true, false, false, false,
+                                                   false, false);
 
-        verify(testingSupportService).createCourt("Test Court", null, 1L, false, true, false, false, false, false);
+        verify(testingSupportService).createCourt("Test Court", null, 1L, false, true, false, false, false,
+                                                  false, false);
     }
 
     @Test
@@ -105,14 +108,15 @@ class TestingSupportControllerTest {
             anyBoolean(),
             anyBoolean(),
             anyBoolean(),
+            anyBoolean(),
             anyBoolean()
         ))
             .thenReturn("test-court");
 
         testingSupportController.createSampleCourt("Test Court", regionId, 1L, false, true, false, false, false,
-                                                   false);
+                                                   false, false);
 
         verify(testingSupportService).createCourt("Test Court", regionId, 1L, false, true, false, false, false,
-                                                  false);
+                                                  false, false);
     }
 }

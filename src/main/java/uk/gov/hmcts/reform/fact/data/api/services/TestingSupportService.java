@@ -649,7 +649,7 @@ public class TestingSupportService {
                 .familyCourtCode(random.nextInt(1000))
                 .build());
         }
-         return Optional.empty();
+        return Optional.empty();
     }
 
     private List<CourtDxCodeDto> createDxCodes(final Random random) {
