@@ -100,6 +100,7 @@ public class UserService {
      * @param user The user entity to create or update
      * @return The saved user entity
      */
+    @Transactional
     public User createOrUpdateLastLoginUser(User user) {
         Optional.ofNullable(user.getId()).flatMap(userRepository::findById)
             .or(() -> Optional.ofNullable(user.getEmail()).flatMap(userRepository::findByEmail))
