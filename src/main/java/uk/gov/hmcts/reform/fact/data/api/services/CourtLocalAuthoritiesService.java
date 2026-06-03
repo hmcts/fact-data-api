@@ -105,6 +105,7 @@ public class CourtLocalAuthoritiesService {
      *
      * @param courtId the id of the court
      */
+    @Transactional
     void performHousekeeping(UUID courtId) {
         try {
 
@@ -116,7 +117,7 @@ public class CourtLocalAuthoritiesService {
             List<UUID> validUUIDs = isFamilyCourt ? buildValidUUIDsFromAolAssignment(courtId) : Collections.emptyList();
 
             // delete any court_local_authorities entries for the court that are not in the set of valid UUIDs
-            this.courtLocalAuthoritiesRepository.deleteByAreaOfLawIdNotIn(validUUIDs);
+            this.courtLocalAuthoritiesRepository.deleteByCourtIdAndAreaOfLawIdNotIn(courtId, validUUIDs);
 
         } catch (Exception ex) {
             log.error("Error performing housekeeping for court local authorities, court id: {}", courtId, ex);
