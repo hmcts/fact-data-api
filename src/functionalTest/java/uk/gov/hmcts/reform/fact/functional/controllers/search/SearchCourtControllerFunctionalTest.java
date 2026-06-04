@@ -43,7 +43,7 @@ public final class SearchCourtControllerFunctionalTest {
         .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
         .build();
     private static final String regionId = TestDataHelper.fetchFirstRegionId(http);
-    private static final String STABLE_ENGLAND_POSTCODE = "SW1A 1AA";
+    private static final String STABLE_ENGLAND_POSTCODE = "SW1A 0AA";
     private static final String TEST_COURT_PREFIX = "Test Court";
 
     @Test
