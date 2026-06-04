@@ -66,14 +66,12 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
 
         final UUID adoptionId = TestDataHelper.getAreaOfLawIdByName(http, "Adoption");
         final UUID childrenId = TestDataHelper.getAreaOfLawIdByName(http, "Children");
-        final UUID civilPartnershipId = TestDataHelper.getAreaOfLawIdByName(http, "Civil partnership");
         final UUID divorceId = TestDataHelper.getAreaOfLawIdByName(http, "Divorce");
 
         final Response enableAreasResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
                                                         TestDataHelper
                                                             .buildCourtAreasOfLaw(courtId, List
-                                                                .of(adoptionId, childrenId, civilPartnershipId,
-                                                                    divorceId)));
+                                                                .of(adoptionId, childrenId, divorceId)));
 
         AssertionHelper.assertStatus(enableAreasResponse, CREATED);
 
@@ -87,11 +85,11 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
         );
 
         assertThat(localAuthorities)
-            .as("Expected four local authority entries for the enabled areas of law")
-            .hasSize(4);
+            .as("Expected three local authority entries for the enabled areas of law")
+            .hasSize(3);
         assertThat(localAuthorities).extracting("areaOfLawName")
             .as("Expected local authority entries for the enabled areas of law")
-            .containsExactlyInAnyOrder("Adoption", "Children", "Civil partnership", "Divorce");
+            .containsExactlyInAnyOrder("Adoption", "Children", "Divorce");
     }
 
     @Test
@@ -101,13 +99,11 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
 
         final UUID adoptionId = TestDataHelper.getAreaOfLawIdByName(http, "Adoption");
         final UUID childrenId = TestDataHelper.getAreaOfLawIdByName(http, "Children");
-        final UUID civilPartnershipId = TestDataHelper.getAreaOfLawIdByName(http, "Civil partnership");
         final UUID divorceId = TestDataHelper.getAreaOfLawIdByName(http, "Divorce");
 
         final Response enableAreasResponse = http.doPut("/courts/" + courtId + "/v1/areas-of-law",
                                                         TestDataHelper.buildCourtAreasOfLaw(courtId,
-                                                            List.of(adoptionId, childrenId,
-                                                                    civilPartnershipId, divorceId)));
+                                                            List.of(adoptionId, childrenId, divorceId)));
 
         AssertionHelper.assertStatus(enableAreasResponse, CREATED);
 
@@ -129,7 +125,6 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
             buildCourtLocalAuthorityUpdate(adoptionId, List.of(buildLocalAuthoritySelection(
                 firstLocalAuthorityId))),
             buildCourtLocalAuthorityUpdate(childrenId, List.of()),
-            buildCourtLocalAuthorityUpdate(civilPartnershipId, List.of()),
             buildCourtLocalAuthorityUpdate(divorceId, List.of())
         );
 

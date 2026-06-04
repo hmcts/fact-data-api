@@ -216,7 +216,7 @@ public class TestingSupportService {
         boolean open,
         boolean addWarningNotice
     ) {
-        return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, true, true, false);
+        return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, true, true, false, false);
     }
 
     public String createCourt(
@@ -228,7 +228,7 @@ public class TestingSupportService {
         boolean withTranslations
     ) {
         return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, withTranslations, true,
-                           false);
+                           false, false);
     }
 
     // Suppressing the "too many params" warning for now as this is a test setup
@@ -246,7 +246,7 @@ public class TestingSupportService {
         boolean associateServiceAreas
     ) {
         return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, withTranslations,
-                           withEnquiriesContact, associateServiceAreas);
+                           withEnquiriesContact, associateServiceAreas, false);
     }
 
     // Suppressing the "too many params" warning for now as this is a test setup
@@ -262,41 +262,47 @@ public class TestingSupportService {
         boolean addWarningNotice,
         boolean withTranslations,
         boolean withEnquiriesContact,
-        boolean associateServiceAreas
+        boolean associateServiceAreas,
+        boolean forceFamilyCourt
     ) {
-        initialiseCaches();
-        auditUserContext.setUserId(getTestingSupportUserId());
+        try {
+            initialiseCaches();
+            auditUserContext.setUserId(getTestingSupportUserId());
 
-        Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
+            Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
 
-        Court court = createCourt(courtName, regionId, serviceCentre, addWarningNotice, random);
-        UUID courtId = court.getId();
-        List<AreaOfLawType> areasOfLaw = setAreasOfLaw(courtId, random);
-        List<CourtType> courtTypes = COURT_TYPES.stream().filter(l -> random.nextBoolean()).toList();
-        if (courtTypes.isEmpty()) {
-            courtTypes = List.of(COURT_TYPES.get(random.nextInt(COURT_TYPES.size())));
+            Court court = createCourt(courtName, regionId, serviceCentre, addWarningNotice, random);
+            UUID courtId = court.getId();
+            List<AreaOfLawType> areasOfLaw = setAreasOfLaw(courtId, random);
+            List<CourtType> courtTypes = COURT_TYPES.stream().filter(l -> random.nextBoolean()).toList();
+            if (courtTypes.isEmpty()) {
+                courtTypes = List.of(COURT_TYPES.get(random.nextInt(COURT_TYPES.size())));
+            }
+
+            setAccessibilityOptions(courtId, random);
+            setAddresses(courtId, areasOfLaw, random);
+            if (open) {
+                openCourt(court);
+            }
+            setContactDetails(courtId, random, withEnquiriesContact);
+            setCounterServiceOpeningHours(courtId, courtTypes, random);
+            setFacilities(courtId, random);
+            setLocalAuthorities(courtId, areasOfLaw, random);
+            setOpeningHours(courtId, random);
+            setProfessionalInformation(courtId, forceFamilyCourt, random);
+            if (associateServiceAreas) {
+                setServiceAreas(courtId, random);
+            }
+            setSinglePointsOfEntry(courtId, areasOfLaw, random);
+            setTranslations(courtId, random, withTranslations);
+            setPhotos(courtId, courtName);
+
+            // return the unique slug for the created court
+            return court.getSlug();
+        } catch (Exception e) {
+            log.error("error while creating court", e);
+            throw e;
         }
-
-        setAccessibilityOptions(courtId, random);
-        setAddresses(courtId, areasOfLaw, random);
-        if (open) {
-            openCourt(court);
-        }
-        setContactDetails(courtId, random, withEnquiriesContact);
-        setCounterServiceOpeningHours(courtId, courtTypes, random);
-        setFacilities(courtId, random);
-        setLocalAuthorities(courtId, areasOfLaw, random);
-        setOpeningHours(courtId, random);
-        setProfessionalInformation(courtId, random);
-        if (associateServiceAreas) {
-            setServiceAreas(courtId, random);
-        }
-        setSinglePointsOfEntry(courtId, areasOfLaw, random);
-        setTranslations(courtId, random, withTranslations);
-        setPhotos(courtId, courtName);
-
-        // return the unique slug for the created court
-        return court.getSlug();
     }
 
     private Court createCourt(String name,
@@ -581,10 +587,10 @@ public class TestingSupportService {
         }
     }
 
-    private void setProfessionalInformation(final UUID courtId, final Random random) {
+    private void setProfessionalInformation(final UUID courtId, final boolean forceFamilyCourt, final Random random) {
         CourtProfessionalInformationDetailsDto dto = CourtProfessionalInformationDetailsDto.builder()
             .professionalInformation(createProfessionalInformation(random))
-            .codes(createCodes(random).orElse(null))
+            .codes(createCodes(forceFamilyCourt, random).orElse(null))
             .dxCodes(createDxCodes(random))
             .faxNumbers(createFaxNumbers(random))
             .build();
@@ -609,7 +615,7 @@ public class TestingSupportService {
         return dto;
     }
 
-    private Optional<CourtCodesDto> createCodes(final Random random) {
+    private Optional<CourtCodesDto> createCodes(final boolean forceFamilyCourt, final Random random) {
         if (random.nextBoolean()) {
             CourtCodesDto courtCodes = CourtCodesDto.builder()
                 .build();
@@ -618,7 +624,7 @@ public class TestingSupportService {
                 courtCodes.setMagistrateCourtCode(random.nextInt(1000));
             }
 
-            if (random.nextBoolean()) {
+            if (forceFamilyCourt || random.nextBoolean()) {
                 courtCodes.setFamilyCourtCode(random.nextInt(1000));
             }
 
@@ -637,8 +643,11 @@ public class TestingSupportService {
             if (random.nextBoolean()) {
                 courtCodes.setGbs(rndAlphaNumeric(10, random));
             }
-
             return Optional.of(courtCodes);
+        } else if (forceFamilyCourt) {
+            return Optional.of(CourtCodesDto.builder()
+                .familyCourtCode(random.nextInt(1000))
+                .build());
         }
         return Optional.empty();
     }

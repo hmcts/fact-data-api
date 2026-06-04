@@ -10,7 +10,6 @@ import java.util.List;
 public enum AllowedLocalAuthorityAreasOfLaw {
     ADOPTION("Adoption"),
     CHILDREN("Children"),
-    CIVIL_PARTNERSHIP("Civil partnership"),
     DIVORCE("Divorce");
 
     private final String displayName;
@@ -19,7 +18,6 @@ public enum AllowedLocalAuthorityAreasOfLaw {
         return List.of(
             ADOPTION.displayName,
             CHILDREN.displayName,
-            CIVIL_PARTNERSHIP.displayName,
             DIVORCE.displayName
         );
     }

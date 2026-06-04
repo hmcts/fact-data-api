@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
+import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
@@ -108,5 +109,18 @@ public class TypesController {
     })
     public ResponseEntity<List<ServiceArea>> getServiceAreas() {
         return ResponseEntity.ok(typesService.getServiceAreas());
+    }
+
+    @GetMapping("/v1/local-authorities")
+    @Operation(
+        summary = "Get all local authorities",
+        description = "Fetch the complete set of local authorities."
+            + "Returns empty list if no local authorities exist."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved local authorities"),
+    })
+    public ResponseEntity<List<LocalAuthorityType>> getLocalAuthorities() {
+        return ResponseEntity.ok(typesService.getLocalAuthorities());
     }
 }

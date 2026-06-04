@@ -46,15 +46,15 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         );
 
         assertThat(areasOfLaw)
-            .as("Should return 4 areas of law")
-            .hasSize(4);
+            .as("Should return 3 areas of law")
+            .hasSize(3);
         assertThat(areasOfLaw)
             .as("All areas should be unselected for new court")
             .allMatch(area -> area.getSelected().equals(false));
         assertThat(areasOfLaw)
             .as("Should contain expected areas of law")
             .extracting(AreaOfLawSelectionDto::getName)
-            .containsExactlyInAnyOrder("Adoption", "Children", "Civil partnership", "Divorce");
+            .containsExactlyInAnyOrder("Adoption", "Children", "Divorce");
         assertThat(areasOfLaw)
             .as("All areas should have an ID")
             .allMatch(area -> area.getId() != null);
@@ -101,8 +101,8 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         );
 
         assertThat(updatedAreasOfLaw)
-            .as("Should return 4 areas of law")
-            .hasSize(4);
+            .as("Should return 3 areas of law")
+            .hasSize(3);
 
         assertThat(updatedAreasOfLaw)
             .as("Adoption should be selected")
@@ -115,12 +115,6 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
             .filteredOn(area -> "Children".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(true);
-
-        assertThat(updatedAreasOfLaw)
-            .as("Civil partnership should not be selected")
-            .filteredOn(area -> "Civil partnership".equals(area.getName()))
-            .extracting(AreaOfLawSelectionDto::getSelected)
-            .containsExactly(false);
 
         assertThat(updatedAreasOfLaw)
             .as("Divorce should not be selected")
@@ -162,7 +156,7 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         );
 
         modifiedAreasOfLaw.forEach(area -> {
-            if ("Divorce".equals(area.getName()) || "Civil partnership".equals(area.getName())) {
+            if ("Divorce".equals(area.getName())) {
                 area.setSelected(true);
             } else {
                 area.setSelected(false);
@@ -189,12 +183,6 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         assertThat(finalAreasOfLaw)
             .as("Divorce should now be selected")
             .filteredOn(area -> "Divorce".equals(area.getName()))
-            .extracting(AreaOfLawSelectionDto::getSelected)
-            .containsExactly(true);
-
-        assertThat(finalAreasOfLaw)
-            .as("Civil partnership should now be selected")
-            .filteredOn(area -> "Civil partnership".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(true);
 
@@ -236,8 +224,8 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         );
 
         assertThat(configuredAreasOfLaw)
-            .as("Should return 4 areas of law")
-            .hasSize(4);
+            .as("Should return 3 areas of law")
+            .hasSize(3);
 
         assertThat(configuredAreasOfLaw)
             .as("Adoption should be selected")
@@ -250,18 +238,6 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
             .filteredOn(area -> "Divorce".equals(area.getName()))
             .extracting(AreaOfLawSelectionDto::getSelected)
             .containsExactly(true);
-
-        assertThat(configuredAreasOfLaw)
-            .as("Children should not be selected")
-            .filteredOn(area -> "Children".equals(area.getName()))
-            .extracting(AreaOfLawSelectionDto::getSelected)
-            .containsExactly(false);
-
-        assertThat(configuredAreasOfLaw)
-            .as("Civil partnership should not be selected")
-            .filteredOn(area -> "Civil partnership".equals(area.getName()))
-            .extracting(AreaOfLawSelectionDto::getSelected)
-            .containsExactly(false);
     }
 
     @Test
@@ -291,8 +267,8 @@ public final class CourtSinglePointsOfEntryControllerFunctionalTest {
         );
 
         assertThat(clearedAreasOfLaw)
-            .as("Should return 4 areas of law")
-            .hasSize(4);
+            .as("Should return 3 areas of law")
+            .hasSize(3);
         assertThat(clearedAreasOfLaw)
             .as("All areas should be unselected after clearing")
             .allMatch(area -> area.getSelected().equals(false));
