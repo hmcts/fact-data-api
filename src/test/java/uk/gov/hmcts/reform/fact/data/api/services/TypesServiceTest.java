@@ -9,12 +9,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
+import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
@@ -46,6 +48,9 @@ class TypesServiceTest {
     @Mock
     private ServiceAreaRepository serviceAreaRepository;
 
+    @Mock
+    private LocalAuthorityTypeRepository localAuthorityTypeRepository;
+
     @InjectMocks
     private TypesService typesService;
 
@@ -55,6 +60,7 @@ class TypesServiceTest {
     private List<ContactDescriptionType> contactDescriptionTypes;
     private List<Region> regions;
     private List<ServiceArea> serviceAreas;
+    private List<LocalAuthorityType> localAuthorityTypes;
 
     @BeforeEach
     void setup() {
@@ -92,6 +98,12 @@ class TypesServiceTest {
             ServiceArea.builder()
                 .id(UUID.randomUUID())
                 .name("service area")
+                .build());
+
+        localAuthorityTypes = List.of(
+            LocalAuthorityType.builder()
+                .id(UUID.randomUUID())
+                .name("local authority type")
                 .build());
     }
 
@@ -219,6 +231,22 @@ class TypesServiceTest {
         when(serviceAreaRepository.findAll()).thenReturn(List.of());
 
         List<ServiceArea> result = typesService.getServiceAreas();
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getLocalAuthoritiesReturnsLocalAuthoritiesWhenFound() {
+        when(localAuthorityTypeRepository.findAll()).thenReturn(localAuthorityTypes);
+
+        List<LocalAuthorityType> result = typesService.getLocalAuthorities();
+
+        assertThat(result).isEqualTo(localAuthorityTypes);
+    }
+
+    @Test
+    void getLocalAuthoritiesReturnsEmptyListWhenNoneFound() {
+        List<LocalAuthorityType> result = typesService.getLocalAuthorities();
 
         assertThat(result).isEmpty();
     }

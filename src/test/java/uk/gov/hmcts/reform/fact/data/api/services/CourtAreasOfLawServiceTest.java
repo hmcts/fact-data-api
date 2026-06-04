@@ -36,6 +36,9 @@ class CourtAreasOfLawServiceTest {
     @Mock
     private TypesService typesService;
 
+    @Mock
+    CourtLocalAuthoritiesService courtLocalAuthoritiesService;
+
     @InjectMocks
     private CourtAreasOfLawService courtAreasOfLawService;
 

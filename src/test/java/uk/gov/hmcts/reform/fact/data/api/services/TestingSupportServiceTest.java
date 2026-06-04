@@ -301,7 +301,7 @@ class TestingSupportServiceTest {
         });
 
         String result = testingSupportService.createCourt(courtName, regionId, null, false, false, true,
-                                                          true, false, false);
+                                                          true, false, false, false);
 
         assertNotNull(result);
         assertEquals("test-court", result);

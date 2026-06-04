@@ -12,6 +12,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtCodes;
@@ -21,6 +23,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtSinglePointsOfEntry;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyCourtMapping;
@@ -33,6 +36,7 @@ import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtProfessionalInformationDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtServiceAreaDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtSinglePointOfEntryDto;
+import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
@@ -63,6 +67,7 @@ class CourtMigrationHelper {
     private final CourtCodesRepository courtCodesRepository;
     private final CourtDxCodeRepository courtDxCodeRepository;
     private final CourtFaxRepository courtFaxRepository;
+    private final AreaOfLawTypeRepository areaOfLawTypeRepository;
     private final LegacyCourtMappingRepository legacyCourtMappingRepository;
     private final CourtService courtService;
 
@@ -76,6 +81,7 @@ class CourtMigrationHelper {
         CourtCodesRepository courtCodesRepository,
         CourtDxCodeRepository courtDxCodeRepository,
         CourtFaxRepository courtFaxRepository,
+        AreaOfLawTypeRepository areaOfLawTypeRepository,
         LegacyCourtMappingRepository legacyCourtMappingRepository,
         CourtService courtService
     ) {
@@ -88,6 +94,7 @@ class CourtMigrationHelper {
         this.courtCodesRepository = courtCodesRepository;
         this.courtDxCodeRepository = courtDxCodeRepository;
         this.courtFaxRepository = courtFaxRepository;
+        this.areaOfLawTypeRepository = areaOfLawTypeRepository;
         this.legacyCourtMappingRepository = legacyCourtMappingRepository;
         this.courtService = courtService;
     }
@@ -251,6 +258,11 @@ class CourtMigrationHelper {
             return;
         }
 
+        List<UUID> allowedAreaOfLawIds =
+            areaOfLawTypeRepository.findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames()).stream()
+                .map(AreaOfLawType::getId)
+                .toList();
+
         for (CourtLocalAuthorityDto dto : localAuthorities) {
             if (dto.getLocalAuthorityIds() == null || dto.getLocalAuthorityIds().isEmpty()) {
                 continue;
@@ -260,6 +272,16 @@ class CourtMigrationHelper {
             if (areaOfLawId == null && dto.getAreaOfLawId() != null) {
                 LOG.warn(
                     "Skipping court local authority for court '{}' because area_of_law_id {} was not migrated",
+                    courtId,
+                    dto.getAreaOfLawId()
+                );
+                continue;
+            }
+
+            if (!allowedAreaOfLawIds.contains(areaOfLawId)) {
+                LOG.warn(
+                    "Skipping court local authority for court '{}' because area_of_law_id {} references an area "
+                        + "of law that is not supported for local authority settings",
                     courtId,
                     dto.getAreaOfLawId()
                 );

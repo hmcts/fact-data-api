@@ -55,6 +55,9 @@ class CourtProfessionalInformationServiceTest {
     @Mock
     private CourtService courtService;
 
+    @Mock
+    private CourtLocalAuthoritiesService courtLocalAuthoritiesService;
+
     @InjectMocks
     private CourtProfessionalInformationService courtProfessionalInformationService;
 

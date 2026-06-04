@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -21,10 +25,13 @@ import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class CourtLocalAuthoritiesService {
 
     private final CourtService courtService;
@@ -32,19 +39,7 @@ public class CourtLocalAuthoritiesService {
     private final CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private final AreaOfLawTypeRepository areaOfLawTypeRepository;
-
-    public CourtLocalAuthoritiesService(
-        CourtService courtService,
-        CourtAreasOfLawRepository courtAreasOfLawRepository,
-        CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository,
-        LocalAuthorityTypeRepository localAuthorityTypeRepository,
-        AreaOfLawTypeRepository areaOfLawTypeRepository) {
-        this.courtService = courtService;
-        this.courtAreasOfLawRepository = courtAreasOfLawRepository;
-        this.courtLocalAuthoritiesRepository = courtLocalAuthoritiesRepository;
-        this.localAuthorityTypeRepository = localAuthorityTypeRepository;
-        this.areaOfLawTypeRepository = areaOfLawTypeRepository;
-    }
+    private final CourtCodesRepository courtCodesRepository;
 
     /**
      * Retrieve local authorities for the allowed areas of law that are enabled for a court.
@@ -103,6 +98,49 @@ public class CourtLocalAuthoritiesService {
 
         courtLocalAuthoritiesRepository.deleteByCourtId(courtId);
         courtLocalAuthoritiesRepository.saveAll(courtLocalAuthoritiesList);
+    }
+
+    /**
+     * Removes court_local_authorities configuration for areas of law that are no longer serviced by this court.
+     *
+     * @param courtId the id of the court
+     */
+    @Transactional
+    void performHousekeeping(UUID courtId) {
+        try {
+
+            boolean isFamilyCourt = courtCodesRepository.findByCourtId(courtId)
+                .map(codes -> codes.getFamilyCourtCode() != null)
+                .orElse(false);
+
+            // if it's not a family court, then none of the areas of law are relevant, we're just pruning everything
+            List<UUID> validUUIDs = isFamilyCourt ? buildValidUUIDsFromAolAssignment(courtId) : Collections.emptyList();
+
+            // delete any court_local_authorities entries for the court that are not in the set of valid UUIDs
+            this.courtLocalAuthoritiesRepository.deleteByCourtIdAndAreaOfLawIdNotIn(courtId, validUUIDs);
+
+        } catch (Exception ex) {
+            log.error("Error performing housekeeping for court local authorities, court id: {}", courtId, ex);
+        }
+    }
+
+    private @NonNull List<UUID> buildValidUUIDsFromAolAssignment(final UUID courtId) {
+        // The set of currently associated Aol UUIDs
+        List<UUID> existingAreaOfLawIDs = courtAreasOfLawRepository.findByCourtId(courtId)
+            .map(CourtAreasOfLaw::getAreasOfLaw).orElse(List.of());
+
+        // the set of UUIDs that it's okay to have local authority data for
+        List<UUID> allowedAreaUUIDs =
+            areaOfLawTypeRepository.findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames())
+                .stream()
+                .map(AreaOfLawType::getId)
+                .toList();
+
+        // the set of aol that are acceptable for local authority settings
+        return existingAreaOfLawIDs
+            .stream()
+            .filter(allowedAreaUUIDs::contains)
+            .toList();
     }
 
     /**

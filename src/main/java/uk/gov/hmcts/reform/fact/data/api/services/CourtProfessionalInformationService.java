@@ -38,6 +38,7 @@ public class CourtProfessionalInformationService {
     private final CourtDxCodeRepository courtDxCodeRepository;
     private final CourtFaxRepository courtFaxRepository;
     private final CourtService courtService;
+    private final CourtLocalAuthoritiesService courtLocalAuthoritiesService;
 
 
     /**
@@ -84,6 +85,7 @@ public class CourtProfessionalInformationService {
         );
 
         Optional<CourtCodes> savedCodes = replaceCourtCodes(courtId, court, professionalInformationDetails.getCodes());
+
         List<CourtDxCode> savedDxCodes = replaceCourtDxCodes(
             courtId,
             court,
@@ -96,9 +98,10 @@ public class CourtProfessionalInformationService {
             professionalInformationDetails.getFaxNumbers()
         );
 
+        courtLocalAuthoritiesService.performHousekeeping(courtId);
+
         return buildDetailsDto(savedProfessionalInformation, savedCodes.orElse(null), savedDxCodes, savedFaxNumbers);
     }
-
 
     /**
      * Assemble a DTO response from the persisted professional information and related entities.

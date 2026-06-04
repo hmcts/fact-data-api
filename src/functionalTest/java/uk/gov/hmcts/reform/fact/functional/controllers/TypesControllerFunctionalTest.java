@@ -21,6 +21,7 @@ public final class TypesControllerFunctionalTest {
     private static final String CONTACT_DESCRIPTION_TYPES_ENDPOINT = TYPES_BASE_PATH + "/contact-description-types";
     private static final String REGIONS_ENDPOINT = TYPES_BASE_PATH + "/regions";
     private static final String SERVICE_AREAS_ENDPOINT = TYPES_BASE_PATH + "/service-areas";
+    private static final String LOCAL_AUTHORITIES_ENDPOINT = TYPES_BASE_PATH + "/local-authorities";
 
     private static final HttpClient http = new HttpClient();
 
@@ -88,6 +89,17 @@ public final class TypesControllerFunctionalTest {
         assertThat(response.contentType()).contains("json");
         assertThat(response.jsonPath().getList("$")).isNotEmpty();
         assertThat(response.jsonPath().getString("[0].name")).isEqualTo("Divorce");
+    }
+
+    @Test
+    @DisplayName("GET /types/v1/local-authorities returns expected data")
+    void shouldReturnLocalAuthoritiesWithExpectedData() {
+        final Response response = http.doGet(LOCAL_AUTHORITIES_ENDPOINT);
+
+        assertThat(response.statusCode()).isEqualTo(OK.value());
+        assertThat(response.contentType()).contains("json");
+        assertThat(response.jsonPath().getList("$")).isNotEmpty();
+        assertThat(response.jsonPath().getString("[0].name")).isEqualTo("Adur District Council");
     }
 
     @Test

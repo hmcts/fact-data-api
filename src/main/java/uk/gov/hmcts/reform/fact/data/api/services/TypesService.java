@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
+import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
@@ -10,6 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
@@ -27,6 +29,7 @@ public class TypesService {
     private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
     private final RegionRepository regionRepository;
     private final ServiceAreaRepository serviceAreaRepository;
+    private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
 
     public TypesService(
         AreaOfLawTypeRepository areaOfLawTypeRepository,
@@ -34,13 +37,14 @@ public class TypesService {
         OpeningHoursTypeRepository openingHoursTypeRepository,
         ContactDescriptionTypeRepository contactDescriptionTypeRepository,
         RegionRepository regionRepository,
-        ServiceAreaRepository serviceAreaRepository) {
+        ServiceAreaRepository serviceAreaRepository, final LocalAuthorityTypeRepository localAuthorityTypeRepository) {
         this.areaOfLawTypeRepository = areaOfLawTypeRepository;
         this.courtTypeRepository = courtTypeRepository;
         this.openingHoursTypeRepository = openingHoursTypeRepository;
         this.contactDescriptionTypeRepository = contactDescriptionTypeRepository;
         this.regionRepository = regionRepository;
         this.serviceAreaRepository = serviceAreaRepository;
+        this.localAuthorityTypeRepository = localAuthorityTypeRepository;
     }
 
     /**
@@ -146,5 +150,14 @@ public class TypesService {
      */
     public List<ServiceArea> getServiceAreas() {
         return serviceAreaRepository.findAll();
+    }
+
+    /**
+     * Get all local authorities.
+     *
+     * @return The local authorities.
+     */
+    public List<LocalAuthorityType> getLocalAuthorities() {
+        return localAuthorityTypeRepository.findAll();
     }
 }

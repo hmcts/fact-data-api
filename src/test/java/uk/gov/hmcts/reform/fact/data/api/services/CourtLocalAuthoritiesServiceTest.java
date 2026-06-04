@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtCodes;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
@@ -16,6 +17,7 @@ import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 
@@ -25,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
@@ -52,6 +55,9 @@ class CourtLocalAuthoritiesServiceTest {
 
     @Mock
     private AreaOfLawTypeRepository areaOfLawTypeRepository;
+
+    @Mock
+    private CourtCodesRepository courtCodesRepository;
 
     @InjectMocks
     private CourtLocalAuthoritiesService courtLocalAuthoritiesService;
@@ -217,6 +223,48 @@ class CourtLocalAuthoritiesServiceTest {
         );
 
         verify(courtLocalAuthoritiesRepository, never()).deleteByCourtId(COURT_ID);
+    }
+
+    @Test
+    void housekeepingShouldRetainOnlyAllowedAreasForFamilyCourts() {
+        UUID disallowedAreaId = UUID.randomUUID();
+
+        when(courtCodesRepository.findByCourtId(COURT_ID))
+            .thenReturn(Optional.of(CourtCodes.builder().courtId(COURT_ID).familyCourtCode(12345).build()));
+        when(courtAreasOfLawRepository.findByCourtId(COURT_ID))
+            .thenReturn(Optional.of(CourtAreasOfLaw.builder()
+                                .courtId(COURT_ID)
+                                .areasOfLaw(List.of(ADOPTION_ID, disallowedAreaId))
+                                .build()));
+        when(areaOfLawTypeRepository.findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames()))
+            .thenReturn(List.of(adoption, children));
+
+        courtLocalAuthoritiesService.performHousekeeping(COURT_ID);
+
+        verify(courtLocalAuthoritiesRepository)
+            .deleteByCourtIdAndAreaOfLawIdNotIn(COURT_ID, List.of(ADOPTION_ID));
+    }
+
+    @Test
+    void housekeepingShouldPruneAllForNonFamilyCourts() {
+        when(courtCodesRepository.findByCourtId(COURT_ID))
+            .thenReturn(Optional.of(CourtCodes.builder().courtId(COURT_ID).familyCourtCode(null).build()));
+
+        courtLocalAuthoritiesService.performHousekeeping(COURT_ID);
+
+        verify(courtLocalAuthoritiesRepository)
+            .deleteByCourtIdAndAreaOfLawIdNotIn(COURT_ID, List.of());
+        verify(courtAreasOfLawRepository, never()).findByCourtId(COURT_ID);
+        verify(areaOfLawTypeRepository, never()).findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames());
+    }
+
+    @Test
+    void housekeepingShouldNotThrowIfRepositoryFails() {
+        when(courtCodesRepository.findByCourtId(COURT_ID)).thenThrow(new RuntimeException("database unavailable"));
+
+        assertDoesNotThrow(() -> courtLocalAuthoritiesService.performHousekeeping(COURT_ID));
+
+        verify(courtLocalAuthoritiesRepository, never()).deleteByCourtIdAndAreaOfLawIdNotIn(COURT_ID, List.of());
     }
 
     private void mockAllowedAreasOfLaw() {
