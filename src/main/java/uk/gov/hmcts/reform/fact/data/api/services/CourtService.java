@@ -139,16 +139,11 @@ public class CourtService {
         existingCourt.setRegionId(foundRegion.getId());
         existingCourt.setWarningNotice(court.getWarningNotice());
 
-        try {
-            log.info("Updating court: {}", courtId);
-            Court updatedCourt = courtRepository.save(existingCourt);
-            handleCathNotification(previousOpenStatus, updatedCourt);
+        Court updatedCourt = courtRepository.save(existingCourt);
 
-            return updatedCourt;
-        } catch (Exception e) {
-            throw e;
-        }
+        handleCathNotification(previousOpenStatus, updatedCourt);
 
+        return updatedCourt;
     }
 
     /**
