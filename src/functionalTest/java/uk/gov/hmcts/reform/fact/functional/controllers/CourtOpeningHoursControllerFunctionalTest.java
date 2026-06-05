@@ -58,7 +58,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         courtId = UUID.randomUUID();
         court = new Court();
         court.setId(courtId);
-        court.setName("Test Court");
+        court.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court"));
 
         openingTimesDetails = List.of(
             new OpeningTimesDetail(

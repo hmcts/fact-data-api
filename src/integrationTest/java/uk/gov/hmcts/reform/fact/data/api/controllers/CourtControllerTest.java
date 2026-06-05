@@ -520,7 +520,7 @@ class CourtControllerTest {
         return CourtDetails.builder()
             .id(id)
             .name(name)
-            .slug(courtService.toSlugFormat(name))
+            .slug(CourtService.toSlugFormat(name))
             .open(Boolean.TRUE)
             .warningNotice("Notice")
             .regionId(REGION_ID)

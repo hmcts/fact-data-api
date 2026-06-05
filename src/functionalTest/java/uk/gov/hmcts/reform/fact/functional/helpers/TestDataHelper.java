@@ -17,6 +17,7 @@ import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.security.SecureRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
@@ -30,6 +31,7 @@ public final class TestDataHelper {
     private static final ObjectMapper mapper = JsonMapper.builder()
         .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
         .build();
+    private static final SecureRandom random = new SecureRandom();
 
     private TestDataHelper() {
         // Utility class
@@ -83,6 +85,30 @@ public final class TestDataHelper {
     }
 
     /**
+     * Appends a random 6-character lowercase suffix to the provided court name.
+     *
+     * @param courtName the base court name
+     * @return the court name with random suffix appended
+     */
+    public static String appendRandomSuffixToCourtName(final String courtName) {
+        return courtName + " " + generateRandomLowercaseString(6);
+    }
+
+    /**
+     * Generates a random lowercase alphabetic string (a-z) with the requested length.
+     *
+     * @param length the length of random string
+     * @return random lowercase string
+     */
+    public static String generateRandomLowercaseString(final int length) {
+        final StringBuilder randomString = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            randomString.append((char) ('a' + random.nextInt(26)));
+        }
+        return randomString.toString();
+    }
+
+    /**
      * Creates a test court with the given name.
      *
      * @param http the HTTP client
@@ -103,7 +129,7 @@ public final class TestDataHelper {
      */
     public static UUID createCourt(final HttpClient http, final String courtName, boolean isOpen) {
         final Court court = new Court();
-        court.setName(courtName);
+        court.setName(appendRandomSuffixToCourtName(courtName));
         court.setRegionId(UUID.fromString(fetchFirstRegionId(http)));
         court.setIsServiceCentre(true);
         court.setOpen(isOpen);
@@ -128,7 +154,7 @@ public final class TestDataHelper {
         final HttpClient http, final String courtName, boolean isOpen, final String mrdId, boolean openOnCath) {
 
         final Court court = new Court();
-        court.setName(courtName);
+        court.setName(appendRandomSuffixToCourtName(courtName));
         court.setRegionId(UUID.fromString(fetchFirstRegionId(http)));
         court.setIsServiceCentre(true);
         court.setOpen(isOpen);

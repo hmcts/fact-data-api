@@ -314,7 +314,6 @@ class CourtServiceTest {
         input.setRegionId(regionId);
 
         when(regionService.getRegionById(regionId)).thenReturn(region);
-        when(courtRepository.existsBySlug(anyString())).thenReturn(false);
         when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Court saved = courtService.createCourt(input);
@@ -323,25 +322,6 @@ class CourtServiceTest {
         assertThat(saved.getRegionId()).isEqualTo(region.getId());
         assertThat(saved.getSlug()).isEqualTo("my-test-court");
         verify(courtRepository).save(saved);
-    }
-
-    @Test
-    void createCourtShouldGenerateUniqueSlugWhenDuplicateExists() {
-        UUID regionId = UUID.randomUUID();
-        Region region = new Region();
-        region.setId(regionId);
-        Court input = new Court();
-        input.setName("Duplicate Court");
-        input.setRegionId(regionId);
-
-        when(regionService.getRegionById(regionId)).thenReturn(region);
-        when(courtRepository.existsBySlug("duplicate-court")).thenReturn(true);
-        when(courtRepository.existsBySlug("duplicate-court-1")).thenReturn(false);
-        when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        Court result = courtService.createCourt(input);
-
-        assertThat(result.getSlug()).isEqualTo("duplicate-court-1");
     }
 
     @Test
@@ -363,7 +343,6 @@ class CourtServiceTest {
 
         when(courtRepository.findById(courtId)).thenReturn(Optional.of(existing));
         when(regionService.getRegionById(regionId)).thenReturn(region);
-        when(courtRepository.existsBySlug("new-name")).thenReturn(false);
         when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Court result = courtService.updateCourt(courtId, updated);
@@ -397,7 +376,6 @@ class CourtServiceTest {
         Court result = courtService.updateCourt(courtId, updated);
 
         assertThat(result.getSlug()).isEqualTo("same-name");
-        verify(courtRepository, never()).existsBySlug(anyString());
     }
 
     @Test

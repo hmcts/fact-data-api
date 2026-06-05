@@ -194,7 +194,7 @@ dependencies {
   implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '12.7.0'
 
   implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.3.0'
-
+  implementation group: 'com.azure', name: 'azure-storage-blob', version: '12.26.0'
 
   implementation group: 'tools.jackson.datatype', name: 'jackson-datatype-hibernate7'
 
