@@ -175,6 +175,7 @@ public class AuthFunctionalTest {
             "/courts/" + courtId + "/v1",
             "/courts/" + courtId + ".json",
             "/courts/slug/" + CourtService.toSlugFormat(testingCourt.getName()) + "/v1",
+            "/courts/slug/" + CourtService.toSlugFormat(testingCourt.getName()) + "/entity/v1",
             "/courts/all/v1",
             "/courts/all.json",
             "/courts/v1?pageNumber=0&pageSize=10&includeClosed=true"

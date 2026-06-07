@@ -122,4 +122,12 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
      * @return the NameAndSlug object
      */
     Optional<NameAndSlug> findNameAndSlugById(UUID id);
+
+    /**
+     * Find a court instance using the court slug.
+     *
+     * @param slug the slug
+     * @return an {@link Optional} {@link Court} instance if found, otherwise an empty {@link Optional}
+     */
+    Optional<Court> findBySlug(String slug);
 }

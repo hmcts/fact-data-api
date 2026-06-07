@@ -423,6 +423,43 @@ public final class CourtControllerFunctionalTest {
     }
 
     @Test
+    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns court entity")
+    void shouldReturnCourtEntityViaSlugPath() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Slug Entity Path");
+
+        final Response byIdResponse = http.doGet("/courts/" + courtId + "/v1");
+        final CourtDetails courtFromIdPath = mapper.readValue(byIdResponse.getBody().asString(), CourtDetails.class);
+
+        final Response response = http.doGet("/courts/slug/" + courtFromIdPath.getSlug() + "/entity/v1");
+
+        AssertionHelper.assertStatus(response, OK);
+
+        final Court fetchedCourt = mapper.readValue(
+            response.getBody().asString(),
+            Court.class
+        );
+
+        assertThat(fetchedCourt.getId())
+            .as("Court ID should match the created court")
+            .isEqualTo(courtId);
+        assertThat(fetchedCourt.getSlug())
+            .as("Court slug should match the created court")
+            .isEqualTo(courtFromIdPath.getSlug());
+    }
+
+    @Test
+    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns 404 for unknown slug")
+    void shouldFailToRetrieveNonExistentCourtEntityBySlug() {
+        final Response response = http.doGet("/courts/slug/non-existent-court/entity/v1");
+
+        AssertionHelper.assertStatus(response, NOT_FOUND);
+
+        assertThat(response.jsonPath().getString("message"))
+            .as("Error message should indicate court entity not found by slug")
+            .contains("Court not found, slug: non-existent-court");
+    }
+
+    @Test
     @DisplayName("POST /courts/v1/link links CaTH courts to FaCT successfully")
     void shouldLinkCaTHCourtsToFaCTSuccessfully() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court For CaTH Linking", false);

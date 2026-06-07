@@ -58,6 +58,18 @@ public class CourtService {
     }
 
     /**
+     * Get a court by its slug.
+     *
+     * @param courtSlug the court slug
+     * @return {@link NotFoundException} if the court is not found.
+     */
+    public Court getCourtBySlug(final String courtSlug) {
+        return courtRepository.findBySlug(courtSlug)
+            .orElseThrow(() -> new NotFoundException("Court not found, slug: " + courtSlug));
+    }
+
+
+    /**
      * Get multiple courts by their IDs.
      *
      * @param courtIds List of court IDs to retrieve.

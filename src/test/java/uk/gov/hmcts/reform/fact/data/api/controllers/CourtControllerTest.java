@@ -134,6 +134,28 @@ class CourtControllerTest {
     }
 
     @Test
+    void getCourtEntityBySlugReturns200() {
+        Court court = createCourt();
+
+        when(courtService.getCourtBySlug(COURT_SLUG)).thenReturn(court);
+
+        ResponseEntity<Court> response = courtController.getCourtEntityBySlug(COURT_SLUG);
+
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(court);
+    }
+
+    @Test
+    void getCourtEntityBySlugThrowsNotFoundException() {
+        when(courtService.getCourtBySlug(UNKNOWN_COURT_SLUG))
+            .thenThrow(new NotFoundException("Court not found"));
+
+        assertThrows(NotFoundException.class, () ->
+            courtController.getCourtEntityBySlug(UNKNOWN_COURT_SLUG)
+        );
+    }
+
+    @Test
     void getFilteredAndPaginatedCourtsReturns200() {
         Court court = createCourt();
         Page<Court> courtPage = new PageImpl<>(List.of(court));
