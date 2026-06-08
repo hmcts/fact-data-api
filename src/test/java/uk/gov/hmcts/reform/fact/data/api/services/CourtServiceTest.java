@@ -97,6 +97,50 @@ class CourtServiceTest {
     }
 
     @Test
+    void getCourtBySlugReturnsCourtWhenFound() {
+        String courtSlug = "test-court";
+        Court court = new Court();
+        court.setSlug(courtSlug);
+        court.setName("Test Court");
+
+        when(courtRepository.findBySlug(courtSlug)).thenReturn(Optional.of(court));
+
+        Court result = courtService.getCourtBySlug(courtSlug);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSlug()).isEqualTo(courtSlug);
+        assertThat(result.getName()).isEqualTo("Test Court");
+    }
+
+    @Test
+    void getCourtBySlugThrowsNotFoundExceptionWhenCourtDoesNotExist() {
+        String courtSlug = "missing-court";
+
+        when(courtRepository.findBySlug(courtSlug)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class, () ->
+                courtService.getCourtBySlug(courtSlug)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Court not found, slug: " + courtSlug);
+    }
+
+    @Test
+    void getCourtBySlugThrowsNotFoundExceptionWhenSlugIsBlank() {
+        String courtSlug = "   ";
+
+        when(courtRepository.findBySlug(courtSlug)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class, () ->
+                courtService.getCourtBySlug(courtSlug)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Court not found, slug: " + courtSlug);
+    }
+
+    @Test
     void getAllCourtsByIdsReturnsMatchingCourts() {
         UUID courtId1 = UUID.randomUUID();
         UUID courtId2 = UUID.randomUUID();
