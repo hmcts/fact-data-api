@@ -97,6 +97,50 @@ class CourtServiceTest {
     }
 
     @Test
+    void getCourtBySlugReturnsCourtWhenFound() {
+        String courtSlug = "test-court";
+        Court court = new Court();
+        court.setSlug(courtSlug);
+        court.setName("Test Court");
+
+        when(courtRepository.findBySlug(courtSlug)).thenReturn(Optional.of(court));
+
+        Court result = courtService.getCourtBySlug(courtSlug);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSlug()).isEqualTo(courtSlug);
+        assertThat(result.getName()).isEqualTo("Test Court");
+    }
+
+    @Test
+    void getCourtBySlugThrowsNotFoundExceptionWhenCourtDoesNotExist() {
+        String courtSlug = "missing-court";
+
+        when(courtRepository.findBySlug(courtSlug)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class, () ->
+                courtService.getCourtBySlug(courtSlug)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Court not found, slug: " + courtSlug);
+    }
+
+    @Test
+    void getCourtBySlugThrowsNotFoundExceptionWhenSlugIsBlank() {
+        String courtSlug = "   ";
+
+        when(courtRepository.findBySlug(courtSlug)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class, () ->
+                courtService.getCourtBySlug(courtSlug)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Court not found, slug: " + courtSlug);
+    }
+
+    @Test
     void getAllCourtsByIdsReturnsMatchingCourts() {
         UUID courtId1 = UUID.randomUUID();
         UUID courtId2 = UUID.randomUUID();
@@ -314,7 +358,6 @@ class CourtServiceTest {
         input.setRegionId(regionId);
 
         when(regionService.getRegionById(regionId)).thenReturn(region);
-        when(courtRepository.existsBySlug(anyString())).thenReturn(false);
         when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Court saved = courtService.createCourt(input);
@@ -323,25 +366,6 @@ class CourtServiceTest {
         assertThat(saved.getRegionId()).isEqualTo(region.getId());
         assertThat(saved.getSlug()).isEqualTo("my-test-court");
         verify(courtRepository).save(saved);
-    }
-
-    @Test
-    void createCourtShouldGenerateUniqueSlugWhenDuplicateExists() {
-        UUID regionId = UUID.randomUUID();
-        Region region = new Region();
-        region.setId(regionId);
-        Court input = new Court();
-        input.setName("Duplicate Court");
-        input.setRegionId(regionId);
-
-        when(regionService.getRegionById(regionId)).thenReturn(region);
-        when(courtRepository.existsBySlug("duplicate-court")).thenReturn(true);
-        when(courtRepository.existsBySlug("duplicate-court-1")).thenReturn(false);
-        when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        Court result = courtService.createCourt(input);
-
-        assertThat(result.getSlug()).isEqualTo("duplicate-court-1");
     }
 
     @Test
@@ -363,7 +387,6 @@ class CourtServiceTest {
 
         when(courtRepository.findById(courtId)).thenReturn(Optional.of(existing));
         when(regionService.getRegionById(regionId)).thenReturn(region);
-        when(courtRepository.existsBySlug("new-name")).thenReturn(false);
         when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Court result = courtService.updateCourt(courtId, updated);
@@ -397,7 +420,6 @@ class CourtServiceTest {
         Court result = courtService.updateCourt(courtId, updated);
 
         assertThat(result.getSlug()).isEqualTo("same-name");
-        verify(courtRepository, never()).existsBySlug(anyString());
     }
 
     @Test

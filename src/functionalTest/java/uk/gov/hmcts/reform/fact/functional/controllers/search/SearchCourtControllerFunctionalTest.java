@@ -66,7 +66,7 @@ public final class SearchCourtControllerFunctionalTest {
         assertThat(courts)
             .as("Expected to find the created court '%s' in search results", courtName)
             .extracting(Court::getName)
-            .contains(courtName);
+            .anyMatch(name -> name.startsWith(courtName));
     }
 
     @Test
@@ -93,7 +93,7 @@ public final class SearchCourtControllerFunctionalTest {
             .as("All returned courts should start with 'T'")
             .allMatch(name -> name.toUpperCase().startsWith("T"))
             .as("Expected to find the created court '%s' in prefix results", courtName)
-            .contains(courtName);
+            .anyMatch(name -> name.startsWith(courtName));
     }
 
     @Test
@@ -650,7 +650,7 @@ public final class SearchCourtControllerFunctionalTest {
         final UUID courtId = TestDataHelper.createCourt(http, courtName);
 
         final Court courtToUpdate = new Court();
-        courtToUpdate.setName(courtName);
+        courtToUpdate.setName(TestDataHelper.appendRandomSuffixToCourtName(courtName));
         courtToUpdate.setRegionId(UUID.fromString(regionId));
         courtToUpdate.setIsServiceCentre(true);
         courtToUpdate.setOpen(true);

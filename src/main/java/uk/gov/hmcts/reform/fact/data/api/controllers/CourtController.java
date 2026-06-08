@@ -109,6 +109,24 @@ public class CourtController {
         );
     }
 
+    @GetMapping(value = "/slug/{courtSlug}/entity/v1")
+    @JsonView(CourtDetailsView.class)
+    @Operation(
+        summary = "Get court entity by slug",
+        description = "Fetch detailed court information for a given court slug."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court details"),
+        @ApiResponse(responseCode = "400", description = "Invalid court slug supplied"),
+        @ApiResponse(responseCode = "404", description = "Court not found")
+    })
+    public ResponseEntity<Court> getCourtEntityBySlug(
+        @Parameter(description = "Slug of the court", required = true)
+        @ValidCourtSlug
+        @PathVariable String courtSlug) {
+        return ResponseEntity.ok(courtService.getCourtBySlug(courtSlug));
+    }
+
     @GetMapping(value = {"/all/v1", "/all.json"})
     @JsonView(CourtDetailsView.class)
     @Operation(

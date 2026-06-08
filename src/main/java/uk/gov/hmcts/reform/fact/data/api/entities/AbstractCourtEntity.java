@@ -55,6 +55,7 @@ public abstract class AbstractCourtEntity {
 
     @Schema(description = "The Court 'slug'")
     @ValidCourtSlug
+    @Column(unique = true)
     private String slug;
 
     @Schema(description = "The open status of the Court")

@@ -41,7 +41,7 @@ public final class CourtControllerFunctionalTest {
     @DisplayName("POST /courts/v1 creates court and verifies persistence")
     void shouldCreateCourtWithValidPayload() throws Exception {
         final Court court = new Court();
-        court.setName("Test Court Create Valid");
+        court.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Create Valid"));
         court.setRegionId(UUID.fromString(regionId));
         court.setIsServiceCentre(true);
         court.setOpen(false);
@@ -62,7 +62,7 @@ public final class CourtControllerFunctionalTest {
         final CourtDetails fetchedCourt = mapper.readValue(getResponse.getBody().asString(), CourtDetails.class);
         assertThat(fetchedCourt.getName())
             .as("Court name should match")
-            .isEqualTo("Test Court Create Valid");
+            .startsWith("Test Court Create Valid");
         assertThat(fetchedCourt.getRegionId())
             .as("Court region ID should match")
             .isEqualTo(UUID.fromString(regionId));
@@ -75,7 +75,7 @@ public final class CourtControllerFunctionalTest {
     @DisplayName("POST /courts/v1 fails with non-existent region ID")
     void shouldFailWithNonExistentRegionId() throws Exception {
         final Court court = new Court();
-        court.setName("Test Court Invalid Region");
+        court.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Invalid Region"));
         court.setRegionId(UUID.randomUUID());
         court.setIsServiceCentre(true);
         court.setOpen(false);
@@ -127,7 +127,7 @@ public final class CourtControllerFunctionalTest {
         final ZonedDateTime timestampBeforeUpdate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
         final Court updatedCourt = new Court();
-        updatedCourt.setName("Test Court Updated");
+        updatedCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Updated"));
         updatedCourt.setRegionId(UUID.fromString(regionId));
         updatedCourt.setIsServiceCentre(true);
         updatedCourt.setOpen(false);
@@ -143,7 +143,7 @@ public final class CourtControllerFunctionalTest {
         final CourtDetails fetchedCourt = mapper.readValue(getResponse.getBody().asString(), CourtDetails.class);
         assertThat(fetchedCourt.getName())
             .as("Court name should be updated")
-            .isEqualTo("Test Court Updated");
+            .startsWith("Test Court Updated");
         assertThat(fetchedCourt.getIsServiceCentre())
             .as("Court should remain a service centre")
             .isTrue();
@@ -160,7 +160,7 @@ public final class CourtControllerFunctionalTest {
         final UUID nonExistentCourtId = UUID.randomUUID();
 
         final Court updatedCourt = new Court();
-        updatedCourt.setName("Test Court Non-Existent court ID");
+        updatedCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Non-Existent court ID"));
         updatedCourt.setRegionId(UUID.fromString(regionId));
         updatedCourt.setIsServiceCentre(true);
         updatedCourt.setOpen(false);
@@ -180,7 +180,7 @@ public final class CourtControllerFunctionalTest {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Update Non-Existent Region ID", false);
 
         final Court updatedCourt = new Court();
-        updatedCourt.setName("Test Court Non-Existent Region ID Updated");
+        updatedCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Non-Existent Region ID Updated"));
         updatedCourt.setRegionId(UUID.randomUUID());
         updatedCourt.setIsServiceCentre(true);
         updatedCourt.setOpen(false);
@@ -228,7 +228,7 @@ public final class CourtControllerFunctionalTest {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Open", false);
 
         final Court updatedCourt = new Court();
-        updatedCourt.setName("Test Court Open");
+        updatedCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Open"));
         updatedCourt.setRegionId(UUID.fromString(regionId));
         updatedCourt.setIsServiceCentre(true);
         updatedCourt.setOpen(true);
@@ -300,7 +300,7 @@ public final class CourtControllerFunctionalTest {
             .isPresent();
         assertThat(matchingCourt.orElseThrow().path("name").asString())
             .as("Court name should match the created court")
-            .isEqualTo("Test Court All Details");
+            .startsWith("Test Court All Details");
     }
 
     @Test
@@ -326,7 +326,7 @@ public final class CourtControllerFunctionalTest {
             .isPresent();
         assertThat(matchingCourt.orElseThrow().path("name").asString())
             .as("Court name should match the created court")
-            .isEqualTo("Test Court All Json Path");
+            .startsWith("Test Court All Json Path");
     }
 
     @Test
@@ -353,7 +353,7 @@ public final class CourtControllerFunctionalTest {
             .isEqualTo(courtId);
         assertThat(fetchedCourt.getName())
             .as("Court name should match the created court")
-            .isEqualTo("Test Court Single Json Path");
+            .startsWith("Test Court Single Json Path");
     }
 
     @Test
@@ -419,6 +419,43 @@ public final class CourtControllerFunctionalTest {
 
         assertThat(response.jsonPath().getString("message"))
             .as("Error message should indicate court not found by slug")
+            .contains("Court not found, slug: non-existent-court");
+    }
+
+    @Test
+    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns court entity")
+    void shouldReturnCourtEntityViaSlugPath() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Slug Entity Path");
+
+        final Response byIdResponse = http.doGet("/courts/" + courtId + "/v1");
+        final CourtDetails courtFromIdPath = mapper.readValue(byIdResponse.getBody().asString(), CourtDetails.class);
+
+        final Response response = http.doGet("/courts/slug/" + courtFromIdPath.getSlug() + "/entity/v1");
+
+        AssertionHelper.assertStatus(response, OK);
+
+        final Court fetchedCourt = mapper.readValue(
+            response.getBody().asString(),
+            Court.class
+        );
+
+        assertThat(fetchedCourt.getId())
+            .as("Court ID should match the created court")
+            .isEqualTo(courtId);
+        assertThat(fetchedCourt.getSlug())
+            .as("Court slug should match the created court")
+            .isEqualTo(courtFromIdPath.getSlug());
+    }
+
+    @Test
+    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns 404 for unknown slug")
+    void shouldFailToRetrieveNonExistentCourtEntityBySlug() {
+        final Response response = http.doGet("/courts/slug/non-existent-court/entity/v1");
+
+        AssertionHelper.assertStatus(response, NOT_FOUND);
+
+        assertThat(response.jsonPath().getString("message"))
+            .as("Error message should indicate court entity not found by slug")
             .contains("Court not found, slug: non-existent-court");
     }
 

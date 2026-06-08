@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.functional.controllers;
 
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -29,6 +30,11 @@ import static org.springframework.http.HttpStatus.PAYLOAD_TOO_LARGE;
 
 @Feature("Court Photo Controller")
 @DisplayName("Court Photo Controller")
+@DisabledIfEnvironmentVariable(
+    named = "SKIP_TESTS_PHOTO",
+    matches = "true",
+    disabledReason = "Photo tests are disabled"
+)
 public final class CourtPhotoControllerFunctionalTest {
 
     private static final HttpClient http = new HttpClient();

@@ -28,6 +28,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
+import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
@@ -74,18 +75,13 @@ public class AuthFunctionalTest {
 
     private static UUID createCourtAsAdmin(String name) {
         Court court = new Court();
-        court.setName(name + " " + buildAlphabeticSuffix());
+        court.setName(TestDataHelper.appendRandomSuffixToCourtName(name));
         court.setRegionId(UUID.fromString(getRegionId()));
         court.setOpen(Boolean.FALSE);
         court.setIsServiceCentre(true);
         Response createResponse = http.doPost("/courts/v1", court, adminToken);
         assertThat(createResponse.statusCode()).isEqualTo(201);
         return UUID.fromString(createResponse.jsonPath().getString("id"));
-    }
-
-    private static String buildAlphabeticSuffix() {
-        final String lettersOnly = UUID.randomUUID().toString().replaceAll("[^A-Za-z]", "a");
-        return lettersOnly.substring(0, 8);
     }
 
     private static void assertViewerAllowed(Response adminResponse, Response viewerResponse, String endpoint) {
@@ -159,40 +155,48 @@ public class AuthFunctionalTest {
     @Test
     @DisplayName("Court controller endpoints enforce admin-only writes")
     void courtControllerAuth() {
-        UUID courtId = createCourtAsAdmin("Test Court Auth Core");
-        Court updateCourt = new Court();
-        updateCourt.setName("Test Court Auth Updated");
-        updateCourt.setOpen(Boolean.FALSE);
-        updateCourt.setRegionId(UUID.fromString(getRegionId()));
-        updateCourt.setIsServiceCentre(true);
+
+        Court testingCourt = new Court();
+        testingCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Auth"));
+        testingCourt.setOpen(Boolean.FALSE);
+        testingCourt.setRegionId(UUID.fromString(getRegionId()));
+        testingCourt.setIsServiceCentre(true);
+
+        // initially test that only the admin can create the court
+        Response createViewer = http.doPost("/courts/v1", testingCourt, viewerToken);
+        Response createAdmin = http.doPost("/courts/v1", testingCourt, adminToken);
+        assertViewerForbidden(createViewer, "/courts/v1 [POST]");
+        assertThat(createAdmin.statusCode()).isEqualTo(201);
+
+        // retrieve the created court's ID
+        UUID courtId = createAdmin.as(Court.class).getCourtId();
 
         String[] readEndpoints = new String[]{
             "/courts/" + courtId + "/v1",
             "/courts/" + courtId + ".json",
-            "/courts/slug/" + "test-court-auth-updated" + "/v1",
+            "/courts/slug/" + CourtService.toSlugFormat(testingCourt.getName()) + "/v1",
+            "/courts/slug/" + CourtService.toSlugFormat(testingCourt.getName()) + "/entity/v1",
             "/courts/all/v1",
             "/courts/all.json",
             "/courts/v1?pageNumber=0&pageSize=10&includeClosed=true"
         };
 
+        // ensure that both roles can access read endpoints
         for (String endpoint : readEndpoints) {
             Response admin = http.doGet(endpoint, adminToken);
             Response viewer = http.doGet(endpoint, viewerToken);
             assertViewerAllowed(admin, viewer, endpoint);
         }
 
-        Response createAdmin = http.doPost("/courts/v1", updateCourt, adminToken);
-        Response createViewer = http.doPost("/courts/v1", updateCourt, viewerToken);
-        assertThat(createAdmin.statusCode()).isEqualTo(201);
-        assertViewerForbidden(createViewer, "/courts/v1 [POST]");
-
-        Response updateAdmin = http.doPut("/courts/" + courtId + "/v1", updateCourt, adminToken);
-        Response updateViewer = http.doPut("/courts/" + courtId + "/v1", updateCourt, viewerToken);
-        assertThat(updateAdmin.statusCode()).isEqualTo(200);
+        // ensure that only admin can update the court
+        testingCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Auth Updated"));
+        Response updateViewer = http.doPut("/courts/" + courtId + "/v1", testingCourt, viewerToken);
+        Response updateAdmin = http.doPut("/courts/" + courtId + "/v1", testingCourt, adminToken);
         assertViewerForbidden(updateViewer, "/courts/{courtId}/v1 [PUT]");
+        assertThat(updateAdmin.statusCode()).isEqualTo(200);
 
         assertUnauthenticated(http.doGet("/courts/v1", ""), "/courts/v1 [GET]");
-        assertUnauthenticated(http.doPost("/courts/v1", updateCourt, ""), "/courts/v1 [POST]");
+        assertUnauthenticated(http.doPost("/courts/v1", testingCourt, ""), "/courts/v1 [POST]");
     }
 
     @Test
