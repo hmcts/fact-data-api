@@ -58,6 +58,18 @@ public class CourtService {
     }
 
     /**
+     * Get a court by its slug.
+     *
+     * @param courtSlug the court slug
+     * @return {@link NotFoundException} if the court is not found.
+     */
+    public Court getCourtBySlug(final String courtSlug) {
+        return courtRepository.findBySlug(courtSlug)
+            .orElseThrow(() -> new NotFoundException("Court not found, slug: " + courtSlug));
+    }
+
+
+    /**
      * Get multiple courts by their IDs.
      *
      * @param courtIds List of court IDs to retrieve.
@@ -108,7 +120,7 @@ public class CourtService {
     public Court createCourt(Court court) {
         Region foundRegion = regionService.getRegionById(court.getRegionId());
         court.setRegionId(foundRegion.getId());
-        court.setSlug(toUniqueSlug(court.getName()));
+        court.setSlug(toSlugFormat(court.getName()));
 
         // A court is closed on creation until an address is added.
         court.setOpen(false);
@@ -132,7 +144,7 @@ public class CourtService {
 
         if (!existingCourt.getName().equalsIgnoreCase(court.getName())) {
             existingCourt.setName(court.getName());
-            existingCourt.setSlug(toUniqueSlug(court.getName()));
+            existingCourt.setSlug(toSlugFormat(court.getName()));
         }
 
         existingCourt.setOpen(court.getOpen());
@@ -274,30 +286,11 @@ public class CourtService {
      * @param name the court name
      * @return the slug representation of the name
      */
-    public String toSlugFormat(String name) {
+    public static String toSlugFormat(String name) {
         return name.toLowerCase()
             .replaceAll("[^a-z\\s-]", "")
             .replaceAll("[\\s-]+", "-")
             .replaceAll("(^-)|(-$)", "");
-    }
-
-    /**
-     * Converts a court name to a unique slug.
-     *
-     * @param name The court name.
-     * @return A unique slug.
-     */
-    private String toUniqueSlug(String name) {
-        String baseSlug = toSlugFormat(name);
-
-        String slug = baseSlug;
-        int counter = 1;
-
-        while (courtRepository.existsBySlug(slug)) {
-            slug = baseSlug + "-" + counter++;
-        }
-
-        return slug;
     }
 
     /**

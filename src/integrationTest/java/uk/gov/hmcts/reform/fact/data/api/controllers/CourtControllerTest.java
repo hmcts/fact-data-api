@@ -213,6 +213,40 @@ class CourtControllerTest {
     }
 
     @Test
+    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns court entity")
+    void getCourtEntityBySlugReturnsCourt() throws Exception {
+        Court court = buildCourt(COURT_ID);
+
+        when(courtService.getCourtBySlug(COURT_SLUG)).thenReturn(court);
+
+        mockMvc.perform(get("/courts/slug/{courtSlug}/entity/v1", COURT_SLUG))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(COURT_ID.toString()))
+            .andExpect(jsonPath("$.name").value("Test Court"))
+            .andExpect(jsonPath("$.regionId").value(REGION_ID.toString()));
+    }
+
+    @Test
+    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns 404 when court missing")
+    void getCourtEntityBySlugReturnsNotFound() throws Exception {
+        when(courtService.getCourtBySlug(UNKNOWN_COURT_SLUG))
+            .thenThrow(new NotFoundException("Court not found"));
+
+        mockMvc.perform(get("/courts/slug/{courtSlug}/entity/v1", UNKNOWN_COURT_SLUG))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns 400 for invalid slug")
+    void getCourtEntityBySlugReturnsBadRequestForInvalidSlug() throws Exception {
+        mockMvc.perform(get("/courts/slug/{courtSlug}/entity/v1", "INVALID SLUG"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString(
+                ValidationConstants.COURT_SLUG_REGEX_MESSAGE
+            )));
+    }
+
+    @Test
     @DisplayName("GET /courts/v1 returns paginated list")
     void getFilteredAndPaginatedCourtsReturnsResults() throws Exception {
         Court court = buildCourt(COURT_ID);
@@ -520,7 +554,7 @@ class CourtControllerTest {
         return CourtDetails.builder()
             .id(id)
             .name(name)
-            .slug(courtService.toSlugFormat(name))
+            .slug(CourtService.toSlugFormat(name))
             .open(Boolean.TRUE)
             .warningNotice("Notice")
             .regionId(REGION_ID)

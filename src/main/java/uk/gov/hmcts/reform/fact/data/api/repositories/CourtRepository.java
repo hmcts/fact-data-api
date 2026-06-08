@@ -47,14 +47,6 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
     );
 
     /**
-     * Checks whether a court slug already exists.
-     *
-     * @param slug the slug to check
-     * @return true if the slug exists
-     */
-    boolean existsBySlug(String slug);
-
-    /**
      * Finds courts whose names start with the provided prefix.
      *
      * @param namePrefix the name prefix
@@ -130,4 +122,12 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
      * @return the NameAndSlug object
      */
     Optional<NameAndSlug> findNameAndSlugById(UUID id);
+
+    /**
+     * Find a court instance using the court slug.
+     *
+     * @param slug the slug
+     * @return an {@link Optional} {@link Court} instance if found, otherwise an empty {@link Optional}
+     */
+    Optional<Court> findBySlug(String slug);
 }
