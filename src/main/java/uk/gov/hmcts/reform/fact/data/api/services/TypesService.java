@@ -158,6 +158,6 @@ public class TypesService {
      * @return The local authorities.
      */
     public List<LocalAuthorityType> getLocalAuthorities() {
-        return localAuthorityTypeRepository.findAll();
+        return localAuthorityTypeRepository.findAllParents();
     }
 }
