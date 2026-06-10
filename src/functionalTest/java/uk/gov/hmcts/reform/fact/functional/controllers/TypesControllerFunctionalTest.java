@@ -6,6 +6,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED;
 import static org.springframework.http.HttpStatus.OK;
@@ -99,7 +101,11 @@ public final class TypesControllerFunctionalTest {
         assertThat(response.statusCode()).isEqualTo(OK.value());
         assertThat(response.contentType()).contains("json");
         assertThat(response.jsonPath().getList("$")).isNotEmpty();
-        assertThat(response.jsonPath().getString("[0].name")).isEqualTo("Adur District Council");
+
+        final List<String> localAuthorityNames = response.jsonPath().getList("name");
+        assertThat(localAuthorityNames)
+            .contains("Barnsley Metropolitan Borough Council")
+            .doesNotContain("Adur District Council");
     }
 
     @Test

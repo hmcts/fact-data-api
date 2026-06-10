@@ -173,7 +173,7 @@ public class CourtLocalAuthoritiesService {
      * @return The list of CourtLocalAuthorityDto objects.
      */
     private List<CourtLocalAuthorityDto> buildCourtLocalAuthorityDtoList(UUID courtId, List<AreaOfLawType> areas) {
-        List<LocalAuthorityType> allLocalAuthorities = localAuthorityTypeRepository.findAll()
+        List<LocalAuthorityType> allLocalAuthorities = localAuthorityTypeRepository.findAllParents()
             .stream()
             .sorted(Comparator.comparing(LocalAuthorityType::getName, String.CASE_INSENSITIVE_ORDER))
             .toList();
