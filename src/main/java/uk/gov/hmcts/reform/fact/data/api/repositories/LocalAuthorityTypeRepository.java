@@ -1,18 +1,33 @@
 package uk.gov.hmcts.reform.fact.data.api.repositories;
 
-import org.springframework.data.jpa.repository.Query;
-import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
-
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 
 @Repository
 public interface LocalAuthorityTypeRepository extends JpaRepository<LocalAuthorityType, UUID> {
 
     Optional<LocalAuthorityType> findByNameIgnoreCase(String name);
+
+    /**
+     * Finds all parent local authorities.
+     *
+     * @return parent local authorities
+     */
+    @Query(
+        value = """
+            SELECT id, name, custodian_code, child_custodian_codes
+            FROM local_authority_types
+            WHERE is_parent = TRUE
+            """,
+        nativeQuery = true
+    )
+    List<LocalAuthorityType> findAllParents();
 
     /**
      * Finds the parent or child authority by custodian code.

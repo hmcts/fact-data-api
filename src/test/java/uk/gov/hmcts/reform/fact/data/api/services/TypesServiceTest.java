@@ -237,7 +237,7 @@ class TypesServiceTest {
 
     @Test
     void getLocalAuthoritiesReturnsLocalAuthoritiesWhenFound() {
-        when(localAuthorityTypeRepository.findAll()).thenReturn(localAuthorityTypes);
+        when(localAuthorityTypeRepository.findAllParents()).thenReturn(localAuthorityTypes);
 
         List<LocalAuthorityType> result = typesService.getLocalAuthorities();
 
@@ -246,9 +246,10 @@ class TypesServiceTest {
 
     @Test
     void getLocalAuthoritiesReturnsEmptyListWhenNoneFound() {
+        when(localAuthorityTypeRepository.findAllParents()).thenReturn(List.of());
+
         List<LocalAuthorityType> result = typesService.getLocalAuthorities();
 
         assertThat(result).isEmpty();
     }
 }
-
