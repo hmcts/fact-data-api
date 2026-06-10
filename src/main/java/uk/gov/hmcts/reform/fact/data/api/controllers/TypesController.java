@@ -114,7 +114,7 @@ public class TypesController {
     @GetMapping("/v1/local-authorities")
     @Operation(
         summary = "Get all local authorities",
-        description = "Fetch the complete set of local authorities."
+        description = "Fetch the complete set of parent local authorities."
             + "Returns empty list if no local authorities exist."
     )
     @ApiResponses(value = {

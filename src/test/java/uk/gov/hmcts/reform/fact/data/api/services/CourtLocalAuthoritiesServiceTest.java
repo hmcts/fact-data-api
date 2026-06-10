@@ -97,7 +97,7 @@ class CourtLocalAuthoritiesServiceTest {
 
         when(courtService.getCourtById(COURT_ID)).thenReturn(court);
         mockAllowedAreasOfLaw();
-        when(localAuthorityTypeRepository.findAll()).thenReturn(List.of(laTwo, laOne));
+        when(localAuthorityTypeRepository.findAllParents()).thenReturn(List.of(laTwo, laOne));
         when(courtLocalAuthoritiesRepository.findByCourtIdAndAreaOfLawId(COURT_ID, ADOPTION_ID))
             .thenReturn(Optional.of(adoptionAuthorities));
         when(courtLocalAuthoritiesRepository.findByCourtIdAndAreaOfLawId(COURT_ID, CHILDREN_ID))
@@ -115,6 +115,8 @@ class CourtLocalAuthoritiesServiceTest {
         List<LocalAuthoritySelectionDto> childrenAuthorities = childrenResult.getLocalAuthorities();
         assertThat(childrenAuthorities).isNotEmpty();
         assertThat(childrenAuthorities).allMatch(la -> Boolean.FALSE.equals(la.getSelected()));
+        verify(localAuthorityTypeRepository).findAllParents();
+        verify(localAuthorityTypeRepository, never()).findAll();
     }
 
     @Test
