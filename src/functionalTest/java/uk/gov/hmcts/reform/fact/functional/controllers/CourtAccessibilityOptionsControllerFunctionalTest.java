@@ -182,7 +182,7 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
         final CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
             .courtId(nonExistentCourtId)
             .accessibleParking(false)
-            .accessibleEntrance(false)
+            .accessibleEntrance(true)
             .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(false)
             .quietRoom(false)
