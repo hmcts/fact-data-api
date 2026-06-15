@@ -39,10 +39,7 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @Entity
 @EntityListeners(AuditableCourtEntityListener.class)
 @ValidConditional(
-    selected = "accessibleParking", selectedValueForRequired = "true", required = "accessibleParkingPhoneNumber"
-)
-@ValidConditional(
-    selected = "accessibleEntrance", selectedValueForRequired = "true", required = "accessibleEntrancePhoneNumber"
+    selected = "accessibleEntrance", selectedValueForRequired = "false", required = "accessibleEntrancePhoneNumber"
 )
 @ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorWidth")
 @ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorLimit")
