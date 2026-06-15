@@ -69,7 +69,8 @@ spring:
       storage:
         account-name: ${AZURE_STORAGE_ACCOUNT_NAME}
         blob:
-          container-name: photos
+          photo-container-name: photos
+          csv-container-name: csv
           connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
       # required for security flows
       active-directory:
