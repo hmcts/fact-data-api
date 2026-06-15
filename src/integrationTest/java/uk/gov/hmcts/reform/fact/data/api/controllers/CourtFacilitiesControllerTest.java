@@ -311,7 +311,7 @@ class CourtFacilitiesControllerTest {
             .snackVendingMachines(true)
             .drinkVendingMachines(false)
             .cafeteria(true)
-            .waitingArea(false)
+            .waitingArea(true)
             .waitingAreaChildren(null)
             .quietRoom(true)
             .wifi(false)
