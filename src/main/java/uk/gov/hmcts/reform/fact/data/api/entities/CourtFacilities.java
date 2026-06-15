@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
+import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -33,6 +34,7 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @EntityListeners(AuditableCourtEntityListener.class)
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_facilities")
+@ValidConditional(selected = "waitingArea", selectedValueForRequired = "true", required = "waitingAreaChildren")
 public class CourtFacilities implements AuditableCourtEntity {
 
     @Schema(
@@ -78,7 +80,6 @@ public class CourtFacilities implements AuditableCourtEntity {
     private Boolean waitingArea;
 
     @Schema(description = "Child-specific waiting area availability status")
-    @NotNull
     private Boolean waitingAreaChildren;
 
     @Schema(description = "Quiet room availability status")
