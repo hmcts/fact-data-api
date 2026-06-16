@@ -382,7 +382,7 @@ public class TestingSupportService {
                 ACCESSIBLE_TOILET_DESCRIPTIONS.size())))
             .build();
 
-        if (courtAccessibilityOptions.getAccessibleEntrance().booleanValue()) {
+        if (!courtAccessibilityOptions.getAccessibleEntrance().booleanValue()) {
             courtAccessibilityOptions.setAccessibleEntrancePhoneNumber(rndPhoneNumber(random));
         }
 
