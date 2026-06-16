@@ -105,6 +105,7 @@ migration:
 
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}
+  enableCache: ${TESTING_SUPPORT_ENABLE_CACHE:false}
 
 clients:
   cath:
