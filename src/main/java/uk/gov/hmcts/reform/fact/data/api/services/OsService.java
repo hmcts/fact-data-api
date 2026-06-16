@@ -1,7 +1,10 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import feign.FeignException;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+
+import uk.gov.hmcts.reform.fact.data.api.config.CacheConfiguration;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.OsProcessException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
@@ -40,6 +43,7 @@ public class OsService {
      * @return the location data returned from OS plus a mapping to determine the admin
      *     district based on the child and parent custodian codes.
      */
+    @Cacheable(cacheNames = CacheConfiguration.OSDATA_CACHE_NAME, key = "'T-' + #postcode")
     public OsLocationData getOsLonLatDistrictByPartial(String postcode) {
         return getOsLatLonDistrictLookup(
             toOutwardPlusSingleInwardDigit(
@@ -53,6 +57,7 @@ public class OsService {
      * @param postcode the postcode.
      * @return the OsData containing all addresses for the provided postcode.
      */
+    @Cacheable(cacheNames = CacheConfiguration.OSDATA_CACHE_NAME, key = "'F-' + #postcode")
     public OsData getOsAddressByFullPostcode(String postcode) {
         return getOsAddressData(validateAndFormatPostcode(postcode), false);
     }
