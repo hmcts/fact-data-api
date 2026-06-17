@@ -17,17 +17,14 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHour
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
-import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
@@ -39,12 +36,10 @@ import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -99,7 +94,6 @@ public class TestingSupportService {
     private static final List<UUID> CONTACT_DESCRIPTION_IDS = new ArrayList<>();
     private static final List<UUID> LOCAL_AUTHORITY_TYPE_IDS = new ArrayList<>();
     private static final List<UUID> OPENING_HOUR_TYPE_IDS = new ArrayList<>();
-    private static final List<UUID> SERVICE_AREA_IDS = new ArrayList<>();
 
     // ------------------------------------------------------------------------
     // Data variations for randomisation
@@ -182,7 +176,6 @@ public class TestingSupportService {
     private final CourtTranslationService courtTranslationService;
     private final CourtProfessionalInformationService courtProfessionalInformationService;
     private final CourtLocalAuthoritiesService courtLocalAuthoritiesService;
-    private final CourtServiceAreasRepository courtServiceAreasRepository;
     // for photos, we try the service first, then fall back to the repository if required
     private final CourtPhotoService courtPhotoService;
     private final CourtPhotoRepository courtPhotoRepository;
@@ -198,7 +191,6 @@ public class TestingSupportService {
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private final OpeningHoursTypeRepository openingHoursTypeRepository;
     private final RegionRepository regionRepository;
-    private final ServiceAreaRepository serviceAreaRepository;
 
     /**
      * Creates a court with the specified name and randomised data for all other fields. The randomisation is based on
@@ -206,29 +198,26 @@ public class TestingSupportService {
      *
      * @param courtName     the name of the court to create
      * @param seed          the seed for randomisation - if not provided, a random seed will be used
-     * @param serviceCentre whether the court should be marked as a service centre (true/false)
      * @return the slug of the created court entry
      **/
     public String createCourt(
         @NonNull String courtName,
         Long seed,
-        boolean serviceCentre,
         boolean open,
         boolean addWarningNotice
     ) {
-        return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, true, true, false, false);
+        return createCourt(courtName, null, seed, open, addWarningNotice, true, true, false);
     }
 
     public String createCourt(
         @NonNull String courtName,
         Long seed,
-        boolean serviceCentre,
         boolean open,
         boolean addWarningNotice,
         boolean withTranslations
     ) {
-        return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, withTranslations, true,
-                           false, false);
+        return createCourt(courtName, null, seed, open, addWarningNotice, withTranslations, true,
+                           false);
     }
 
     // Suppressing the "too many params" warning for now as this is a test setup
@@ -238,15 +227,14 @@ public class TestingSupportService {
     public String createCourt(
         @NonNull String courtName,
         Long seed,
-        boolean serviceCentre,
         boolean open,
         boolean addWarningNotice,
         boolean withTranslations,
         boolean withEnquiriesContact,
-        boolean associateServiceAreas
+        boolean forceFamilyCourt
     ) {
-        return createCourt(courtName, null, seed, serviceCentre, open, addWarningNotice, withTranslations,
-                           withEnquiriesContact, associateServiceAreas, false);
+        return createCourt(courtName, null, seed, open, addWarningNotice, withTranslations,
+                           withEnquiriesContact, forceFamilyCourt);
     }
 
     // Suppressing the "too many params" warning for now as this is a test setup
@@ -257,12 +245,10 @@ public class TestingSupportService {
         @NonNull String courtName,
         UUID regionId,
         Long seed,
-        boolean serviceCentre,
         boolean open,
         boolean addWarningNotice,
         boolean withTranslations,
         boolean withEnquiriesContact,
-        boolean associateServiceAreas,
         boolean forceFamilyCourt
     ) {
         try {
@@ -271,7 +257,7 @@ public class TestingSupportService {
 
             Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
 
-            Court court = createCourt(courtName, regionId, serviceCentre, addWarningNotice, random);
+            Court court = createCourt(courtName, regionId, addWarningNotice, random);
             UUID courtId = court.getId();
             List<AreaOfLawType> areasOfLaw = setAreasOfLaw(courtId, random);
             List<CourtType> courtTypes = COURT_TYPES.stream().filter(l -> random.nextBoolean()).toList();
@@ -290,9 +276,6 @@ public class TestingSupportService {
             setLocalAuthorities(courtId, areasOfLaw, random);
             setOpeningHours(courtId, random);
             setProfessionalInformation(courtId, forceFamilyCourt, random);
-            if (associateServiceAreas) {
-                setServiceAreas(courtId, random);
-            }
             setSinglePointsOfEntry(courtId, areasOfLaw, random);
             setTranslations(courtId, random, withTranslations);
             setPhotos(courtId, courtName);
@@ -307,12 +290,10 @@ public class TestingSupportService {
 
     private Court createCourt(String name,
                               UUID regionId,
-                              boolean serviceCenter,
                               boolean addWarningNotice,
                               Random random) {
         Court court = Court.builder()
             .name(name)
-            .isServiceCentre(serviceCenter)
             .regionId(Optional.ofNullable(regionId).orElseGet(() -> REGION_IDS.get(random.nextInt(REGION_IDS.size()))))
             .mrdId(rndAlphaNumeric(random.nextInt(16, 32), random))
             .open(false)
@@ -358,11 +339,9 @@ public class TestingSupportService {
             OPENING_HOUR_TYPE_IDS.addAll(openingHoursTypeRepository.findAll().stream().map(
                 OpeningHourType::getId).toList()
             );
-            SERVICE_AREA_IDS.addAll(serviceAreaRepository.findAll().stream().map(ServiceArea::getId).toList());
-
             if (REGION_IDS.isEmpty() || AREAS_OF_LAW.isEmpty() || COURT_TYPES.isEmpty()
                 || CONTACT_DESCRIPTION_IDS.isEmpty() || LOCAL_AUTHORITY_TYPE_IDS.isEmpty()
-                || OPENING_HOUR_TYPE_IDS.isEmpty() || SERVICE_AREA_IDS.isEmpty()) {
+                || OPENING_HOUR_TYPE_IDS.isEmpty()) {
                 throw new IllegalStateException("Unable to initialize testing support service caches "
                                                     + "- one or more required reference data tables are empty");
             }
@@ -679,22 +658,6 @@ public class TestingSupportService {
             );
         }
         return faxNumbers;
-    }
-
-    private void setServiceAreas(final UUID courtId, final Random random) {
-
-        List<UUID> serviceAreaIds = SERVICE_AREA_IDS.stream().filter(id -> random.nextBoolean()).toList();
-        if (serviceAreaIds.isEmpty()) {
-            serviceAreaIds = List.of(SERVICE_AREA_IDS.get(random.nextInt(SERVICE_AREA_IDS.size())));
-        }
-
-        CourtServiceAreas serviceAreas = CourtServiceAreas.builder()
-            .courtId(courtId)
-            .serviceAreaId(serviceAreaIds)
-            .catchmentType(CatchmentType.values()[random.nextInt(CatchmentType.values().length)])
-            .build();
-
-        courtServiceAreasRepository.save(serviceAreas);
     }
 
     private void setSinglePointsOfEntry(final UUID courtId, final List<AreaOfLawType> areasOfLaw, final Random random) {

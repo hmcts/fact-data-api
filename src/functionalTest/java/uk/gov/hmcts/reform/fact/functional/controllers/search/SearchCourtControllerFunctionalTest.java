@@ -159,9 +159,7 @@ public final class SearchCourtControllerFunctionalTest {
      * - Childcare SPOE special-case (single point of entry search)
      *
      * <p>
-     * The only search strategy not covered is FAMILY_REGIONAL, because there is currently no API endpoint to
-     * link courts to service areas (court_service_areas). Once an endpoint is available, a functional test
-     * should be added to cover the FAMILY_REGIONAL flow end-to-end.
+     * TODO: Add service-centre search coverage when that model is introduced.
      */
     @Test
     @DisplayName("GET /search/courts/v1/postcode returns courts for OTHER type service area using DEFAULT_AOL_DISTANCE")
@@ -652,7 +650,6 @@ public final class SearchCourtControllerFunctionalTest {
         final Court courtToUpdate = new Court();
         courtToUpdate.setName(TestDataHelper.appendRandomSuffixToCourtName(courtName));
         courtToUpdate.setRegionId(UUID.fromString(regionId));
-        courtToUpdate.setIsServiceCentre(true);
         courtToUpdate.setOpen(true);
 
         final Response updateResponse = http.doPut("/courts/" + courtId + "/v1", courtToUpdate);

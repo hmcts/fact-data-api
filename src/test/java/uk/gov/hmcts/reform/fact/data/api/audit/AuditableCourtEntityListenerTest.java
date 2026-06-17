@@ -147,7 +147,6 @@ class AuditableCourtEntityListenerTest {
             .slug("test-court")
             .open(Boolean.FALSE)
             .regionId(UUID.randomUUID())
-            .isServiceCentre(Boolean.FALSE)
             .build();
     }
 }

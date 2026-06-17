@@ -306,7 +306,6 @@ class AuditControllerTest {
             .name(name)
             .open(Boolean.FALSE)
             .regionId(regionId)
-            .isServiceCentre(Boolean.FALSE)
             .build();
     }
 

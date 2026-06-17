@@ -1,9 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
 import java.text.MessageFormat;
@@ -17,7 +15,6 @@ import org.springframework.stereotype.Service;
 public class ServiceAreaService {
 
     private final ServiceAreaRepository serviceAreaRepository;
-    private final CourtServiceAreasRepository courtServiceAreasRepository;
 
     /**
      * Retrieves a service area by name.
@@ -59,18 +56,10 @@ public class ServiceAreaService {
      * @return the service area with additional data
      */
     private ServiceArea enrichServiceArea(ServiceArea serviceArea) {
-        serviceArea.setHasLocal(
-            courtServiceAreasRepository.existsByServiceAreaIdAndCatchmentTypeIn(
-                serviceArea.getId(), List.of(CatchmentType.LOCAL))
-        );
-        serviceArea.setHasNational(
-            courtServiceAreasRepository.existsByServiceAreaIdAndCatchmentTypeIn(
-                serviceArea.getId(), List.of(CatchmentType.NATIONAL))
-        );
-        serviceArea.setHasRegional(
-            courtServiceAreasRepository.existsByServiceAreaIdAndCatchmentTypeIn(
-                serviceArea.getId(), List.of(CatchmentType.REGIONAL))
-        );
+        //TODO: Re-populate catchment availability from service-centres when that model is introduced.
+        serviceArea.setHasLocal(false);
+        serviceArea.setHasNational(false);
+        serviceArea.setHasRegional(false);
         return serviceArea;
     }
 }

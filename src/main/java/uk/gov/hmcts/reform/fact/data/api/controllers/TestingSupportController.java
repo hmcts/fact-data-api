@@ -83,23 +83,19 @@ public class TestingSupportController {
         @RequestParam(required = true) String courtName,
         @RequestParam(required = false) UUID regionId,
         @RequestParam(required = false) Long seed,
-        @RequestParam(required = false, defaultValue = "false") boolean serviceCenter,
         @RequestParam(required = false, defaultValue = "true") boolean open,
         @RequestParam(required = false, defaultValue = "false") boolean addWarningNotice,
         @RequestParam(required = false, defaultValue = "true") boolean withTranslations,
         @RequestParam(required = false, defaultValue = "true") boolean withEnquiriesContact,
-        @RequestParam(required = false, defaultValue = "false") boolean withServiceAreaAssociation,
         @RequestParam(required = false, defaultValue = "false") boolean forceFamilyCourt) {
         String courtSlug = testingSupportService.createCourt(
             courtName,
             regionId,
             seed,
-            serviceCenter,
             open,
             addWarningNotice,
             withTranslations,
             withEnquiriesContact,
-            withServiceAreaAssociation,
             forceFamilyCourt
         );
         CourtDetails details = courtService.getCourtDetailsBySlug(courtSlug);

@@ -60,7 +60,6 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
@@ -109,8 +108,6 @@ class MigrationServiceTest {
     private CourtTypeRepository courtTypeRepository;
     @Mock
     private CourtRepository courtRepository;
-    @Mock
-    private CourtServiceAreasRepository courtServiceAreasRepository;
     @Mock
     private CourtAreasOfLawRepository courtAreasOfLawRepository;
     @Mock
@@ -261,7 +258,7 @@ class MigrationServiceTest {
 
         assertThat(result.getCourtsMigrated()).isEqualTo(1);
         assertThat(result.getCourtAreasOfLawMigrated()).isEqualTo(1);
-        assertThat(result.getCourtServiceAreasMigrated()).isEqualTo(1);
+        assertThat(result.getCourtServiceAreasMigrated()).isZero();
         assertThat(result.getCourtLocalAuthoritiesMigrated()).isEqualTo(1);
         assertThat(result.getCourtSinglePointsOfEntryMigrated()).isEqualTo(1);
         assertThat(result.getCourtProfessionalInformationMigrated()).isEqualTo(1);
@@ -270,7 +267,6 @@ class MigrationServiceTest {
         assertThat(result.getCourtFaxMigrated()).isEqualTo(1);
 
         verify(legacyServiceRepository).save(any(LegacyService.class));
-        verify(courtServiceAreasRepository).save(any());
         verify(courtAreasOfLawRepository).save(any());
         verify(courtSinglePointsOfEntryRepository).save(any());
         verify(courtLocalAuthoritiesRepository).save(any());
@@ -310,7 +306,7 @@ class MigrationServiceTest {
     }
 
     @Test
-    void shouldAssignFallbackRegionToServiceCentresWithoutRegion() {
+    void shouldSkipServiceCentres() {
         CourtDto serviceCentre = new CourtDto(
             999L,
             "Service Centre Court",
@@ -347,11 +343,8 @@ class MigrationServiceTest {
 
         MigrationSummary summary = migrationService.migrate();
 
-        assertThat(summary.getResult().getCourtsMigrated()).isEqualTo(1);
-        ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
-        verify(courtService).createCourt(captor.capture());
-        assertThat(captor.getValue().getRegionId()).isNotNull();
-        verify(regionRepository).findByNameAndCountry("Service Centre", "England");
+        assertThat(summary.getResult().getCourtsMigrated()).isZero();
+        verify(courtService, never()).createCourt(any(Court.class));
     }
 
     private CourtDto courtDto() {
@@ -370,7 +363,7 @@ class MigrationServiceTest {
             List.of(new CourtDxCodeDto("dx", "123", "dx explanation")),
             List.of(new CourtFaxDto("fax", "01632960000")),
             null,
-            true
+            false
         );
     }
 
@@ -419,7 +412,7 @@ class MigrationServiceTest {
             List.of(new CourtDxCodeDto("dx", null, null)),
             List.of(new CourtFaxDto("fax", "01632960000")),
             null,
-            true
+            false
         );
     }
 
