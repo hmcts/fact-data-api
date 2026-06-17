@@ -57,6 +57,7 @@ class CourtControllerTest {
     private static final UUID UNKNOWN_COURT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final String COURT_SLUG = "test-court";
     private static final String UNKNOWN_COURT_SLUG = "missing-court";
+    private static final String COURT_NAME_WITH_SPECIAL_CHARACTER = "King's Lynn Crown Court";
 
     @Autowired
     private MockMvc mockMvc;
@@ -131,6 +132,38 @@ class CourtControllerTest {
     }
 
     @Test
+    @DisplayName("GET /courts/name/v1 returns court entity for exact name")
+    void getCourtEntityByNameReturnsCourt() throws Exception {
+        Court court = buildCourt(COURT_ID);
+        court.setName(COURT_NAME_WITH_SPECIAL_CHARACTER);
+
+        when(courtService.getCourtByName(COURT_NAME_WITH_SPECIAL_CHARACTER)).thenReturn(court);
+
+        mockMvc.perform(get("/courts/name/v1").param("name", COURT_NAME_WITH_SPECIAL_CHARACTER))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(COURT_ID.toString()))
+            .andExpect(jsonPath("$.name").value(COURT_NAME_WITH_SPECIAL_CHARACTER))
+            .andExpect(jsonPath("$.regionId").value(REGION_ID.toString()));
+    }
+
+    @Test
+    @DisplayName("GET /courts/name/v1 returns 404 when court missing")
+    void getCourtEntityByNameReturnsNotFound() throws Exception {
+        when(courtService.getCourtByName("Missing Court"))
+            .thenThrow(new NotFoundException("Court not found"));
+
+        mockMvc.perform(get("/courts/name/v1").param("name", "Missing Court"))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /courts/name/v1 returns 400 for blank name")
+    void getCourtEntityByNameReturnsBadRequestForBlankName() throws Exception {
+        mockMvc.perform(get("/courts/name/v1").param("name", " "))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("GET /courts/slug/{courtSlug}/v1 returns court details")
     void getCourtBySlugReturnsCourt() throws Exception {
         CourtDetails courtDetails = buildCourtDetails(COURT_ID, "Test Court");
@@ -156,6 +189,16 @@ class CourtControllerTest {
     }
 
     @Test
+    @DisplayName("GET /courts/slug/{courtSlug}/v1 accepts slug at minimum length")
+    void getCourtDetailsBySlugAcceptsSlugAtMinimumLength() throws Exception {
+        when(courtService.getCourtDetailsBySlug("a"))
+            .thenThrow(new NotFoundException("Court not found"));
+
+        mockMvc.perform(get("/courts/slug/{courtSlug}/v1", "a"))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
     @DisplayName("GET /courts/slug/{courtSlug}/v1 returns 400 for invalid slug")
     void getCourtBySlugReturnsBadRequestForInvalidSlug() throws Exception {
         mockMvc.perform(get("/courts/slug/{courtSlug}/v1", "INVALID SLUG"))
@@ -172,16 +215,6 @@ class CourtControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString(
                 ValidationConstants.COURT_SLUG_REGEX_MESSAGE
-            )));
-    }
-
-    @Test
-    @DisplayName("GET /courts/slug/{courtSlug}/v1 returns 400 for slug below min length")
-    void getCourtBySlugReturnsBadRequestForShortSlug() throws Exception {
-        mockMvc.perform(get("/courts/slug/{courtSlug}/v1", "abcd"))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString(
-                ValidationConstants.COURT_SLUG_LENGTH_MESSAGE
             )));
     }
 
@@ -210,40 +243,6 @@ class CourtControllerTest {
             .andExpect(jsonPath("$.id").value(COURT_ID.toString()))
             .andExpect(jsonPath("$.name").value("Test Court"))
             .andExpect(jsonPath("$.regionId").value(REGION_ID.toString()));
-    }
-
-    @Test
-    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns court entity")
-    void getCourtEntityBySlugReturnsCourt() throws Exception {
-        Court court = buildCourt(COURT_ID);
-
-        when(courtService.getCourtBySlug(COURT_SLUG)).thenReturn(court);
-
-        mockMvc.perform(get("/courts/slug/{courtSlug}/entity/v1", COURT_SLUG))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(COURT_ID.toString()))
-            .andExpect(jsonPath("$.name").value("Test Court"))
-            .andExpect(jsonPath("$.regionId").value(REGION_ID.toString()));
-    }
-
-    @Test
-    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns 404 when court missing")
-    void getCourtEntityBySlugReturnsNotFound() throws Exception {
-        when(courtService.getCourtBySlug(UNKNOWN_COURT_SLUG))
-            .thenThrow(new NotFoundException("Court not found"));
-
-        mockMvc.perform(get("/courts/slug/{courtSlug}/entity/v1", UNKNOWN_COURT_SLUG))
-            .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns 400 for invalid slug")
-    void getCourtEntityBySlugReturnsBadRequestForInvalidSlug() throws Exception {
-        mockMvc.perform(get("/courts/slug/{courtSlug}/entity/v1", "INVALID SLUG"))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString(
-                ValidationConstants.COURT_SLUG_REGEX_MESSAGE
-            )));
     }
 
     @Test
@@ -554,7 +553,7 @@ class CourtControllerTest {
         return CourtDetails.builder()
             .id(id)
             .name(name)
-            .slug(CourtService.toSlugFormat(name))
+            .slug(courtService.toSlugFormat(name))
             .open(Boolean.TRUE)
             .warningNotice("Notice")
             .regionId(REGION_ID)

@@ -35,6 +35,7 @@ class CourtControllerTest {
     private static final String INVALID_UUID = "invalid-uuid";
     private static final String COURT_SLUG = "test-court";
     private static final String UNKNOWN_COURT_SLUG = "missing-court";
+    private static final String COURT_NAME_WITH_SPECIAL_CHARACTER = "King's Lynn Crown Court";
 
     private static final int PAGE_NUMBER = 0;
     private static final int PAGE_SIZE = 25;
@@ -111,6 +112,29 @@ class CourtControllerTest {
     }
 
     @Test
+    void getCourtByNameReturns200() {
+        Court court = createCourt();
+        court.setName(COURT_NAME_WITH_SPECIAL_CHARACTER);
+
+        when(courtService.getCourtByName(COURT_NAME_WITH_SPECIAL_CHARACTER)).thenReturn(court);
+
+        ResponseEntity<Court> response = courtController.getCourtByName(COURT_NAME_WITH_SPECIAL_CHARACTER);
+
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(court);
+    }
+
+    @Test
+    void getCourtByNameThrowsNotFoundException() {
+        when(courtService.getCourtByName(COURT_NAME_WITH_SPECIAL_CHARACTER))
+            .thenThrow(new NotFoundException("Court not found"));
+
+        assertThrows(NotFoundException.class, () ->
+            courtController.getCourtByName(COURT_NAME_WITH_SPECIAL_CHARACTER)
+        );
+    }
+
+    @Test
     void getCourtDetailsBySlugReturns200() {
         CourtDetails courtDetails = createCourtDetails();
 
@@ -130,28 +154,6 @@ class CourtControllerTest {
 
         assertThrows(NotFoundException.class, () ->
             courtController.getCourtDetailsBySlug(UNKNOWN_COURT_SLUG)
-        );
-    }
-
-    @Test
-    void getCourtEntityBySlugReturns200() {
-        Court court = createCourt();
-
-        when(courtService.getCourtBySlug(COURT_SLUG)).thenReturn(court);
-
-        ResponseEntity<Court> response = courtController.getCourtEntityBySlug(COURT_SLUG);
-
-        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(court);
-    }
-
-    @Test
-    void getCourtEntityBySlugThrowsNotFoundException() {
-        when(courtService.getCourtBySlug(UNKNOWN_COURT_SLUG))
-            .thenThrow(new NotFoundException("Court not found"));
-
-        assertThrows(NotFoundException.class, () ->
-            courtController.getCourtEntityBySlug(UNKNOWN_COURT_SLUG)
         );
     }
 
