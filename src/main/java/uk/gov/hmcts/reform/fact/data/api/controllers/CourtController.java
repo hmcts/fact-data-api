@@ -89,6 +89,24 @@ public class CourtController {
         return ResponseEntity.ok(courtService.getCourtById(UUID.fromString(courtId)));
     }
 
+    @GetMapping(value = "/name/v1")
+    @Operation(
+        summary = "Get court entity by exact name",
+        description = "Fetch the court entity for a given exact court name."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved court entity"),
+        @ApiResponse(responseCode = "400", description = "Invalid court name supplied"),
+        @ApiResponse(responseCode = "404", description = "Court not found")
+    })
+    public ResponseEntity<Court> getCourtByName(
+        @Parameter(description = "Exact name of the court", required = true)
+        @NotBlank(message = "name must not be blank")
+        @Size(max = 250, message = "name must be less than 250 characters")
+        @RequestParam(name = "name") String name) {
+        return ResponseEntity.ok(courtService.getCourtByName(name));
+    }
+
     @GetMapping(value = {"/slug/{courtSlug}/v1", "/slug/{courtSlug}.json"})
     @JsonView(CourtDetailsView.class)
     @Operation(
@@ -107,24 +125,6 @@ public class CourtController {
         return ResponseEntity.ok(
             courtDetailsViewService.prepareDetailsView(courtService.getCourtDetailsBySlug(courtSlug))
         );
-    }
-
-    @GetMapping(value = "/slug/{courtSlug}/entity/v1")
-    @JsonView(CourtDetailsView.class)
-    @Operation(
-        summary = "Get court entity by slug",
-        description = "Fetch detailed court information for a given court slug."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved court details"),
-        @ApiResponse(responseCode = "400", description = "Invalid court slug supplied"),
-        @ApiResponse(responseCode = "404", description = "Court not found")
-    })
-    public ResponseEntity<Court> getCourtEntityBySlug(
-        @Parameter(description = "Slug of the court", required = true)
-        @ValidCourtSlug
-        @PathVariable String courtSlug) {
-        return ResponseEntity.ok(courtService.getCourtBySlug(courtSlug));
     }
 
     @GetMapping(value = {"/all/v1", "/all.json"})
