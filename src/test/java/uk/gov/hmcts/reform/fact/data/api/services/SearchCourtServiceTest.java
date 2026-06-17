@@ -8,11 +8,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
@@ -54,9 +52,6 @@ class SearchCourtServiceTest {
 
     @Mock
     private CourtSinglePointOfEntryService courtSinglePointOfEntryService;
-
-    @Mock
-    private CourtServiceAreaService courtServiceAreaService;
 
     @Mock
     private CourtAddressService courtAddressService;
@@ -177,33 +172,9 @@ class SearchCourtServiceTest {
     }
 
     @Test
-    void selectSearchStrategyShouldReturnFamilyRegionalWhenRegionalCatchmentExists() {
+    void selectSearchStrategyShouldReturnFamilyNonRegionalForLocalAuthorityCatchment() {
         ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
         area.setCatchmentMethod(CatchmentMethod.LOCAL_AUTHORITY);
-        CourtServiceAreas courtServiceAreas = new CourtServiceAreas();
-        courtServiceAreas.setCatchmentType(CatchmentType.REGIONAL);
-
-        when(courtServiceAreaService.findByServiceAreaId(area.getId()))
-            .thenReturn(List.of(courtServiceAreas));
-
-        SearchStrategy strategy = searchCourtService.selectSearchStrategy(
-            SearchAction.DOCUMENTS,
-            "Authority",
-            area
-        );
-
-        assertThat(strategy).isEqualTo(SearchStrategy.FAMILY_REGIONAL);
-    }
-
-    @Test
-    void selectSearchStrategyShouldReturnFamilyNonRegionalWhenNoRegionalCatchment() {
-        ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
-        area.setCatchmentMethod(CatchmentMethod.LOCAL_AUTHORITY);
-        CourtServiceAreas courtServiceAreas = new CourtServiceAreas();
-        courtServiceAreas.setCatchmentType(CatchmentType.LOCAL);
-
-        when(courtServiceAreaService.findByServiceAreaId(area.getId()))
-            .thenReturn(List.of(courtServiceAreas));
 
         SearchStrategy strategy = searchCourtService.selectSearchStrategy(
             SearchAction.DOCUMENTS,

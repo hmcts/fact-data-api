@@ -24,7 +24,6 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
@@ -53,7 +52,6 @@ public class MigrationService {
         LocalAuthorityTypeRepository localAuthorityTypeRepository,
         ContactDescriptionTypeRepository contactDescriptionTypeRepository,
         OpeningHoursTypeRepository openingHourTypeRepository,
-        CourtServiceAreasRepository courtServiceAreasRepository,
         CourtAreasOfLawRepository courtAreasOfLawRepository,
         CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository,
         CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository,
@@ -78,8 +76,6 @@ public class MigrationService {
             openingHourTypeRepository
         );
         this.courtMigrationHelper = new CourtMigrationHelper(
-            regionRepository,
-            courtServiceAreasRepository,
             courtAreasOfLawRepository,
             courtSinglePointsOfEntryRepository,
             courtLocalAuthoritiesRepository,
@@ -118,7 +114,7 @@ public class MigrationService {
         MigrationResult result = new MigrationResult(
             courtsMigrated,
             context.getCourtAreasOfLawMigrated(),
-            context.getCourtServiceAreasMigrated(),
+            0,
             context.getCourtLocalAuthoritiesMigrated(),
             context.getCourtSinglePointsOfEntryMigrated(),
             context.getCourtProfessionalInformationMigrated(),

@@ -190,7 +190,6 @@ class CourtLastUpdatedTimeTest {
             .open(Boolean.TRUE)
             .warningNotice("Notice")
             .regionId(regionId)
-            .isServiceCentre(Boolean.TRUE)
             .openOnCath(Boolean.TRUE)
             .mrdId("MRD123")
             .build();

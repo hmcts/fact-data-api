@@ -77,7 +77,6 @@ public class AuthFunctionalTest {
         court.setName(TestDataHelper.appendRandomSuffixToCourtName(name));
         court.setRegionId(UUID.fromString(getRegionId()));
         court.setOpen(Boolean.FALSE);
-        court.setIsServiceCentre(true);
         Response createResponse = http.doPost("/courts/v1", court, adminToken);
         assertThat(createResponse.statusCode()).isEqualTo(201);
         return UUID.fromString(createResponse.jsonPath().getString("id"));
@@ -159,7 +158,6 @@ public class AuthFunctionalTest {
         testingCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Auth"));
         testingCourt.setOpen(Boolean.FALSE);
         testingCourt.setRegionId(UUID.fromString(getRegionId()));
-        testingCourt.setIsServiceCentre(true);
 
         // initially test that only the admin can create the court
         Response createViewer = http.doPost("/courts/v1", testingCourt, viewerToken);
@@ -637,7 +635,6 @@ public class AuthFunctionalTest {
             "/search/courts/v1/postcode?postcode=SW1A1AA&limit=5", "courts by postcode",
             "/search/courts/v1/prefix?prefix=A", "courts by prefix",
             "/search/courts/v1/name?q=court", "courts by name",
-            "/search/service-area/v1/adoption", "service area",
             "/search/services/v1", "services",
             "/search/services/v1/divorce/service-areas", "service areas by service"
         );

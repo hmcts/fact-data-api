@@ -131,7 +131,6 @@ public final class TestDataHelper {
         final Court court = new Court();
         court.setName(appendRandomSuffixToCourtName(courtName));
         court.setRegionId(UUID.fromString(fetchFirstRegionId(http)));
-        court.setIsServiceCentre(true);
         court.setOpen(isOpen);
 
         final Response createResponse = http.doPost("/courts/v1", court);
@@ -156,7 +155,6 @@ public final class TestDataHelper {
         final Court court = new Court();
         court.setName(appendRandomSuffixToCourtName(courtName));
         court.setRegionId(UUID.fromString(fetchFirstRegionId(http)));
-        court.setIsServiceCentre(true);
         court.setOpen(isOpen);
         court.setMrdId(mrdId);
         court.setOpenOnCath(openOnCath);

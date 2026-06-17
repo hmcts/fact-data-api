@@ -27,13 +27,11 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHour
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
-import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
@@ -41,12 +39,10 @@ import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -89,8 +85,6 @@ class TestingSupportServiceTest {
     @Mock
     private CourtLocalAuthoritiesService courtLocalAuthoritiesService;
     @Mock
-    private CourtServiceAreasRepository courtServiceAreasRepository;
-    @Mock
     private CourtPhotoService courtPhotoService;
     @Mock
     private CourtPhotoRepository courtPhotoRepository;
@@ -110,9 +104,6 @@ class TestingSupportServiceTest {
     private OpeningHoursTypeRepository openingHoursTypeRepository;
     @Mock
     private RegionRepository regionRepository;
-    @Mock
-    private ServiceAreaRepository serviceAreaRepository;
-
     @InjectMocks
     private TestingSupportService testingSupportService;
 
@@ -121,12 +112,10 @@ class TestingSupportServiceTest {
     private final List<AreaOfLawType> areasOfLaw = randomAreasOfLaw();
     private final UUID auditUserId = UUID.randomUUID();
 
-
     private final List<CourtType> courtTypes = randomCourtTypes();
     private final List<UUID> contactDescIds = randomUuidList();
     private final List<UUID> localAuthorityIds = randomUuidList();
     private final List<UUID> openingHourTypeIds = randomUuidList();
-    private final List<UUID> serviceAreaIds = randomUuidList();
 
     private static List<AreaOfLawType> randomAreasOfLaw() {
         Random random = new Random();
@@ -202,10 +191,6 @@ class TestingSupportServiceTest {
         lenient().when(openingHoursTypeRepository.findAll()).thenReturn(
             openingHourTypeIds.stream().map(id -> OpeningHourType.builder().id(id).build()).toList()
         );
-        // ServiceAreaRepository
-        lenient().when(serviceAreaRepository.findAll()).thenReturn(
-            serviceAreaIds.stream().map(id -> ServiceArea.builder().id(id).build()).toList()
-        );
         lenient().when(auditUserContext.getUserId()).thenReturn(Optional.of(auditUserId));
         lenient().when(auditUserContext.requireUserId()).thenReturn(auditUserId);
         lenient().when(userService.createOrUpdateLastLoginUser(any(User.class))).thenAnswer(inv -> {
@@ -221,10 +206,11 @@ class TestingSupportServiceTest {
         when(courtService.createCourt(any())).thenAnswer(inv -> {
             Court c = Court.class.cast(inv.getArguments()[0]);
             c.setSlug("test-court");
+            c.setId(UUID.randomUUID());
             return c;
         });
 
-        String result = testingSupportService.createCourt(courtName, null, false, false, true);
+        String result = testingSupportService.createCourt(courtName, null, false, true);
 
         assertNotNull(result);
         assertEquals("test-court", result);
@@ -244,7 +230,6 @@ class TestingSupportServiceTest {
         verify(courtAddressService, atLeast(1)).createAddress(any(), any());
 
         // things that are optional, but have a ceiling
-        verify(courtServiceAreasRepository, atMost(1)).save(any());
         verify(courtLocalAuthoritiesService, atMost(1)).setCourtLocalAuthorities(any(), any());
         verify(courtTranslationService, times(1)).setTranslation(any(), any());
         verify(courtPhotoRepository, atMost(1)).save(any());
@@ -258,10 +243,11 @@ class TestingSupportServiceTest {
         when(courtService.createCourt(any())).thenAnswer(inv -> {
             Court c = Court.class.cast(inv.getArguments()[0]);
             c.setSlug("test-court");
+            c.setId(UUID.randomUUID());
             return c;
         });
 
-        String result = testingSupportService.createCourt(courtName, null, false, false, true);
+        String result = testingSupportService.createCourt(courtName, null, false, true);
 
         assertNotNull(result);
         assertEquals("test-court", result);
@@ -277,10 +263,11 @@ class TestingSupportServiceTest {
         when(courtService.createCourt(any())).thenAnswer(inv -> {
             Court c = Court.class.cast(inv.getArguments()[0]);
             c.setSlug("test-court");
+            c.setId(UUID.randomUUID());
             return c;
         });
 
-        String result = testingSupportService.createCourt(courtName, null, false, false, false);
+        String result = testingSupportService.createCourt(courtName, null, false, false);
 
         assertNotNull(result);
         assertEquals("test-court", result);
@@ -297,11 +284,12 @@ class TestingSupportServiceTest {
         when(courtService.createCourt(any())).thenAnswer(inv -> {
             Court c = Court.class.cast(inv.getArguments()[0]);
             c.setSlug("test-court");
+            c.setId(UUID.randomUUID());
             return c;
         });
 
-        String result = testingSupportService.createCourt(courtName, regionId, null, false, false, true,
-                                                          true, false, false, false);
+        String result = testingSupportService.createCourt(courtName, regionId, null, false, true,
+                                                          true, false, false);
 
         assertNotNull(result);
         assertEquals("test-court", result);
@@ -316,7 +304,7 @@ class TestingSupportServiceTest {
         String courtName = "";
         assertThrows(
             NullPointerException.class,
-            () -> testingSupportService.createCourt(courtName, null, false, false, true)
+            () -> testingSupportService.createCourt(courtName, null, false, true)
         );
     }
 
@@ -326,10 +314,11 @@ class TestingSupportServiceTest {
         when(courtService.createCourt(any())).thenAnswer(inv -> {
             Court c = Court.class.cast(inv.getArguments()[0]);
             c.setSlug("test-court");
+            c.setId(UUID.randomUUID());
             return c;
         });
 
-        String result = testingSupportService.createCourt(courtName, null, false, false, true, false);
+        String result = testingSupportService.createCourt(courtName, null, false, true, false);
 
         assertNotNull(result);
         assertEquals("test-court", result);
@@ -342,48 +331,16 @@ class TestingSupportServiceTest {
         when(courtService.createCourt(any())).thenAnswer(inv -> {
             Court c = Court.class.cast(inv.getArguments()[0]);
             c.setSlug("test-court");
+            c.setId(UUID.randomUUID());
             return c;
         });
 
-        String result = testingSupportService.createCourt(courtName, null, false, false, true, true, false, false);
+        String result = testingSupportService.createCourt(courtName, null, false, true, true, false, false);
 
         assertNotNull(result);
         assertEquals("test-court", result);
         verify(courtContactDetailsService, never()).createContactDetail(any(), any());
     }
-
-    @Test
-    void createCourtWithoutAssociateServiceAreasSkipsServiceAreaAssociation() {
-        String courtName = "Test Court";
-        when(courtService.createCourt(any())).thenAnswer(inv -> {
-            Court c = Court.class.cast(inv.getArguments()[0]);
-            c.setSlug("test-court");
-            return c;
-        });
-
-        String result = testingSupportService.createCourt(courtName, null, false, false, true, true, false, false);
-
-        assertNotNull(result);
-        assertEquals("test-court", result);
-        verify(courtServiceAreasRepository, never()).save(any());
-    }
-
-    @Test
-    void createCourtWithAssociateServiceAreasPerformsServiceAreaAssociation() {
-        String courtName = "Test Court";
-        when(courtService.createCourt(any())).thenAnswer(inv -> {
-            Court c = Court.class.cast(inv.getArguments()[0]);
-            c.setSlug("test-court");
-            return c;
-        });
-
-        String result = testingSupportService.createCourt(courtName, null, false, false, true, true, false, true);
-
-        assertNotNull(result);
-        assertEquals("test-court", result);
-        verify(courtServiceAreasRepository, times(1)).save(any());
-    }
-
 
     @Captor
     private ArgumentCaptor<List<AreaOfLawSelectionDto>> aolSelectionDtoArgumentCaptor;
@@ -404,7 +361,7 @@ class TestingSupportServiceTest {
             return c;
         });
 
-        testingSupportService.createCourt(courtName, seed, false, false, true);
+        testingSupportService.createCourt(courtName, seed, false, true);
 
         // things that are always called once
         verify(courtService, times(1)).createCourt(any());
@@ -455,13 +412,8 @@ class TestingSupportServiceTest {
         verify(courtPhotoRepository, atMost(1)).save(courtPhotoArgumentCaptor.capture());
         verify(courtSinglePointsOfEntryService, atMost(1))
             .updateCourtSinglePointsOfEntry(eq(courtId), aolSelectionDtoArgumentCaptor.capture());
-        ArgumentCaptor<CourtServiceAreas> courtServiceAreasArgumentCaptor =
-            ArgumentCaptor.forClass(CourtServiceAreas.class);
-        verify(courtServiceAreasRepository, atMost(1))
-            .save(courtServiceAreasArgumentCaptor.capture());
-
         // second call with same seed should generate same results
-        testingSupportService.createCourt(courtName, seed, false, false, true);
+        testingSupportService.createCourt(courtName, seed, false, true);
 
         verify(courtService, times(2)).createCourt(any());
 
@@ -513,9 +465,5 @@ class TestingSupportServiceTest {
                                                                      times(2)
                                                                  ).updateCourtSinglePointsOfEntry(courtId, v)
         );
-        courtServiceAreasArgumentCaptor.getAllValues().forEach(v -> verify(
-            courtServiceAreasRepository,
-            times(2)
-        ).save(v));
     }
 }

@@ -87,10 +87,6 @@ public abstract class AbstractCourtEntity {
     @Column(name = "region_id")
     private UUID regionId;
 
-    @Schema(description = "Indicates that this Court is Service Centre")
-    @NotNull
-    private Boolean isServiceCentre;
-
     @Schema(description = "Indicates that this Court is declared open in the Court and Tribunal Hearing service")
     private Boolean openOnCath;
 

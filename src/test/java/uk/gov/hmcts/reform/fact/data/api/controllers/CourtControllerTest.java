@@ -309,7 +309,6 @@ class CourtControllerTest {
         court.setSlug("test-court");
         court.setOpen(Boolean.TRUE);
         court.setRegionId(UUID.randomUUID());
-        court.setIsServiceCentre(Boolean.TRUE);
         court.setOpenOnCath(Boolean.TRUE);
         court.setWarningNotice("Warning notice");
         court.setMrdId("MRD123");

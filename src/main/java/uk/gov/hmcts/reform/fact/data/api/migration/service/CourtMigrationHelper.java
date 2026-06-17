@@ -21,7 +21,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtDxCode;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFax;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtSinglePointsOfEntry;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
@@ -34,7 +33,6 @@ import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDxCodeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtFaxDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtProfessionalInformationDto;
-import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtServiceAreaDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtSinglePointOfEntryDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
@@ -43,9 +41,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
 
@@ -58,8 +54,6 @@ class CourtMigrationHelper {
     private static final Pattern INVALID_GENERIC_DESCRIPTION_CHARACTERS =
         Pattern.compile("[^A-Za-z0-9 ()':,-]+");
 
-    private final RegionRepository regionRepository;
-    private final CourtServiceAreasRepository courtServiceAreasRepository;
     private final CourtAreasOfLawRepository courtAreasOfLawRepository;
     private final CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
     private final CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
@@ -72,8 +66,6 @@ class CourtMigrationHelper {
     private final CourtService courtService;
 
     CourtMigrationHelper(
-        RegionRepository regionRepository,
-        CourtServiceAreasRepository courtServiceAreasRepository,
         CourtAreasOfLawRepository courtAreasOfLawRepository,
         CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository,
         CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository,
@@ -85,8 +77,6 @@ class CourtMigrationHelper {
         LegacyCourtMappingRepository legacyCourtMappingRepository,
         CourtService courtService
     ) {
-        this.regionRepository = regionRepository;
-        this.courtServiceAreasRepository = courtServiceAreasRepository;
         this.courtAreasOfLawRepository = courtAreasOfLawRepository;
         this.courtSinglePointsOfEntryRepository = courtSinglePointsOfEntryRepository;
         this.courtLocalAuthoritiesRepository = courtLocalAuthoritiesRepository;
@@ -115,6 +105,12 @@ class CourtMigrationHelper {
 
         int total = 0;
         for (CourtDto dto : courts) {
+            if (Boolean.TRUE.equals(dto.getIsServiceCentre())) {
+                //TODO: Only migrate courts.
+                LOG.info("Skipping service centre {}", dto.getSlug());
+                continue;
+            }
+
             Optional<UUID> regionId = resolveRegionId(dto, context);
             if (regionId.isEmpty()) {
                 LOG.warn("Skipping court {} because region {} was not migrated", dto.getSlug(), dto.getRegionId());
@@ -140,7 +136,6 @@ class CourtMigrationHelper {
                 .slug(dto.getSlug())
                 .open(dto.getOpen())
                 .regionId(regionId.get())
-                .isServiceCentre(dto.getIsServiceCentre())
                 .build();
 
             Court savedCourt;
@@ -151,7 +146,6 @@ class CourtMigrationHelper {
                 throw ex;
             }
             UUID courtId = savedCourt.getId();
-            persistCourtServiceAreas(dto.getCourtServiceAreas(), courtId, context);
             persistCourtAreasOfLaw(dto.getCourtAreasOfLaw(), courtId, context);
             persistCourtSinglePointsOfEntry(dto.getCourtSinglePointsOfEntry(), courtId, context);
             persistCourtLocalAuthorities(dto.getCourtLocalAuthorities(), courtId, context);
@@ -163,34 +157,6 @@ class CourtMigrationHelper {
             total++;
         }
         return total;
-    }
-
-    /**
-     * Persists court-service-area joins for a single court.
-     *
-     * @param serviceAreas legacy service-area relationships.
-     * @param courtId identifier of the newly created court.
-     * @param context migration context containing service-area ID mappings.
-     */
-    private void persistCourtServiceAreas(
-        List<CourtServiceAreaDto> serviceAreas,
-        UUID courtId,
-        MigrationContext context
-    ) {
-        if (isEmpty(serviceAreas)) {
-            return;
-        }
-
-        for (CourtServiceAreaDto dto : serviceAreas) {
-            CourtServiceAreas.CourtServiceAreasBuilder entityBuilder = CourtServiceAreas.builder()
-                .courtId(courtId)
-                .serviceAreaId(mapIds(dto.getServiceAreaIds(), context.getServiceAreaIds(), "court service area"))
-                ;
-            parseCatchmentType(dto.getCatchmentType()).ifPresent(entityBuilder::catchmentType);
-            CourtServiceAreas entity = entityBuilder.build();
-            courtServiceAreasRepository.save(entity);
-            context.courtServiceAreasMigrated++;
-        }
     }
 
     /**
@@ -475,8 +441,7 @@ class CourtMigrationHelper {
     }
 
     /**
-     * Resolves the region ID for the supplied court. Service centres fall back to the dedicated
-     * "Service Centre" region when the legacy payload omits a region.
+     * Resolves the region ID for the supplied court.
      *
      * @param dto legacy court payload.
      * @param context migration context containing mapped region IDs.
@@ -487,33 +452,7 @@ class CourtMigrationHelper {
         if (regionId != null) {
             return Optional.of(regionId);
         }
-        if (!Boolean.TRUE.equals(dto.getIsServiceCentre())) {
-            return Optional.empty();
-        }
-        UUID fallback = context.getServiceCentreRegionId();
-        if (fallback == null) {
-            Optional<UUID> loadedFallback = loadServiceCentreRegionId();
-            if (loadedFallback.isEmpty()) {
-                LOG.warn(
-                    "Unable to assign region for service centre '{}' because the fallback region was not found",
-                    dto.getSlug()
-                );
-                return Optional.empty();
-            }
-            fallback = loadedFallback.get();
-            context.setServiceCentreRegionId(fallback);
-        }
-        return Optional.of(fallback);
-    }
-
-    /**
-     * Loads the fallback region for service centres.
-     *
-     * @return identifier of the service-centre region when present.
-     */
-    private Optional<UUID> loadServiceCentreRegionId() {
-        return regionRepository.findByNameAndCountry("Service Centre", "England")
-            .map(uk.gov.hmcts.reform.fact.data.api.entities.Region::getId);
+        return Optional.empty();
     }
 
     /**

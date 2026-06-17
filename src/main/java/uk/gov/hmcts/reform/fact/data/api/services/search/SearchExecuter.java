@@ -55,14 +55,6 @@ public class SearchExecuter {
                 limit,
                 aolId
             );
-            case FAMILY_REGIONAL -> executeFamilyRegionalSearchStrategy(
-                serviceArea,
-                osLocationData,
-                lat,
-                lon,
-                limit,
-                aolId
-            );
             case FAMILY_NON_REGIONAL -> {
                 List<CourtWithDistance> results = executeFamilyNonRegionalSearchStrategy(
                     osLocationData,
@@ -119,46 +111,6 @@ public class SearchExecuter {
         return !results.isEmpty()
             ? results
             : courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
-    }
-
-    /**
-     * Execute the family regional search strategy according to the following rules:
-     * One of the court service areas need to match a regional service area by ID.
-     * The area of law needs to be FAMILY.
-     * The catchment also needs to be local-authority.
-     *
-     * @param serviceArea The service area
-     * @param osLocationData The ordnance survey location data
-     * @param lat the latitude
-     * @param lon the longitude
-     * @param limit the limit
-     * @param aolId the area of law id
-     * @return a list of court with distance objects
-     */
-    private List<CourtWithDistance> executeFamilyRegionalSearchStrategy(ServiceArea serviceArea,
-                                                                        OsLocationData osLocationData, double lat,
-                                                                        double lon, int limit, UUID aolId) {
-        UUID serviceAreaId = serviceArea.getId();
-        return getAuthorityID(osLocationData)
-            .map(LocalAuthorityType::getId)
-            .map(localAuthorityId -> courtAddressRepository.findFamilyRegionalByLocalAuthority(
-                serviceAreaId,
-                lat,
-                lon,
-                aolId,
-                localAuthorityId
-            ))
-            .filter(list -> !list.isEmpty())
-            .orElseGet(() -> {
-                log.debug("Finding family regional for {}", serviceArea);
-                List<CourtWithDistance> byAol =
-                    courtAddressRepository.findFamilyRegionalByAol(serviceAreaId, lat, lon, aolId);
-                if (!byAol.isEmpty()) {
-                    return byAol;
-                }
-                log.debug("Finding family regional fallback for {}", serviceArea);
-                return courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
-            });
     }
 
     /**
