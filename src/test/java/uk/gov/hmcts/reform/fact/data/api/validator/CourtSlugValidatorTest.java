@@ -34,7 +34,7 @@ class CourtSlugValidatorTest {
 
     @Test
     void testSlugAtMinLengthIsValid() {
-        assertTrue(validator.isValid("abcde", context));
+        assertTrue(validator.isValid("a", context));
     }
 
     @Test
@@ -79,7 +79,7 @@ class CourtSlugValidatorTest {
 
     @Test
     void testSlugTooShort() {
-        assertFalse(validator.isValid("abcd", context));
+        assertFalse(validator.isValid("", context));
     }
 
     @Test

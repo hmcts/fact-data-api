@@ -16,6 +16,7 @@ import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
@@ -423,14 +424,13 @@ public final class CourtControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns court entity")
-    void shouldReturnCourtEntityViaSlugPath() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Slug Entity Path");
-
+    @DisplayName("GET /courts/name/v1 returns court entity for exact name")
+    void shouldReturnCourtEntityViaExactName() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court King's Exact Name");
         final Response byIdResponse = http.doGet("/courts/" + courtId + "/v1");
-        final CourtDetails courtFromIdPath = mapper.readValue(byIdResponse.getBody().asString(), CourtDetails.class);
+        final CourtDetails createdCourt = mapper.readValue(byIdResponse.getBody().asString(), CourtDetails.class);
 
-        final Response response = http.doGet("/courts/slug/" + courtFromIdPath.getSlug() + "/entity/v1");
+        final Response response = http.doGet("/courts/name/v1", Map.of("name", createdCourt.getName()));
 
         AssertionHelper.assertStatus(response, OK);
 
@@ -442,21 +442,21 @@ public final class CourtControllerFunctionalTest {
         assertThat(fetchedCourt.getId())
             .as("Court ID should match the created court")
             .isEqualTo(courtId);
-        assertThat(fetchedCourt.getSlug())
-            .as("Court slug should match the created court")
-            .isEqualTo(courtFromIdPath.getSlug());
+        assertThat(fetchedCourt.getName())
+            .as("Court name should exactly match the created court")
+            .isEqualTo(createdCourt.getName());
     }
 
     @Test
-    @DisplayName("GET /courts/slug/{courtSlug}/entity/v1 returns 404 for unknown slug")
-    void shouldFailToRetrieveNonExistentCourtEntityBySlug() {
-        final Response response = http.doGet("/courts/slug/non-existent-court/entity/v1");
+    @DisplayName("GET /courts/name/v1 returns 404 for unknown exact name")
+    void shouldFailToRetrieveNonExistentCourtByExactName() {
+        final Response response = http.doGet("/courts/name/v1", Map.of("name", "Test Court Missing Exact Name"));
 
         AssertionHelper.assertStatus(response, NOT_FOUND);
 
         assertThat(response.jsonPath().getString("message"))
-            .as("Error message should indicate court entity not found by slug")
-            .contains("Court not found, slug: non-existent-court");
+            .as("Error message should indicate court not found by name")
+            .contains("Court not found, name: Test Court Missing Exact Name");
     }
 
     @Test
