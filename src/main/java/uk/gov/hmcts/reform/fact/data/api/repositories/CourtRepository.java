@@ -54,6 +54,22 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
      */
     List<Court> findByNameStartingWithIgnoreCase(String namePrefix);
 
+    /**
+     * Finds a court whose name exactly matches the provided value.
+     *
+     * @param name the exact court name
+     * @return the matching court if found
+     */
+    Optional<Court> findByName(String name);
+
+    /**
+     * Checks whether a court slug already exists.
+     *
+     * @param slug the slug to check
+     * @return true if the slug exists
+     */
+    boolean existsBySlug(String slug);
+
     Optional<Court> findByMrdId(String mrdId);
 
     /**
@@ -123,11 +139,4 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
      */
     Optional<NameAndSlug> findNameAndSlugById(UUID id);
 
-    /**
-     * Find a court instance using the court slug.
-     *
-     * @param slug the slug
-     * @return an {@link Optional} {@link Court} instance if found, otherwise an empty {@link Optional}
-     */
-    Optional<Court> findBySlug(String slug);
 }
