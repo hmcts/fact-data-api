@@ -28,7 +28,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
@@ -169,13 +168,13 @@ public class AuthFunctionalTest {
         assertThat(createAdmin.statusCode()).isEqualTo(201);
 
         // retrieve the created court's ID
-        UUID courtId = createAdmin.as(Court.class).getCourtId();
+        Court createdCourt = createAdmin.as(Court.class);
+        UUID courtId = createdCourt.getCourtId();
 
         String[] readEndpoints = new String[]{
             "/courts/" + courtId + "/v1",
             "/courts/" + courtId + ".json",
-            "/courts/slug/" + CourtService.toSlugFormat(testingCourt.getName()) + "/v1",
-            "/courts/slug/" + CourtService.toSlugFormat(testingCourt.getName()) + "/entity/v1",
+            "/courts/slug/" + createdCourt.getSlug() + "/v1",
             "/courts/all/v1",
             "/courts/all.json",
             "/courts/v1?pageNumber=0&pageSize=10&includeClosed=true"
