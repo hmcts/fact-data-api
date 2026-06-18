@@ -18,6 +18,8 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
 
     record NameAndSlug(String name, String slug) {}
 
+    record NameAndId(String name, UUID id) {}
+
     /**
      * Finds courts by region ids and partial name, case-insensitive.
      *
@@ -139,4 +141,18 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
      */
     Optional<NameAndSlug> findNameAndSlugById(UUID id);
 
+    /**
+     * Retrieve all court names mapped to their IDs.
+     *
+     * @return the {@link List} of {@link NameAndId} objects
+     */
+    @Query(
+        value = """
+            SELECT c.name, c.id
+            FROM court c
+            ORDER BY c.name
+            """,
+        nativeQuery = true
+    )
+    List<NameAndId> findAllNameAndId();
 }

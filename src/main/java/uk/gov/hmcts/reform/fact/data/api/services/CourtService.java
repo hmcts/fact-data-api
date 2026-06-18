@@ -236,6 +236,15 @@ public class CourtService {
     }
 
     /**
+     * get all court names mapped to their ids.
+     *
+     * @return a {@link List} of court names with their ids.
+     */
+    public List<CourtRepository.NameAndId> getAllCourtNameAndIds() {
+        return courtRepository.findAllNameAndId();
+    }
+
+    /**
      * Marks courts received from CaTH as open and records which MRD IDs could not be matched.
      *
      * @param mrdIds the MRD IDs supplied by CaTH.
