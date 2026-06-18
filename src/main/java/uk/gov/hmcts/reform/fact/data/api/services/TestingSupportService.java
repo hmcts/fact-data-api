@@ -90,7 +90,7 @@ public class TestingSupportService {
     // used to generate alphanumeric strings
     private static final char[] ALPHA_NUMERICS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
     private static final String TESTING_SUPPORT_USER_EMAIL = "testing-support-not-a-real-user@justice.gov.uk";
-    private static final UUID TESTING_SUPPORT_USER_SSO_ID = UUID.fromString("00000000-0000-0000-0000-000000000002");
+    private static final UUID TESTING_SUPPORT_USER_SSO_ID = UUID.fromString("00000000-0000-4000-a000-000000000002");
 
     // ------------------------------------------------------------------------
     // static data caches - we load these once and then reuse for all generated courts
