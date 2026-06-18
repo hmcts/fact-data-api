@@ -87,16 +87,7 @@ public class AuthFunctionalTest {
     }
 
     private static UUID createServiceCentreAsAdmin(String name) {
-        ServiceCentre serviceCentre = new ServiceCentre();
-        serviceCentre.setName(TestDataHelper.appendRandomSuffixToCourtName(name));
-        serviceCentre.setOpen(Boolean.FALSE);
-        serviceCentre.setServiceAreaIds(List.of(UUID.fromString(
-            http.doGet("/types/v1/service-areas", adminToken).jsonPath().getString("[0].id")
-        )));
-        serviceCentre.setCatchmentType(uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType.REGIONAL);
-        Response createResponse = http.doPost("/service-centres/v1", serviceCentre, adminToken);
-        assertThat(createResponse.statusCode()).isEqualTo(201);
-        return UUID.fromString(createResponse.jsonPath().getString("id"));
+        return TestDataHelper.createServiceCentre(http, name, adminToken);
     }
 
     private static void assertViewerAllowed(Response adminResponse, Response viewerResponse, String endpoint) {
@@ -216,13 +207,11 @@ public class AuthFunctionalTest {
     @Test
     @DisplayName("Service centre controller endpoints enforce admin-only writes")
     void serviceCentreControllerAuth() {
-        ServiceCentre serviceCentre = new ServiceCentre();
-        serviceCentre.setName(TestDataHelper.appendRandomSuffixToCourtName("Auth Test Service Centre"));
-        serviceCentre.setOpen(Boolean.FALSE);
-        serviceCentre.setServiceAreaIds(List.of(UUID.fromString(
-            http.doGet("/types/v1/service-areas", adminToken).jsonPath().getString("[0].id")
-        )));
-        serviceCentre.setCatchmentType(uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType.REGIONAL);
+        ServiceCentre serviceCentre = TestDataHelper.buildServiceCentre(
+            http,
+            "Auth Test Service Centre",
+            adminToken
+        );
 
         Response createViewer = http.doPost("/service-centres/v1", serviceCentre, viewerToken);
         Response createAdmin = http.doPost("/service-centres/v1", serviceCentre, adminToken);
@@ -231,6 +220,7 @@ public class AuthFunctionalTest {
 
         ServiceCentre createdServiceCentre = createAdmin.as(ServiceCentre.class);
         UUID serviceCentreId = createdServiceCentre.getId();
+        assertThat(createdServiceCentre.getCatchmentType().name()).isEqualTo("NATIONAL");
 
         String[] readEndpoints = new String[]{
             "/service-centres/" + serviceCentreId + "/v1"

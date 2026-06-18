@@ -20,6 +20,13 @@ public class ServiceCentreAreasOfLawService {
     private final ServiceCentreService serviceCentreService;
     private final TypesService typesService;
 
+    /**
+     * Get areas of law by service centre id.
+     *
+     * @param serviceCentreId The service centre id to find the areas of law for.
+     * @return Areas of law record for the service centre.
+     * @throws NotFoundException if no areas of law record exists for the service centre.
+     */
     public ServiceCentreAreasOfLaw getServiceCentreAreasOfLawByServiceCentreId(UUID serviceCentreId) {
         return serviceCentreAreasOfLawRepository.findByServiceCentreId(
             serviceCentreService.getServiceCentreById(serviceCentreId).getId()
@@ -28,6 +35,13 @@ public class ServiceCentreAreasOfLawService {
         ));
     }
 
+    /**
+     * Get a map of areas of law types and their status for a service centre.
+     *
+     * @param serviceCentreId The service centre id to find the areas of law for.
+     * @return Map of area of law types with boolean values indicating if they are available at the service centre.
+     * @throws NotFoundException if no areas of law record exists for the service centre.
+     */
     public Map<AreaOfLawType, Boolean> getAreasOfLawStatusByServiceCentreId(UUID serviceCentreId) {
         List<UUID> serviceCentreAreasOfLawIds =
             getServiceCentreAreasOfLawByServiceCentreId(serviceCentreId).getAreasOfLaw();
@@ -40,6 +54,14 @@ public class ServiceCentreAreasOfLawService {
             ));
     }
 
+    /**
+     * Set an areas of law record for a service centre.
+     *
+     * @param serviceCentreId The id of the service centre to set areas of law for.
+     * @param serviceCentreAreasOfLaw The service centre areas of law entity to create or update.
+     * @return The created or updated areas of law entity.
+     * @throws NotFoundException if the service centre or supplied areas of law do not exist.
+     */
     public ServiceCentreAreasOfLaw setServiceCentreAreasOfLaw(UUID serviceCentreId,
                                                               ServiceCentreAreasOfLaw serviceCentreAreasOfLaw) {
         serviceCentreAreasOfLaw.setServiceCentre(serviceCentreService.getServiceCentreById(serviceCentreId));

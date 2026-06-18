@@ -20,16 +20,36 @@ public class ServiceCentreService {
     private final ServiceCentreRepository serviceCentreRepository;
     private final ServiceAreaRepository serviceAreaRepository;
 
+    /**
+     * Get a service centre by id.
+     *
+     * @param serviceCentreId The ID of the service centre to get.
+     * @return The service centre entity.
+     * @throws NotFoundException if the service centre is not found.
+     */
     public ServiceCentre getServiceCentreById(UUID serviceCentreId) {
         return serviceCentreRepository.findById(serviceCentreId)
             .orElseThrow(() -> new NotFoundException("Service centre not found, ID: " + serviceCentreId));
     }
 
+    /**
+     * Get a service centre by its exact name.
+     *
+     * @param serviceCentreName The exact name of the service centre to get.
+     * @return The service centre entity.
+     * @throws NotFoundException if the service centre is not found.
+     */
     public ServiceCentre getServiceCentreByName(String serviceCentreName) {
         return serviceCentreRepository.findByName(serviceCentreName)
             .orElseThrow(() -> new NotFoundException("Service centre not found, name: " + serviceCentreName));
     }
 
+    /**
+     * Creates a new service centre.
+     *
+     * @param serviceCentre The service centre to create.
+     * @return The created service centre.
+     */
     public ServiceCentre createServiceCentre(ServiceCentre serviceCentre) {
         serviceCentre.setId(null);
         serviceCentre.setSlug(toUniqueSlug(serviceCentre.getName()));
@@ -40,6 +60,14 @@ public class ServiceCentreService {
         return serviceCentreRepository.save(serviceCentre);
     }
 
+    /**
+     * Updates an existing service centre.
+     *
+     * @param serviceCentreId The id of the service centre to update.
+     * @param serviceCentre The service centre entity with updated values.
+     * @return The updated service centre.
+     * @throws NotFoundException if the service centre is not found.
+     */
     public ServiceCentre updateServiceCentre(UUID serviceCentreId, ServiceCentre serviceCentre) {
         ServiceCentre existingServiceCentre = getServiceCentreById(serviceCentreId);
 
@@ -56,6 +84,12 @@ public class ServiceCentreService {
         return serviceCentreRepository.save(existingServiceCentre);
     }
 
+    /**
+     * Delete service centres matching the provided name prefix.
+     *
+     * @param serviceCentreNamePrefix The name prefix to match.
+     * @return The number of service centres deleted.
+     */
     @Transactional
     public long deleteServiceCentresByNamePrefix(String serviceCentreNamePrefix) {
         List<ServiceCentre> serviceCentresToDelete =
@@ -69,6 +103,12 @@ public class ServiceCentreService {
         return serviceCentresToDelete.size();
     }
 
+    /**
+     * Convert a service centre name into slug format.
+     *
+     * @param name The service centre name.
+     * @return The slug-formatted name.
+     */
     public String toSlugFormat(String name) {
         return name.toLowerCase()
             .replaceAll("[^a-z\\s-]", "")

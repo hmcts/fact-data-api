@@ -24,11 +24,26 @@ public class ServiceCentreContactDetailsService {
     private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
     private final ServiceCentreService serviceCentreService;
 
+    /**
+     * Retrieve all contact details for a specific service centre.
+     *
+     * @param serviceCentreId The service centre identifier.
+     * @return List of contact detail records for the service centre.
+     * @throws NotFoundException if the service centre does not exist.
+     */
     public List<ServiceCentreContactDetails> getContactDetails(UUID serviceCentreId) {
         serviceCentreService.getServiceCentreById(serviceCentreId);
         return serviceCentreContactDetailsRepository.findByServiceCentreId(serviceCentreId);
     }
 
+    /**
+     * Retrieve a single contact detail entry by service centre and contact identifiers.
+     *
+     * @param serviceCentreId The service centre identifier.
+     * @param contactId The contact identifier.
+     * @return Matching contact detail.
+     * @throws NotFoundException if the service centre or contact detail does not exist.
+     */
     public ServiceCentreContactDetails getContactDetail(UUID serviceCentreId, UUID contactId) {
         serviceCentreService.getServiceCentreById(serviceCentreId);
         return serviceCentreContactDetailsRepository.findByIdAndServiceCentreId(contactId, serviceCentreId)
@@ -38,6 +53,14 @@ public class ServiceCentreContactDetailsService {
             ));
     }
 
+    /**
+     * Persist a new contact detail for a service centre.
+     *
+     * @param serviceCentreId The service centre identifier.
+     * @param request The contact detail to create.
+     * @return Created contact detail.
+     * @throws NotFoundException if the service centre or supplied description type does not exist.
+     */
     @Transactional
     public ServiceCentreContactDetails createContactDetail(UUID serviceCentreId, ServiceCentreContactDetails request) {
         ServiceCentre serviceCentre = serviceCentreService.getServiceCentreById(serviceCentreId);
@@ -53,6 +76,15 @@ public class ServiceCentreContactDetailsService {
         return serviceCentreContactDetailsRepository.save(request);
     }
 
+    /**
+     * Update an existing contact detail for a service centre.
+     *
+     * @param serviceCentreId The service centre identifier.
+     * @param contactId The contact identifier.
+     * @param request Updated contact detail values.
+     * @return Updated contact detail.
+     * @throws NotFoundException if the service centre, contact detail, or supplied description type does not exist.
+     */
     @Transactional
     public ServiceCentreContactDetails updateContactDetail(UUID serviceCentreId,
                                                            UUID contactId,
@@ -72,6 +104,13 @@ public class ServiceCentreContactDetailsService {
         return serviceCentreContactDetailsRepository.save(existing);
     }
 
+    /**
+     * Remove a contact detail for a service centre.
+     *
+     * @param serviceCentreId The service centre identifier.
+     * @param contactId The contact identifier.
+     * @throws NotFoundException if the service centre or contact detail does not exist.
+     */
     @Transactional
     public void deleteContactDetail(UUID serviceCentreId, UUID contactId) {
         serviceCentreService.getServiceCentreById(serviceCentreId);

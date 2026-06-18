@@ -22,11 +22,26 @@ public class ServiceCentreAddressService {
     private final ServiceCentreService serviceCentreService;
     private final OsService osService;
 
+    /**
+     * Retrieve all addresses for a specific service centre.
+     *
+     * @param serviceCentreId The service centre identifier.
+     * @return List of address records for the service centre.
+     * @throws NotFoundException if the service centre does not exist.
+     */
     public List<ServiceCentreAddress> getAddresses(UUID serviceCentreId) {
         serviceCentreService.getServiceCentreById(serviceCentreId);
         return serviceCentreAddressRepository.findByServiceCentreId(serviceCentreId);
     }
 
+    /**
+     * Retrieve a single address entry by service centre and address identifiers.
+     *
+     * @param serviceCentreId The service centre identifier.
+     * @param addressId The address identifier.
+     * @return Matching address detail.
+     * @throws NotFoundException if the service centre or address does not exist.
+     */
     public ServiceCentreAddress getAddress(UUID serviceCentreId, UUID addressId) {
         serviceCentreService.getServiceCentreById(serviceCentreId);
         return serviceCentreAddressRepository.findByIdAndServiceCentreId(addressId, serviceCentreId).orElseThrow(
@@ -36,6 +51,14 @@ public class ServiceCentreAddressService {
         );
     }
 
+    /**
+     * Persist a new address for a service centre.
+     *
+     * @param serviceCentreId The service centre identifier.
+     * @param serviceCentreAddress The address to create.
+     * @return Created address.
+     * @throws NotFoundException if the service centre does not exist.
+     */
     @Transactional
     public ServiceCentreAddress createAddress(UUID serviceCentreId, ServiceCentreAddress serviceCentreAddress) {
         ServiceCentre serviceCentre = serviceCentreService.getServiceCentreById(serviceCentreId);
@@ -48,6 +71,15 @@ public class ServiceCentreAddressService {
         return serviceCentreAddressRepository.save(serviceCentreAddress);
     }
 
+    /**
+     * Update an existing address for a service centre.
+     *
+     * @param serviceCentreId The service centre identifier.
+     * @param addressId The address identifier.
+     * @param serviceCentreAddress Updated address values.
+     * @return Updated address.
+     * @throws NotFoundException if the service centre or address does not exist.
+     */
     @Transactional
     public ServiceCentreAddress updateAddress(UUID serviceCentreId,
                                               UUID addressId,
@@ -58,6 +90,13 @@ public class ServiceCentreAddressService {
         return serviceCentreAddressRepository.save(existing);
     }
 
+    /**
+     * Remove an address for a service centre.
+     *
+     * @param serviceCentreId The service centre identifier.
+     * @param addressId The address identifier.
+     * @throws NotFoundException if the service centre or address does not exist.
+     */
     @Transactional
     public void deleteAddress(UUID serviceCentreId, UUID addressId) {
         serviceCentreAddressRepository.deleteByIdAndServiceCentreId(
