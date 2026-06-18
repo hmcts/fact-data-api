@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -72,6 +73,16 @@ public class ServiceCentreAreasOfLaw implements AuditableEntity {
     @JsonIgnore
     public List<UUID> getAreasOfLaw() {
         return areasOfLaw;
+    }
+
+    @JsonSetter("serviceCentreId")
+    public void setServiceCentreId(UUID serviceCentreId) {
+        this.serviceCentreId = serviceCentreId;
+    }
+
+    @JsonSetter("areasOfLaw")
+    public void setAreasOfLaw(List<UUID> areasOfLaw) {
+        this.areasOfLaw = areasOfLaw;
     }
 
     @Override

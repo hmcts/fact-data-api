@@ -2,8 +2,10 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.RegionService;
+import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreService;
 import uk.gov.hmcts.reform.fact.data.api.services.TestingSupportService;
 
 import java.util.List;
@@ -38,6 +40,7 @@ public class TestingSupportController {
 
     private final CourtService courtService;
     private final RegionService regionService;
+    private final ServiceCentreService serviceCentreService;
     private final TestingSupportService testingSupportService;
 
     @DeleteMapping("/courts/name-prefix/{courtNamePrefix}")
@@ -57,6 +60,25 @@ public class TestingSupportController {
         return ResponseEntity.status(HttpStatus.OK)
             .body(courtService.deleteCourtsByNamePrefix(courtNamePrefix)
                       + " court(s) with prefix " + courtNamePrefix + " deleted successfully");
+    }
+
+    @DeleteMapping("/service-centres/name-prefix/{serviceCentreNamePrefix}")
+    @Operation(
+        summary = "Bulk delete service centres by name prefix",
+        description = "Deletes all service centres whose names start with the supplied prefix (case-insensitive)."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully deleted matching service centres"),
+        @ApiResponse(responseCode = "400", description = "Invalid service centre name prefix supplied")
+    })
+    public ResponseEntity<String> deleteServiceCentresByNamePrefix(
+        @PathVariable
+        @Size(min = 1, max = 200, message = "Service centre name prefix must be between 1 and 200 characters")
+        String serviceCentreNamePrefix
+    ) {
+        return ResponseEntity.status(HttpStatus.OK)
+            .body(serviceCentreService.deleteServiceCentresByNamePrefix(serviceCentreNamePrefix)
+                      + " service centre(s) with prefix " + serviceCentreNamePrefix + " deleted successfully");
     }
 
     @GetMapping("/regions")
@@ -101,5 +123,29 @@ public class TestingSupportController {
         CourtDetails details = courtService.getCourtDetailsBySlug(courtSlug);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(details);
+    }
+
+    @GetMapping("/service-centres")
+    @Operation(
+        summary = "Create sample service centre",
+        description = "Creates a sample service centre with randomised data for testing purposes."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Successfully created sample service centre"),
+    })
+    public ResponseEntity<ServiceCentre> createSampleServiceCentre(
+        @RequestParam(required = true) String serviceCentreName,
+        @RequestParam(required = false) Long seed,
+        @RequestParam(required = false, defaultValue = "true") boolean open,
+        @RequestParam(required = false, defaultValue = "false") boolean addWarningNotice,
+        @RequestParam(required = false, defaultValue = "true") boolean withContactDetails) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(testingSupportService.createServiceCentre(
+                serviceCentreName,
+                seed,
+                open,
+                addWarningNotice,
+                withContactDetails
+            ));
     }
 }

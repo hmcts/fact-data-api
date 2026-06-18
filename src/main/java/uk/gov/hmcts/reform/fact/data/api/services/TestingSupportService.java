@@ -22,9 +22,15 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
@@ -40,6 +46,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -94,6 +101,7 @@ public class TestingSupportService {
     private static final List<UUID> CONTACT_DESCRIPTION_IDS = new ArrayList<>();
     private static final List<UUID> LOCAL_AUTHORITY_TYPE_IDS = new ArrayList<>();
     private static final List<UUID> OPENING_HOUR_TYPE_IDS = new ArrayList<>();
+    private static final List<UUID> SERVICE_AREA_IDS = new ArrayList<>();
 
     // ------------------------------------------------------------------------
     // Data variations for randomisation
@@ -176,6 +184,10 @@ public class TestingSupportService {
     private final CourtTranslationService courtTranslationService;
     private final CourtProfessionalInformationService courtProfessionalInformationService;
     private final CourtLocalAuthoritiesService courtLocalAuthoritiesService;
+    private final ServiceCentreService serviceCentreService;
+    private final ServiceCentreAddressService serviceCentreAddressService;
+    private final ServiceCentreAreasOfLawService serviceCentreAreasOfLawService;
+    private final ServiceCentreContactDetailsService serviceCentreContactDetailsService;
     // for photos, we try the service first, then fall back to the repository if required
     private final CourtPhotoService courtPhotoService;
     private final CourtPhotoRepository courtPhotoRepository;
@@ -191,6 +203,7 @@ public class TestingSupportService {
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private final OpeningHoursTypeRepository openingHoursTypeRepository;
     private final RegionRepository regionRepository;
+    private final ServiceAreaRepository serviceAreaRepository;
 
     /**
      * Creates a court with the specified name and randomised data for all other fields. The randomisation is based on
@@ -308,6 +321,60 @@ public class TestingSupportService {
         return courtService.createCourt(court);
     }
 
+    public ServiceCentre createServiceCentre(
+        @NonNull String serviceCentreName,
+        Long seed,
+        boolean open,
+        boolean addWarningNotice,
+        boolean withContactDetails
+    ) {
+        try {
+            initialiseCaches();
+            auditUserContext.setUserId(getTestingSupportUserId());
+
+            Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
+
+            ServiceCentre serviceCentre = createServiceCentre(serviceCentreName, addWarningNotice, random);
+            UUID serviceCentreId = serviceCentre.getId();
+            setServiceCentreAreasOfLaw(serviceCentreId, random);
+            setServiceCentreAddress(serviceCentreId, random);
+
+            if (withContactDetails) {
+                setServiceCentreContactDetails(serviceCentreId, random);
+            }
+
+            if (open) {
+                serviceCentre = openServiceCentre(serviceCentre);
+            }
+
+            return serviceCentre;
+        } catch (Exception e) {
+            log.error("error while creating service centre", e);
+            throw e;
+        }
+    }
+
+    private ServiceCentre createServiceCentre(String name, boolean addWarningNotice, Random random) {
+        List<UUID> serviceAreaIds = SERVICE_AREA_IDS.stream().filter(l -> random.nextBoolean()).toList();
+        if (serviceAreaIds.isEmpty()) {
+            serviceAreaIds = List.of(SERVICE_AREA_IDS.get(random.nextInt(SERVICE_AREA_IDS.size())));
+        }
+
+        ServiceCentre serviceCentre = ServiceCentre.builder()
+            .name(name)
+            .open(false)
+            .warningNotice(
+                addWarningNotice
+                    ? WARNING_NOTICE_VALUES.get(random.nextInt(WARNING_NOTICE_VALUES.size()))
+                    : null
+            )
+            .serviceAreaIds(serviceAreaIds)
+            .catchmentType(CatchmentType.NATIONAL)
+            .build();
+
+        return serviceCentreService.createServiceCentre(serviceCentre);
+    }
+
     private UUID getTestingSupportUserId() {
         User user = User.builder()
             .email(TESTING_SUPPORT_USER_EMAIL)
@@ -321,6 +388,11 @@ public class TestingSupportService {
     private void openCourt(final Court court) {
         court.setOpen(true);
         courtService.updateCourt(court.getId(), court);
+    }
+
+    private ServiceCentre openServiceCentre(final ServiceCentre serviceCentre) {
+        serviceCentre.setOpen(true);
+        return serviceCentreService.updateServiceCentre(serviceCentre.getId(), serviceCentre);
     }
 
     @Synchronized
@@ -339,9 +411,10 @@ public class TestingSupportService {
             OPENING_HOUR_TYPE_IDS.addAll(openingHoursTypeRepository.findAll().stream().map(
                 OpeningHourType::getId).toList()
             );
+            SERVICE_AREA_IDS.addAll(serviceAreaRepository.findAll().stream().map(ServiceArea::getId).toList());
             if (REGION_IDS.isEmpty() || AREAS_OF_LAW.isEmpty() || COURT_TYPES.isEmpty()
                 || CONTACT_DESCRIPTION_IDS.isEmpty() || LOCAL_AUTHORITY_TYPE_IDS.isEmpty()
-                || OPENING_HOUR_TYPE_IDS.isEmpty()) {
+                || OPENING_HOUR_TYPE_IDS.isEmpty() || SERVICE_AREA_IDS.isEmpty()) {
                 throw new IllegalStateException("Unable to initialize testing support service caches "
                                                     + "- one or more required reference data tables are empty");
             }
@@ -421,6 +494,27 @@ public class TestingSupportService {
         return areasOfLaw;
     }
 
+    private List<AreaOfLawType> setServiceCentreAreasOfLaw(final UUID serviceCentreId, final Random random) {
+        final List<AreaOfLawType> areasOfLaw = new ArrayList<>(
+            AREAS_OF_LAW.stream()
+                .filter(l -> random.nextInt(100) < 30)
+                .toList()
+        );
+
+        if (areasOfLaw.isEmpty()) {
+            areasOfLaw.add(AREAS_OF_LAW.get(random.nextInt(AREAS_OF_LAW.size())));
+        }
+
+        ServiceCentreAreasOfLaw serviceCentreAreasOfLaw = ServiceCentreAreasOfLaw.builder()
+            .serviceCentreId(serviceCentreId)
+            .areasOfLaw(areasOfLaw.stream().map(AreaOfLawType::getId).toList())
+            .build();
+
+        serviceCentreAreasOfLawService.setServiceCentreAreasOfLaw(serviceCentreId, serviceCentreAreasOfLaw);
+
+        return areasOfLaw;
+    }
+
     private void setContactDetails(final UUID courtId, final Random random, final boolean withEnquiriesContact) {
         if (!withEnquiriesContact) {
             return;
@@ -434,6 +528,26 @@ public class TestingSupportService {
             .email(rndEmail(random))
             .build();
         courtContactDetailsService.createContactDetail(courtId, courtContactDetails);
+    }
+
+    private void setServiceCentreAddress(final UUID serviceCentreId, final Random random) {
+        serviceCentreAddressService.createAddress(
+            serviceCentreId,
+            rndServiceCentreAddress(serviceCentreId, AddressType.VISIT_OR_CONTACT_US, random)
+        );
+    }
+
+    private void setServiceCentreContactDetails(final UUID serviceCentreId, final Random random) {
+        ServiceCentreContactDetails serviceCentreContactDetails = ServiceCentreContactDetails.builder()
+            .serviceCentreId(serviceCentreId)
+            .serviceCentreContactDescriptionId(
+                CONTACT_DESCRIPTION_IDS.get(random.nextInt(CONTACT_DESCRIPTION_IDS.size()))
+            )
+            .explanation(CONTACT_DESCRIPTION_VALUES.get(random.nextInt(CONTACT_DESCRIPTION_VALUES.size())))
+            .phoneNumber(rndPhoneNumber(random))
+            .email(rndEmail(random))
+            .build();
+        serviceCentreContactDetailsService.createContactDetail(serviceCentreId, serviceCentreContactDetails);
     }
 
     private void setCounterServiceOpeningHours(final UUID courtId, List<CourtType> courtTypes, final Random random) {
@@ -768,6 +882,24 @@ public class TestingSupportService {
             .areasOfLaw(areasOfLaw.stream().map(AreaOfLawType::getId).toList())
             .courtTypes(courtTypes)
             .epimId(rndAlphaNumeric(random.nextInt(5, 10), random))
+            .lat(BigDecimal.valueOf(random.nextDouble()))
+            .lon(BigDecimal.valueOf(random.nextDouble()))
+            .build();
+    }
+
+    private static ServiceCentreAddress rndServiceCentreAddress(
+        final UUID serviceCentreId,
+        final AddressType addressType,
+        final Random random) {
+        String city = LOCATION_MAP.keySet().stream().toList().get(random.nextInt(LOCATION_MAP.size()));
+        return ServiceCentreAddress.builder()
+            .serviceCentreId(serviceCentreId)
+            .addressLine1(ADDRESS_LINE_1.get(random.nextInt(ADDRESS_LINE_1.size())))
+            .addressLine2(ADDRESS_LINE_2.get(random.nextInt(ADDRESS_LINE_2.size())))
+            .townCity(city)
+            .county(LOCATION_MAP.get(city))
+            .postcode(POST_CODES.get(random.nextInt(POST_CODES.size())))
+            .addressType(addressType)
             .lat(BigDecimal.valueOf(random.nextDouble()))
             .lon(BigDecimal.valueOf(random.nextDouble()))
             .build();

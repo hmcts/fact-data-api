@@ -32,8 +32,14 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
@@ -43,6 +49,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -85,6 +92,14 @@ class TestingSupportServiceTest {
     @Mock
     private CourtLocalAuthoritiesService courtLocalAuthoritiesService;
     @Mock
+    private ServiceCentreService serviceCentreService;
+    @Mock
+    private ServiceCentreAddressService serviceCentreAddressService;
+    @Mock
+    private ServiceCentreAreasOfLawService serviceCentreAreasOfLawService;
+    @Mock
+    private ServiceCentreContactDetailsService serviceCentreContactDetailsService;
+    @Mock
     private CourtPhotoService courtPhotoService;
     @Mock
     private CourtPhotoRepository courtPhotoRepository;
@@ -104,6 +119,8 @@ class TestingSupportServiceTest {
     private OpeningHoursTypeRepository openingHoursTypeRepository;
     @Mock
     private RegionRepository regionRepository;
+    @Mock
+    private ServiceAreaRepository serviceAreaRepository;
     @InjectMocks
     private TestingSupportService testingSupportService;
 
@@ -116,6 +133,7 @@ class TestingSupportServiceTest {
     private final List<UUID> contactDescIds = randomUuidList();
     private final List<UUID> localAuthorityIds = randomUuidList();
     private final List<UUID> openingHourTypeIds = randomUuidList();
+    private final List<UUID> serviceAreaIds = randomUuidList();
 
     private static List<AreaOfLawType> randomAreasOfLaw() {
         Random random = new Random();
@@ -190,6 +208,9 @@ class TestingSupportServiceTest {
         // OpeningHoursTypeRepository
         lenient().when(openingHoursTypeRepository.findAll()).thenReturn(
             openingHourTypeIds.stream().map(id -> OpeningHourType.builder().id(id).build()).toList()
+        );
+        lenient().when(serviceAreaRepository.findAll()).thenReturn(
+            serviceAreaIds.stream().map(id -> ServiceArea.builder().id(id).build()).toList()
         );
         lenient().when(auditUserContext.getUserId()).thenReturn(Optional.of(auditUserId));
         lenient().when(auditUserContext.requireUserId()).thenReturn(auditUserId);
@@ -340,6 +361,63 @@ class TestingSupportServiceTest {
         assertNotNull(result);
         assertEquals("test-court", result);
         verify(courtContactDetailsService, never()).createContactDetail(any(), any());
+    }
+
+    @Test
+    void createServiceCentreCreatesCoreServiceCentreData() {
+        String serviceCentreName = "Test Service Centre";
+        UUID serviceCentreId = UUID.randomUUID();
+
+        when(serviceCentreService.createServiceCentre(any())).thenAnswer(inv -> {
+            ServiceCentre serviceCentre = ServiceCentre.class.cast(inv.getArguments()[0]);
+            serviceCentre.setSlug("test-service-centre");
+            serviceCentre.setId(serviceCentreId);
+            return serviceCentre;
+        });
+        when(serviceCentreAreasOfLawService.setServiceCentreAreasOfLaw(any(), any()))
+            .thenAnswer(inv -> inv.getArgument(1));
+        when(serviceCentreAddressService.createAddress(any(), any())).thenAnswer(inv -> inv.getArgument(1));
+        when(serviceCentreContactDetailsService.createContactDetail(any(), any()))
+            .thenAnswer(inv -> inv.getArgument(1));
+        when(serviceCentreService.updateServiceCentre(eq(serviceCentreId), any(ServiceCentre.class)))
+            .thenAnswer(inv -> inv.getArgument(1));
+
+        ServiceCentre result = testingSupportService.createServiceCentre(serviceCentreName, 1L, true, true, true);
+
+        assertThat(result.getSlug()).isEqualTo("test-service-centre");
+        ArgumentCaptor<ServiceCentre> serviceCentreArgumentCaptor = ArgumentCaptor.forClass(ServiceCentre.class);
+        verify(serviceCentreService).createServiceCentre(serviceCentreArgumentCaptor.capture());
+        assertThat(serviceCentreArgumentCaptor.getValue().getName()).isEqualTo(serviceCentreName);
+        assertThat(serviceCentreArgumentCaptor.getValue().getServiceAreaIds()).isNotEmpty();
+        assertThat(serviceCentreArgumentCaptor.getValue().getCatchmentType()).isEqualTo(CatchmentType.NATIONAL);
+        verify(serviceCentreService).updateServiceCentre(eq(serviceCentreId), any(ServiceCentre.class));
+        verify(serviceCentreAreasOfLawService).setServiceCentreAreasOfLaw(
+            eq(serviceCentreId),
+            any(ServiceCentreAreasOfLaw.class)
+        );
+        verify(serviceCentreAddressService).createAddress(eq(serviceCentreId), any(ServiceCentreAddress.class));
+        verify(serviceCentreContactDetailsService).createContactDetail(
+            eq(serviceCentreId),
+            any(ServiceCentreContactDetails.class)
+        );
+    }
+
+    @Test
+    void createServiceCentreWithoutContactDetailsSkipsContactCreation() {
+        String serviceCentreName = "Test Service Centre";
+        UUID serviceCentreId = UUID.randomUUID();
+
+        when(serviceCentreService.createServiceCentre(any())).thenAnswer(inv -> {
+            ServiceCentre serviceCentre = ServiceCentre.class.cast(inv.getArguments()[0]);
+            serviceCentre.setSlug("test-service-centre");
+            serviceCentre.setId(serviceCentreId);
+            return serviceCentre;
+        });
+
+        ServiceCentre result = testingSupportService.createServiceCentre(serviceCentreName, 1L, false, false, false);
+
+        assertThat(result.getSlug()).isEqualTo("test-service-centre");
+        verify(serviceCentreContactDetailsService, never()).createContactDetail(any(), any());
     }
 
     @Captor
