@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.audit;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
-import uk.gov.hmcts.reform.fact.data.api.entities.AuditableCourtEntity;
+import uk.gov.hmcts.reform.fact.data.api.entities.AuditableEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
 
@@ -33,7 +33,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 /**
- * Entity listener implementation for all {@link AuditableCourtEntity} derived entities.
+ * Entity listener implementation for all {@link AuditableEntity} derived entities.
  */
 @Component
 @RequiredArgsConstructor
@@ -60,17 +60,17 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
     }
 
     @PrePersist
-    public void beforePersist(AuditableCourtEntity entity) {
+    public void beforePersist(AuditableEntity entity) {
         writeAudit(entity, AuditActionType.INSERT);
     }
 
     @PreUpdate
-    public void beforeUpdate(AuditableCourtEntity entity) {
+    public void beforeUpdate(AuditableEntity entity) {
         writeAudit(entity, AuditActionType.UPDATE);
     }
 
     @PreRemove
-    public void beforeRemove(AuditableCourtEntity entity) {
+    public void beforeRemove(AuditableEntity entity) {
         writeAudit(entity, AuditActionType.DELETE);
     }
 
@@ -92,13 +92,13 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
         return auditUserContextRef.get() != null;
     }
 
-    private void writeAudit(AuditableCourtEntity entity, AuditActionType auditActionType) {
+    private void writeAudit(AuditableEntity entity, AuditActionType auditActionType) {
         if (ensureAuditUserContext() && auditUserContextRef.get().isAuditSuppressed()) {
             return;
         }
 
         if (ensureEntityManager()) {
-            AuditableCourtEntity previousEntity = auditActionType == AuditActionType.INSERT
+            AuditableEntity previousEntity = auditActionType == AuditActionType.INSERT
                 ? null
                 : findPreviousEntity(entity);
             writeAuditRecord(entity, previousEntity, auditActionType);
@@ -108,14 +108,14 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
         }
     }
 
-    private AuditableCourtEntity findPreviousEntity(final AuditableCourtEntity entity) {
+    private AuditableEntity findPreviousEntity(final AuditableEntity entity) {
 
         // Need to run our lookup for the previous entity on a different
         // thread. If we don't, JPA/Hibernate will intercept and return the
         // data that's about to be persisted as part of the event we're
         // listening to.
 
-        Future<AuditableCourtEntity> future = executor.submit(
+        Future<AuditableEntity> future = executor.submit(
             () -> entityManagerRef.get().find(
                 entity.getClass(),
                 entity.getId()
@@ -135,7 +135,7 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
         }
     }
 
-    private void writeAuditRecord(AuditableCourtEntity entity, AuditableCourtEntity previous,
+    private void writeAuditRecord(AuditableEntity entity, AuditableEntity previous,
                                   AuditActionType operationType) {
         if (auditUserContextRef.get() == null && !ensureAuditUserContext()) {
             log.error("No audit user context available during an audit operation");
@@ -143,7 +143,8 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
         }
 
         Audit.AuditBuilder audit = Audit.builder()
-            .courtId(entity.getCourtId())
+            .subjectId(entity.getAuditSubjectId())
+            .subjectType(entity.getAuditSubjectType())
             .actionType(operationType)
             .actionEntity(entity.getClass().getSimpleName())
             .createdAt(ZonedDateTime.now())
@@ -154,7 +155,7 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
         entityManagerRef.get().persist(audit.build());
     }
 
-    private List<Change> generateDiffs(AuditableCourtEntity previous, AuditableCourtEntity current) {
+    private List<Change> generateDiffs(AuditableEntity previous, AuditableEntity current) {
         List<Change> diffs = new ArrayList<>();
         try {
             // convert the entities into maps
