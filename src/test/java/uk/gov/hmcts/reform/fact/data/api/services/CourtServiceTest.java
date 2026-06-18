@@ -822,4 +822,28 @@ class CourtServiceTest {
             .isNotNull()
             .isEqualTo(courtDetailsList);
     }
+
+    @Test
+    void getAllCourtNameAndIdsReturnsRepositoryResults() {
+        CourtRepository.NameAndId first = new CourtRepository.NameAndId("Court A", UUID.randomUUID());
+        CourtRepository.NameAndId second = new CourtRepository.NameAndId("Court B", UUID.randomUUID());
+        List<CourtRepository.NameAndId> expected = List.of(first, second);
+
+        when(courtRepository.findAllNameAndId()).thenReturn(expected);
+
+        List<CourtRepository.NameAndId> result = courtService.getAllCourtNameAndIds();
+
+        assertThat(result).isEqualTo(expected);
+        verify(courtRepository).findAllNameAndId();
+    }
+
+    @Test
+    void getAllCourtNameAndIdsReturnsEmptyListWhenNoCourtsExist() {
+        when(courtRepository.findAllNameAndId()).thenReturn(Collections.emptyList());
+
+        List<CourtRepository.NameAndId> result = courtService.getAllCourtNameAndIds();
+
+        assertThat(result).isEmpty();
+        verify(courtRepository).findAllNameAndId();
+    }
 }
