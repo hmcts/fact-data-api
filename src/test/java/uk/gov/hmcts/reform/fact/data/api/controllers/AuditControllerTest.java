@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.services.AuditService;
@@ -18,6 +20,7 @@ import uk.gov.hmcts.reform.fact.data.api.services.AuditService;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -111,6 +114,23 @@ class AuditControllerTest {
                     LocalDate.now()
                 )
         );
+    }
+
+    @Test
+    void getSubjectNameAndIdMapReturns200() {
+        Map<AuditSubjectType, List<NameAndId>> subjectMap = Map.of(
+            AuditSubjectType.COURT, List.of(
+                new NameAndId("Exeter Law Courts", UUID.randomUUID())
+            )
+        );
+
+        when(auditService.getSubjectNameAndIdMap()).thenReturn(subjectMap);
+
+        ResponseEntity<Map<AuditSubjectType, List<NameAndId>>> response = auditController.getSubjectNameAndIdMap();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode(), RESPONSE_STATUS_MISMATCH);
+        assertEquals(subjectMap, response.getBody(), RESPONSE_BODY_MISMATCH);
+        verify(auditService).getSubjectNameAndIdMap();
     }
 
     private Audit createAudit() {

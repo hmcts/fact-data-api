@@ -14,6 +14,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 
@@ -21,6 +22,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -58,6 +60,8 @@ class AuditServiceTest {
 
     @Mock
     private AuditRepository auditRepository;
+    @Mock
+    private CourtService courtService;
     @Mock
     private AuditConfigurationProperties auditConfigurationProperties;
 
@@ -395,6 +399,34 @@ class AuditServiceTest {
         verify(auditRepository, times(2)).findByCreatedAtAfter(
             eq(fromDateTime), any(Pageable.class)
         );
+    }
+
+    @Test
+    void getSubjectNameAndIdMapShouldReturnCourtAndServiceCentreSubjects() {
+        List<NameAndId> courts = List.of(
+            new NameAndId("Birmingham Civil and Family Justice Centre", UUID.randomUUID()),
+            new NameAndId("Exeter Law Courts", UUID.randomUUID())
+        );
+        when(courtService.getAllCourtNameAndIds()).thenReturn(courts);
+
+        Map<AuditSubjectType, List<NameAndId>> result = auditService.getSubjectNameAndIdMap();
+
+        assertThat(result).hasSize(2).containsKeys(AuditSubjectType.COURT, AuditSubjectType.SERVICE_CENTRE);
+        assertThat(result.get(AuditSubjectType.COURT)).containsExactlyElementsOf(courts);
+        // TODO: assertions for service centres
+        verify(courtService).getAllCourtNameAndIds();
+    }
+
+    @Test
+    void getSubjectNameAndIdMapShouldReturnEmptyCourtListWhenNoCourtsExist() {
+        when(courtService.getAllCourtNameAndIds()).thenReturn(List.of());
+
+        Map<AuditSubjectType, List<NameAndId>> result = auditService.getSubjectNameAndIdMap();
+
+        assertThat(result).containsKeys(AuditSubjectType.COURT, AuditSubjectType.SERVICE_CENTRE);
+        assertThat(result.get(AuditSubjectType.COURT)).isEmpty();
+        // TODO: assertions for service centres
+        verify(courtService).getAllCourtNameAndIds();
     }
 
     private Audit createAudit() {

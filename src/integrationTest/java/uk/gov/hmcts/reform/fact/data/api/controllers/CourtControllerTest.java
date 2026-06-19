@@ -21,7 +21,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
@@ -533,41 +532,6 @@ class CourtControllerTest {
         ));
 
         Assertions.assertThat(responseList).isEqualTo(courtDetailsList);
-    }
-
-    @Test
-    @DisplayName("GET /courts/nameoptions/v1 returns 200 with court name and id mappings")
-    void getCourtNameIdMapReturnsOkWithResults() throws Exception {
-        CourtRepository.NameAndId first = org.mockito.Mockito.mock(CourtRepository.NameAndId.class);
-        CourtRepository.NameAndId second = org.mockito.Mockito.mock(CourtRepository.NameAndId.class);
-
-        UUID firstId = UUID.randomUUID();
-        UUID secondId = UUID.randomUUID();
-
-        when(first.id()).thenReturn(firstId);
-        when(first.name()).thenReturn("Test Court A");
-        when(second.id()).thenReturn(secondId);
-        when(second.name()).thenReturn("Test Court B");
-
-        when(courtService.getAllCourtNameAndIds()).thenReturn(List.of(first, second));
-
-        mockMvc.perform(get("/courts/nameoptions/v1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].id").value(firstId.toString()))
-            .andExpect(jsonPath("$[0].name").value("Test Court A"))
-            .andExpect(jsonPath("$[1].id").value(secondId.toString()))
-            .andExpect(jsonPath("$[1].name").value("Test Court B"));
-    }
-
-    @Test
-    @DisplayName("GET /courts/nameoptions/v1 returns 200 with empty list when no mappings exist")
-    void getCourtNameIdMapReturnsOkWithEmptyList() throws Exception {
-        when(courtService.getAllCourtNameAndIds()).thenReturn(List.of());
-
-        mockMvc.perform(get("/courts/nameoptions/v1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$").isEmpty());
     }
 
     private Court buildCourt(UUID id) {

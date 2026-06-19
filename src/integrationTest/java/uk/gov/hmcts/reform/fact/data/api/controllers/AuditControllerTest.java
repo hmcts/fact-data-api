@@ -351,6 +351,20 @@ class AuditControllerTest {
         mvc.perform(delete("/audits/v1")).andExpect(status().isNoContent());
     }
 
+    @Test
+    @DisplayName("GET /audits/subjectoptions/v1 returns subject options map")
+    void getSubjectNameAndIdMapReturnsResults() throws Exception {
+        // Seed at least one court so COURT options are present
+        createTestCourts(1);
+
+        mvc.perform(get("/audits/subjectoptions/v1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.COURT").isArray())
+            .andExpect(jsonPath("$.SERVICE_CENTRE").isArray())
+            .andExpect(jsonPath("$.COURT[0].name").exists())
+            .andExpect(jsonPath("$.COURT[0].id").exists());
+    }
+
     private List<Court> createTestCourts(int num) {
         List<Court> results = new ArrayList<>();
         for (int i = 0; i < num; i++) {

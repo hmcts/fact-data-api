@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
@@ -247,18 +246,5 @@ public class CourtController {
     ) {
         courtService.handleCathCourtDeletion(mrdId);
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/nameoptions/v1")
-    @Operation(
-        summary = "Retrieve the complete set of name->id value pairs for all courts",
-        description = "Fetches a list of all court names with their corresponding ids."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved list of court name->id mappings")
-    })
-    @PreAuthorize("@authService.isAdmin()") // only want admin using this endpoint
-    public ResponseEntity<List<CourtRepository.NameAndId>> getCourtNameIdMap() {
-        return ResponseEntity.ok(this.courtService.getAllCourtNameAndIds());
     }
 }

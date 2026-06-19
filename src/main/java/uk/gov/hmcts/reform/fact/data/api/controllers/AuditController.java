@@ -1,6 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubject;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
@@ -8,6 +10,8 @@ import uk.gov.hmcts.reform.fact.data.api.services.AuditService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,6 +23,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -100,4 +105,16 @@ public class AuditController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/subjectoptions/v1")
+    @Operation(
+        summary = "Retrieve the complete set of name->id value pairs for all supported audit subjects",
+        description = "Fetches a Map of all subject names with their corresponding ids, mapped to their subject type"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved map of subject-> name+id pairs")
+    })
+    @PreAuthorize("@authService.isAdmin()") // only want admin using this endpoint
+    public ResponseEntity<Map<AuditSubject, List<NameAndId>>> getSubjectNameAndIdMap() {
+        return ResponseEntity.ok(this.auditService.getSubjectNameAndIdMap());
+    }
 }

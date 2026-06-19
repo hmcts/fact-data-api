@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,8 +18,6 @@ import org.springframework.stereotype.Repository;
 public interface CourtRepository extends JpaRepository<Court, UUID> {
 
     record NameAndSlug(String name, String slug) {}
-
-    record NameAndId(String name, UUID id) {}
 
     /**
      * Finds courts by region ids and partial name, case-insensitive.

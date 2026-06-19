@@ -3,12 +3,15 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import uk.gov.hmcts.reform.fact.data.api.config.properties.AuditConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuditService {
 
     private final AuditRepository auditRepository;
+    private final CourtService courtService;
     private final AuditConfigurationProperties auditConfiguration;
 
     /**
@@ -132,4 +136,22 @@ public class AuditService {
     }
 
     private record SubjectFilter(UUID subjectId, AuditSubjectType subjectType) {}
+
+    /**
+     * Retrieves the complete set of supported audit subjects with their corresponding name and id pairs.
+     *
+     * @return a {@link Map} of {@link AuditSubjectType} to a list of {@link NameAndId} pairs
+     *         representing the names and ids of the subjects.
+     */
+    public Map<AuditSubjectType, List<NameAndId>> getSubjectNameAndIdMap() {
+        return Map.of(
+            AuditSubjectType.COURT, courtService.getAllCourtNameAndIds(),
+            // TODO: replace with real service centre once implemented
+            AuditSubjectType.SERVICE_CENTRE, List.of(
+                new NameAndId(
+                    "Service Center",
+                    UUID.fromString("00000000-0000-0000-0000-000000000000")
+                ))
+        );
+    }
 }

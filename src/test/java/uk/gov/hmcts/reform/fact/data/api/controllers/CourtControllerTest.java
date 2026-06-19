@@ -14,7 +14,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.AbstractCourtEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
@@ -290,34 +289,6 @@ class CourtControllerTest {
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.NO_CONTENT);
         verify(courtService).handleCathCourtDeletion("MRD123");
-    }
-
-    @Test
-    void getCourtNameIdMapReturns200WithAllNameAndIdPairs() {
-        CourtRepository.NameAndId first = org.mockito.Mockito.mock(CourtRepository.NameAndId.class);
-        CourtRepository.NameAndId second = org.mockito.Mockito.mock(CourtRepository.NameAndId.class);
-        List<CourtRepository.NameAndId> nameAndIds = List.of(first, second);
-
-        when(courtService.getAllCourtNameAndIds()).thenReturn(nameAndIds);
-
-        ResponseEntity<List<CourtRepository.NameAndId>> response = courtController.getCourtNameIdMap();
-
-        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(nameAndIds);
-        verify(courtService).getAllCourtNameAndIds();
-    }
-
-    @Test
-    void getCourtNameIdMapReturns200WithEmptyListWhenNoCourtsExist() {
-        List<CourtRepository.NameAndId> nameAndIds = List.of();
-
-        when(courtService.getAllCourtNameAndIds()).thenReturn(nameAndIds);
-
-        ResponseEntity<List<CourtRepository.NameAndId>> response = courtController.getCourtNameIdMap();
-
-        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(nameAndIds);
-        verify(courtService).getAllCourtNameAndIds();
     }
 
     private Court createCourt() {
