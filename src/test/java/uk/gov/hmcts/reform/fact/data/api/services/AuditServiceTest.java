@@ -402,7 +402,7 @@ class AuditServiceTest {
     }
 
     @Test
-    void getSubjectNameAndIdMapShouldReturnCourtAndServiceCentreSubjects() {
+    void getSubjectNameAndIdMapShouldAllSubjectData() {
         List<NameAndId> courts = List.of(
             new NameAndId("Birmingham Civil and Family Justice Centre", UUID.randomUUID()),
             new NameAndId("Exeter Law Courts", UUID.randomUUID())
