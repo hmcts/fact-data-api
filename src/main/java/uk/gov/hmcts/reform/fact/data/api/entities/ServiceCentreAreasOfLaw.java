@@ -29,6 +29,7 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.ServiceCentreController.Ser
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -85,8 +86,27 @@ public class ServiceCentreAreasOfLaw implements AuditableEntity {
     }
 
     @JsonSetter("areasOfLaw")
-    public void setAreasOfLaw(List<UUID> areasOfLaw) {
-        this.areasOfLaw = areasOfLaw;
+    public void setAreasOfLaw(List<?> areasOfLaw) {
+        this.areasOfLaw = areasOfLaw == null
+            ? null
+            : areasOfLaw.stream().map(ServiceCentreAreasOfLaw::extractAreaOfLawId).toList();
+    }
+
+    private static UUID extractAreaOfLawId(Object areaOfLaw) {
+        if (areaOfLaw instanceof UUID id) {
+            return id;
+        }
+        if (areaOfLaw instanceof String id) {
+            return UUID.fromString(id);
+        }
+        if (areaOfLaw instanceof AreaOfLawType areaOfLawType) {
+            return areaOfLawType.getId();
+        }
+        if (areaOfLaw instanceof Map<?, ?> areaOfLawType) {
+            Object id = areaOfLawType.get("id");
+            return id instanceof UUID uuid ? uuid : UUID.fromString(String.valueOf(id));
+        }
+        return UUID.fromString(String.valueOf(areaOfLaw));
     }
 
     @Override
