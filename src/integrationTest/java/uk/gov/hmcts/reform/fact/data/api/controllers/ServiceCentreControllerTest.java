@@ -11,11 +11,19 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
+import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
+import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreService;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -35,6 +43,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ServiceCentreControllerTest {
 
     private static final UUID SERVICE_CENTRE_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+    private static final UUID CONTACT_DESCRIPTION_ID = UUID.fromString("223e4567-e89b-12d3-a456-426614174000");
+    private static final UUID AREA_OF_LAW_ID = UUID.fromString("323e4567-e89b-12d3-a456-426614174000");
+    private static final UUID SERVICE_AREA_ID = UUID.fromString("423e4567-e89b-12d3-a456-426614174000");
     private static final String SERVICE_CENTRE_NAME = "Test Service Centre";
 
     @Autowired
@@ -46,17 +57,31 @@ class ServiceCentreControllerTest {
     @MockitoBean
     private ServiceCentreService serviceCentreService;
 
-    @Test
-    @DisplayName("GET /service-centres/{serviceCentreId}/v1 returns service centre")
-    void getServiceCentreByIdReturnsServiceCentre() throws Exception {
-        ServiceCentre serviceCentre = buildServiceCentre();
+    @MockitoBean
+    private ServiceCentreDetailsViewService serviceCentreDetailsViewService;
 
-        when(serviceCentreService.getServiceCentreById(SERVICE_CENTRE_ID)).thenReturn(serviceCentre);
+    @Test
+    @DisplayName("GET /service-centres/{serviceCentreId}/v1 returns service centre details")
+    void getServiceCentreDetailsByIdReturnsServiceCentreDetails() throws Exception {
+        ServiceCentreDetails serviceCentreDetails = buildServiceCentreDetails();
+
+        when(serviceCentreService.getServiceCentreDetailsById(SERVICE_CENTRE_ID)).thenReturn(serviceCentreDetails);
+        when(serviceCentreDetailsViewService.prepareDetailsView(serviceCentreDetails)).thenReturn(serviceCentreDetails);
 
         mockMvc.perform(get("/service-centres/{serviceCentreId}/v1", SERVICE_CENTRE_ID))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(SERVICE_CENTRE_ID.toString()))
-            .andExpect(jsonPath("$.name").value(SERVICE_CENTRE_NAME));
+            .andExpect(jsonPath("$.name").value(SERVICE_CENTRE_NAME))
+            .andExpect(jsonPath("$.serviceAreaIds").doesNotExist())
+            .andExpect(jsonPath("$.serviceAreas[0].id").value(SERVICE_AREA_ID.toString()))
+            .andExpect(jsonPath("$.serviceAreas[0].name").value("Family"))
+            .andExpect(jsonPath("$.serviceCentreContactDetails[0].serviceCentreContactDescriptionId").doesNotExist())
+            .andExpect(jsonPath("$.serviceCentreContactDetails[0].serviceCentreContactDescription.id")
+                           .value(CONTACT_DESCRIPTION_ID.toString()))
+            .andExpect(jsonPath("$.serviceCentreContactDetails[0].serviceCentreContactDescription.name")
+                           .value("Enquiries"))
+            .andExpect(jsonPath("$.serviceCentreAreasOfLaw[0].areasOfLaw[0].id").value(AREA_OF_LAW_ID.toString()))
+            .andExpect(jsonPath("$.serviceCentreAreasOfLaw[0].areasOfLaw[0].name").value("Civil"));
     }
 
     @Test
@@ -69,11 +94,24 @@ class ServiceCentreControllerTest {
     @Test
     @DisplayName("GET /service-centres/{serviceCentreId}/v1 returns 404 when missing")
     void getServiceCentreByIdReturnsNotFound() throws Exception {
-        when(serviceCentreService.getServiceCentreById(SERVICE_CENTRE_ID))
+        when(serviceCentreService.getServiceCentreDetailsById(SERVICE_CENTRE_ID))
             .thenThrow(new NotFoundException("Service centre not found"));
 
         mockMvc.perform(get("/service-centres/{serviceCentreId}/v1", SERVICE_CENTRE_ID))
             .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /service-centres/{serviceCentreId}/entity/v1 returns service centre entity")
+    void getServiceCentreEntityByIdReturnsServiceCentre() throws Exception {
+        ServiceCentre serviceCentre = buildServiceCentre();
+
+        when(serviceCentreService.getServiceCentreById(SERVICE_CENTRE_ID)).thenReturn(serviceCentre);
+
+        mockMvc.perform(get("/service-centres/{serviceCentreId}/entity/v1", SERVICE_CENTRE_ID))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(SERVICE_CENTRE_ID.toString()))
+            .andExpect(jsonPath("$.name").value(SERVICE_CENTRE_NAME));
     }
 
     @Test
@@ -125,6 +163,38 @@ class ServiceCentreControllerTest {
             .slug("test-service-centre")
             .open(true)
             .catchmentType(CatchmentType.REGIONAL)
+            .build();
+    }
+
+    private ServiceCentreDetails buildServiceCentreDetails() {
+        ServiceCentreContactDetails contactDetails = ServiceCentreContactDetails.builder()
+            .serviceCentreContactDescriptionId(CONTACT_DESCRIPTION_ID)
+            .serviceCentreContactDescriptionDetails(ContactDescriptionType.builder()
+                                                        .id(CONTACT_DESCRIPTION_ID)
+                                                        .name("Enquiries")
+                                                        .build())
+            .build();
+        ServiceCentreAreasOfLaw areasOfLaw = ServiceCentreAreasOfLaw.builder()
+            .areasOfLaw(List.of(AREA_OF_LAW_ID))
+            .areasOfLawDetails(List.of(AreaOfLawType.builder()
+                                          .id(AREA_OF_LAW_ID)
+                                          .name("Civil")
+                                          .build()))
+            .build();
+
+        return ServiceCentreDetails.builder()
+            .id(SERVICE_CENTRE_ID)
+            .name(SERVICE_CENTRE_NAME)
+            .slug("test-service-centre")
+            .open(true)
+            .catchmentType(CatchmentType.NATIONAL)
+            .serviceAreaIds(List.of(SERVICE_AREA_ID))
+            .serviceAreaDetails(List.of(ServiceArea.builder()
+                                            .id(SERVICE_AREA_ID)
+                                            .name("Family")
+                                            .build()))
+            .serviceCentreContactDetails(List.of(contactDetails))
+            .serviceCentreAreasOfLaw(List.of(areasOfLaw))
             .build();
     }
 }

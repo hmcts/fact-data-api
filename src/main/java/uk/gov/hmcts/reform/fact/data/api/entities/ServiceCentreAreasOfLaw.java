@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,6 +25,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
+import uk.gov.hmcts.reform.fact.data.api.controllers.ServiceCentreController.ServiceCentreDetailsView;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 
 import java.util.List;
@@ -35,6 +37,7 @@ import java.util.UUID;
 @Builder
 @Entity
 @EntityListeners(AuditableCourtEntityListener.class)
+@JsonView(ServiceCentreDetailsView.class)
 @Table(name = "service_centre_areas_of_law")
 public class ServiceCentreAreasOfLaw implements AuditableEntity {
 
@@ -65,6 +68,7 @@ public class ServiceCentreAreasOfLaw implements AuditableEntity {
     @JsonIgnore
     private List<AreaOfLawType> areasOfLawDetails;
 
+    @JsonView(ServiceCentreDetailsView.class)
     @JsonProperty("areasOfLaw")
     public List<?> getAreasOfLawForView() {
         return areasOfLawDetails != null ? areasOfLawDetails : areasOfLaw;

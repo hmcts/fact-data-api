@@ -5,9 +5,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.UUID;
 public class ServiceCentreService {
 
     private final ServiceCentreRepository serviceCentreRepository;
+    private final ServiceCentreDetailsRepository serviceCentreDetailsRepository;
     private final ServiceAreaRepository serviceAreaRepository;
 
     /**
@@ -29,6 +32,18 @@ public class ServiceCentreService {
      */
     public ServiceCentre getServiceCentreById(UUID serviceCentreId) {
         return serviceCentreRepository.findById(serviceCentreId)
+            .orElseThrow(() -> new NotFoundException("Service centre not found, ID: " + serviceCentreId));
+    }
+
+    /**
+     * Get service centre details by id.
+     *
+     * @param serviceCentreId The ID of the service centre details to get.
+     * @return The service centre details entity.
+     * @throws NotFoundException if the service centre details are not found.
+     */
+    public ServiceCentreDetails getServiceCentreDetailsById(UUID serviceCentreId) {
+        return serviceCentreDetailsRepository.findById(serviceCentreId)
             .orElseThrow(() -> new NotFoundException("Service centre not found, ID: " + serviceCentreId));
     }
 

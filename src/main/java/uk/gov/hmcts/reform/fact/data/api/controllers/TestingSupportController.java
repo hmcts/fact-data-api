@@ -1,10 +1,13 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
-import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
+import uk.gov.hmcts.reform.fact.data.api.controllers.ServiceCentreController.ServiceCentreDetailsView;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.RegionService;
+import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreService;
 import uk.gov.hmcts.reform.fact.data.api.services.TestingSupportService;
 
@@ -40,6 +43,7 @@ public class TestingSupportController {
 
     private final CourtService courtService;
     private final RegionService regionService;
+    private final ServiceCentreDetailsViewService serviceCentreDetailsViewService;
     private final ServiceCentreService serviceCentreService;
     private final TestingSupportService testingSupportService;
 
@@ -126,6 +130,7 @@ public class TestingSupportController {
     }
 
     @GetMapping("/service-centres")
+    @JsonView(ServiceCentreDetailsView.class)
     @Operation(
         summary = "Create sample service centre",
         description = "Creates a sample service centre with randomised data for testing purposes."
@@ -133,19 +138,21 @@ public class TestingSupportController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Successfully created sample service centre"),
     })
-    public ResponseEntity<ServiceCentre> createSampleServiceCentre(
+    public ResponseEntity<ServiceCentreDetails> createSampleServiceCentre(
         @RequestParam(required = true) String serviceCentreName,
         @RequestParam(required = false) Long seed,
         @RequestParam(required = false, defaultValue = "true") boolean open,
         @RequestParam(required = false, defaultValue = "false") boolean addWarningNotice,
         @RequestParam(required = false, defaultValue = "true") boolean withContactDetails) {
+        UUID serviceCentreId = testingSupportService.createServiceCentre(
+            serviceCentreName,
+            seed,
+            open,
+            addWarningNotice,
+            withContactDetails
+        ).getId();
+        ServiceCentreDetails details = serviceCentreService.getServiceCentreDetailsById(serviceCentreId);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(testingSupportService.createServiceCentre(
-                serviceCentreName,
-                seed,
-                open,
-                addWarningNotice,
-                withContactDetails
-            ));
+            .body(serviceCentreDetailsViewService.prepareDetailsView(details));
     }
 }

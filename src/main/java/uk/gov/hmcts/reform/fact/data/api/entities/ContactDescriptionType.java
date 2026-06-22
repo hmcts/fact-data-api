@@ -16,13 +16,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
+import uk.gov.hmcts.reform.fact.data.api.controllers.ServiceCentreController.ServiceCentreDetailsView;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 @Entity
-@JsonView(CourtDetailsView.class)
+@JsonView({CourtDetailsView.class, ServiceCentreDetailsView.class})
 @Table(name = "contact_description_types")
 public class ContactDescriptionType {
 

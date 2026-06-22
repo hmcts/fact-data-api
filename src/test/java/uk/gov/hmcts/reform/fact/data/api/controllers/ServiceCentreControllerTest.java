@@ -8,6 +8,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
+import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreService;
 
 import java.util.UUID;
@@ -23,11 +25,27 @@ class ServiceCentreControllerTest {
     @Mock
     private ServiceCentreService serviceCentreService;
 
+    @Mock
+    private ServiceCentreDetailsViewService serviceCentreDetailsViewService;
+
     @InjectMocks
     private ServiceCentreController serviceCentreController;
 
     @Test
-    void getServiceCentreByIdReturns200() {
+    void getServiceCentreDetailsByIdReturns200() {
+        ServiceCentreDetails serviceCentreDetails = createServiceCentreDetails();
+        when(serviceCentreService.getServiceCentreDetailsById(SERVICE_CENTRE_ID)).thenReturn(serviceCentreDetails);
+        when(serviceCentreDetailsViewService.prepareDetailsView(serviceCentreDetails)).thenReturn(serviceCentreDetails);
+
+        ResponseEntity<ServiceCentreDetails> response =
+            serviceCentreController.getServiceCentreDetailsById(SERVICE_CENTRE_ID.toString());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(serviceCentreDetails);
+    }
+
+    @Test
+    void getServiceCentreEntityByIdReturns200() {
         ServiceCentre serviceCentre = createServiceCentre();
         when(serviceCentreService.getServiceCentreById(SERVICE_CENTRE_ID)).thenReturn(serviceCentre);
 
@@ -75,6 +93,15 @@ class ServiceCentreControllerTest {
 
     private ServiceCentre createServiceCentre() {
         return ServiceCentre.builder()
+            .id(SERVICE_CENTRE_ID)
+            .name("Test Service Centre")
+            .slug("test-service-centre")
+            .open(true)
+            .build();
+    }
+
+    private ServiceCentreDetails createServiceCentreDetails() {
+        return ServiceCentreDetails.builder()
             .id(SERVICE_CENTRE_ID)
             .name("Test Service Centre")
             .slug("test-service-centre")
