@@ -5,6 +5,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 
 import java.time.LocalDate;
@@ -153,5 +154,20 @@ public class AuditService {
                     UUID.fromString("00000000-0000-0000-0000-000000000000")
                 ))
         );
+    }
+
+    /**
+     * Retrieves an {@link Audit} by its id.
+     *
+     * @param auditId the ID of the audit record.
+     * @return the {@link Audit} record with the specified ID.
+     * @throws NotFoundException if no audit record is found with the given ID.
+     */
+    public Audit getAuditById(final UUID auditId) {
+        Audit audit = auditRepository.findById(auditId).orElseThrow(() ->
+            new NotFoundException("Audit not found, ID: " + auditId)
+        );
+        audit.getCourt(); // Force loading of the court entity
+        return audit;
     }
 }

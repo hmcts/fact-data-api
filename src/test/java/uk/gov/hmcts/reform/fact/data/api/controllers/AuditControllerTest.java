@@ -14,6 +14,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.services.AuditService;
 
@@ -131,6 +132,45 @@ class AuditControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode(), RESPONSE_STATUS_MISMATCH);
         assertEquals(subjectMap, response.getBody(), RESPONSE_BODY_MISMATCH);
         verify(auditService).getSubjectNameAndIdMap();
+    }
+
+    @Test
+    void getAuditByIdReturns200() {
+        Audit audit = createAudit();
+
+        when(auditService.getAuditById(AUDIT_ID)).thenReturn(audit);
+
+        ResponseEntity<Audit> response = auditController.getFilteredAndPaginatedAudits(AUDIT_ID.toString());
+
+        assertEquals(HttpStatus.OK, response.getStatusCode(), RESPONSE_STATUS_MISMATCH);
+        assertEquals(audit, response.getBody(), RESPONSE_BODY_MISMATCH);
+        verify(auditService).getAuditById(AUDIT_ID);
+    }
+
+    @Test
+    void getAuditByIdPropagatesExceptionWhenAuditDoesNotExist() {
+        NotFoundException exception = new NotFoundException("Audit not found");
+        UUID missingAuditId = UUID.randomUUID();
+
+        when(auditService.getAuditById(missingAuditId)).thenThrow(exception);
+
+        String missingAuditIdString = missingAuditId.toString();
+
+        NotFoundException thrown = assertThrows(
+            NotFoundException.class,
+            () -> auditController.getFilteredAndPaginatedAudits(missingAuditIdString)
+        );
+
+        assertEquals("Audit not found", thrown.getMessage());
+        verify(auditService).getAuditById(missingAuditId);
+    }
+
+    @Test
+    void getAuditByIdThrowsIllegalArgumentExceptionForInvalidUuid() {
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> auditController.getFilteredAndPaginatedAudits("not-a-valid-uuid")
+        );
     }
 
     private Audit createAudit() {

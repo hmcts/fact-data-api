@@ -16,6 +16,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 
 import java.time.LocalDate;
@@ -23,6 +24,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -427,6 +429,31 @@ class AuditServiceTest {
         assertThat(result.get(AuditSubjectType.COURT)).isEmpty();
         // TODO: assertions for service centres
         verify(courtService).getAllCourtNameAndIds();
+    }
+
+    @Test
+    void getAuditByIdShouldReturnAuditWhenRecordExists() {
+        Audit audit = createAudit();
+
+        when(auditRepository.findById(AUDIT_ID)).thenReturn(Optional.of(audit));
+
+        Audit result = auditService.getAuditById(AUDIT_ID);
+
+        assertThat(result).isSameAs(audit);
+        verify(auditRepository).findById(AUDIT_ID);
+    }
+
+    @Test
+    void getAuditByIdShouldThrowNotFoundExceptionWhenRecordDoesNotExist() {
+        when(auditRepository.findById(AUDIT_ID)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class,
+            () -> auditService.getAuditById(AUDIT_ID)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Audit not found, ID: " + AUDIT_ID);
+        verify(auditRepository).findById(AUDIT_ID);
     }
 
     private Audit createAudit() {

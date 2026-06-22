@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.jayway.jsonpath.JsonPath;
 import io.qameta.allure.Feature;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Description;
@@ -363,6 +364,47 @@ class AuditControllerTest {
             .andExpect(jsonPath("$.SERVICE_CENTRE").isArray())
             .andExpect(jsonPath("$.COURT[0].name").exists())
             .andExpect(jsonPath("$.COURT[0].id").exists());
+    }
+
+    @Test
+    @DisplayName("GET /audits/{auditId}/v1 returns audit when id is valid")
+    void getAuditByIdReturnsAuditWhenIdIsValid() throws Exception {
+        Court court = createTestCourts(1).getFirst();
+
+        String auditsResponse = mvc.perform(get("/audits/v1")
+                                                .param("pageNumber", "0")
+                                                .param("pageSize", "10")
+                                                .param("fromDate", LocalDate.now().toString())
+                                                .param("courtId", court.getId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        String auditId = JsonPath.read(auditsResponse, "$.content[0].id");
+
+        mvc.perform(get("/audits/" + auditId + "/v1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(auditId))
+            .andExpect(jsonPath("$.court.id").value(court.getCourtId().toString()))
+            .andExpect(jsonPath("$.actionType").exists())
+            .andExpect(jsonPath("$.createdAt").exists());
+    }
+
+    @Test
+    @DisplayName("GET /audits/{auditId}/v1 returns 400 when auditId is not a UUID")
+    void getAuditByIdReturnsBadRequestWhenAuditIdIsInvalid() throws Exception {
+        mvc.perform(get("/audits/not-a-valid-uuid/v1"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /audits/{auditId}/v1 returns 404 when audit does not exist")
+    void getAuditByIdReturnsNotFoundWhenAuditDoesNotExist() throws Exception {
+        mvc.perform(get("/audits/" + UUID.randomUUID() + "/v1"))
+            .andExpect(status().isNotFound());
     }
 
     private List<Court> createTestCourts(int num) {
