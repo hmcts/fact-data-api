@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,7 +21,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
+import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -35,15 +38,43 @@ import java.util.UUID;
 @SuppressWarnings("java:S4684")
 public class ServiceCentreController {
 
+    /**
+     * JsonView marker for expanded service centre details responses.
+     */
+    public interface ServiceCentreDetailsView {
+    }
+
     private final ServiceCentreService serviceCentreService;
+    private final ServiceCentreDetailsViewService serviceCentreDetailsViewService;
 
     @GetMapping("/{serviceCentreId}/v1")
+    @JsonView(ServiceCentreDetailsView.class)
     @Operation(
-        summary = "Get service centre by ID",
-        description = "Fetch a service centre for a given service centre ID."
+        summary = "Get service centre details by ID",
+        description = "Fetch detailed service centre information for a given service centre ID."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved service centre"),
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved service centre details"),
+        @ApiResponse(responseCode = "400", description = "Invalid service centre ID supplied"),
+        @ApiResponse(responseCode = "404", description = "Service centre not found")
+    })
+    public ResponseEntity<ServiceCentreDetails> getServiceCentreDetailsById(
+        @Parameter(description = "UUID of the service centre", required = true)
+        @ValidUUID @PathVariable String serviceCentreId) {
+        return ResponseEntity.ok(
+            serviceCentreDetailsViewService.prepareDetailsView(
+                serviceCentreService.getServiceCentreDetailsById(UUID.fromString(serviceCentreId))
+            )
+        );
+    }
+
+    @GetMapping("/{serviceCentreId}/entity/v1")
+    @Operation(
+        summary = "Get service centre entity by ID",
+        description = "Fetch the service centre entity for a given service centre ID."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved service centre entity"),
         @ApiResponse(responseCode = "400", description = "Invalid service centre ID supplied"),
         @ApiResponse(responseCode = "404", description = "Service centre not found")
     })

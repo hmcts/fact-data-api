@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,9 +25,11 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
+import uk.gov.hmcts.reform.fact.data.api.controllers.ServiceCentreController.ServiceCentreDetailsView;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -35,6 +38,7 @@ import java.util.UUID;
 @Builder
 @Entity
 @EntityListeners(AuditableCourtEntityListener.class)
+@JsonView(ServiceCentreDetailsView.class)
 @Table(name = "service_centre_areas_of_law")
 public class ServiceCentreAreasOfLaw implements AuditableEntity {
 
@@ -65,6 +69,7 @@ public class ServiceCentreAreasOfLaw implements AuditableEntity {
     @JsonIgnore
     private List<AreaOfLawType> areasOfLawDetails;
 
+    @JsonView(ServiceCentreDetailsView.class)
     @JsonProperty("areasOfLaw")
     public List<?> getAreasOfLawForView() {
         return areasOfLawDetails != null ? areasOfLawDetails : areasOfLaw;
@@ -81,8 +86,27 @@ public class ServiceCentreAreasOfLaw implements AuditableEntity {
     }
 
     @JsonSetter("areasOfLaw")
-    public void setAreasOfLaw(List<UUID> areasOfLaw) {
-        this.areasOfLaw = areasOfLaw;
+    public void setAreasOfLaw(List<?> areasOfLaw) {
+        this.areasOfLaw = areasOfLaw == null
+            ? null
+            : areasOfLaw.stream().map(ServiceCentreAreasOfLaw::extractAreaOfLawId).toList();
+    }
+
+    private static UUID extractAreaOfLawId(Object areaOfLaw) {
+        if (areaOfLaw instanceof UUID id) {
+            return id;
+        }
+        if (areaOfLaw instanceof String id) {
+            return UUID.fromString(id);
+        }
+        if (areaOfLaw instanceof AreaOfLawType areaOfLawType) {
+            return areaOfLawType.getId();
+        }
+        if (areaOfLaw instanceof Map<?, ?> areaOfLawType) {
+            Object id = areaOfLawType.get("id");
+            return id instanceof UUID uuid ? uuid : UUID.fromString(String.valueOf(id));
+        }
+        return UUID.fromString(String.valueOf(areaOfLaw));
     }
 
     @Override

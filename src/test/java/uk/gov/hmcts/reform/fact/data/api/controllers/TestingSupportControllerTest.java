@@ -9,8 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.RegionService;
+import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreService;
 import uk.gov.hmcts.reform.fact.data.api.services.TestingSupportService;
 
@@ -37,6 +39,8 @@ class TestingSupportControllerTest {
     private CourtService courtService;
     @Mock
     private RegionService regionService;
+    @Mock
+    private ServiceCentreDetailsViewService serviceCentreDetailsViewService;
     @Mock
     private ServiceCentreService serviceCentreService;
     @Mock
@@ -131,8 +135,15 @@ class TestingSupportControllerTest {
 
     @Test
     void createSampleServiceCentreReturns201() {
+        UUID serviceCentreId = UUID.randomUUID();
         ServiceCentre serviceCentre = ServiceCentre.builder()
-            .id(UUID.randomUUID())
+            .id(serviceCentreId)
+            .name("Test Service Centre")
+            .slug("test-service-centre")
+            .open(true)
+            .build();
+        ServiceCentreDetails serviceCentreDetails = ServiceCentreDetails.builder()
+            .id(serviceCentreId)
             .name("Test Service Centre")
             .slug("test-service-centre")
             .open(true)
@@ -140,8 +151,10 @@ class TestingSupportControllerTest {
 
         when(testingSupportService.createServiceCentre("Test Service Centre", 1L, true, false, true))
             .thenReturn(serviceCentre);
+        when(serviceCentreService.getServiceCentreDetailsById(serviceCentreId)).thenReturn(serviceCentreDetails);
+        when(serviceCentreDetailsViewService.prepareDetailsView(serviceCentreDetails)).thenReturn(serviceCentreDetails);
 
-        ResponseEntity<ServiceCentre> response = testingSupportController.createSampleServiceCentre(
+        ResponseEntity<ServiceCentreDetails> response = testingSupportController.createSampleServiceCentre(
             "Test Service Centre",
             1L,
             true,
@@ -150,7 +163,9 @@ class TestingSupportControllerTest {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isEqualTo(serviceCentre);
+        assertThat(response.getBody()).isEqualTo(serviceCentreDetails);
         verify(testingSupportService).createServiceCentre("Test Service Centre", 1L, true, false, true);
+        verify(serviceCentreService).getServiceCentreDetailsById(serviceCentreId);
+        verify(serviceCentreDetailsViewService).prepareDetailsView(serviceCentreDetails);
     }
 }

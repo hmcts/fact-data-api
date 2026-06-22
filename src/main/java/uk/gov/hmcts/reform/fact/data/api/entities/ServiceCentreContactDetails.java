@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -24,6 +25,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
+import uk.gov.hmcts.reform.fact.data.api.controllers.ServiceCentreController.ServiceCentreDetailsView;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
@@ -44,11 +46,13 @@ public class ServiceCentreContactDetails implements AuditableEntity {
     )
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @JsonView(ServiceCentreDetailsView.class)
     private UUID id;
 
     @Schema(description = "The ID of the associated Service Centre", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
     @Column(name = "service_centre_id")
+    @JsonView(ServiceCentreDetailsView.class)
     private UUID serviceCentreId;
 
     @JsonIgnore
@@ -58,10 +62,11 @@ public class ServiceCentreContactDetails implements AuditableEntity {
 
     @Schema(description = "The ID of the associated Contact Description Type")
     @Column(name = "service_centre_contact_description_id")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private UUID serviceCentreContactDescriptionId;
 
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "service_centre_contact_description_id", insertable = false, updatable = false)
     private ContactDescriptionType serviceCentreContactDescription;
 
@@ -69,10 +74,13 @@ public class ServiceCentreContactDetails implements AuditableEntity {
     @JsonIgnore
     private ContactDescriptionType serviceCentreContactDescriptionDetails;
 
+    @JsonView(ServiceCentreDetailsView.class)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("serviceCentreContactDescription")
     public ContactDescriptionType getServiceCentreContactDescriptionForView() {
-        return serviceCentreContactDescriptionDetails;
+        return serviceCentreContactDescriptionDetails != null
+            ? serviceCentreContactDescriptionDetails
+            : serviceCentreContactDescription;
     }
 
     @Schema(description = "The explanation")
@@ -82,6 +90,7 @@ public class ServiceCentreContactDetails implements AuditableEntity {
         regexp = "^[A-Za-z0-9 '\\-()&+]*$",
         message = "Explanation contains invalid characters. Allowed: letters, numbers, spaces, apostrophes, - ( ) & +"
     )
+    @JsonView(ServiceCentreDetailsView.class)
     private String explanation;
 
     @Schema(description = "The Welsh language explanation")
@@ -92,16 +101,19 @@ public class ServiceCentreContactDetails implements AuditableEntity {
         message = "Welsh explanation contains invalid characters. Allowed: letters (with accents), numbers, spaces, "
             + "apostrophes, - ( ) & +"
     )
+    @JsonView(ServiceCentreDetailsView.class)
     private String explanationCy;
 
     @Schema(description = "The associated email address")
     @Size(max = ValidationConstants.EMAIL_MAX_LENGTH, message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.EMAIL_REGEX, message = ValidationConstants.EMAIL_REGEX_MESSAGE)
+    @JsonView(ServiceCentreDetailsView.class)
     private String email;
 
     @Schema(description = "The associated phone number")
     @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
+    @JsonView(ServiceCentreDetailsView.class)
     private String phoneNumber;
 
     @Override

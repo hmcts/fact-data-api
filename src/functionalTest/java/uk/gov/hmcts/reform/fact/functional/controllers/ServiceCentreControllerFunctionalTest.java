@@ -43,6 +43,10 @@ public final class ServiceCentreControllerFunctionalTest {
         String createdName = createResponse.jsonPath().getString("name");
         assertThat(getResponse.jsonPath().getString("name")).isEqualTo(createdName);
 
+        Response entityResponse = http.doGet("/service-centres/" + serviceCentreId + "/entity/v1");
+        AssertionHelper.assertStatus(entityResponse, OK);
+        assertThat(entityResponse.jsonPath().getString("name")).isEqualTo(createdName);
+
         Response nameResponse = http.doGet("/service-centres/name/v1", Map.of("name", createdName));
         AssertionHelper.assertStatus(nameResponse, OK);
         assertThat(UUID.fromString(nameResponse.jsonPath().getString("id"))).isEqualTo(serviceCentreId);
@@ -60,6 +64,38 @@ public final class ServiceCentreControllerFunctionalTest {
 
         Response missingResponse = http.doGet("/service-centres/" + UUID.randomUUID() + "/v1");
         AssertionHelper.assertStatus(missingResponse, NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("Service centre details endpoint returns child resources")
+    void shouldReturnServiceCentreDetailsWithChildResources() {
+        Response createResponse = http.doGet(
+            "/testing-support/service-centres",
+            Map.of(
+                "serviceCentreName", TestDataHelper.appendRandomSuffixToCourtName(TEST_PREFIX + " Details"),
+                "withContactDetails", "true"
+            )
+        );
+        AssertionHelper.assertStatus(createResponse, CREATED);
+
+        UUID serviceCentreId = UUID.fromString(createResponse.jsonPath().getString("id"));
+
+        Response detailsResponse = http.doGet("/service-centres/" + serviceCentreId + "/v1");
+        AssertionHelper.assertStatus(detailsResponse, OK);
+        assertThat(detailsResponse.jsonPath().getList("serviceCentreAddresses")).isNotEmpty();
+        assertThat(detailsResponse.jsonPath().getList("serviceAreas")).isNotEmpty();
+        assertThat(detailsResponse.jsonPath().getList("serviceAreaIds")).isNull();
+        assertThat(detailsResponse.jsonPath().getList("serviceCentreContactDetails")).isNotEmpty();
+        assertThat(detailsResponse.jsonPath().getList("serviceCentreAreasOfLaw")).isNotEmpty();
+        assertThat(detailsResponse.jsonPath().getString(
+            "serviceCentreContactDetails[0].serviceCentreContactDescription.id"
+        )).isNotBlank();
+        assertThat(detailsResponse.jsonPath().getString(
+            "serviceCentreContactDetails[0].serviceCentreContactDescriptionId"
+        )).isNull();
+        assertThat(detailsResponse.jsonPath().getString(
+            "serviceCentreAreasOfLaw[0].areasOfLaw[0].id"
+        )).isNotBlank();
     }
 
     @AfterAll

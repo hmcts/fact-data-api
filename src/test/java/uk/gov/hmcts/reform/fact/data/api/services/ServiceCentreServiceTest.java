@@ -7,9 +7,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 
 import java.util.List;
@@ -27,6 +29,9 @@ class ServiceCentreServiceTest {
 
     @Mock
     private ServiceCentreRepository serviceCentreRepository;
+
+    @Mock
+    private ServiceCentreDetailsRepository serviceCentreDetailsRepository;
 
     @Mock
     private ServiceAreaRepository serviceAreaRepository;
@@ -54,6 +59,34 @@ class ServiceCentreServiceTest {
         NotFoundException exception = assertThrows(
             NotFoundException.class,
             () -> serviceCentreService.getServiceCentreById(serviceCentreId)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Service centre not found, ID: " + serviceCentreId);
+    }
+
+    @Test
+    void getServiceCentreDetailsByIdReturnsDetailsWhenFound() {
+        UUID serviceCentreId = UUID.randomUUID();
+        ServiceCentreDetails serviceCentreDetails = ServiceCentreDetails.builder()
+            .id(serviceCentreId)
+            .name("Test Service Centre")
+            .build();
+
+        when(serviceCentreDetailsRepository.findById(serviceCentreId)).thenReturn(Optional.of(serviceCentreDetails));
+
+        ServiceCentreDetails result = serviceCentreService.getServiceCentreDetailsById(serviceCentreId);
+
+        assertThat(result).isEqualTo(serviceCentreDetails);
+    }
+
+    @Test
+    void getServiceCentreDetailsByIdThrowsNotFoundWhenMissing() {
+        UUID serviceCentreId = UUID.randomUUID();
+        when(serviceCentreDetailsRepository.findById(serviceCentreId)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class,
+            () -> serviceCentreService.getServiceCentreDetailsById(serviceCentreId)
         );
 
         assertThat(exception.getMessage()).isEqualTo("Service centre not found, ID: " + serviceCentreId);
