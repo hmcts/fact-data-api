@@ -48,6 +48,18 @@ public class ServiceCentreService {
     }
 
     /**
+     * Get service centre details by slug.
+     *
+     * @param serviceCentreSlug The slug of the service centre details to get.
+     * @return The service centre details entity.
+     * @throws NotFoundException if the service centre details are not found.
+     */
+    public ServiceCentreDetails getServiceCentreDetailsBySlug(String serviceCentreSlug) {
+        return serviceCentreDetailsRepository.findBySlug(serviceCentreSlug)
+            .orElseThrow(() -> new NotFoundException("Service centre not found, slug: " + serviceCentreSlug));
+    }
+
+    /**
      * Get a service centre by its exact name.
      *
      * @param serviceCentreName The exact name of the service centre to get.
@@ -70,7 +82,7 @@ public class ServiceCentreService {
         serviceCentre.setSlug(toUniqueSlug(serviceCentre.getName()));
         serviceCentre.setOpen(false);
         serviceCentre.setServiceAreaIds(getValidatedServiceAreaIds(serviceCentre.getServiceAreaIds()));
-        serviceCentre.setCatchmentType(CatchmentType.NATIONAL);
+        serviceCentre.setCatchmentType(getCatchmentTypeOrDefault(serviceCentre.getCatchmentType()));
 
         return serviceCentreRepository.save(serviceCentre);
     }
@@ -94,7 +106,7 @@ public class ServiceCentreService {
         existingServiceCentre.setOpen(serviceCentre.getOpen());
         existingServiceCentre.setWarningNotice(serviceCentre.getWarningNotice());
         existingServiceCentre.setServiceAreaIds(getValidatedServiceAreaIds(serviceCentre.getServiceAreaIds()));
-        existingServiceCentre.setCatchmentType(CatchmentType.NATIONAL);
+        existingServiceCentre.setCatchmentType(getCatchmentTypeOrDefault(serviceCentre.getCatchmentType()));
 
         return serviceCentreRepository.save(existingServiceCentre);
     }
@@ -152,6 +164,10 @@ public class ServiceCentreService {
             .stream()
             .map(ServiceArea::getId)
             .toList();
+    }
+
+    private CatchmentType getCatchmentTypeOrDefault(CatchmentType catchmentType) {
+        return catchmentType == null ? CatchmentType.NATIONAL : catchmentType;
     }
 
 }

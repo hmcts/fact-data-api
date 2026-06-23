@@ -68,6 +68,29 @@ public class ServiceCentreController {
         );
     }
 
+    @GetMapping("/slug/{serviceCentreSlug}/v1")
+    @JsonView(ServiceCentreDetailsView.class)
+    @Operation(
+        summary = "Get service centre details by slug",
+        description = "Fetch detailed service centre information for a given service centre slug."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved service centre details"),
+        @ApiResponse(responseCode = "400", description = "Invalid service centre slug supplied"),
+        @ApiResponse(responseCode = "404", description = "Service centre not found")
+    })
+    public ResponseEntity<ServiceCentreDetails> getServiceCentreDetailsBySlug(
+        @Parameter(description = "Slug of the service centre", required = true)
+        @NotBlank(message = "serviceCentreSlug must not be blank")
+        @Size(max = 250, message = "serviceCentreSlug must be less than 250 characters")
+        @PathVariable String serviceCentreSlug) {
+        return ResponseEntity.ok(
+            serviceCentreDetailsViewService.prepareDetailsView(
+                serviceCentreService.getServiceCentreDetailsBySlug(serviceCentreSlug)
+            )
+        );
+    }
+
     @GetMapping("/{serviceCentreId}/entity/v1")
     @Operation(
         summary = "Get service centre entity by ID",
