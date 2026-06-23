@@ -164,10 +164,8 @@ public class AuditService {
      * @throws NotFoundException if no audit record is found with the given ID.
      */
     public Audit getAuditById(final UUID auditId) {
-        Audit audit = auditRepository.findById(auditId).orElseThrow(() ->
+        return auditRepository.findById(auditId).orElseThrow(() ->
             new NotFoundException("Audit not found, ID: " + auditId)
         );
-        audit.getCourt(); // Force loading of the court entity
-        return audit;
     }
 }
