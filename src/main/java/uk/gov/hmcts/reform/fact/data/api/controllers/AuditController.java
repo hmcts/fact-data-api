@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubject;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
@@ -128,7 +128,7 @@ public class AuditController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved map of subject-> name+id pairs")
     })
-    public ResponseEntity<Map<AuditSubject, List<NameAndId>>> getSubjectNameAndIdMap() {
+    public ResponseEntity<Map<AuditSubjectType, List<NameAndId>>> getSubjectNameAndIdMap() {
         return ResponseEntity.ok(this.auditService.getSubjectNameAndIdMap());
     }
 }
