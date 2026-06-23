@@ -29,6 +29,8 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeReposito
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreAreasOfLawRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 @Service
@@ -41,6 +43,7 @@ public class MigrationService {
     private final TransactionTemplate transactionTemplate;
     private final ReferenceDataImporter referenceDataImporter;
     private final CourtMigrationHelper courtMigrationHelper;
+    private final ServiceCentreMigrationHelper serviceCentreMigrationHelper;
 
     public MigrationService(
         LegacyFactClient legacyFactClient,
@@ -59,6 +62,8 @@ public class MigrationService {
         CourtCodesRepository courtCodesRepository,
         CourtDxCodeRepository courtDxCodeRepository,
         CourtFaxRepository courtFaxRepository,
+        ServiceCentreRepository serviceCentreRepository,
+        ServiceCentreAreasOfLawRepository serviceCentreAreasOfLawRepository,
         MigrationAuditRepository migrationAuditRepository,
         TransactionTemplate transactionTemplate,
         CourtService courtService
@@ -87,6 +92,10 @@ public class MigrationService {
             legacyCourtMappingRepository,
             courtService
         );
+        this.serviceCentreMigrationHelper = new ServiceCentreMigrationHelper(
+            serviceCentreRepository,
+            serviceCentreAreasOfLawRepository
+        );
     }
 
     public MigrationSummary migrate() {
@@ -110,17 +119,20 @@ public class MigrationService {
         final MigrationContext context = new MigrationContext();
         referenceDataImporter.importReferenceData(exportResponse, context);
         int courtsMigrated = courtMigrationHelper.migrateCourts(exportResponse.getCourts(), context);
+        int serviceCentresMigrated =
+            serviceCentreMigrationHelper.migrateServiceCentres(exportResponse.getCourts(), context);
 
         MigrationResult result = new MigrationResult(
             courtsMigrated,
+            serviceCentresMigrated,
             context.getCourtAreasOfLawMigrated(),
-            0,
             context.getCourtLocalAuthoritiesMigrated(),
             context.getCourtSinglePointsOfEntryMigrated(),
             context.getCourtProfessionalInformationMigrated(),
             context.getCourtCodesMigrated(),
             context.getCourtDxCodesMigrated(),
-            context.getCourtFaxMigrated()
+            context.getCourtFaxMigrated(),
+            context.getServiceCentreAreasOfLawMigrated()
         );
 
         return new MigrationSummary(result);
