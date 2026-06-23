@@ -28,12 +28,6 @@ public class AuditService {
     private final AuditRepository auditRepository;
     private final AuditConfigurationProperties auditConfiguration;
 
-    // bitfields for query column matching
-    private static final int IGNORE             = 0b0000;
-    private static final int INCLUDE_SUBJECT_ID = 0b0001;
-    private static final int INCLUDE_TO_DATE    = 0b0010;
-    private static final int INCLUDE_EMAIL      = 0b0100;
-
     /**
      * Get a paginated list of {@link Audit}s with optional filters.
      *
@@ -82,38 +76,46 @@ public class AuditService {
 
     private Page<Audit> performAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
                                           SubjectFilter subjectFilter, String email, Pageable pageable) {
+        boolean hasToDate = toDateTime != null;
+        boolean hasEmail = email != null && !email.isBlank();
 
-        // create a query bitfield that can be tested in the switch
-        // below using boolean arithmetic matching.
-        int query = 0;
-        query |= subjectFilter != null ? INCLUDE_SUBJECT_ID : IGNORE;
-        query |= toDateTime != null ? INCLUDE_TO_DATE : IGNORE;
-        query |= email != null && !email.isBlank() ? INCLUDE_EMAIL : IGNORE;
-
-        // perform the appropriate repository lookup based on matching
-        // bits in the query param
-        return switch (query) {
-            case INCLUDE_SUBJECT_ID -> auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
-                subjectFilter.subjectId(), subjectFilter.subjectType(), fromDateTime, pageable);
-            case INCLUDE_TO_DATE -> auditRepository.findByCreatedAtBetween(
-                fromDateTime, toDateTime, pageable);
-            case INCLUDE_SUBJECT_ID | INCLUDE_TO_DATE ->
-                auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtBetween(
-                    subjectFilter.subjectId(), subjectFilter.subjectType(), fromDateTime, toDateTime, pageable);
-            case INCLUDE_EMAIL -> auditRepository.findByCreatedAtAfterAndEmailAddressLike(
-                fromDateTime, email, pageable);
-            case INCLUDE_SUBJECT_ID | INCLUDE_EMAIL ->
-                auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfterAndEmailAddressLike(
-                    subjectFilter.subjectId(), subjectFilter.subjectType(), fromDateTime, email, pageable);
-            case INCLUDE_TO_DATE | INCLUDE_EMAIL -> auditRepository.findByCreatedAtBetweenAndEmailAddressLike(
+        if (subjectFilter != null) {
+            return performSubjectAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
+        }
+        if (hasToDate && hasEmail) {
+            return auditRepository.findByCreatedAtBetweenAndEmailAddressLike(
                 fromDateTime, toDateTime, email, pageable);
-            case INCLUDE_SUBJECT_ID | INCLUDE_TO_DATE | INCLUDE_EMAIL ->
-                auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
-                    subjectFilter.subjectId(), subjectFilter.subjectType(), fromDateTime, toDateTime, email, pageable);
-            // if no field match bits are set then test only using the
-            // mandatory fromDate.
-            default -> auditRepository.findByCreatedAtAfter(fromDateTime, pageable);
-        };
+        }
+        if (hasToDate) {
+            return auditRepository.findByCreatedAtBetween(fromDateTime, toDateTime, pageable);
+        }
+        if (hasEmail) {
+            return auditRepository.findByCreatedAtAfterAndEmailAddressLike(fromDateTime, email, pageable);
+        }
+        return auditRepository.findByCreatedAtAfter(fromDateTime, pageable);
+    }
+
+    private Page<Audit> performSubjectAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
+                                                 SubjectFilter subjectFilter, String email, Pageable pageable) {
+        UUID subjectId = subjectFilter.subjectId();
+        AuditSubjectType subjectType = subjectFilter.subjectType();
+        boolean hasToDate = toDateTime != null;
+        boolean hasEmail = email != null && !email.isBlank();
+
+        if (hasToDate && hasEmail) {
+            return auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
+                subjectId, subjectType, fromDateTime, toDateTime, email, pageable);
+        }
+        if (hasToDate) {
+            return auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtBetween(
+                subjectId, subjectType, fromDateTime, toDateTime, pageable);
+        }
+        if (hasEmail) {
+            return auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfterAndEmailAddressLike(
+                subjectId, subjectType, fromDateTime, email, pageable);
+        }
+        return auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
+            subjectId, subjectType, fromDateTime, pageable);
     }
 
     private static SubjectFilter resolveSubjectFilter(String courtId, String serviceCentreId) {

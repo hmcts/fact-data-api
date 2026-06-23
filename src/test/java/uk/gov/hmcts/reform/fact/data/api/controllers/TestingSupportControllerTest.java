@@ -56,7 +56,7 @@ class TestingSupportControllerTest {
         ResponseEntity<String> response = testingSupportController.deleteCourtsByNamePrefix(COURT_NAME_PREFIX);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).contains("3 court(s)").contains(COURT_NAME_PREFIX);
+        assertThat(response.getBody()).contains("3 court(s)").doesNotContain(COURT_NAME_PREFIX);
         verify(courtService).deleteCourtsByNamePrefix(COURT_NAME_PREFIX);
     }
 
@@ -77,7 +77,7 @@ class TestingSupportControllerTest {
             testingSupportController.deleteServiceCentresByNamePrefix(SERVICE_CENTRE_NAME_PREFIX);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).contains("2 service centre(s)").contains(SERVICE_CENTRE_NAME_PREFIX);
+        assertThat(response.getBody()).contains("2 service centre(s)").doesNotContain(SERVICE_CENTRE_NAME_PREFIX);
         verify(serviceCentreService).deleteServiceCentresByNamePrefix(SERVICE_CENTRE_NAME_PREFIX);
     }
 
