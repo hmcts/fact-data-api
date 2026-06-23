@@ -140,7 +140,7 @@ class AuditControllerTest {
 
         when(auditService.getAuditById(AUDIT_ID)).thenReturn(audit);
 
-        ResponseEntity<Audit> response = auditController.getFilteredAndPaginatedAudits(AUDIT_ID.toString());
+        ResponseEntity<Audit> response = auditController.getAuditById(AUDIT_ID.toString());
 
         assertEquals(HttpStatus.OK, response.getStatusCode(), RESPONSE_STATUS_MISMATCH);
         assertEquals(audit, response.getBody(), RESPONSE_BODY_MISMATCH);
@@ -158,8 +158,7 @@ class AuditControllerTest {
 
         NotFoundException thrown = assertThrows(
             NotFoundException.class,
-            () -> auditController.getFilteredAndPaginatedAudits(missingAuditIdString)
-        );
+            () -> auditController.getAuditById(missingAuditIdString));
 
         assertEquals("Audit not found", thrown.getMessage());
         verify(auditService).getAuditById(missingAuditId);
@@ -169,7 +168,7 @@ class AuditControllerTest {
     void getAuditByIdThrowsIllegalArgumentExceptionForInvalidUuid() {
         assertThrows(
             IllegalArgumentException.class,
-            () -> auditController.getFilteredAndPaginatedAudits("not-a-valid-uuid")
+            () -> auditController.getAuditById("not-a-valid-uuid")
         );
     }
 

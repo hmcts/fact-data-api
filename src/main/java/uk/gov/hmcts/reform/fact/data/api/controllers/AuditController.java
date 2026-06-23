@@ -100,9 +100,10 @@ public class AuditController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved Audit record"),
-        @ApiResponse(responseCode = "400", description = "Invalid request parameters supplied")
+        @ApiResponse(responseCode = "400", description = "Invalid request parameters supplied"),
+        @ApiResponse(responseCode = "404", description = "Audit record with the given id was not found")
     })
-    public ResponseEntity<Audit> getFilteredAndPaginatedAudits(
+    public ResponseEntity<Audit> getAuditById(
         @ValidUUID @PathVariable String auditId) {
         return ResponseEntity.ok(auditService.getAuditById(UUID.fromString(auditId)));
     }

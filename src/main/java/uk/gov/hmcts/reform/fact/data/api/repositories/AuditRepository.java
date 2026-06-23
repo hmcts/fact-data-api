@@ -4,6 +4,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -102,6 +103,9 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
         ZonedDateTime createdAtBefore,
         String email,
         Pageable pageable);
+
+    @EntityGraph(attributePaths = {"court", "user"})
+    Optional<Audit> findWithCourtAndUserById(UUID id);
 
     // ----------------------------------------------------
     // Housekeeping queries
