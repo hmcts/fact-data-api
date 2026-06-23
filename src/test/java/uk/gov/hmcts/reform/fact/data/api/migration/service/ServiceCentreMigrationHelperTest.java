@@ -69,7 +69,7 @@ class ServiceCentreMigrationHelperTest {
         verify(serviceCentreRepository).save(serviceCentreCaptor.capture());
         assertThat(serviceCentreCaptor.getValue().getName()).isEqualTo("Legacy Service Centre");
         assertThat(serviceCentreCaptor.getValue().getSlug()).isEqualTo("legacy-service-centre");
-        assertThat(serviceCentreCaptor.getValue().getOpen()).isTrue();
+        assertThat(serviceCentreCaptor.getValue().getOpen()).isFalse();
         assertThat(serviceCentreCaptor.getValue().getServiceAreaIds()).containsExactly(nationalServiceAreaId);
         assertThat(serviceCentreCaptor.getValue().getCatchmentType()).isEqualTo(CatchmentType.NATIONAL);
 

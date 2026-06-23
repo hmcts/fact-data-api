@@ -70,7 +70,7 @@ class ServiceCentreMigrationHelper {
             ServiceCentre serviceCentre = ServiceCentre.builder()
                 .name(serviceCentreName)
                 .slug(dto.getSlug())
-                .open(Boolean.TRUE.equals(dto.getOpen()))
+                .open(Boolean.FALSE)
                 .serviceAreaIds(serviceAreaSelection.serviceAreaIds())
                 .catchmentType(serviceAreaSelection.catchmentType().orElse(null))
                 .build();
