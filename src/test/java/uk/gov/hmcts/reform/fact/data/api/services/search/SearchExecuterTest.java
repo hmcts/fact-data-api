@@ -122,6 +122,23 @@ class SearchExecuterTest {
     }
 
     @Test
+    void executeSearchStrategyShouldReturnNoCourtResultsForFamilyRegionalServiceCentreRouting() {
+        ServiceArea area = serviceArea(ServiceAreaType.FAMILY);
+        OsLocationData locationData = osLocationData("Authority", "SW1A 1AA");
+
+        List<CourtWithDistance> response = searchExecuter.executeSearchStrategy(
+            locationData,
+            area,
+            SearchStrategy.FAMILY_REGIONAL,
+            SearchAction.DOCUMENTS,
+            10
+        );
+
+        assertThat(response).isEmpty();
+        verify(courtAddressRepository, never()).findNearestByAreaOfLaw(anyDouble(), anyDouble(), any(), anyInt());
+    }
+
+    @Test
     void executeSearchStrategyShouldReturnFamilyNonRegionalByLocalAuthorityWhenFound() {
         ServiceArea area = serviceArea(ServiceAreaType.FAMILY);
         OsLocationData locationData = osLocationData("Authority", "SW1A 1AA");

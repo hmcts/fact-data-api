@@ -55,6 +55,7 @@ public class SearchExecuter {
                 limit,
                 aolId
             );
+            case FAMILY_REGIONAL -> List.of();
             case FAMILY_NON_REGIONAL -> {
                 List<CourtWithDistance> results = executeFamilyNonRegionalSearchStrategy(
                     osLocationData,

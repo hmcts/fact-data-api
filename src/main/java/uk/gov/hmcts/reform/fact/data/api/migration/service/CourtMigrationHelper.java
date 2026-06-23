@@ -106,7 +106,6 @@ class CourtMigrationHelper {
         int total = 0;
         for (CourtDto dto : courts) {
             if (Boolean.TRUE.equals(dto.getIsServiceCentre())) {
-                //TODO: Only migrate courts.
                 LOG.info("Skipping service centre {}", dto.getSlug());
                 continue;
             }

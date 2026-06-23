@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
@@ -20,6 +21,7 @@ import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchExecuter;
 
@@ -61,6 +63,9 @@ class SearchCourtServiceTest {
 
     @Mock
     LocalAuthorityTypeRepository localAuthorityTypeRepository;
+
+    @Mock
+    private ServiceCentreRepository serviceCentreRepository;
 
     @InjectMocks
     private SearchCourtService searchCourtService;
@@ -172,7 +177,26 @@ class SearchCourtServiceTest {
     }
 
     @Test
-    void selectSearchStrategyShouldReturnFamilyNonRegionalForLocalAuthorityCatchment() {
+    void selectSearchStrategyShouldReturnFamilyRegionalWhenRegionalServiceCentreExists() {
+        ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
+        area.setCatchmentMethod(CatchmentMethod.LOCAL_AUTHORITY);
+
+        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+            area.getId(),
+            List.of(CatchmentType.REGIONAL)
+        )).thenReturn(true);
+
+        SearchStrategy strategy = searchCourtService.selectSearchStrategy(
+            SearchAction.DOCUMENTS,
+            "Authority",
+            area
+        );
+
+        assertThat(strategy).isEqualTo(SearchStrategy.FAMILY_REGIONAL);
+    }
+
+    @Test
+    void selectSearchStrategyShouldReturnFamilyNonRegionalWhenRegionalServiceCentreDoesNotExist() {
         ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
         area.setCatchmentMethod(CatchmentMethod.LOCAL_AUTHORITY);
 

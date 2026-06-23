@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParamet
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtAddressService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtSinglePointOfEntryService;
 import uk.gov.hmcts.reform.fact.data.api.services.OsService;
@@ -21,10 +22,12 @@ import java.util.List;
 import java.util.Optional;
 
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod.LOCAL_AUTHORITY;
+import static uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType.REGIONAL;
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction.NEAREST;
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy.CIVIL_POSTCODE_PREFERENCE;
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy.DEFAULT_AOL_DISTANCE;
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy.FAMILY_NON_REGIONAL;
+import static uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy.FAMILY_REGIONAL;
 
 @Service
 @Slf4j
@@ -36,6 +39,7 @@ public class SearchCourtService {
     private final CourtAddressService courtAddressService;
     private final SearchExecuter searchExecuter;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
+    private final ServiceCentreRepository serviceCentreRepository;
     private static final String CHILDCARE_SERVICE_AREA = "Childcare arrangements if you separate from your partner";
     private static final String CHILDCARE_AOL = "Children";
 
@@ -44,13 +48,15 @@ public class SearchCourtService {
                               CourtSinglePointOfEntryService courtSinglePointOfEntryService,
                               CourtAddressService courtAddressService,
                               SearchExecuter searchExecuter,
-                              LocalAuthorityTypeRepository localAuthorityTypeRepository) {
+                              LocalAuthorityTypeRepository localAuthorityTypeRepository,
+                              ServiceCentreRepository serviceCentreRepository) {
         this.osService = osService;
         this.serviceAreaService = serviceAreaService;
         this.courtSinglePointOfEntryService = courtSinglePointOfEntryService;
         this.courtAddressService = courtAddressService;
         this.searchExecuter = searchExecuter;
         this.localAuthorityTypeRepository = localAuthorityTypeRepository;
+        this.serviceCentreRepository = serviceCentreRepository;
     }
 
     /**
@@ -176,8 +182,10 @@ public class SearchCourtService {
     private SearchStrategy getFamilyStrategy(SearchAction action, ServiceArea serviceArea, String authorityName) {
         if (LOCAL_AUTHORITY.equals(serviceArea.getCatchmentMethod())
                 && !authorityName.isEmpty()) {
-            //TODO: Restore regional service-centre routing when service-centres are reintroduced.
-            return FAMILY_NON_REGIONAL;
+            return serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+                serviceArea.getId(),
+                List.of(REGIONAL)
+            ) ? FAMILY_REGIONAL : FAMILY_NON_REGIONAL;
         }
         log.debug("Setting search strategy to default for {}, {}, {}",
                 action, serviceArea, authorityName);
