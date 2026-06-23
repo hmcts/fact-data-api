@@ -156,7 +156,7 @@ class ServiceCentreMigrationHelperTest {
 
     @Test
     void shouldPreserveCatchmentTypeWhenServiceAreaIdsAreUnmapped() {
-        when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        mockServiceCentreSave();
 
         CourtDto serviceCentreDto = new CourtDto();
         serviceCentreDto.setName("Legacy Service Centre");
@@ -179,7 +179,7 @@ class ServiceCentreMigrationHelperTest {
 
     @Test
     void shouldMigrateServiceCentreWithoutServiceAreasOrAreasOfLaw() {
-        when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        mockServiceCentreSave();
 
         CourtDto serviceCentreDto = buildMinimalServiceCentreDto("Legacy Service Centre");
 
@@ -237,7 +237,7 @@ class ServiceCentreMigrationHelperTest {
         UUID localServiceAreaId = UUID.randomUUID();
         context.getServiceAreaIds().put(1, localServiceAreaId);
         context.getServiceAreaIds().put(2, regionalServiceAreaId);
-        when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        mockServiceCentreSave();
 
         CourtDto serviceCentreDto = buildMinimalServiceCentreDto("Legacy Service Centre");
         serviceCentreDto.setCourtServiceAreas(List.of(
@@ -259,7 +259,7 @@ class ServiceCentreMigrationHelperTest {
     void shouldChooseMappedServiceAreaWithoutCatchmentWhenOtherSelectionsAreUnmappedAndUnknown() {
         UUID serviceAreaId = UUID.randomUUID();
         context.getServiceAreaIds().put(1, serviceAreaId);
-        when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        mockServiceCentreSave();
 
         CourtDto serviceCentreDto = buildMinimalServiceCentreDto("Legacy Service Centre");
         serviceCentreDto.setCourtServiceAreas(List.of(
@@ -281,7 +281,7 @@ class ServiceCentreMigrationHelperTest {
     void shouldMapServiceAreasWithoutCatchmentType() {
         UUID serviceAreaId = UUID.randomUUID();
         context.getServiceAreaIds().put(1, serviceAreaId);
-        when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        mockServiceCentreSave();
 
         CourtDto serviceCentreDto = buildMinimalServiceCentreDto("Legacy Service Centre");
         serviceCentreDto.setCourtServiceAreas(List.of(new CourtServiceAreaDto(1, null, List.of(1))));
@@ -298,7 +298,7 @@ class ServiceCentreMigrationHelperTest {
 
     @Test
     void shouldIgnoreServiceAreaSelectionWhenIdsAreEmptyAndCatchmentIsBlank() {
-        when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        mockServiceCentreSave();
 
         CourtDto serviceCentreDto = buildMinimalServiceCentreDto("Legacy Service Centre");
         serviceCentreDto.setCourtServiceAreas(List.of(new CourtServiceAreaDto(1, " ", List.of())));
@@ -319,7 +319,7 @@ class ServiceCentreMigrationHelperTest {
         UUID secondServiceAreaId = UUID.randomUUID();
         context.getServiceAreaIds().put(1, firstServiceAreaId);
         context.getServiceAreaIds().put(2, secondServiceAreaId);
-        when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        mockServiceCentreSave();
 
         CourtDto serviceCentreDto = buildMinimalServiceCentreDto("Legacy Service Centre");
         serviceCentreDto.setCourtServiceAreas(List.of(
@@ -341,7 +341,7 @@ class ServiceCentreMigrationHelperTest {
     void shouldMapServiceAreaIdsWhenCatchmentTypeIsUnknown() {
         UUID serviceAreaId = UUID.randomUUID();
         context.getServiceAreaIds().put(1, serviceAreaId);
-        when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        mockServiceCentreSave();
 
         CourtDto serviceCentreDto = buildMinimalServiceCentreDto("Legacy Service Centre");
         serviceCentreDto.setCourtServiceAreas(List.of(new CourtServiceAreaDto(1, "unknown", List.of(1))));
@@ -358,7 +358,7 @@ class ServiceCentreMigrationHelperTest {
 
     @Test
     void shouldPreserveCatchmentTypeWhenLegacyServiceAreaIdsAreNull() {
-        when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        mockServiceCentreSave();
 
         CourtDto serviceCentreDto = buildMinimalServiceCentreDto("Legacy Service Centre");
         serviceCentreDto.setCourtServiceAreas(List.of(new CourtServiceAreaDto(1, CatchmentType.LOCAL.name(), null)));
@@ -395,5 +395,10 @@ class ServiceCentreMigrationHelperTest {
         ));
         serviceCentreDto.setCourtAreasOfLaw(new CourtAreasOfLawDto("areas", List.of(10)));
         return serviceCentreDto;
+    }
+
+    private void mockServiceCentreSave() {
+        when(serviceCentreRepository.save(any(ServiceCentre.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
     }
 }
