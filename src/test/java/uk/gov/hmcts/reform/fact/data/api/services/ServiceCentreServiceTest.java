@@ -93,6 +93,33 @@ class ServiceCentreServiceTest {
     }
 
     @Test
+    void getServiceCentreDetailsBySlugReturnsDetailsWhenFound() {
+        ServiceCentreDetails serviceCentreDetails = ServiceCentreDetails.builder()
+            .slug("test-service-centre")
+            .name("Test Service Centre")
+            .build();
+
+        when(serviceCentreDetailsRepository.findBySlug("test-service-centre"))
+            .thenReturn(Optional.of(serviceCentreDetails));
+
+        ServiceCentreDetails result = serviceCentreService.getServiceCentreDetailsBySlug("test-service-centre");
+
+        assertThat(result).isEqualTo(serviceCentreDetails);
+    }
+
+    @Test
+    void getServiceCentreDetailsBySlugThrowsNotFoundWhenMissing() {
+        when(serviceCentreDetailsRepository.findBySlug("missing-service-centre")).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class,
+            () -> serviceCentreService.getServiceCentreDetailsBySlug("missing-service-centre")
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Service centre not found, slug: missing-service-centre");
+    }
+
+    @Test
     void getServiceCentreByNameReturnsServiceCentre() {
         ServiceCentre serviceCentre = ServiceCentre.builder().name("Bulk Scan Centre").build();
 
@@ -124,7 +151,7 @@ class ServiceCentreServiceTest {
         assertThat(result.getSlug()).isEqualTo("bulk-scan-centre-1");
         assertThat(result.getOpen()).isFalse();
         assertThat(result.getServiceAreaIds()).containsExactly(validServiceAreaId);
-        assertThat(result.getCatchmentType()).isEqualTo(CatchmentType.NATIONAL);
+        assertThat(result.getCatchmentType()).isEqualTo(CatchmentType.REGIONAL);
     }
 
     @Test
@@ -155,7 +182,7 @@ class ServiceCentreServiceTest {
         assertThat(result.getSlug()).isEqualTo("new-service-centre");
         assertThat(result.getOpen()).isTrue();
         assertThat(result.getWarningNotice()).isEqualTo("Warning");
-        assertThat(result.getCatchmentType()).isEqualTo(CatchmentType.NATIONAL);
+        assertThat(result.getCatchmentType()).isEqualTo(CatchmentType.LOCAL);
     }
 
     @Test
