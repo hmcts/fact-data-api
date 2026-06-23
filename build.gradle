@@ -83,7 +83,6 @@ tasks.withType(JavaExec).configureEach {
 tasks.withType(Test).configureEach {
   useJUnitPlatform()
   failFast = true
-  systemProperty 'org.aspectj.weaver.Dump.exception', 'false'
 
   testLogging {
     exceptionFormat = 'full'
@@ -156,6 +155,9 @@ dependencyCheck {
 
 allure {
   version = '2.34.1'
+  adapter {
+    aspectjWeaver.set(false)
+  }
 }
 
 repositories {
