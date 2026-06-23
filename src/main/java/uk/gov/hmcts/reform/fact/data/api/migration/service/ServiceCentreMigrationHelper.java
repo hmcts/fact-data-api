@@ -126,7 +126,7 @@ class ServiceCentreMigrationHelper {
                 mapIds(dto.getServiceAreaIds(), context.getServiceAreaIds(), "service centre service area"),
                 parseCatchmentType(dto.getCatchmentType())
             ))
-            .filter(selection -> !selection.serviceAreaIds().isEmpty())
+            .filter(selection -> !selection.serviceAreaIds().isEmpty() || selection.catchmentType().isPresent())
             .min(Comparator.comparing(ServiceCentreMigrationHelper::catchmentPriority))
             .orElseGet(ServiceAreaSelection::empty);
     }

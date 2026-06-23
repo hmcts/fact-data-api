@@ -91,6 +91,29 @@ class ServiceCentreMigrationHelperTest {
         verify(serviceCentreRepository, never()).save(any(ServiceCentre.class));
     }
 
+    @Test
+    void shouldPreserveCatchmentTypeWhenServiceAreaIdsAreUnmapped() {
+        when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CourtDto serviceCentreDto = new CourtDto();
+        serviceCentreDto.setName("Legacy Service Centre");
+        serviceCentreDto.setSlug("legacy-service-centre");
+        serviceCentreDto.setOpen(true);
+        serviceCentreDto.setIsServiceCentre(true);
+        serviceCentreDto.setCourtServiceAreas(List.of(
+            new CourtServiceAreaDto(1, CatchmentType.LOCAL.name(), List.of(999))
+        ));
+
+        int migrated = helper.migrateServiceCentres(List.of(serviceCentreDto), context);
+
+        assertThat(migrated).isEqualTo(1);
+
+        ArgumentCaptor<ServiceCentre> serviceCentreCaptor = ArgumentCaptor.forClass(ServiceCentre.class);
+        verify(serviceCentreRepository).save(serviceCentreCaptor.capture());
+        assertThat(serviceCentreCaptor.getValue().getServiceAreaIds()).isEmpty();
+        assertThat(serviceCentreCaptor.getValue().getCatchmentType()).isEqualTo(CatchmentType.LOCAL);
+    }
+
     private CourtDto buildServiceCentreDto() {
         CourtDto serviceCentreDto = new CourtDto();
         serviceCentreDto.setId(100L);
