@@ -85,6 +85,22 @@ class ServiceCentreControllerTest {
     }
 
     @Test
+    @DisplayName("GET /service-centres/slug/{serviceCentreSlug}/v1 returns service centre details")
+    void getServiceCentreDetailsBySlugReturnsServiceCentreDetails() throws Exception {
+        ServiceCentreDetails serviceCentreDetails = buildServiceCentreDetails();
+
+        when(serviceCentreService.getServiceCentreDetailsBySlug("test-service-centre"))
+            .thenReturn(serviceCentreDetails);
+        when(serviceCentreDetailsViewService.prepareDetailsView(serviceCentreDetails)).thenReturn(serviceCentreDetails);
+
+        mockMvc.perform(get("/service-centres/slug/{serviceCentreSlug}/v1", "test-service-centre"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(SERVICE_CENTRE_ID.toString()))
+            .andExpect(jsonPath("$.slug").value("test-service-centre"))
+            .andExpect(jsonPath("$.serviceAreas[0].id").value(SERVICE_AREA_ID.toString()));
+    }
+
+    @Test
     @DisplayName("GET /service-centres/{serviceCentreId}/v1 returns 400 for invalid UUID")
     void getServiceCentreByIdReturnsBadRequestForInvalidUuid() throws Exception {
         mockMvc.perform(get("/service-centres/{serviceCentreId}/v1", "invalid-uuid"))

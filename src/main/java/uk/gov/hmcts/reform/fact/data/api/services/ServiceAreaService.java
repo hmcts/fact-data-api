@@ -1,8 +1,11 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 
 import java.text.MessageFormat;
 import java.util.List;
@@ -15,6 +18,8 @@ import org.springframework.stereotype.Service;
 public class ServiceAreaService {
 
     private final ServiceAreaRepository serviceAreaRepository;
+    private final ServiceCentreRepository serviceCentreRepository;
+    private final CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
 
     /**
      * Retrieves a service area by name.
@@ -56,10 +61,19 @@ public class ServiceAreaService {
      * @return the service area with additional data
      */
     private ServiceArea enrichServiceArea(ServiceArea serviceArea) {
-        //TODO: Re-populate catchment availability from service-centres when that model is introduced.
-        serviceArea.setHasLocal(false);
-        serviceArea.setHasNational(false);
-        serviceArea.setHasRegional(false);
+        serviceArea.setHasLocal(
+            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+                serviceArea.getId(), List.of(CatchmentType.LOCAL))
+                || courtLocalAuthoritiesRepository.existsByAreaOfLawId(serviceArea.getAreaOfLawId())
+        );
+        serviceArea.setHasNational(
+            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+                serviceArea.getId(), List.of(CatchmentType.NATIONAL))
+        );
+        serviceArea.setHasRegional(
+            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+                serviceArea.getId(), List.of(CatchmentType.REGIONAL))
+        );
         return serviceArea;
     }
 }
