@@ -47,12 +47,11 @@ public class SearchServiceCentreService {
         if (serviceAreaEmpty) {
             return List.of();
         }
-        return searchWithServiceArea(postcode, serviceArea, action, limit);
+        return searchWithServiceArea(postcode, serviceArea, limit);
     }
 
     private List<ServiceCentreWithDistance> searchWithServiceArea(String postcode,
                                                                   String serviceArea,
-                                                                  SearchAction action,
                                                                   Integer limit) {
         OsLocationData osLocationData = osService.getOsLonLatDistrictByPartial(postcode);
         ServiceArea serviceAreaFound = serviceAreaService.getServiceAreaByName(serviceArea);
