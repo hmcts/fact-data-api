@@ -63,7 +63,7 @@ public class TestingSupportController {
     ) {
         return ResponseEntity.status(HttpStatus.OK)
             .body(courtService.deleteCourtsByNamePrefix(courtNamePrefix)
-                      + " court(s) with prefix " + courtNamePrefix + " deleted successfully");
+                      + " court(s) deleted successfully");
     }
 
     @DeleteMapping("/service-centres/name-prefix/{serviceCentreNamePrefix}")
@@ -82,7 +82,7 @@ public class TestingSupportController {
     ) {
         return ResponseEntity.status(HttpStatus.OK)
             .body(serviceCentreService.deleteServiceCentresByNamePrefix(serviceCentreNamePrefix)
-                      + " service centre(s) with prefix " + serviceCentreNamePrefix + " deleted successfully");
+                      + " service centre(s) deleted successfully");
     }
 
     @GetMapping("/regions")
