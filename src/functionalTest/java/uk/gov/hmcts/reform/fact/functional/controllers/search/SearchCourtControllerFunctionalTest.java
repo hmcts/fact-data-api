@@ -772,6 +772,13 @@ public final class SearchCourtControllerFunctionalTest {
             .isEqualTo(CREATED.value());
 
         final UUID serviceCentreId = UUID.fromString(createResponse.jsonPath().getString("id"));
+        serviceCentre.setOpen(true);
+
+        final Response updateResponse = http.doPut("/service-centres/" + serviceCentreId + "/v1", serviceCentre);
+
+        assertThat(updateResponse.statusCode())
+            .as("Expected 200 OK when updating regional service centre %s to open", serviceCentreId)
+            .isEqualTo(OK.value());
 
         final ServiceCentreAddress address = ServiceCentreAddress.builder()
             .serviceCentreId(serviceCentreId)
