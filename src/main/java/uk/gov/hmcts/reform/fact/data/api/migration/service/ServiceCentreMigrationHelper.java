@@ -132,14 +132,13 @@ class ServiceCentreMigrationHelper {
     }
 
     private static int catchmentPriority(ServiceAreaSelection selection) {
-        if (selection.catchmentType().isEmpty()) {
-            return 3;
-        }
-        return switch (selection.catchmentType().get()) {
-            case NATIONAL -> 0;
-            case REGIONAL -> 1;
-            case LOCAL -> 2;
-        };
+        return selection.catchmentType()
+            .map(catchmentType -> switch (catchmentType) {
+                    case NATIONAL -> 0;
+                    case REGIONAL -> 1;
+                    case LOCAL -> 2;
+                })
+            .orElse(3);
     }
 
     private static Optional<CatchmentType> parseCatchmentType(String value) {
