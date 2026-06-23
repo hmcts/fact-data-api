@@ -19,4 +19,5 @@ class MigrationContext {
     int courtCodesMigrated;
     int courtDxCodesMigrated;
     int courtFaxMigrated;
+    int serviceCentreAreasOfLawMigrated;
 }
