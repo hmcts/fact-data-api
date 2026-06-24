@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -57,11 +56,6 @@ public class Audit {
     @Enumerated(EnumType.STRING)
     private AuditSubjectType subjectType;
 
-    @Schema(description = "The associated Court")
-    @ManyToOne
-    @JoinColumn(name = "subject_id", insertable = false, updatable = false)
-    private Court court;
-
     @NotNull
     @Column(name = "user_id")
     private UUID userId;
@@ -88,16 +82,5 @@ public class Audit {
     @CreationTimestamp
     @Setter(AccessLevel.NONE)
     private ZonedDateTime createdAt;
-
-    @JsonProperty("courtId")
-    public UUID getCourtId() {
-        return AuditSubjectType.COURT.equals(subjectType) ? subjectId : null;
-    }
-
-    @JsonProperty("courtId")
-    public void setCourtId(UUID courtId) {
-        this.subjectId = courtId;
-        this.subjectType = AuditSubjectType.COURT;
-    }
 
 }

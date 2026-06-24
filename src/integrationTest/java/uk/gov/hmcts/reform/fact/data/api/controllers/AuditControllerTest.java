@@ -166,7 +166,10 @@ class AuditControllerTest {
             .andExpect(jsonPath("$.content").isArray())
             .andExpect(jsonPath("$.content.length()").value(7))
             .andExpect(jsonPath("$.content[0]").exists())
-            .andExpect(jsonPath("$.content[*].court.id").value(allElementsEqual(court1.getCourtId().toString())))
+            .andExpect(jsonPath("$.content[*].subjectId").value(allElementsEqual(court1.getId().toString())))
+            .andExpect(jsonPath("$.content[*].subjectType").value(allElementsEqual("COURT")))
+            .andExpect(jsonPath("$.content[0].court").doesNotExist())
+            .andExpect(jsonPath("$.content[0].courtId").doesNotExist())
             .andExpect(jsonPath("$.page.number").value(0))
             .andExpect(jsonPath("$.page.totalPages").value(1))
             .andExpect(jsonPath("$.page.totalElements").value(7));
@@ -181,7 +184,8 @@ class AuditControllerTest {
             .andExpect(jsonPath("$.content").isArray())
             .andExpect(jsonPath("$.content.length()").value(3))
             .andExpect(jsonPath("$.content[0]").exists())
-            .andExpect(jsonPath("$.content[*].court.id").value(allElementsEqual(court2.getCourtId().toString())))
+            .andExpect(jsonPath("$.content[*].subjectId").value(allElementsEqual(court2.getId().toString())))
+            .andExpect(jsonPath("$.content[*].subjectType").value(allElementsEqual("COURT")))
             .andExpect(jsonPath("$.page.number").value(0))
             .andExpect(jsonPath("$.page.totalPages").value(1))
             .andExpect(jsonPath("$.page.totalElements").value(3));
