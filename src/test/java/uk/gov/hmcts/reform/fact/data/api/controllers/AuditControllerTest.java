@@ -95,6 +95,7 @@ class AuditControllerTest {
                     null,
                     null,
                     null,
+                    null,
                     fromDate,
                     toDate
                 )

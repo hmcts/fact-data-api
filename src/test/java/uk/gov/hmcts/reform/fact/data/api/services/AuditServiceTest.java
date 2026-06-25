@@ -91,7 +91,7 @@ class AuditServiceTest {
                 null,
                 null,
                 null,
-                null
+                 null
             );
 
         assertThat(result.getContent()).hasSize(1);
