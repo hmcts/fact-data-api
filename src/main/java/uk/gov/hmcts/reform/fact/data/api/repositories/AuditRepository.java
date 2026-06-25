@@ -32,10 +32,23 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
         Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
+    Page<Audit> findBySubjectTypeAndCreatedAtAfter(
+        AuditSubjectType subjectType,
+        ZonedDateTime fromDateTime,
+        Pageable pageable);
+
+    @EntityGraph(attributePaths = {"user"})
     Page<Audit> findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
         UUID subjectId,
         AuditSubjectType subjectType,
         ZonedDateTime createdAt,
+        Pageable pageable);
+
+    @EntityGraph(attributePaths = {"user"})
+    Page<Audit> findBySubjectTypeAndCreatedAtBetween(
+        AuditSubjectType subjectType,
+        ZonedDateTime fromDateTime,
+        ZonedDateTime toDateTime,
         Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
@@ -45,6 +58,7 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
         ZonedDateTime createdAtAfter,
         ZonedDateTime createdAtBefore,
         Pageable pageable);
+
 
     // ----------------------------------------------------
     // Complex paged queries
@@ -68,6 +82,7 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
         """;
 
     String AND_SUBJECT_EQUALS = " and a.subjectId = :subjectId and a.subjectType = :subjectType";
+    String AND_SUBJECT_TYPE_EQUALS = " and a.subjectType = :subjectType";
 
 
     @EntityGraph(attributePaths = {"user"})
@@ -105,11 +120,27 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
         Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
+    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_AFTER + AND_SUBJECT_TYPE_EQUALS)
+    Page<Audit> findBySubjectTypeAndCreatedAtAfterAndEmailAddressLike(
+        AuditSubjectType subjectType,
+        ZonedDateTime fromDateTime,
+        String email,
+        Pageable pageable);
+
+    @EntityGraph(attributePaths = {"user"})
+    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_BETWEEN + AND_SUBJECT_TYPE_EQUALS)
+    Page<Audit> findBySubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
+        AuditSubjectType subjectType,
+        ZonedDateTime fromDateTime,
+        ZonedDateTime toDateTime,
+        String email,
+        Pageable pageable);
+
+    @EntityGraph(attributePaths = {"user"})
     Optional<Audit> findWithUserById(UUID id);
 
     // ----------------------------------------------------
     // Housekeeping queries
 
     void deleteAllByCreatedAtBefore(ZonedDateTime createdAtBefore);
-
 }

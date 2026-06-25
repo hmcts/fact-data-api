@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
@@ -343,6 +344,37 @@ class AuditControllerTest {
                         .param("pageNumber", "-3")
                         .param("pageSize", "100")
                         .param("fromDate", LocalDate.now().toString()))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /audits/v1 returns results when subjectType is provided")
+    void getFilteredAndPaginatedAuditsReturnsResultsWhenSubjectTypeProvided() throws Exception {
+        createTestCourts(2);
+        createTestServiceCentre();
+
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "10")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("subjectType", AuditSubjectType.COURT.name()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(2))
+            .andExpect(jsonPath("$.content[*].subjectType")
+                           .value(allElementsEqual(AuditSubjectType.COURT.name())))
+            .andExpect(jsonPath("$.page.number").value(0))
+            .andExpect(jsonPath("$.page.totalElements").value(2));
+    }
+
+    @Test
+    @DisplayName("GET /audits/v1 returns 400 when subjectType is invalid")
+    void getFilteredAndPaginatedAuditsReturnsBadRequestForInvalidSubjectType() throws Exception {
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "5")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("subjectType", "NOT_A_REAL_TYPE"))
             .andExpect(status().isBadRequest());
     }
 

@@ -58,6 +58,7 @@ public class AuditController {
         @PositiveOrZero(message = "pageNumber must be greater than or equal to 0") int pageNumber,
         @RequestParam(name = "pageSize", defaultValue = "25")
         @Positive(message = "pageSize must be greater than 0") int pageSize,
+        @RequestParam(name = "subjectType", required = false) AuditSubjectType subjectType,
         @RequestParam(name = "courtId", required = false) @ValidUUID(allowNull = true) String courtId,
         @RequestParam(name = "serviceCentreId", required = false) @ValidUUID(allowNull = true) String serviceCentreId,
         @RequestParam(name = "email", required = false)
@@ -86,6 +87,7 @@ public class AuditController {
                 pageSize,
                 fromDate,
                 toDate,
+                subjectType,
                 courtId,
                 serviceCentreId,
                 emailMatch

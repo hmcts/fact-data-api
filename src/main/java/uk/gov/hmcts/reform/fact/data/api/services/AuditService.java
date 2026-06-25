@@ -47,8 +47,8 @@ public class AuditService {
      * @return a {@link Page} of {@link Audit} results.
      */
     public Page<Audit> getFilteredAndPaginatedAudits(int pageNumber, int pageSize, @NonNull LocalDate fromDate,
-                                                     LocalDate toDate, String courtId, String serviceCentreId,
-                                                     String email) {
+                                                     LocalDate toDate, AuditSubjectType subjectType, String courtId,
+                                                     String serviceCentreId, String email) {
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
 
@@ -62,7 +62,7 @@ public class AuditService {
             ZoneOffset.UTC
         )).orElse(null);
 
-        SubjectFilter subjectFilter = resolveSubjectFilter(courtId, serviceCentreId);
+        SubjectFilter subjectFilter = resolveSubjectFilter(courtId, serviceCentreId, subjectType);
 
         return performAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
     }
@@ -86,7 +86,12 @@ public class AuditService {
         boolean hasEmail = email != null && !email.isBlank();
 
         if (subjectFilter != null) {
-            return performSubjectAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
+            if (subjectFilter.subjectId != null) {
+                return performSubjectAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
+            } else {
+                return performSubjectTypeAuditQuery(
+                    fromDateTime, toDateTime, subjectFilter.subjectType(), email, pageable);
+            }
         }
         if (hasToDate && hasEmail) {
             return auditRepository.findByCreatedAtBetweenAndEmailAddressLike(
@@ -124,7 +129,29 @@ public class AuditService {
             subjectId, subjectType, fromDateTime, pageable);
     }
 
-    private static SubjectFilter resolveSubjectFilter(String courtId, String serviceCentreId) {
+    private Page<Audit> performSubjectTypeAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
+                                                 AuditSubjectType subjectType, String email, Pageable pageable) {
+        boolean hasToDate = toDateTime != null;
+        boolean hasEmail = email != null && !email.isBlank();
+
+        if (hasToDate && hasEmail) {
+            return auditRepository.findBySubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
+                subjectType, fromDateTime, toDateTime, email, pageable);
+        }
+        if (hasToDate) {
+            return auditRepository.findBySubjectTypeAndCreatedAtBetween(
+                subjectType, fromDateTime, toDateTime, pageable);
+        }
+        if (hasEmail) {
+            return auditRepository.findBySubjectTypeAndCreatedAtAfterAndEmailAddressLike(
+                subjectType, fromDateTime, email, pageable);
+        }
+        return auditRepository.findBySubjectTypeAndCreatedAtAfter(
+            subjectType, fromDateTime, pageable);
+    }
+
+    private static SubjectFilter resolveSubjectFilter(String courtId, String serviceCentreId,
+                                                      AuditSubjectType subjectType) {
         if (courtId != null && serviceCentreId != null) {
             throw new InvalidParameterCombinationException("Only one of courtId or serviceCentreId can be provided");
         }
@@ -133,6 +160,10 @@ public class AuditService {
         }
         if (serviceCentreId != null) {
             return new SubjectFilter(UUID.fromString(serviceCentreId), AuditSubjectType.SERVICE_CENTRE);
+        }
+        // if a subject type is provided without a specific subject id, we can still filter by subject type
+        if (subjectType != null) {
+            return new SubjectFilter(null, subjectType);
         }
         return null;
     }

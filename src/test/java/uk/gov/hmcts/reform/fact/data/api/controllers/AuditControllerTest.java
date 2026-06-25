@@ -66,12 +66,14 @@ class AuditControllerTest {
             any(LocalDate.class),
             isNull(),
             isNull(),
+            isNull(),
             isNull()
         )).thenReturn(auditPage);
 
         ResponseEntity<Page<Audit>> response = auditController.getFilteredAndPaginatedAudits(
             PAGE_NUMBER,
             PAGE_SIZE,
+            null,
             null,
             null,
             null,
@@ -95,6 +97,7 @@ class AuditControllerTest {
                     null,
                     null,
                     null,
+                    null,
                     fromDate,
                     toDate
                 )
@@ -108,6 +111,7 @@ class AuditControllerTest {
                 auditController.getFilteredAndPaginatedAudits(
                     PAGE_NUMBER,
                     PAGE_SIZE,
+                    null,
                     COURT_ID.toString(),
                     SERVICE_CENTRE_ID.toString(),
                     null,
