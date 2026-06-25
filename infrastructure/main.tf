@@ -38,7 +38,7 @@ module "postgresql" {
   ]
   common_tags          = var.common_tags
   business_area        = "cft"
-  pgsql_version        = "18"
+  pgsql_version        = "17"
   admin_user_object_id = var.jenkins_AAD_objectId
   pgsql_server_configuration = [{
     name  = "azure.extensions"

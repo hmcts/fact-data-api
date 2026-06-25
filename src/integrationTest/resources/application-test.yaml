@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
-    url: jdbc:tc:postgresql:18:///fact
+    url: jdbc:tc:postgresql:17:///fact
   cloud:
     azure:
       storage:
