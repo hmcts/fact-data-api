@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import tools.jackson.databind.ObjectMapper;
 import io.qameta.allure.Feature;
 import org.junit.jupiter.api.Assertions;
@@ -54,6 +55,7 @@ class CourtOpeningHoursControllerTest {
 
     private UUID courtId;
     private UUID nonExistentCourtId;
+    private UUID nonExistentCourterServiceId;
     private UUID openingHourTypeId;
     private Court court;
     private OpeningHourType openingHourType;
@@ -64,6 +66,7 @@ class CourtOpeningHoursControllerTest {
     @BeforeEach
     public void setup() {
         nonExistentCourtId = UUID.randomUUID();
+        nonExistentCourterServiceId = UUID.randomUUID();
         openingHourTypeId = UUID.randomUUID();
         courtId = UUID.randomUUID();
         openingHourType = new OpeningHourType();
@@ -225,12 +228,17 @@ class CourtOpeningHoursControllerTest {
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/opening-hours/counter-service returns opening hours successfully")
+    @DisplayName("GET /courts/{courtId}/v1/opening-hours/counter-service/{counterServiceOpeningHoursId}"
+        + "returns counter service opening hours successfully")
     void getCounterServiceOpeningHoursReturnsSuccessfully() throws Exception {
-        when(courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(courtId))
+        when(courtOpeningHoursService.getCounterServiceOpeningHoursById(courtId, counterServiceOpeningHours.getId()))
             .thenReturn(counterServiceOpeningHours);
 
-        mockMvc.perform(get("/courts/{courtId}/v1/opening-hours/counter-service", courtId))
+        mockMvc.perform(
+            get(
+                "/courts/{courtId}/v1/opening-hours/counter-service/{counterServiceOpeningHoursId}",
+                courtId,
+                counterServiceOpeningHours.getId()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.openingTimesDetails[0].dayOfWeek")
                            .value(counterServiceOpeningHours
@@ -573,7 +581,7 @@ class CourtOpeningHoursControllerTest {
     void deleteCounterServiceOpeningHoursNonExistentCourtReturnsNotFound() throws Exception {
         doThrow(new NotFoundException("Court not found"))
             .when(courtOpeningHoursService)
-            .deleteCourtCounterServiceOpeningHours(nonExistentCourtId);
+            .deleteCourtCounterServiceOpeningHours(nonExistentCourtId, nonExistentCourterServiceId);
 
         mockMvc.perform(delete(
                 "/courts/{courtId}/v1/opening-hours/counter-service",

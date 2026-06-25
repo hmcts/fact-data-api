@@ -202,12 +202,13 @@ class CourtOpeningHoursServiceTest {
     void getCounterServiceOpeningHoursByCourtIdReturnsOpeningHoursWhenFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId))
-            .thenReturn(Optional.of(counterServiceOpeningHours));
+            .thenReturn(Optional.of(List.of(counterServiceOpeningHours)));
 
-        CourtCounterServiceOpeningHours result =
+
+        List<CourtCounterServiceOpeningHours> result =
             courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(courtId);
 
-        assertThat(result).isEqualTo(counterServiceOpeningHours);
+        assertThat(result).isEqualTo(List.of(counterServiceOpeningHours));
     }
 
     @Test

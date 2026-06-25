@@ -12,10 +12,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCounterServiceOpeningHoursRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtOpeningHoursRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -71,21 +68,35 @@ public class CourtOpeningHoursService {
                 "No opening hour found for court ID: " + courtId + " with ID: " + openingHoursId));
     }
 
+    /**
+     * Get a list of counter service opening hours by court ID.
+     *
+     * @param courtId The court ID to find the counter service opening hours for.
+     * @return The list of counter service opening hours.
+     * @throws CourtResourceNotFoundException if no counter service opening hours record exists for the court or the list is empty.
+     */
+    public List<CourtCounterServiceOpeningHours> getCounterServiceOpeningHoursByCourtId(UUID courtId) {
+        return courtCounterServiceOpeningHoursRepository
+            .findByCourtId(courtService.getCourtById(courtId).getId())
+            .filter(list -> !list.isEmpty())
+            .orElseThrow(() -> new CourtResourceNotFoundException(
+                "No counter service opening hours found for court ID: " + courtId));
+    }
 
     /**
      * Get counter-service opening hours by court ID.
-     * A court will only ever have zero or one counter-service opening hours record.
      *
      * @param courtId The court ID to find the counter-service opening hours for.
+     * @param counterServiceOpeningHoursId The ID for the counter service opening hours to find.
      * @return The counter-service opening hours record.
      * @throws CourtResourceNotFoundException if no counter-service opening hours record exists for the court.
      */
-    public CourtCounterServiceOpeningHours getCounterServiceOpeningHoursByCourtId(UUID courtId) {
+    public CourtCounterServiceOpeningHours getCounterServiceOpeningHoursById(final UUID courtId, final UUID counterServiceOpeningHoursId) {
         return courtCounterServiceOpeningHoursRepository
-            .findByCourtId(courtService.getCourtById(courtId).getId())
+            .findByCourtIdAndId(courtService.getCourtById(courtId).getId(), counterServiceOpeningHoursId)
             .orElseThrow(
                 () -> new CourtResourceNotFoundException(
-                    "No counter service opening hours found for court ID: " + courtId));
+                    "No counter service opening hours found for court ID: " + courtId + " with ID: " + counterServiceOpeningHoursId));
     }
 
     /**
@@ -147,7 +158,7 @@ public class CourtOpeningHoursService {
             .map(this::validateCourtTypeIds)
             .ifPresent(courtCounterServiceOpeningHours::setCourtTypes);
 
-        courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)
+        courtCounterServiceOpeningHoursRepository.findByCourtIdAndId(courtId, courtCounterServiceOpeningHours.getId())
             .ifPresent(existing -> courtCounterServiceOpeningHours.setId(existing.getId()));
 
         return courtCounterServiceOpeningHoursRepository.save(courtCounterServiceOpeningHours);
@@ -165,11 +176,12 @@ public class CourtOpeningHoursService {
 
     /**
      * Delete court counter service opening hours.
-     * @param courtId The ID of the court to delete counter service opening hours for.
+     * @param counterServiceId The ID of the counter service to delete counter service opening hours for court courtId.
      */
     @Transactional
-    public void deleteCourtCounterServiceOpeningHours(UUID courtId) {
-        courtCounterServiceOpeningHoursRepository.deleteByCourtId(courtService.getCourtById(courtId).getId());
+    public void deleteCourtCounterServiceOpeningHours(final UUID courtId, final UUID counterServiceId) {
+        log.info("Deleting court counter service opening hours for court ID: {} and counter service ID: {}", courtId, counterServiceId);
+        courtCounterServiceOpeningHoursRepository.deleteById(counterServiceId);
     }
 
     /**
