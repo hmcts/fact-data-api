@@ -344,7 +344,7 @@ class CourtAccessibilityOptionsControllerTest {
 
     @Test
     @DisplayName(
-        "POST /courts/{courtId}/v1/accessibility-options returns 400 when lift is false and liftSupportPhoneNumber is null"
+        "POST /courts/{courtId}/v1/accessibility-options return 400 when lift is false & liftSupportPhoneNumber is null"
     )
     void postAccessibilityOptionsLiftFalseSupportPhoneNull() throws Exception {
         CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
@@ -366,7 +366,7 @@ class CourtAccessibilityOptionsControllerTest {
 
     @Test
     @DisplayName(
-        "POST /courts/{courtId}/v1/accessibility-options returns 400 when lift is false and liftSupportPhoneNumber is invalid"
+        "POST /courts/{courtId}/v1/accessibility-options return 400 when lift is false & liftSupportPhoneNumber invalid"
     )
     void postAccessibilityOptionsLiftFalseSupportPhoneInvalid() throws Exception {
         CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
