@@ -13,6 +13,10 @@ java:
     TESTING_SUPPORT_ENABLE_API: true
   postgresql:
     enabled: true
+    image:
+      registry: hmctsprod.azurecr.io
+      repository: imported/postgres
+      tag: '18-alpine'
     primary:
       initdb:
         scripts:
