@@ -17,6 +17,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
+import uk.gov.hmcts.reform.fact.data.api.controllers.ServiceCentreController.ServiceCentreDetailsView;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -24,7 +25,7 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @Builder
 @Entity
 @Table(name = "area_of_law_types")
-@JsonView(CourtDetailsView.class)
+@JsonView({CourtDetailsView.class, ServiceCentreDetailsView.class})
 public class AreaOfLawType {
 
     @Schema(

@@ -19,6 +19,10 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCounterServiceOpeningHour
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
@@ -77,10 +81,13 @@ public class AuthFunctionalTest {
         court.setName(TestDataHelper.appendRandomSuffixToCourtName(name));
         court.setRegionId(UUID.fromString(getRegionId()));
         court.setOpen(Boolean.FALSE);
-        court.setIsServiceCentre(true);
         Response createResponse = http.doPost("/courts/v1", court, adminToken);
         assertThat(createResponse.statusCode()).isEqualTo(201);
         return UUID.fromString(createResponse.jsonPath().getString("id"));
+    }
+
+    private static UUID createServiceCentreAsAdmin(String name) {
+        return TestDataHelper.createServiceCentre(http, name, adminToken);
     }
 
     private static void assertViewerAllowed(Response adminResponse, Response viewerResponse, String endpoint) {
@@ -159,7 +166,6 @@ public class AuthFunctionalTest {
         testingCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Auth"));
         testingCourt.setOpen(Boolean.FALSE);
         testingCourt.setRegionId(UUID.fromString(getRegionId()));
-        testingCourt.setIsServiceCentre(true);
 
         // initially test that only the admin can create the court
         Response createViewer = http.doPost("/courts/v1", testingCourt, viewerToken);
@@ -196,6 +202,140 @@ public class AuthFunctionalTest {
 
         assertUnauthenticated(http.doGet("/courts/v1", ""), "/courts/v1 [GET]");
         assertUnauthenticated(http.doPost("/courts/v1", testingCourt, ""), "/courts/v1 [POST]");
+    }
+
+    @Test
+    @DisplayName("Service centre controller endpoints enforce admin-only writes")
+    void serviceCentreControllerAuth() {
+        ServiceCentre serviceCentre = TestDataHelper.buildServiceCentre(
+            http,
+            "Auth Test Service Centre",
+            adminToken
+        );
+
+        Response createViewer = http.doPost("/service-centres/v1", serviceCentre, viewerToken);
+        Response createAdmin = http.doPost("/service-centres/v1", serviceCentre, adminToken);
+        assertViewerForbidden(createViewer, "/service-centres/v1 [POST]");
+        assertThat(createAdmin.statusCode()).isEqualTo(201);
+
+        ServiceCentre createdServiceCentre = createAdmin.as(ServiceCentre.class);
+        UUID serviceCentreId = createdServiceCentre.getId();
+        assertThat(createdServiceCentre.getCatchmentType().name()).isEqualTo("NATIONAL");
+
+        String[] readEndpoints = new String[]{
+            "/service-centres/" + serviceCentreId + "/v1"
+        };
+
+        for (String endpoint : readEndpoints) {
+            Response admin = http.doGet(endpoint, adminToken);
+            Response viewer = http.doGet(endpoint, viewerToken);
+            assertViewerAllowed(admin, viewer, endpoint);
+        }
+
+        serviceCentre.setName(TestDataHelper.appendRandomSuffixToCourtName("Auth Test Service Centre Updated"));
+        Response updateViewer = http.doPut("/service-centres/" + serviceCentreId + "/v1", serviceCentre, viewerToken);
+        Response updateAdmin = http.doPut("/service-centres/" + serviceCentreId + "/v1", serviceCentre, adminToken);
+        assertViewerForbidden(updateViewer, "/service-centres/{serviceCentreId}/v1 [PUT]");
+        assertThat(updateAdmin.statusCode()).isEqualTo(200);
+
+        assertUnauthenticated(
+            http.doGet("/service-centres/" + serviceCentreId + "/v1", ""),
+            "/service-centres/{serviceCentreId}/v1 [GET]"
+        );
+        assertUnauthenticated(http.doPost("/service-centres/v1", serviceCentre, ""), "/service-centres/v1 [POST]");
+    }
+
+    @Test
+    @DisplayName("Service centre child endpoints enforce admin-only writes")
+    void serviceCentreChildControllerAuth() {
+        UUID serviceCentreId = createServiceCentreAsAdmin("Auth Test Service Centre Children");
+        ServiceCentreAddress address = ServiceCentreAddress.builder()
+            .serviceCentreId(serviceCentreId)
+            .addressLine1("1 Auth Street")
+            .townCity("London")
+            .postcode("NW10 4DX")
+            .addressType(AddressType.VISIT_OR_CONTACT_US)
+            .build();
+
+        Response createAddressAdmin =
+            http.doPost("/service-centres/" + serviceCentreId + "/v1/address", address, adminToken);
+        assertThat(createAddressAdmin.statusCode()).isEqualTo(201);
+        UUID addressId = UUID.fromString(createAddressAdmin.jsonPath().getString("id"));
+
+        assertViewerAllowed(
+            http.doGet("/service-centres/" + serviceCentreId + "/v1/address", adminToken),
+            http.doGet("/service-centres/" + serviceCentreId + "/v1/address", viewerToken),
+            "/service-centres/{serviceCentreId}/v1/address [GET]"
+        );
+        assertViewerForbidden(
+            http.doPost("/service-centres/" + serviceCentreId + "/v1/address", address, viewerToken),
+            "/service-centres/{serviceCentreId}/v1/address [POST]"
+        );
+        assertViewerForbidden(
+            http.doPut("/service-centres/" + serviceCentreId + "/v1/address/" + addressId, address, viewerToken),
+            "/service-centres/{serviceCentreId}/v1/address/{addressId} [PUT]"
+        );
+
+        UUID contactTypeId = UUID.fromString(http.doGet("/types/v1/contact-description-types", adminToken)
+                                                 .jsonPath().getString("[0].id"));
+        ServiceCentreContactDetails contactDetails = ServiceCentreContactDetails.builder()
+            .serviceCentreId(serviceCentreId)
+            .serviceCentreContactDescriptionId(contactTypeId)
+            .explanation("Auth test")
+            .email("servicecentre-auth@test.gov.uk")
+            .phoneNumber("01234567890")
+            .build();
+        Response createContactAdmin = http.doPost(
+            "/service-centres/" + serviceCentreId + "/v1/contact-details",
+            contactDetails,
+            adminToken
+        );
+        assertThat(createContactAdmin.statusCode()).isEqualTo(201);
+        UUID contactId = UUID.fromString(createContactAdmin.jsonPath().getString("id"));
+
+        assertViewerAllowed(
+            http.doGet("/service-centres/" + serviceCentreId + "/v1/contact-details", adminToken),
+            http.doGet("/service-centres/" + serviceCentreId + "/v1/contact-details", viewerToken),
+            "/service-centres/{serviceCentreId}/v1/contact-details [GET]"
+        );
+        assertViewerForbidden(
+            http.doPut(
+                "/service-centres/" + serviceCentreId + "/v1/contact-details/" + contactId,
+                contactDetails,
+                viewerToken
+            ),
+            "/service-centres/{serviceCentreId}/v1/contact-details/{contactId} [PUT]"
+        );
+
+        UUID areaOfLawId = UUID.fromString(http.doGet("/types/v1/areas-of-law", adminToken)
+                                               .jsonPath().getString("[0].id"));
+        ServiceCentreAreasOfLaw areasOfLaw = ServiceCentreAreasOfLaw.builder()
+            .serviceCentreId(serviceCentreId)
+            .areasOfLaw(List.of(areaOfLawId))
+            .build();
+        assertThat(http.doPut(
+            "/service-centres/" + serviceCentreId + "/v1/areas-of-law",
+            areasOfLaw,
+            adminToken
+        ).statusCode()).isEqualTo(201);
+        assertViewerAllowed(
+            http.doGet("/service-centres/" + serviceCentreId + "/v1/areas-of-law", adminToken),
+            http.doGet("/service-centres/" + serviceCentreId + "/v1/areas-of-law", viewerToken),
+            "/service-centres/{serviceCentreId}/v1/areas-of-law [GET]"
+        );
+        assertViewerForbidden(
+            http.doPut("/service-centres/" + serviceCentreId + "/v1/areas-of-law", areasOfLaw, viewerToken),
+            "/service-centres/{serviceCentreId}/v1/areas-of-law [PUT]"
+        );
+
+        assertViewerForbidden(
+            http.doDelete("/service-centres/" + serviceCentreId + "/v1/address/" + addressId, viewerToken),
+            "/service-centres/{serviceCentreId}/v1/address/{addressId} [DELETE]"
+        );
+        assertViewerForbidden(
+            http.doDelete("/service-centres/" + serviceCentreId + "/v1/contact-details/" + contactId, viewerToken),
+            "/service-centres/{serviceCentreId}/v1/contact-details/{contactId} [DELETE]"
+        );
     }
 
     @Test
@@ -637,7 +777,6 @@ public class AuthFunctionalTest {
             "/search/courts/v1/postcode?postcode=SW1A1AA&limit=5", "courts by postcode",
             "/search/courts/v1/prefix?prefix=A", "courts by prefix",
             "/search/courts/v1/name?q=court", "courts by name",
-            "/search/service-area/v1/adoption", "service area",
             "/search/services/v1", "services",
             "/search/services/v1/divorce/service-areas", "service areas by service"
         );
@@ -660,11 +799,18 @@ public class AuthFunctionalTest {
         endpoint = "/testing-support/courts/name-prefix/Auth Test Cleanup";
         noToken = http.doDelete(endpoint, "");
         assertOpen(noToken, endpoint);
+        endpoint = "/testing-support/service-centres?serviceCentreName=Auth Test Service Centre Support";
+        noToken = http.doGet(endpoint);
+        assertOpen(noToken, endpoint);
+        endpoint = "/testing-support/service-centres/name-prefix/Auth Test Service Centre Support";
+        noToken = http.doDelete(endpoint, "");
+        assertOpen(noToken, endpoint);
     }
 
     @AfterAll
     static void cleanUp() {
         http.doDelete("/testing-support/courts/name-prefix/Test Court", adminToken);
         http.doDelete("/testing-support/courts/name-prefix/Auth Test", adminToken);
+        http.doDelete("/testing-support/service-centres/name-prefix/Auth Test", adminToken);
     }
 }

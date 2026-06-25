@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.AuditService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -38,9 +39,9 @@ public class AuditController {
 
     @GetMapping("/v1")
     @Operation(
-        summary = "Get filtered and paginated list of audits for a given Court",
+        summary = "Get filtered and paginated list of audits",
         description = "Fetch a paginated and optionally filtered, list of audit records"
-            + " that relate to a specific Court"
+            + " that relate to a specific Court or Service Centre"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved list of audits"),
@@ -52,6 +53,7 @@ public class AuditController {
         @RequestParam(name = "pageSize", defaultValue = "25")
         @Positive(message = "pageSize must be greater than 0") int pageSize,
         @RequestParam(name = "courtId", required = false) @ValidUUID(allowNull = true) String courtId,
+        @RequestParam(name = "serviceCentreId", required = false) @ValidUUID(allowNull = true) String serviceCentreId,
         @RequestParam(name = "email", required = false)
         @Pattern(
             regexp = "^[A-Za-z0-9._+-]*(|@[A-Za-z0-9._+-]*)$",
@@ -68,6 +70,9 @@ public class AuditController {
         if (toDate != null && toDate.isBefore(fromDate)) {
             throw new InvalidDateRangeException("toDate must not be before fromDate");
         }
+        if (courtId != null && serviceCentreId != null) {
+            throw new InvalidParameterCombinationException("Only one of courtId or serviceCentreId can be provided");
+        }
 
         return ResponseEntity.ok(
             auditService.getFilteredAndPaginatedAudits(
@@ -76,6 +81,7 @@ public class AuditController {
                 fromDate,
                 toDate,
                 courtId,
+                serviceCentreId,
                 emailMatch
             )
         );
