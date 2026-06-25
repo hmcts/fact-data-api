@@ -543,7 +543,6 @@ class CourtControllerTest {
             .open(Boolean.TRUE)
             .warningNotice("Notice")
             .regionId(REGION_ID)
-            .isServiceCentre(Boolean.TRUE)
             .openOnCath(Boolean.TRUE)
             .mrdId("MRD123")
             .build();
@@ -557,7 +556,6 @@ class CourtControllerTest {
             .open(Boolean.TRUE)
             .warningNotice("Notice")
             .regionId(REGION_ID)
-            .isServiceCentre(Boolean.TRUE)
             .openOnCath(Boolean.TRUE)
             .mrdId("MRD123")
             .build();

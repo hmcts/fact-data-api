@@ -9,8 +9,10 @@ import static org.mockito.Mockito.when;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.services.AuditService;
 
 import java.time.LocalDate;
@@ -33,6 +35,7 @@ class AuditControllerTest {
 
     private static final UUID AUDIT_ID = UUID.randomUUID();
     private static final UUID COURT_ID = UUID.randomUUID();
+    private static final UUID SERVICE_CENTRE_ID = UUID.randomUUID();
     private static final UUID USER_ID = UUID.randomUUID();
 
     private static final int PAGE_NUMBER = 0;
@@ -58,12 +61,14 @@ class AuditControllerTest {
             any(LocalDate.class),
             any(LocalDate.class),
             isNull(),
+            isNull(),
             isNull()
         )).thenReturn(auditPage);
 
         ResponseEntity<Page<Audit>> response = auditController.getFilteredAndPaginatedAudits(
             PAGE_NUMBER,
             PAGE_SIZE,
+            null,
             null,
             null,
             LocalDate.now().minusDays(1),
@@ -85,8 +90,25 @@ class AuditControllerTest {
                     PAGE_SIZE,
                     null,
                     null,
+                    null,
                     fromDate,
                     toDate
+                )
+        );
+    }
+
+    @Test
+    void getFilteredAndPaginatedAuditsThrowsInvalidParameterCombinationForBothSubjectIds() {
+        assertThrows(
+            InvalidParameterCombinationException.class, () ->
+                auditController.getFilteredAndPaginatedAudits(
+                    PAGE_NUMBER,
+                    PAGE_SIZE,
+                    COURT_ID.toString(),
+                    SERVICE_CENTRE_ID.toString(),
+                    null,
+                    LocalDate.now().minusDays(1),
+                    LocalDate.now()
                 )
         );
     }
@@ -94,7 +116,8 @@ class AuditControllerTest {
     private Audit createAudit() {
         return Audit.builder()
             .id(AUDIT_ID)
-            .courtId(COURT_ID)
+            .subjectId(COURT_ID)
+            .subjectType(AuditSubjectType.COURT)
             .actionEntity(Court.class.getSimpleName())
             .actionDataDiff(List.of(
                 new Change("isOpen", Boolean.FALSE, Boolean.TRUE),

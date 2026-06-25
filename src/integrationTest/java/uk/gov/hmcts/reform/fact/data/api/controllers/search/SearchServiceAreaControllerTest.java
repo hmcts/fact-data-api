@@ -8,10 +8,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
+import uk.gov.hmcts.reform.fact.data.api.dto.ServiceAreaSearchResult;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchResultType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtServiceAreaService;
+import uk.gov.hmcts.reform.fact.data.api.services.search.SearchServiceAreaService;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,43 +28,47 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class SearchServiceAreaControllerTest {
 
-    private static final UUID COURT_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
-    private static final UUID SERVICE_AREA_ID = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    private static final UUID SERVICE_CENTRE_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+    private static final UUID SERVICE_AREA_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174111");
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private CourtServiceAreaService courtServiceAreaService;
+    private SearchServiceAreaService searchServiceAreaService;
 
     @Test
-    @DisplayName("GET /search/service-area/v1/{serviceAreaName} returns court service areas")
-    void getServiceAreaReturnsOk() throws Exception {
-        CourtServiceAreas area = new CourtServiceAreas();
-        area.setCourtId(COURT_ID);
-        area.setServiceAreaId(List.of(SERVICE_AREA_ID));
-        area.setCatchmentType(CatchmentType.REGIONAL);
-        area.setCourtName("court name");
-        area.setCourtSlug("court-name");
+    @DisplayName("GET /search/service-area/v1/{serviceAreaName} returns service-centre results")
+    void getServiceAreaByNameReturnsServiceCentreResults() throws Exception {
+        when(searchServiceAreaService.findByServiceAreaName("Money Claims"))
+            .thenReturn(List.of(ServiceAreaSearchResult.builder()
+                                    .id(SERVICE_CENTRE_ID)
+                                    .serviceCentreId(SERVICE_CENTRE_ID)
+                                    .serviceCentreName("National Business Centre")
+                                    .serviceCentreSlug("national-business-centre")
+                                    .serviceAreaIds(List.of(SERVICE_AREA_ID))
+                                    .catchmentType(CatchmentType.NATIONAL)
+                                    .type(SearchResultType.SERVICE_CENTRE)
+                                    .build()));
 
-        when(courtServiceAreaService.findByServiceAreaName("Family"))
-            .thenReturn(List.of(area));
-
-        mockMvc.perform(get("/search/service-area/v1/{serviceAreaName}", "Family"))
+        mockMvc.perform(get("/search/service-area/v1/{serviceAreaName}", "Money Claims"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].courtId").value(COURT_ID.toString()))
-            .andExpect(jsonPath("$[0].catchmentType").value("REGIONAL"))
-            .andExpect(jsonPath("$[0].courtName").value("court name"))
-            .andExpect(jsonPath("$[0].courtSlug").value("court-name"));
+            .andExpect(jsonPath("$[0].id").value(SERVICE_CENTRE_ID.toString()))
+            .andExpect(jsonPath("$[0].serviceCentreId").value(SERVICE_CENTRE_ID.toString()))
+            .andExpect(jsonPath("$[0].serviceCentreName").value("National Business Centre"))
+            .andExpect(jsonPath("$[0].serviceCentreSlug").value("national-business-centre"))
+            .andExpect(jsonPath("$[0].serviceAreaIds[0]").value(SERVICE_AREA_ID.toString()))
+            .andExpect(jsonPath("$[0].catchmentType").value("NATIONAL"))
+            .andExpect(jsonPath("$[0].type").value("SERVICE_CENTRE"));
     }
 
     @Test
     @DisplayName("GET /search/service-area/v1/{serviceAreaName} returns 404 when missing")
-    void getServiceAreaReturnsNotFound() throws Exception {
-        when(courtServiceAreaService.findByServiceAreaName("Family"))
-            .thenThrow(new NotFoundException("Service area Family not found"));
+    void getServiceAreaByNameReturnsNotFound() throws Exception {
+        when(searchServiceAreaService.findByServiceAreaName("Missing"))
+            .thenThrow(new NotFoundException("Service area Missing not found"));
 
-        mockMvc.perform(get("/search/service-area/v1/{serviceAreaName}", "Family"))
+        mockMvc.perform(get("/search/service-area/v1/{serviceAreaName}", "Missing"))
             .andExpect(status().isNotFound());
     }
 }

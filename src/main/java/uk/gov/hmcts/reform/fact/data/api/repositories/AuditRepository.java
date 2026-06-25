@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.repositories;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -26,13 +27,15 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
         ZonedDateTime createdAtBefore,
         Pageable pageable);
 
-    Page<Audit> findByCourtIdAndCreatedAtAfter(
-        UUID courtId,
+    Page<Audit> findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
+        UUID subjectId,
+        AuditSubjectType subjectType,
         ZonedDateTime createdAt,
         Pageable pageable);
 
-    Page<Audit> findByCourtIdAndCreatedAtBetween(
-        UUID courtId,
+    Page<Audit> findBySubjectIdAndSubjectTypeAndCreatedAtBetween(
+        UUID subjectId,
+        AuditSubjectType subjectType,
         ZonedDateTime createdAtAfter,
         ZonedDateTime createdAtBefore,
         Pageable pageable);
@@ -61,7 +64,7 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
             and u.email like %:email%
         """;
 
-    String AND_COURT_ID_EQUALS = " and a.courtId = :courtId";
+    String AND_SUBJECT_EQUALS = " and a.subjectId = :subjectId and a.subjectType = :subjectType";
 
 
     @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_AFTER)
@@ -77,16 +80,18 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
         String email,
         Pageable pageable);
 
-    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_AFTER + AND_COURT_ID_EQUALS)
-    Page<Audit> findByCourtIdAndCreatedAtAfterAndEmailAddressLike(
-        UUID courtId,
+    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_AFTER + AND_SUBJECT_EQUALS)
+    Page<Audit> findBySubjectIdAndSubjectTypeAndCreatedAtAfterAndEmailAddressLike(
+        UUID subjectId,
+        AuditSubjectType subjectType,
         ZonedDateTime createdAtAfter,
         String email,
         Pageable pageable);
 
-    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_BETWEEN + AND_COURT_ID_EQUALS)
-    Page<Audit> findByCourtIdAndCreatedAtBetweenAndEmailAddressLike(
-        UUID courtId,
+    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_BETWEEN + AND_SUBJECT_EQUALS)
+    Page<Audit> findBySubjectIdAndSubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
+        UUID subjectId,
+        AuditSubjectType subjectType,
         ZonedDateTime createdAtAfter,
         ZonedDateTime createdAtBefore,
         String email,

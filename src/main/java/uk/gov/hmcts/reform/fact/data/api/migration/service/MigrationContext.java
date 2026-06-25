@@ -12,17 +12,12 @@ class MigrationContext {
     private final Map<Integer, UUID> areaOfLawIds = new HashMap<>();
     private final Map<Integer, UUID> serviceAreaIds = new HashMap<>();
     private final Map<Integer, List<UUID>> localAuthorityTypeIds = new HashMap<>();
-    private UUID serviceCentreRegionId;
     int courtAreasOfLawMigrated;
-    int courtServiceAreasMigrated;
     int courtLocalAuthoritiesMigrated;
     int courtSinglePointsOfEntryMigrated;
     int courtProfessionalInformationMigrated;
     int courtCodesMigrated;
     int courtDxCodesMigrated;
     int courtFaxMigrated;
-
-    void setServiceCentreRegionId(UUID id) {
-        this.serviceCentreRegionId = id;
-    }
+    int serviceCentreAreasOfLawMigrated;
 }
