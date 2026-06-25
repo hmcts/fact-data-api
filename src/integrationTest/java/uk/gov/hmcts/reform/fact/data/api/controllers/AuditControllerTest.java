@@ -357,13 +357,16 @@ class AuditControllerTest {
     void getSubjectNameAndIdMapReturnsResults() throws Exception {
         // Seed at least one court so COURT options are present
         createTestCourts(1);
+        createTestServiceCentre();
 
         mvc.perform(get("/audits/subjectoptions/v1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.COURT").isArray())
             .andExpect(jsonPath("$.SERVICE_CENTRE").isArray())
             .andExpect(jsonPath("$.COURT[0].name").exists())
-            .andExpect(jsonPath("$.COURT[0].id").exists());
+            .andExpect(jsonPath("$.COURT[0].id").exists())
+            .andExpect(jsonPath("$.SERVICE_CENTRE[0].name").exists())
+            .andExpect(jsonPath("$.SERVICE_CENTRE[0].id").exists());
     }
 
     @Test

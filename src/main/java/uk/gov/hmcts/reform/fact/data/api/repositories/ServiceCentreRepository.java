@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import uk.gov.hmcts.reform.fact.data.api.dto.ServiceCentreWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 
 import java.util.List;
 import java.util.Optional;
@@ -88,4 +89,19 @@ public interface ServiceCentreRepository extends JpaRepository<ServiceCentre, UU
         @Param("lon") double lon,
         @Param("limit") int limit
     );
+
+    /**
+     * Retrieve all service centre names mapped to their IDs.
+     *
+     * @return the {@link List} of {@link NameAndId} objects
+     */
+    @Query(
+        value = """
+            SELECT sc.name, sc.id
+            FROM service_centre sc
+            ORDER BY sc.name
+            """,
+        nativeQuery = true
+    )
+    List<NameAndId> findAllNameAndId();
 }

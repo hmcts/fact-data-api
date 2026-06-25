@@ -122,6 +122,9 @@ class AuditControllerTest {
         Map<AuditSubjectType, List<NameAndId>> subjectMap = Map.of(
             AuditSubjectType.COURT, List.of(
                 new NameAndId("Exeter Law Courts", UUID.randomUUID())
+            ),
+            AuditSubjectType.SERVICE_CENTRE, List.of(
+                new NameAndId("Traffic Enforcement Centre", UUID.randomUUID())
             )
         );
 

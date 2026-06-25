@@ -31,6 +31,7 @@ public class AuditService {
 
     private final AuditRepository auditRepository;
     private final CourtService courtService;
+    private final ServiceCentreService serviceCentreService;
     private final AuditConfigurationProperties auditConfiguration;
 
     /**
@@ -147,12 +148,7 @@ public class AuditService {
     public Map<AuditSubjectType, List<NameAndId>> getSubjectNameAndIdMap() {
         return Map.of(
             AuditSubjectType.COURT, courtService.getAllCourtNameAndIds(),
-            // TODO: replace with real service centre once implemented
-            AuditSubjectType.SERVICE_CENTRE, List.of(
-                new NameAndId(
-                    "Service Center",
-                    UUID.fromString("00000000-0000-0000-0000-000000000000")
-                ))
+            AuditSubjectType.SERVICE_CENTRE, serviceCentreService.getAllServiceCentreNameAndIds()
         );
     }
 

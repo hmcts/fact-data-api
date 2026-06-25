@@ -65,6 +65,8 @@ class AuditServiceTest {
     @Mock
     private CourtService courtService;
     @Mock
+    private ServiceCentreService serviceCentreService;
+    @Mock
     private AuditConfigurationProperties auditConfigurationProperties;
 
     @InjectMocks
@@ -409,26 +411,33 @@ class AuditServiceTest {
             new NameAndId("Birmingham Civil and Family Justice Centre", UUID.randomUUID()),
             new NameAndId("Exeter Law Courts", UUID.randomUUID())
         );
+        List<NameAndId> serviceCentres = List.of(
+            new NameAndId("Traffic Enforcement Centre", UUID.randomUUID())
+        );
         when(courtService.getAllCourtNameAndIds()).thenReturn(courts);
+        when(serviceCentreService.getAllServiceCentreNameAndIds()).thenReturn(serviceCentres);
 
         Map<AuditSubjectType, List<NameAndId>> result = auditService.getSubjectNameAndIdMap();
 
         assertThat(result).hasSize(2).containsKeys(AuditSubjectType.COURT, AuditSubjectType.SERVICE_CENTRE);
         assertThat(result.get(AuditSubjectType.COURT)).containsExactlyElementsOf(courts);
-        // TODO: assertions for service centres
+        assertThat(result.get(AuditSubjectType.SERVICE_CENTRE)).containsExactlyElementsOf(serviceCentres);
         verify(courtService).getAllCourtNameAndIds();
+        verify(serviceCentreService).getAllServiceCentreNameAndIds();
     }
 
     @Test
-    void getSubjectNameAndIdMapShouldReturnEmptyCourtListWhenNoCourtsExist() {
+    void getSubjectNameAndIdMapShouldReturnEmptyListsWhenNoSubjectsExist() {
         when(courtService.getAllCourtNameAndIds()).thenReturn(List.of());
+        when(serviceCentreService.getAllServiceCentreNameAndIds()).thenReturn(List.of());
 
         Map<AuditSubjectType, List<NameAndId>> result = auditService.getSubjectNameAndIdMap();
 
         assertThat(result).containsKeys(AuditSubjectType.COURT, AuditSubjectType.SERVICE_CENTRE);
         assertThat(result.get(AuditSubjectType.COURT)).isEmpty();
-        // TODO: assertions for service centres
+        assertThat(result.get(AuditSubjectType.SERVICE_CENTRE)).isEmpty();
         verify(courtService).getAllCourtNameAndIds();
+        verify(serviceCentreService).getAllServiceCentreNameAndIds();
     }
 
     @Test
