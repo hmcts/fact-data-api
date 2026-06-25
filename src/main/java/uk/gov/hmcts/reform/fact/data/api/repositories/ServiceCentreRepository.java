@@ -70,7 +70,7 @@ public interface ServiceCentreRepository extends JpaRepository<ServiceCentre, UU
                     AND CAST(:serviceAreaId AS uuid) = ANY(sc.service_area_ids)
                     AND CAST(:areaOfLawId AS uuid) = ANY(scaol.areas_of_law)
                     AND sc.catchment_type IN (:#{#catchmentTypes.![name()]})
-                    AND sca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
+                    AND sca.address_type IN ('VISIT_US', 'WRITE_TO_US', 'VISIT_OR_CONTACT_US')
                     AND sca.lat IS NOT NULL
                     AND sca.lon IS NOT NULL
                 ORDER BY sc.id, distance
