@@ -111,6 +111,7 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
             .accessibleEntrance(true)
             .hearingEnhancementEquipment(HearingEnhancementEquipment.INFRARED_SYSTEMS)
             .lift(false)
+            .liftSupportPhoneNumber("020 7946 0960")
             .quietRoom(false)
             .build();
 
@@ -185,6 +186,7 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
             .accessibleEntrance(true)
             .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(false)
+            .liftSupportPhoneNumber("020 7946 0961")
             .quietRoom(false)
             .build();
 

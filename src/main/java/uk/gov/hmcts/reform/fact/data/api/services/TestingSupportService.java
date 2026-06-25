@@ -393,6 +393,8 @@ public class TestingSupportService {
         if (courtAccessibilityOptions.getLift().booleanValue()) {
             courtAccessibilityOptions.setLiftDoorWidth(200 + random.nextInt(600));
             courtAccessibilityOptions.setLiftDoorLimit(3000 + random.nextInt(5000));
+        } else {
+            courtAccessibilityOptions.setLiftSupportPhoneNumber(rndPhoneNumber(random));
         }
 
         courtAccessibilityOptionsService.setAccessibilityOptions(courtId, courtAccessibilityOptions);
