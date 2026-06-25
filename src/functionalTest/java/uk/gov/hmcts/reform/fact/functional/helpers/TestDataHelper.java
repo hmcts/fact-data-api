@@ -50,10 +50,10 @@ public final class TestDataHelper {
 
     /**
      * Fetches a specific opening hour type ID by index from the opening hour types endpoint.
-     * Valid indices are 0-8 for the 9 available opening hour types.
+     * Valid indices are 0-9 for the 10 available opening hour types.
      *
      * @param http the HTTP client
-     * @param index the index of the opening hour type (0-8)
+     * @param index the index of the opening hour type (0-9)
      * @return the opening hour type ID at the specified index as a UUID
      */
     public static UUID getOpeningHourTypeId(final HttpClient http, final int index) {
