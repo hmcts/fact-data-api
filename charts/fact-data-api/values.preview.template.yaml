@@ -17,7 +17,6 @@ java:
       registry: hmctsprod.azurecr.io
       repository: imported/bitnami/postgresql
       tag: '17.5.0'
-    nameOverride: postgresql-17
     primary:
       initdb:
         scripts:
