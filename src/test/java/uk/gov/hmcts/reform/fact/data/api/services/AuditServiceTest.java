@@ -435,17 +435,17 @@ class AuditServiceTest {
     void getAuditByIdShouldReturnAuditWhenRecordExists() {
         Audit audit = createAudit();
 
-        when(auditRepository.findWithCourtAndUserById(AUDIT_ID)).thenReturn(Optional.of(audit));
+        when(auditRepository.findWithUserById(AUDIT_ID)).thenReturn(Optional.of(audit));
 
         Audit result = auditService.getAuditById(AUDIT_ID);
 
         assertThat(result).isSameAs(audit);
-        verify(auditRepository).findWithCourtAndUserById(AUDIT_ID);
+        verify(auditRepository).findWithUserById(AUDIT_ID);
     }
 
     @Test
     void getAuditByIdShouldThrowNotFoundExceptionWhenRecordDoesNotExist() {
-        when(auditRepository.findWithCourtAndUserById(AUDIT_ID)).thenReturn(Optional.empty());
+        when(auditRepository.findWithUserById(AUDIT_ID)).thenReturn(Optional.empty());
 
         NotFoundException exception = assertThrows(
             NotFoundException.class,
@@ -453,7 +453,7 @@ class AuditServiceTest {
         );
 
         assertThat(exception.getMessage()).isEqualTo("Audit not found, ID: " + AUDIT_ID);
-        verify(auditRepository).findWithCourtAndUserById(AUDIT_ID);
+        verify(auditRepository).findWithUserById(AUDIT_ID);
     }
 
     private Audit createAudit() {

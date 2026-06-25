@@ -119,7 +119,7 @@ public final class AuditControllerFunctionalTest {
             .as("Returned audit id should match requested id")
             .isEqualTo(auditId);
 
-        assertThat(singleAuditResponse.jsonPath().getString("court.id"))
+        assertThat(singleAuditResponse.jsonPath().getString("subjectId"))
             .as("Returned audit should belong to the created court")
             .isEqualTo(courtId.toString());
     }

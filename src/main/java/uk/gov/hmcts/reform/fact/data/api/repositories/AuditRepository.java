@@ -104,8 +104,8 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
         String email,
         Pageable pageable);
 
-    @EntityGraph(attributePaths = {"court", "user"})
-    Optional<Audit> findWithCourtAndUserById(UUID id);
+    @EntityGraph(attributePaths = {"user"})
+    Optional<Audit> findWithUserById(UUID id);
 
     // ----------------------------------------------------
     // Housekeeping queries

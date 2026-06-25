@@ -388,7 +388,7 @@ class AuditControllerTest {
         mvc.perform(get("/audits/" + auditId + "/v1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(auditId))
-            .andExpect(jsonPath("$.court.id").value(court.getCourtId().toString()))
+            .andExpect(jsonPath("$.subjectId").value(court.getCourtId().toString()))
             .andExpect(jsonPath("$.actionType").exists())
             .andExpect(jsonPath("$.createdAt").exists());
     }
