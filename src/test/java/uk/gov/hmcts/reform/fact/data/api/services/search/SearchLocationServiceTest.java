@@ -226,6 +226,38 @@ class SearchLocationServiceTest {
     }
 
     @Test
+    void forcedMarriageDocumentsIncludesRegionalServiceCentreResults() {
+        UUID serviceCentreId = UUID.randomUUID();
+        ServiceCentreWithDistance serviceCentre =
+            serviceCentreWithDistance(serviceCentreId, BigDecimal.valueOf(1));
+
+        when(searchCourtService.getCourtsBySearchParameters(
+            "PL12 4ER",
+            FORCED_MARRIAGE_SERVICE_AREA,
+            SearchAction.DOCUMENTS,
+            10
+        )).thenReturn(List.of());
+        when(searchServiceCentreService.getServiceCentresBySearchParameters(
+            "PL12 4ER",
+            FORCED_MARRIAGE_SERVICE_AREA,
+            SearchAction.DOCUMENTS,
+            10
+        )).thenReturn(List.of(serviceCentre));
+
+        List<SearchResult> results = searchLocationService.getLocationsBySearchParameters(
+            "PL12 4ER",
+            FORCED_MARRIAGE_SERVICE_AREA,
+            SearchAction.DOCUMENTS,
+            10
+        );
+
+        assertThat(results).extracting(SearchResult::getType)
+            .containsExactly(SearchResultType.SERVICE_CENTRE);
+        assertThat(results).extracting(SearchResult::getId)
+            .containsExactly(serviceCentreId);
+    }
+
+    @Test
     void childcareNearestStillIncludesServiceCentreResults() {
         UUID courtId = UUID.randomUUID();
         UUID serviceCentreId = UUID.randomUUID();

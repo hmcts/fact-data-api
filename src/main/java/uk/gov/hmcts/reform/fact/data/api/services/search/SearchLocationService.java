@@ -13,10 +13,12 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class SearchLocationService {
 
-    private static final Set<String> COURT_ONLY_SERVICE_AREAS = Set.of(
+    private static final Set<String> COURT_ONLY_DOCUMENT_SERVICE_AREAS = Set.of(
         "Adoption",
+        "Childcare arrangements if you separate from your partner"
+    );
+    private static final Set<String> COURT_ONLY_UPDATE_SERVICE_AREAS = Set.of(
         "Bankruptcy",
-        "Childcare arrangements if you separate from your partner",
         "Female Genital Mutilation Protection Orders",
         "Forced marriage",
         "Housing"
@@ -63,8 +65,18 @@ public class SearchLocationService {
     }
 
     private boolean isCourtOnlySearch(String serviceArea, SearchAction action) {
-        return action != SearchAction.NEAREST
-            && serviceArea != null
-            && COURT_ONLY_SERVICE_AREAS.stream().anyMatch(serviceArea::equalsIgnoreCase);
+        if (serviceArea == null || action == null) {
+            return false;
+        }
+
+        return switch (action) {
+            case DOCUMENTS -> containsIgnoreCase(COURT_ONLY_DOCUMENT_SERVICE_AREAS, serviceArea);
+            case UPDATE -> containsIgnoreCase(COURT_ONLY_UPDATE_SERVICE_AREAS, serviceArea);
+            case NEAREST -> false;
+        };
+    }
+
+    private boolean containsIgnoreCase(Set<String> serviceAreas, String serviceArea) {
+        return serviceAreas.stream().anyMatch(serviceArea::equalsIgnoreCase);
     }
 }
