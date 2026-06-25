@@ -11,8 +11,8 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParamet
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtAddressService;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtServiceAreaService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtSinglePointOfEntryService;
 import uk.gov.hmcts.reform.fact.data.api.services.OsService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceAreaService;
@@ -36,27 +36,27 @@ public class SearchCourtService {
     private final OsService osService;
     private final ServiceAreaService serviceAreaService;
     private final CourtSinglePointOfEntryService courtSinglePointOfEntryService;
-    private final CourtServiceAreaService courtServiceAreaService;
     private final CourtAddressService courtAddressService;
     private final SearchExecuter searchExecuter;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
+    private final ServiceCentreRepository serviceCentreRepository;
     private static final String CHILDCARE_SERVICE_AREA = "Childcare arrangements if you separate from your partner";
     private static final String CHILDCARE_AOL = "Children";
 
     public SearchCourtService(OsService osService,
                               ServiceAreaService serviceAreaService,
                               CourtSinglePointOfEntryService courtSinglePointOfEntryService,
-                              CourtServiceAreaService courtServiceAreaService,
                               CourtAddressService courtAddressService,
                               SearchExecuter searchExecuter,
-                              LocalAuthorityTypeRepository localAuthorityTypeRepository) {
+                              LocalAuthorityTypeRepository localAuthorityTypeRepository,
+                              ServiceCentreRepository serviceCentreRepository) {
         this.osService = osService;
         this.serviceAreaService = serviceAreaService;
         this.courtSinglePointOfEntryService = courtSinglePointOfEntryService;
-        this.courtServiceAreaService = courtServiceAreaService;
         this.courtAddressService = courtAddressService;
         this.searchExecuter = searchExecuter;
         this.localAuthorityTypeRepository = localAuthorityTypeRepository;
+        this.serviceCentreRepository = serviceCentreRepository;
     }
 
     /**
@@ -182,10 +182,10 @@ public class SearchCourtService {
     private SearchStrategy getFamilyStrategy(SearchAction action, ServiceArea serviceArea, String authorityName) {
         if (LOCAL_AUTHORITY.equals(serviceArea.getCatchmentMethod())
                 && !authorityName.isEmpty()) {
-            return courtServiceAreaService.findByServiceAreaId(serviceArea.getId())
-                    .stream()
-                    .anyMatch(courtService -> courtService.getCatchmentType().equals(REGIONAL))
-                    ? FAMILY_REGIONAL : FAMILY_NON_REGIONAL;
+            return serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+                serviceArea.getId(),
+                List.of(REGIONAL)
+            ) ? FAMILY_REGIONAL : FAMILY_NON_REGIONAL;
         }
         log.debug("Setting search strategy to default for {}, {}, {}",
                 action, serviceArea, authorityName);

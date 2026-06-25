@@ -3,8 +3,11 @@ package uk.gov.hmcts.reform.fact.functional.controllers;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
+
+import java.util.Map;
 
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.cfg.DateTimeFeature;
@@ -65,8 +68,34 @@ public class TestingSupportControllerTest {
         assertThat(retrievedCourt.getCourtPhotos()).isNotEmpty();
     }
 
+    @ParameterizedTest
+    @DisplayName("Test random service centre generation returns details")
+    @ValueSource(strings = {"TSC Service Centre A", "TSC Service Centre B"})
+    void testingSupportServiceCentreEndpointReturnsDetails(String serviceCentreName) {
+        Response response = http.doGet(
+            "/testing-support/service-centres",
+            Map.of("serviceCentreName", serviceCentreName)
+        );
+
+        assertThat(response).isNotNull();
+        AssertionHelper.assertStatus(response, HttpStatus.CREATED);
+
+        ServiceCentreDetails createdServiceCentre = mapper.readValue(
+            response.getBody().asString(),
+            ServiceCentreDetails.class
+        );
+
+        assertThat(createdServiceCentre.getId()).isNotNull();
+        assertThat(createdServiceCentre.getSlug()).isNotNull();
+        assertThat(createdServiceCentre.getOpen()).isTrue();
+        assertThat(createdServiceCentre.getServiceCentreAddresses()).isNotEmpty();
+        assertThat(createdServiceCentre.getServiceCentreContactDetails()).isNotEmpty();
+        assertThat(createdServiceCentre.getServiceCentreAreasOfLaw()).isNotEmpty();
+    }
+
     @AfterAll
     static void cleanUp() {
         http.doDelete("/testing-support/courts/name-prefix/TSC Auth Test");
+        http.doDelete("/testing-support/service-centres/name-prefix/TSC Service Centre");
     }
 }

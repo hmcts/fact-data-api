@@ -8,14 +8,17 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.AuditService;
 
@@ -64,6 +67,9 @@ class AuditingTest {
     CourtPhotoRepository courtPhotoRepository;
 
     @Autowired
+    ServiceCentreRepository serviceCentreRepository;
+
+    @Autowired
     AuditRepository auditRepository;
 
     @Autowired
@@ -83,6 +89,7 @@ class AuditingTest {
         courtRepository.deleteAll();
         courtPhotoRepository.deleteAll();
         courtTranslationRepository.deleteAll();
+        serviceCentreRepository.deleteAll();
 
         // do this one last
         auditRepository.deleteAll();
@@ -118,6 +125,36 @@ class AuditingTest {
         creatingAndUpdatingACourtShouldCreateAuditRecords();
         auditService.removeExpiredAuditEntries();
         assertEquals(0L, auditRepository.count());
+    }
+
+    @Test
+    @DisplayName("Creating and updating a ServiceCentre should create Audit records")
+    void creatingAndUpdatingAServiceCentreShouldCreateAuditRecords() {
+        ServiceCentre serviceCentre = ServiceCentre.builder()
+            .name("Test Service Centre")
+            .slug("test-service-centre")
+            .open(Boolean.FALSE)
+            .build();
+        serviceCentreRepository.save(serviceCentre);
+
+        serviceCentre.setOpen(Boolean.TRUE);
+        serviceCentreRepository.save(serviceCentre);
+
+        Page<Audit> audits = auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
+            serviceCentre.getId(),
+            AuditSubjectType.SERVICE_CENTRE,
+            CREATED_AFTER.atStartOfDay().atZone(java.time.ZoneOffset.UTC),
+            org.springframework.data.domain.PageRequest.of(0, 1000)
+        );
+
+        List<Audit> content = audits.getContent().stream().filter(audit -> Objects.equals(
+            audit.getActionEntity(),
+            ServiceCentre.class.getSimpleName()
+        )).toList();
+
+        assertEquals(2, content.size());
+        assertEquals(1, content.stream().filter(audit -> AuditActionType.UPDATE.equals(audit.getActionType())).count());
+        assertEquals(1, content.stream().filter(audit -> AuditActionType.INSERT.equals(audit.getActionType())).count());
     }
 
     @Test
@@ -330,6 +367,7 @@ class AuditingTest {
             CREATED_AFTER,
             null,
             owningCourt.getId().toString(),
+            null,
             null
         );
 
@@ -363,7 +401,6 @@ class AuditingTest {
             .name(name)
             .open(Boolean.FALSE)
             .regionId(regionId)
-            .isServiceCentre(Boolean.FALSE)
             .build();
     }
 }

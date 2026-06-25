@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
 
 import java.time.ZonedDateTime;
@@ -48,13 +49,12 @@ public class Audit {
     private UUID id;
 
     @NotNull
-    @Column(name = "court_id")
-    private UUID courtId;
+    @Column(name = "subject_id")
+    private UUID subjectId;
 
-    @Schema(description = "The associated Court")
-    @ManyToOne
-    @JoinColumn(name = "court_id", insertable = false, updatable = false)
-    private Court court;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private AuditSubjectType subjectType;
 
     @NotNull
     @Column(name = "user_id")
