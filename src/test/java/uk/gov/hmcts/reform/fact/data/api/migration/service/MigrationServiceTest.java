@@ -14,10 +14,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
+import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
@@ -60,13 +62,14 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreAreasOfLawRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,6 +90,7 @@ class MigrationServiceTest {
     private static final UUID AREA_OF_LAW_ID = UUID.randomUUID();
     private static final UUID SERVICE_AREA_ID = UUID.randomUUID();
     private static final UUID COURT_ID = UUID.randomUUID();
+    private static final UUID SERVICE_CENTRE_ID = UUID.randomUUID();
     private static final UUID LOCAL_AUTHORITY_TYPE_ID = UUID.randomUUID();
 
     @Mock
@@ -110,8 +114,6 @@ class MigrationServiceTest {
     @Mock
     private CourtRepository courtRepository;
     @Mock
-    private CourtServiceAreasRepository courtServiceAreasRepository;
-    @Mock
     private CourtAreasOfLawRepository courtAreasOfLawRepository;
     @Mock
     private CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
@@ -127,6 +129,10 @@ class MigrationServiceTest {
     private CourtFaxRepository courtFaxRepository;
     @Mock
     private LegacyCourtMappingRepository legacyCourtMappingRepository;
+    @Mock
+    private ServiceCentreRepository serviceCentreRepository;
+    @Mock
+    private ServiceCentreAreasOfLawRepository serviceCentreAreasOfLawRepository;
     @Mock
     private TransactionTemplate transactionTemplate;
     @Mock
@@ -177,11 +183,23 @@ class MigrationServiceTest {
             return Optional.of(serviceArea);
         });
         lenient().when(legacyServiceRepository.findByName(anyString())).thenReturn(Optional.empty());
+        lenient().when(contactDescriptionTypeRepository.findAll()).thenReturn(List.of(
+            ContactDescriptionType.builder()
+                .id(UUID.randomUUID())
+                .name("CDT")
+                .nameCy("CDT CY")
+                .build()
+        ));
 
         lenient().when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
             Court court = invocation.getArgument(0);
             court.setId(COURT_ID);
             return court;
+        });
+        lenient().when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> {
+            ServiceCentre serviceCentre = invocation.getArgument(0);
+            serviceCentre.setId(SERVICE_CENTRE_ID);
+            return serviceCentre;
         });
 
         lenient().when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
@@ -260,17 +278,17 @@ class MigrationServiceTest {
         MigrationResult result = summary.getResult();
 
         assertThat(result.getCourtsMigrated()).isEqualTo(1);
+        assertThat(result.getServiceCentresMigrated()).isZero();
         assertThat(result.getCourtAreasOfLawMigrated()).isEqualTo(1);
-        assertThat(result.getCourtServiceAreasMigrated()).isEqualTo(1);
         assertThat(result.getCourtLocalAuthoritiesMigrated()).isEqualTo(1);
         assertThat(result.getCourtSinglePointsOfEntryMigrated()).isEqualTo(1);
         assertThat(result.getCourtProfessionalInformationMigrated()).isEqualTo(1);
         assertThat(result.getCourtCodesMigrated()).isEqualTo(1);
         assertThat(result.getCourtDxCodesMigrated()).isEqualTo(1);
         assertThat(result.getCourtFaxMigrated()).isEqualTo(1);
+        assertThat(result.getServiceCentreAreasOfLawMigrated()).isZero();
 
         verify(legacyServiceRepository).save(any(LegacyService.class));
-        verify(courtServiceAreasRepository).save(any());
         verify(courtAreasOfLawRepository).save(any());
         verify(courtSinglePointsOfEntryRepository).save(any());
         verify(courtLocalAuthoritiesRepository).save(any());
@@ -310,7 +328,7 @@ class MigrationServiceTest {
     }
 
     @Test
-    void shouldAssignFallbackRegionToServiceCentresWithoutRegion() {
+    void shouldMigrateServiceCentresWithoutCreatingCourts() {
         CourtDto serviceCentre = new CourtDto(
             999L,
             "Service Centre Court",
@@ -347,11 +365,12 @@ class MigrationServiceTest {
 
         MigrationSummary summary = migrationService.migrate();
 
-        assertThat(summary.getResult().getCourtsMigrated()).isEqualTo(1);
-        ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
-        verify(courtService).createCourt(captor.capture());
-        assertThat(captor.getValue().getRegionId()).isNotNull();
-        verify(regionRepository).findByNameAndCountry("Service Centre", "England");
+        assertThat(summary.getResult().getCourtsMigrated()).isZero();
+        assertThat(summary.getResult().getServiceCentresMigrated()).isEqualTo(1);
+        assertThat(summary.getResult().getServiceCentreAreasOfLawMigrated()).isEqualTo(1);
+        verify(courtService, never()).createCourt(any(Court.class));
+        verify(serviceCentreRepository).save(any(ServiceCentre.class));
+        verify(serviceCentreAreasOfLawRepository).save(any());
     }
 
     private CourtDto courtDto() {
@@ -370,7 +389,7 @@ class MigrationServiceTest {
             List.of(new CourtDxCodeDto("dx", "123", "dx explanation")),
             List.of(new CourtFaxDto("fax", "01632960000")),
             null,
-            true
+            false
         );
     }
 
@@ -419,7 +438,7 @@ class MigrationServiceTest {
             List.of(new CourtDxCodeDto("dx", null, null)),
             List.of(new CourtFaxDto("fax", "01632960000")),
             null,
-            true
+            false
         );
     }
 

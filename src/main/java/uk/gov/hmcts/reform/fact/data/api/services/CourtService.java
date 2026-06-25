@@ -111,7 +111,7 @@ public class CourtService {
     }
 
     /**
-     * Creates a new court or service centre.
+     * Creates a new court.
      *
      * @param court The court to create.
      * @return The created court.

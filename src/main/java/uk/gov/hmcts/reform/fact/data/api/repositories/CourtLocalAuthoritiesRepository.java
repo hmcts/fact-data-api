@@ -14,6 +14,8 @@ import org.springframework.stereotype.Repository;
 public interface CourtLocalAuthoritiesRepository extends JpaRepository<CourtLocalAuthorities, UUID> {
     Optional<CourtLocalAuthorities> findByCourtIdAndAreaOfLawId(UUID courtId, UUID areaOfLawId);
 
+    boolean existsByAreaOfLawId(UUID areaOfLawId);
+
     void deleteByCourtId(UUID courtId);
 
     /**

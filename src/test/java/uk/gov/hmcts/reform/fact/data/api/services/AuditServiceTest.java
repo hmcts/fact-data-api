@@ -12,7 +12,9 @@ import static org.mockito.Mockito.when;
 import uk.gov.hmcts.reform.fact.data.api.config.properties.AuditConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 
 import java.time.LocalDate;
@@ -35,6 +37,7 @@ class AuditServiceTest {
 
     private static final UUID AUDIT_ID = UUID.randomUUID();
     private static final UUID COURT_ID = UUID.randomUUID();
+    private static final UUID SERVICE_CENTRE_ID = UUID.randomUUID();
     private static final UUID USER_ID = UUID.randomUUID();
 
     private static final String EMAIL = "test.user@example.com";
@@ -79,6 +82,7 @@ class AuditServiceTest {
                 fromDate,
                 null,
                 null,
+                null,
                 null
             );
 
@@ -105,6 +109,7 @@ class AuditServiceTest {
                 fromDate,
                 toDate,
                 null,
+                null,
                 null
             );
 
@@ -117,8 +122,9 @@ class AuditServiceTest {
     @Test
     void getFilteredAndPaginatedAuditsShouldCallFindByCourtIdAndCreatedAtAfter() {
 
-        when(auditRepository.findByCourtIdAndCreatedAtAfter(
+        when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
                  eq(COURT_ID),
+                 eq(AuditSubjectType.COURT),
                  eq(fromDateTime),
                  any(Pageable.class)
              )
@@ -131,20 +137,22 @@ class AuditServiceTest {
                 fromDate,
                 null,
                 COURT_ID.toString(),
+                null,
                 null
             );
 
         assertThat(result.getContent()).hasSize(1);
-        verify(auditRepository).findByCourtIdAndCreatedAtAfter(
-            eq(COURT_ID), eq(fromDateTime), any(Pageable.class)
+        verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
+            eq(COURT_ID), eq(AuditSubjectType.COURT), eq(fromDateTime), any(Pageable.class)
         );
     }
 
     @Test
     void getFilteredAndPaginatedAuditsShouldCallFindByCourtIdAndCreatedAtBetween() {
 
-        when(auditRepository.findByCourtIdAndCreatedAtBetween(
+        when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtBetween(
                  eq(COURT_ID),
+                 eq(AuditSubjectType.COURT),
                  eq(fromDateTime),
                  eq(toDateTime),
                  any(Pageable.class)
@@ -158,12 +166,13 @@ class AuditServiceTest {
                 fromDate,
                 toDate,
                 COURT_ID.toString(),
+                null,
                 null
             );
 
         assertThat(result.getContent()).hasSize(1);
-        verify(auditRepository).findByCourtIdAndCreatedAtBetween(
-            eq(COURT_ID), eq(fromDateTime), eq(toDateTime), any(Pageable.class)
+        verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtBetween(
+            eq(COURT_ID), eq(AuditSubjectType.COURT), eq(fromDateTime), eq(toDateTime), any(Pageable.class)
         );
     }
 
@@ -184,6 +193,7 @@ class AuditServiceTest {
                 PAGE_NUMBER,
                 PAGE_SIZE,
                 fromDate,
+                null,
                 null,
                 null,
                 EMAIL
@@ -213,6 +223,7 @@ class AuditServiceTest {
                 fromDate,
                 toDate,
                 null,
+                null,
                 EMAIL
             );
 
@@ -225,8 +236,9 @@ class AuditServiceTest {
     @Test
     void getFilteredAndPaginatedAuditsShouldCallFindByCourtIdAndCreatedAtAfterAndEmailAddressLike() {
 
-        when(auditRepository.findByCourtIdAndCreatedAtAfterAndEmailAddressLike(
+        when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfterAndEmailAddressLike(
                  eq(COURT_ID),
+                 eq(AuditSubjectType.COURT),
                  eq(fromDateTime),
                  eq(EMAIL),
                  any(Pageable.class)
@@ -240,20 +252,22 @@ class AuditServiceTest {
                 fromDate,
                 null,
                 COURT_ID.toString(),
+                null,
                 EMAIL
             );
 
         assertThat(result.getContent()).hasSize(1);
-        verify(auditRepository).findByCourtIdAndCreatedAtAfterAndEmailAddressLike(
-            eq(COURT_ID), eq(fromDateTime), eq(EMAIL), any(Pageable.class)
+        verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtAfterAndEmailAddressLike(
+            eq(COURT_ID), eq(AuditSubjectType.COURT), eq(fromDateTime), eq(EMAIL), any(Pageable.class)
         );
     }
 
     @Test
     void getFilteredAndPaginatedAuditsShouldCallFindByCourtIdAndCreatedAtBetweenAndEmailAddressLike() {
 
-        when(auditRepository.findByCourtIdAndCreatedAtBetweenAndEmailAddressLike(
+        when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
                  eq(COURT_ID),
+                 eq(AuditSubjectType.COURT),
                  eq(fromDateTime),
                  eq(toDateTime),
                  eq(EMAIL),
@@ -268,12 +282,13 @@ class AuditServiceTest {
                 fromDate,
                 toDate,
                 COURT_ID.toString(),
+                null,
                 EMAIL
             );
 
         assertThat(result.getContent()).hasSize(1);
-        verify(auditRepository).findByCourtIdAndCreatedAtBetweenAndEmailAddressLike(
-            eq(COURT_ID), eq(fromDateTime), eq(toDateTime), eq(EMAIL), any(Pageable.class)
+        verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
+            eq(COURT_ID), eq(AuditSubjectType.COURT), eq(fromDateTime), eq(toDateTime), eq(EMAIL), any(Pageable.class)
         );
     }
 
@@ -293,10 +308,53 @@ class AuditServiceTest {
     // edge case tests
 
     @Test
+    void getFilteredAndPaginatedAuditsShouldCallFindByServiceCentreIdAndCreatedAtAfter() {
+
+        when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
+                 eq(SERVICE_CENTRE_ID),
+                 eq(AuditSubjectType.SERVICE_CENTRE),
+                 eq(fromDateTime),
+                 any(Pageable.class)
+             )
+        ).thenReturn(new PageImpl<>(List.of(createAudit())));
+
+        Page<Audit> result =
+            auditService.getFilteredAndPaginatedAudits(
+                PAGE_NUMBER,
+                PAGE_SIZE,
+                fromDate,
+                null,
+                null,
+                SERVICE_CENTRE_ID.toString(),
+                null
+            );
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
+            eq(SERVICE_CENTRE_ID), eq(AuditSubjectType.SERVICE_CENTRE), eq(fromDateTime), any(Pageable.class)
+        );
+    }
+
+    @Test
+    void shouldThrowInvalidParameterCombinationExceptionWhenBothSubjectIdsProvided() {
+        assertThrows(
+            InvalidParameterCombinationException.class, () -> auditService.getFilteredAndPaginatedAudits(
+                PAGE_NUMBER,
+                PAGE_SIZE,
+                fromDate,
+                null,
+                COURT_ID.toString(),
+                SERVICE_CENTRE_ID.toString(),
+                null
+            )
+        );
+    }
+
+    @Test
     void shouldThrowNullPointerExceptionWhenFromDateIsNull() {
         assertThrows(
             NullPointerException.class, () -> {
-                auditService.getFilteredAndPaginatedAudits(0, 1, null, null, null, null);
+                auditService.getFilteredAndPaginatedAudits(0, 1, null, null, null, null, null);
             }
         );
     }
@@ -317,6 +375,7 @@ class AuditServiceTest {
                 fromDate,
                 null,
                 null,
+                null,
                 ""
             );
         assertThat(result.getContent()).hasSize(1);
@@ -326,6 +385,7 @@ class AuditServiceTest {
                 PAGE_NUMBER,
                 PAGE_SIZE,
                 fromDate,
+                null,
                 null,
                 null,
                 " "
@@ -340,7 +400,8 @@ class AuditServiceTest {
     private Audit createAudit() {
         return Audit.builder()
             .id(AUDIT_ID)
-            .courtId(COURT_ID)
+            .subjectId(COURT_ID)
+            .subjectType(AuditSubjectType.COURT)
             .actionEntity(Court.class.getSimpleName())
             .actionDataDiff(List.of(
                 new Change("isOpen", Boolean.FALSE, Boolean.TRUE),
