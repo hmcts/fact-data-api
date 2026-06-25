@@ -534,6 +534,7 @@ class CourtControllerTest {
         Assertions.assertThat(responseList).isEqualTo(courtDetailsList);
     }
 
+
     private Court buildCourt(UUID id) {
         return Court.builder()
             .id(id)
