@@ -29,6 +29,7 @@ module "postgresql" {
   source    = "git@github.com:hmcts/terraform-module-postgresql-flexible?ref=master"
   product   = var.product
   component = var.component
+  name      = "${var.product}-${var.component}-pg17"
   location  = var.location
   env       = var.env
   pgsql_databases = [
@@ -38,7 +39,7 @@ module "postgresql" {
   ]
   common_tags          = var.common_tags
   business_area        = "cft"
-  pgsql_version        = "18"
+  pgsql_version        = "17"
   admin_user_object_id = var.jenkins_AAD_objectId
   pgsql_server_configuration = [{
     name  = "azure.extensions"

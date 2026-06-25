@@ -15,8 +15,8 @@ java:
     enabled: true
     image:
       registry: hmctsprod.azurecr.io
-      repository: imported/postgres
-      tag: '18-alpine'
+      repository: imported/bitnami/postgresql
+      tag: '17.5.0'
     primary:
       initdb:
         scripts:
