@@ -29,6 +29,7 @@ module "postgresql" {
   source    = "git@github.com:hmcts/terraform-module-postgresql-flexible?ref=master"
   product   = var.product
   component = var.component
+  name      = "${var.product}-${var.component}-pg17"
   location  = var.location
   env       = var.env
   pgsql_databases = [
