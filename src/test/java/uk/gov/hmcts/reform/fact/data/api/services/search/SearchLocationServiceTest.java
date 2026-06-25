@@ -16,10 +16,19 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SearchLocationServiceTest {
+
+    private static final String CHILDCARE_SERVICE_AREA =
+        "Childcare arrangements if you separate from your partner";
+    private static final String ADOPTION_SERVICE_AREA = "Adoption";
+    private static final String BANKRUPTCY_SERVICE_AREA = "Bankruptcy";
+    private static final String FGM_SERVICE_AREA = "Female Genital Mutilation Protection Orders";
+    private static final String FORCED_MARRIAGE_SERVICE_AREA = "Forced marriage";
+    private static final String HOUSING_SERVICE_AREA = "Housing";
 
     @Mock
     private SearchCourtService searchCourtService;
@@ -58,6 +67,194 @@ class SearchLocationServiceTest {
             .containsExactly(SearchResultType.SERVICE_CENTRE, SearchResultType.COURT);
         assertThat(results).extracting(SearchResult::getId)
             .containsExactly(serviceCentreId, courtId);
+    }
+
+    @Test
+    void childcareDocumentsReturnsOnlySpoeCourtResults() {
+        UUID courtId = UUID.randomUUID();
+        CourtWithDistance court = courtWithDistance(courtId, BigDecimal.valueOf(3));
+
+        when(searchCourtService.getCourtsBySearchParameters(
+            "PL12 4ER",
+            CHILDCARE_SERVICE_AREA,
+            SearchAction.DOCUMENTS,
+            10
+        )).thenReturn(List.of(court));
+
+        List<SearchResult> results = searchLocationService.getLocationsBySearchParameters(
+            "PL12 4ER",
+            CHILDCARE_SERVICE_AREA,
+            SearchAction.DOCUMENTS,
+            10
+        );
+
+        assertThat(results).extracting(SearchResult::getType)
+            .containsExactly(SearchResultType.COURT);
+        assertThat(results).extracting(SearchResult::getId)
+            .containsExactly(courtId);
+        verifyNoInteractions(searchServiceCentreService);
+    }
+
+    @Test
+    void adoptionDocumentsReturnsOnlyLocalAuthorityCourtResults() {
+        UUID courtId = UUID.randomUUID();
+        CourtWithDistance court = courtWithDistance(courtId, BigDecimal.valueOf(3));
+
+        when(searchCourtService.getCourtsBySearchParameters(
+            "PL12 4ER",
+            ADOPTION_SERVICE_AREA,
+            SearchAction.DOCUMENTS,
+            10
+        )).thenReturn(List.of(court));
+
+        List<SearchResult> results = searchLocationService.getLocationsBySearchParameters(
+            "PL12 4ER",
+            ADOPTION_SERVICE_AREA,
+            SearchAction.DOCUMENTS,
+            10
+        );
+
+        assertThat(results).extracting(SearchResult::getType)
+            .containsExactly(SearchResultType.COURT);
+        assertThat(results).extracting(SearchResult::getId)
+            .containsExactly(courtId);
+        verifyNoInteractions(searchServiceCentreService);
+    }
+
+    @Test
+    void housingUpdateReturnsOnlyPostcodeRoutedCourtResults() {
+        UUID courtId = UUID.randomUUID();
+        CourtWithDistance court = courtWithDistance(courtId, BigDecimal.valueOf(3));
+
+        when(searchCourtService.getCourtsBySearchParameters(
+            "PL12 4ER",
+            HOUSING_SERVICE_AREA,
+            SearchAction.UPDATE,
+            10
+        )).thenReturn(List.of(court));
+
+        List<SearchResult> results = searchLocationService.getLocationsBySearchParameters(
+            "PL12 4ER",
+            HOUSING_SERVICE_AREA,
+            SearchAction.UPDATE,
+            10
+        );
+
+        assertThat(results).extracting(SearchResult::getType)
+            .containsExactly(SearchResultType.COURT);
+        assertThat(results).extracting(SearchResult::getId)
+            .containsExactly(courtId);
+        verifyNoInteractions(searchServiceCentreService);
+    }
+
+    @Test
+    void bankruptcyUpdateReturnsOnlyPostcodeRoutedCourtResults() {
+        UUID courtId = UUID.randomUUID();
+        CourtWithDistance court = courtWithDistance(courtId, BigDecimal.valueOf(3));
+
+        when(searchCourtService.getCourtsBySearchParameters(
+            "PL12 4ER",
+            BANKRUPTCY_SERVICE_AREA,
+            SearchAction.UPDATE,
+            10
+        )).thenReturn(List.of(court));
+
+        List<SearchResult> results = searchLocationService.getLocationsBySearchParameters(
+            "PL12 4ER",
+            BANKRUPTCY_SERVICE_AREA,
+            SearchAction.UPDATE,
+            10
+        );
+
+        assertThat(results).extracting(SearchResult::getType)
+            .containsExactly(SearchResultType.COURT);
+        assertThat(results).extracting(SearchResult::getId)
+            .containsExactly(courtId);
+        verifyNoInteractions(searchServiceCentreService);
+    }
+
+    @Test
+    void forcedMarriageUpdateReturnsOnlyPostcodeRoutedCourtResults() {
+        UUID courtId = UUID.randomUUID();
+        CourtWithDistance court = courtWithDistance(courtId, BigDecimal.valueOf(3));
+
+        when(searchCourtService.getCourtsBySearchParameters(
+            "PL12 4ER",
+            FORCED_MARRIAGE_SERVICE_AREA,
+            SearchAction.UPDATE,
+            10
+        )).thenReturn(List.of(court));
+
+        List<SearchResult> results = searchLocationService.getLocationsBySearchParameters(
+            "PL12 4ER",
+            FORCED_MARRIAGE_SERVICE_AREA,
+            SearchAction.UPDATE,
+            10
+        );
+
+        assertThat(results).extracting(SearchResult::getType)
+            .containsExactly(SearchResultType.COURT);
+        assertThat(results).extracting(SearchResult::getId)
+            .containsExactly(courtId);
+        verifyNoInteractions(searchServiceCentreService);
+    }
+
+    @Test
+    void fgmProtectionOrdersUpdateReturnsOnlyPostcodeRoutedCourtResults() {
+        UUID courtId = UUID.randomUUID();
+        CourtWithDistance court = courtWithDistance(courtId, BigDecimal.valueOf(3));
+
+        when(searchCourtService.getCourtsBySearchParameters(
+            "PL12 4ER",
+            FGM_SERVICE_AREA,
+            SearchAction.UPDATE,
+            10
+        )).thenReturn(List.of(court));
+
+        List<SearchResult> results = searchLocationService.getLocationsBySearchParameters(
+            "PL12 4ER",
+            FGM_SERVICE_AREA,
+            SearchAction.UPDATE,
+            10
+        );
+
+        assertThat(results).extracting(SearchResult::getType)
+            .containsExactly(SearchResultType.COURT);
+        assertThat(results).extracting(SearchResult::getId)
+            .containsExactly(courtId);
+        verifyNoInteractions(searchServiceCentreService);
+    }
+
+    @Test
+    void childcareNearestStillIncludesServiceCentreResults() {
+        UUID courtId = UUID.randomUUID();
+        UUID serviceCentreId = UUID.randomUUID();
+        CourtWithDistance court = courtWithDistance(courtId, BigDecimal.valueOf(3));
+        ServiceCentreWithDistance serviceCentre =
+            serviceCentreWithDistance(serviceCentreId, BigDecimal.valueOf(1));
+
+        when(searchCourtService.getCourtsBySearchParameters(
+            "PL12 4ER",
+            CHILDCARE_SERVICE_AREA,
+            SearchAction.NEAREST,
+            10
+        )).thenReturn(List.of(court));
+        when(searchServiceCentreService.getServiceCentresBySearchParameters(
+            "PL12 4ER",
+            CHILDCARE_SERVICE_AREA,
+            SearchAction.NEAREST,
+            10
+        )).thenReturn(List.of(serviceCentre));
+
+        List<SearchResult> results = searchLocationService.getLocationsBySearchParameters(
+            "PL12 4ER",
+            CHILDCARE_SERVICE_AREA,
+            SearchAction.NEAREST,
+            10
+        );
+
+        assertThat(results).extracting(SearchResult::getType)
+            .containsExactly(SearchResultType.SERVICE_CENTRE, SearchResultType.COURT);
     }
 
     private CourtWithDistance courtWithDistance(UUID courtId, BigDecimal distance) {

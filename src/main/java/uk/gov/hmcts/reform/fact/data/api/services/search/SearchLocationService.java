@@ -7,10 +7,20 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class SearchLocationService {
+
+    private static final Set<String> COURT_ONLY_SERVICE_AREAS = Set.of(
+        "Adoption",
+        "Bankruptcy",
+        "Childcare arrangements if you separate from your partner",
+        "Female Genital Mutilation Protection Orders",
+        "Forced marriage",
+        "Housing"
+    );
 
     private final SearchCourtService searchCourtService;
     private final SearchServiceCentreService searchServiceCentreService;
@@ -36,6 +46,10 @@ public class SearchLocationService {
             .map(SearchResult::fromCourt)
             .toList();
 
+        if (isCourtOnlySearch(serviceArea, action)) {
+            return courts;
+        }
+
         List<SearchResult> serviceCentres = searchServiceCentreService
             .getServiceCentresBySearchParameters(postcode, serviceArea, action, limit)
             .stream()
@@ -46,5 +60,11 @@ public class SearchLocationService {
             .sorted(Comparator.comparing(SearchResult::getDistance))
             .limit(limit)
             .toList();
+    }
+
+    private boolean isCourtOnlySearch(String serviceArea, SearchAction action) {
+        return action != SearchAction.NEAREST
+            && serviceArea != null
+            && COURT_ONLY_SERVICE_AREAS.stream().anyMatch(serviceArea::equalsIgnoreCase);
     }
 }
