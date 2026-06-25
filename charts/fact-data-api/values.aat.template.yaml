@@ -3,7 +3,7 @@ java:
   ingressHost: ${SERVICE_FQDN}
   environment:
     RUN_DB_MIGRATION_ON_STARTUP: true
-    DB_HOST: "{{ .Release.Name }}-postgresql"
+    DB_HOST: "{{ .Release.Name }}-postgresql-17"
     DB_NAME: "{{ .Values.postgresql.auth.database}}"
     DB_USER: "{{ .Values.postgresql.auth.username}}"
     DB_PASSWORD: "{{ .Values.postgresql.auth.password}}"
@@ -17,10 +17,7 @@ java:
       registry: hmctsprod.azurecr.io
       repository: imported/bitnami/postgresql
       tag: '17.5.0'
-    auth:
-      username: fact
-      password: fact
-      database: fact
+    nameOverride: postgresql-17
     primary:
       initdb:
         scripts:
