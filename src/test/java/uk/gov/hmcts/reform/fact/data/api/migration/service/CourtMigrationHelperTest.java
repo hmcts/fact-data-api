@@ -7,7 +7,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDxCode;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
-import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtAreasOfLawDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtDto;
@@ -37,17 +35,13 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CourtMigrationHelperTest {
 
-    @Mock private RegionRepository regionRepository;
-    @Mock private CourtServiceAreasRepository courtServiceAreasRepository;
     @Mock private CourtAreasOfLawRepository courtAreasOfLawRepository;
     @Mock private CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
     @Mock private CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
@@ -65,8 +59,6 @@ class CourtMigrationHelperTest {
     @BeforeEach
     void setUp() {
         helper = new CourtMigrationHelper(
-            regionRepository,
-            courtServiceAreasRepository,
             courtAreasOfLawRepository,
             courtSinglePointsOfEntryRepository,
             courtLocalAuthoritiesRepository,
@@ -98,7 +90,6 @@ class CourtMigrationHelperTest {
 
         context.getRegionIds().put(1, regionId);
         context.getAreaOfLawIds().put(10, childrenAolID);
-        context.getServiceAreaIds().put(100, UUID.randomUUID());
         context.getLocalAuthorityTypeIds().put(20, List.of(UUID.randomUUID()));
         when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
             Court court = invocation.getArgument(0);
@@ -120,23 +111,13 @@ class CourtMigrationHelperTest {
 
         int migrated = helper.migrateCourts(List.of(courtDto), context);
         assertThat(migrated).isEqualTo(1);
-        assertThat(context.getCourtServiceAreasMigrated()).isEqualTo(1);
         assertThat(context.getCourtAreasOfLawMigrated()).isEqualTo(1);
         assertThat(context.getCourtLocalAuthoritiesMigrated()).isEqualTo(1);
         assertThat(context.getCourtSinglePointsOfEntryMigrated()).isEqualTo(1);
     }
 
     @Test
-    void shouldUseServiceCentreFallbackRegion() {
-        UUID fallbackRegion = UUID.randomUUID();
-        when(regionRepository.findByNameAndCountry("Service Centre", "England"))
-            .thenReturn(Optional.of(Region.builder().id(fallbackRegion).build()));
-        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
-            Court court = invocation.getArgument(0);
-            court.setId(UUID.randomUUID());
-            return court;
-        });
-
+    void shouldSkipServiceCentre() {
         CourtDto serviceCentre = new CourtDto();
         serviceCentre.setId(600L);
         serviceCentre.setName("Service Centre Court");
@@ -145,8 +126,8 @@ class CourtMigrationHelperTest {
         serviceCentre.setIsServiceCentre(true);
 
         int migrated = helper.migrateCourts(List.of(serviceCentre), context);
-        assertThat(migrated).isEqualTo(1);
-        assertThat(context.getServiceCentreRegionId()).isEqualTo(fallbackRegion);
+        assertThat(migrated).isZero();
+        verify(courtService, never()).createCourt(any(Court.class));
     }
 
     @Test

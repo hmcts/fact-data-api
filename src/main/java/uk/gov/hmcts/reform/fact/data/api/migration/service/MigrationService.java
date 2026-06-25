@@ -24,12 +24,13 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreAreasOfLawRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
 @Service
@@ -42,6 +43,7 @@ public class MigrationService {
     private final TransactionTemplate transactionTemplate;
     private final ReferenceDataImporter referenceDataImporter;
     private final CourtMigrationHelper courtMigrationHelper;
+    private final ServiceCentreMigrationHelper serviceCentreMigrationHelper;
 
     public MigrationService(
         LegacyFactClient legacyFactClient,
@@ -53,7 +55,6 @@ public class MigrationService {
         LocalAuthorityTypeRepository localAuthorityTypeRepository,
         ContactDescriptionTypeRepository contactDescriptionTypeRepository,
         OpeningHoursTypeRepository openingHourTypeRepository,
-        CourtServiceAreasRepository courtServiceAreasRepository,
         CourtAreasOfLawRepository courtAreasOfLawRepository,
         CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository,
         CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository,
@@ -61,6 +62,8 @@ public class MigrationService {
         CourtCodesRepository courtCodesRepository,
         CourtDxCodeRepository courtDxCodeRepository,
         CourtFaxRepository courtFaxRepository,
+        ServiceCentreRepository serviceCentreRepository,
+        ServiceCentreAreasOfLawRepository serviceCentreAreasOfLawRepository,
         MigrationAuditRepository migrationAuditRepository,
         TransactionTemplate transactionTemplate,
         CourtService courtService
@@ -78,8 +81,6 @@ public class MigrationService {
             openingHourTypeRepository
         );
         this.courtMigrationHelper = new CourtMigrationHelper(
-            regionRepository,
-            courtServiceAreasRepository,
             courtAreasOfLawRepository,
             courtSinglePointsOfEntryRepository,
             courtLocalAuthoritiesRepository,
@@ -90,6 +91,10 @@ public class MigrationService {
             areaOfLawTypeRepository,
             legacyCourtMappingRepository,
             courtService
+        );
+        this.serviceCentreMigrationHelper = new ServiceCentreMigrationHelper(
+            serviceCentreRepository,
+            serviceCentreAreasOfLawRepository
         );
     }
 
@@ -114,17 +119,20 @@ public class MigrationService {
         final MigrationContext context = new MigrationContext();
         referenceDataImporter.importReferenceData(exportResponse, context);
         int courtsMigrated = courtMigrationHelper.migrateCourts(exportResponse.getCourts(), context);
+        int serviceCentresMigrated =
+            serviceCentreMigrationHelper.migrateServiceCentres(exportResponse.getCourts(), context);
 
         MigrationResult result = new MigrationResult(
             courtsMigrated,
+            serviceCentresMigrated,
             context.getCourtAreasOfLawMigrated(),
-            context.getCourtServiceAreasMigrated(),
             context.getCourtLocalAuthoritiesMigrated(),
             context.getCourtSinglePointsOfEntryMigrated(),
             context.getCourtProfessionalInformationMigrated(),
             context.getCourtCodesMigrated(),
             context.getCourtDxCodesMigrated(),
-            context.getCourtFaxMigrated()
+            context.getCourtFaxMigrated(),
+            context.getServiceCentreAreasOfLawMigrated()
         );
 
         return new MigrationSummary(result);

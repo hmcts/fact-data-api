@@ -8,8 +8,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.RegionService;
+import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreDetailsViewService;
+import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreService;
 import uk.gov.hmcts.reform.fact.data.api.services.TestingSupportService;
 
 import java.util.List;
@@ -28,12 +32,17 @@ import static org.mockito.Mockito.when;
 class TestingSupportControllerTest {
 
     private static final String COURT_NAME_PREFIX = "TESTCOURT";
+    private static final String SERVICE_CENTRE_NAME_PREFIX = "TESTSERVICECENTRE";
     private static final String BLANK_PREFIX = " ";
 
     @Mock
     private CourtService courtService;
     @Mock
     private RegionService regionService;
+    @Mock
+    private ServiceCentreDetailsViewService serviceCentreDetailsViewService;
+    @Mock
+    private ServiceCentreService serviceCentreService;
     @Mock
     private TestingSupportService testingSupportService;
 
@@ -47,7 +56,7 @@ class TestingSupportControllerTest {
         ResponseEntity<String> response = testingSupportController.deleteCourtsByNamePrefix(COURT_NAME_PREFIX);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).contains("3 court(s)").contains(COURT_NAME_PREFIX);
+        assertThat(response.getBody()).contains("3 court(s)").doesNotContain(COURT_NAME_PREFIX);
         verify(courtService).deleteCourtsByNamePrefix(COURT_NAME_PREFIX);
     }
 
@@ -58,6 +67,18 @@ class TestingSupportControllerTest {
         assertThrows(IllegalArgumentException.class, () ->
             testingSupportController.deleteCourtsByNamePrefix(BLANK_PREFIX)
         );
+    }
+
+    @Test
+    void deleteServiceCentresByNamePrefixReturns200() {
+        when(serviceCentreService.deleteServiceCentresByNamePrefix(SERVICE_CENTRE_NAME_PREFIX)).thenReturn(2L);
+
+        ResponseEntity<String> response =
+            testingSupportController.deleteServiceCentresByNamePrefix(SERVICE_CENTRE_NAME_PREFIX);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("2 service centre(s)").doesNotContain(SERVICE_CENTRE_NAME_PREFIX);
+        verify(serviceCentreService).deleteServiceCentresByNamePrefix(SERVICE_CENTRE_NAME_PREFIX);
     }
 
     @Test
@@ -83,17 +104,13 @@ class TestingSupportControllerTest {
             anyBoolean(),
             anyBoolean(),
             anyBoolean(),
-            anyBoolean(),
-            anyBoolean(),
             anyBoolean()
         ))
             .thenReturn("test-court");
 
-        testingSupportController.createSampleCourt("Test Court", null, 1L, false, true, false, false, false,
-                                                   false, false);
+        testingSupportController.createSampleCourt("Test Court", null, 1L, true, false, false, false, false);
 
-        verify(testingSupportService).createCourt("Test Court", null, 1L, false, true, false, false, false,
-                                                  false, false);
+        verify(testingSupportService).createCourt("Test Court", null, 1L, true, false, false, false, false);
     }
 
     @Test
@@ -107,16 +124,48 @@ class TestingSupportControllerTest {
             anyBoolean(),
             anyBoolean(),
             anyBoolean(),
-            anyBoolean(),
-            anyBoolean(),
             anyBoolean()
         ))
             .thenReturn("test-court");
 
-        testingSupportController.createSampleCourt("Test Court", regionId, 1L, false, true, false, false, false,
-                                                   false, false);
+        testingSupportController.createSampleCourt("Test Court", regionId, 1L, true, false, false, false, false);
 
-        verify(testingSupportService).createCourt("Test Court", regionId, 1L, false, true, false, false, false,
-                                                  false, false);
+        verify(testingSupportService).createCourt("Test Court", regionId, 1L, true, false, false, false, false);
+    }
+
+    @Test
+    void createSampleServiceCentreReturns201() {
+        UUID serviceCentreId = UUID.randomUUID();
+        ServiceCentre serviceCentre = ServiceCentre.builder()
+            .id(serviceCentreId)
+            .name("Test Service Centre")
+            .slug("test-service-centre")
+            .open(true)
+            .build();
+        ServiceCentreDetails serviceCentreDetails = ServiceCentreDetails.builder()
+            .id(serviceCentreId)
+            .name("Test Service Centre")
+            .slug("test-service-centre")
+            .open(true)
+            .build();
+
+        when(testingSupportService.createServiceCentre("Test Service Centre", 1L, true, false, true))
+            .thenReturn(serviceCentre);
+        when(serviceCentreService.getServiceCentreDetailsById(serviceCentreId)).thenReturn(serviceCentreDetails);
+        when(serviceCentreDetailsViewService.prepareDetailsView(serviceCentreDetails)).thenReturn(serviceCentreDetails);
+
+        ResponseEntity<ServiceCentreDetails> response = testingSupportController.createSampleServiceCentre(
+            "Test Service Centre",
+            1L,
+            true,
+            false,
+            true
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isEqualTo(serviceCentreDetails);
+        verify(testingSupportService).createServiceCentre("Test Service Centre", 1L, true, false, true);
+        verify(serviceCentreService).getServiceCentreDetailsById(serviceCentreId);
+        verify(serviceCentreDetailsViewService).prepareDetailsView(serviceCentreDetails);
     }
 }

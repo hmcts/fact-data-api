@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 
 import java.util.UUID;
 
@@ -118,6 +119,8 @@ class AuditableCourtEntityListenerTest {
         verify(entityManager, times(1)).find(Court.class, courtCurrent.getId());
         Audit audit = auditCaptor.getValue();
         assertEquals(USER_ID, audit.getUserId());
+        assertEquals(COURT_ID, audit.getSubjectId());
+        assertEquals(AuditSubjectType.COURT, audit.getSubjectType());
         assertEquals(1, audit.getActionDataDiff().size());
         assertEquals("name", audit.getActionDataDiff().getFirst().field());
     }
@@ -147,7 +150,6 @@ class AuditableCourtEntityListenerTest {
             .slug("test-court")
             .open(Boolean.FALSE)
             .regionId(UUID.randomUUID())
-            .isServiceCentre(Boolean.FALSE)
             .build();
     }
 }

@@ -44,7 +44,6 @@ public final class CourtControllerFunctionalTest {
         final Court court = new Court();
         court.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Create Valid"));
         court.setRegionId(UUID.fromString(regionId));
-        court.setIsServiceCentre(true);
         court.setOpen(false);
 
         final Response createResponse = http.doPost("/courts/v1", court);
@@ -67,9 +66,6 @@ public final class CourtControllerFunctionalTest {
         assertThat(fetchedCourt.getRegionId())
             .as("Court region ID should match")
             .isEqualTo(UUID.fromString(regionId));
-        assertThat(fetchedCourt.getIsServiceCentre())
-            .as("Court should be a service centre")
-            .isTrue();
     }
 
     @Test
@@ -78,7 +74,6 @@ public final class CourtControllerFunctionalTest {
         final Court court = new Court();
         court.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Invalid Region"));
         court.setRegionId(UUID.randomUUID());
-        court.setIsServiceCentre(true);
         court.setOpen(false);
 
         final Response response = http.doPost("/courts/v1", court);
@@ -95,7 +90,6 @@ public final class CourtControllerFunctionalTest {
     void shouldFailWithMissingName() throws Exception {
         final Court court = new Court();
         court.setRegionId(UUID.fromString(regionId));
-        court.setIsServiceCentre(true);
 
         final Response response = http.doPost("/courts/v1", court);
 
@@ -130,7 +124,6 @@ public final class CourtControllerFunctionalTest {
         final Court updatedCourt = new Court();
         updatedCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Updated"));
         updatedCourt.setRegionId(UUID.fromString(regionId));
-        updatedCourt.setIsServiceCentre(true);
         updatedCourt.setOpen(false);
 
         final Response updateResponse = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
@@ -145,10 +138,6 @@ public final class CourtControllerFunctionalTest {
         assertThat(fetchedCourt.getName())
             .as("Court name should be updated")
             .startsWith("Test Court Updated");
-        assertThat(fetchedCourt.getIsServiceCentre())
-            .as("Court should remain a service centre")
-            .isTrue();
-
         final ZonedDateTime timestampAfterUpdate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
         assertThat(timestampAfterUpdate)
             .as("Court lastUpdatedAt should move forward after court update for court %s", courtId)
@@ -163,7 +152,6 @@ public final class CourtControllerFunctionalTest {
         final Court updatedCourt = new Court();
         updatedCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Non-Existent court ID"));
         updatedCourt.setRegionId(UUID.fromString(regionId));
-        updatedCourt.setIsServiceCentre(true);
         updatedCourt.setOpen(false);
 
         final Response response = http.doPut("/courts/" + nonExistentCourtId + "/v1", updatedCourt);
@@ -183,7 +171,6 @@ public final class CourtControllerFunctionalTest {
         final Court updatedCourt = new Court();
         updatedCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Non-Existent Region ID Updated"));
         updatedCourt.setRegionId(UUID.randomUUID());
-        updatedCourt.setIsServiceCentre(true);
         updatedCourt.setOpen(false);
 
         final Response response = http.doPut("/courts/" + courtId + "/v1", updatedCourt);
@@ -231,7 +218,6 @@ public final class CourtControllerFunctionalTest {
         final Court updatedCourt = new Court();
         updatedCourt.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Open"));
         updatedCourt.setRegionId(UUID.fromString(regionId));
-        updatedCourt.setIsServiceCentre(true);
         updatedCourt.setOpen(true);
 
         final Response updateResponse = http.doPut("/courts/" + courtId + "/v1", updatedCourt);

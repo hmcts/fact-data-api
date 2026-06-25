@@ -10,11 +10,17 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistanceResponse;
+import uk.gov.hmcts.reform.fact.data.api.dto.SearchResult;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchResultType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
@@ -45,6 +51,7 @@ public final class SearchCourtControllerFunctionalTest {
     private static final String regionId = TestDataHelper.fetchFirstRegionId(http);
     private static final String STABLE_ENGLAND_POSTCODE = "SW1A 0AA";
     private static final String TEST_COURT_PREFIX = "Test Court";
+    private static final String TEST_SERVICE_CENTRE_PREFIX = "Test Service Centre Search";
 
     @Test
     @DisplayName("GET /search/courts/v1/name returns courts matching query")
@@ -157,11 +164,6 @@ public final class SearchCourtControllerFunctionalTest {
      * - DEFAULT_AOL_DISTANCE (other service areas)
      * - FAMILY_NON_REGIONAL (family service areas)
      * - Childcare SPOE special-case (single point of entry search)
-     *
-     * <p>
-     * The only search strategy not covered is FAMILY_REGIONAL, because there is currently no API endpoint to
-     * link courts to service areas (court_service_areas). Once an endpoint is available, a functional test
-     * should be added to cover the FAMILY_REGIONAL flow end-to-end.
      */
     @Test
     @DisplayName("GET /search/courts/v1/postcode returns courts for OTHER type service area using DEFAULT_AOL_DISTANCE")
@@ -534,6 +536,77 @@ public final class SearchCourtControllerFunctionalTest {
     }
 
     @Test
+    @DisplayName("GET /search/locations/v1/postcode returns regional service centre for FAMILY service area")
+    void shouldReturnRegionalServiceCentreForFamilyServiceAreaLocationSearch() throws Exception {
+        final String familyServiceAreaName = "Forced marriage";
+
+        final Response serviceAreasResponse = http.doGet("/types/v1/service-areas");
+
+        assertThat(serviceAreasResponse.statusCode())
+            .as("Expected 200 OK when fetching service areas")
+            .isEqualTo(OK.value());
+
+        final List<ServiceArea> serviceAreas = mapper.readValue(
+            serviceAreasResponse.getBody().asString(),
+            new TypeReference<List<ServiceArea>>() {}
+        );
+
+        final List<ServiceArea> matchingServiceAreas = serviceAreas.stream()
+            .filter(serviceArea -> familyServiceAreaName.equals(serviceArea.getName()))
+            .toList();
+
+        assertThat(matchingServiceAreas)
+            .as("Expected to find exactly one service area named '%s'", familyServiceAreaName)
+            .hasSize(1);
+
+        final ServiceArea familyServiceArea = matchingServiceAreas.getFirst();
+
+        assertThat(familyServiceArea.getType())
+            .as("Expected service area '%s' to have type FAMILY", familyServiceAreaName)
+            .isEqualTo(ServiceAreaType.FAMILY);
+
+        assertThat(familyServiceArea.getAreaOfLawId())
+            .as("Expected FAMILY service area '%s' to have an area of law ID", familyServiceAreaName)
+            .isNotNull();
+
+        final OsDpa dpa = TestDataHelper.fetchFirstDpaForPostcode(http, STABLE_ENGLAND_POSTCODE);
+        final String serviceCentreName = TEST_SERVICE_CENTRE_PREFIX + " Family Regional";
+        final UUID serviceCentreId = createOpenRegionalServiceCentre(
+            serviceCentreName,
+            familyServiceArea,
+            dpa
+        );
+
+        final Response searchResponse = http.doGet(
+            "/search/locations/v1/postcode",
+            Map.of(
+                "postcode", STABLE_ENGLAND_POSTCODE,
+                "serviceArea", familyServiceAreaName,
+                "action", "DOCUMENTS"
+            )
+        );
+
+        assertThat(searchResponse.statusCode())
+            .as("Expected 200 OK for FAMILY regional service-centre postcode search (serviceArea=%s)",
+                familyServiceAreaName)
+            .isEqualTo(OK.value());
+
+        final List<SearchResult> results = mapper.readValue(
+            searchResponse.getBody().asString(),
+            new TypeReference<List<SearchResult>>() {}
+        );
+
+        assertThat(results)
+            .as("Expected regional service centre '%s' in location search results", serviceCentreName)
+            .anySatisfy(result -> {
+                assertThat(result.getId()).isEqualTo(serviceCentreId);
+                assertThat(result.getName()).startsWith(serviceCentreName);
+                assertThat(result.getType()).isEqualTo(SearchResultType.SERVICE_CENTRE);
+                assertThat(result.getDistance()).isNotNull();
+            });
+    }
+
+    @Test
     @DisplayName("GET /search/courts/v1/postcode returns nearest SPOE court for childcare arrangements")
     void shouldReturnNearestSpoeCourtForChildcareArrangementsServiceArea() throws Exception {
         final String childcareServiceAreaName = "Childcare arrangements if you separate from your partner";
@@ -652,7 +725,6 @@ public final class SearchCourtControllerFunctionalTest {
         final Court courtToUpdate = new Court();
         courtToUpdate.setName(TestDataHelper.appendRandomSuffixToCourtName(courtName));
         courtToUpdate.setRegionId(UUID.fromString(regionId));
-        courtToUpdate.setIsServiceCentre(true);
         courtToUpdate.setOpen(true);
 
         final Response updateResponse = http.doPut("/courts/" + courtId + "/v1", courtToUpdate);
@@ -682,8 +754,71 @@ public final class SearchCourtControllerFunctionalTest {
             .lon(BigDecimal.valueOf(dpa.getLng()));
     }
 
+    private static UUID createOpenRegionalServiceCentre(
+        final String serviceCentreName,
+        final ServiceArea serviceArea,
+        final OsDpa dpa
+    ) {
+        final ServiceCentre serviceCentre = new ServiceCentre();
+        serviceCentre.setName(TestDataHelper.appendRandomSuffixToCourtName(serviceCentreName));
+        serviceCentre.setOpen(true);
+        serviceCentre.setServiceAreaIds(List.of(serviceArea.getId()));
+        serviceCentre.setCatchmentType(CatchmentType.REGIONAL);
+
+        final Response createResponse = http.doPost("/service-centres/v1", serviceCentre);
+
+        assertThat(createResponse.statusCode())
+            .as("Expected 201 CREATED when creating regional service centre")
+            .isEqualTo(CREATED.value());
+
+        final UUID serviceCentreId = UUID.fromString(createResponse.jsonPath().getString("id"));
+        serviceCentre.setOpen(true);
+
+        final Response updateResponse = http.doPut("/service-centres/" + serviceCentreId + "/v1", serviceCentre);
+
+        assertThat(updateResponse.statusCode())
+            .as("Expected 200 OK when updating regional service centre %s to open", serviceCentreId)
+            .isEqualTo(OK.value());
+
+        final ServiceCentreAddress address = ServiceCentreAddress.builder()
+            .serviceCentreId(serviceCentreId)
+            .addressLine1(dpa.getAddress())
+            .townCity(dpa.getPostTown())
+            .postcode(dpa.getPostcode())
+            .addressType(AddressType.VISIT_US)
+            .lat(BigDecimal.valueOf(dpa.getLat()))
+            .lon(BigDecimal.valueOf(dpa.getLng()))
+            .build();
+
+        final Response addressResponse = http.doPost(
+            "/service-centres/" + serviceCentreId + "/v1/address",
+            address
+        );
+
+        assertThat(addressResponse.statusCode())
+            .as("Expected 201 CREATED when creating address for service centre %s", serviceCentreId)
+            .isEqualTo(CREATED.value());
+
+        final ServiceCentreAreasOfLaw areasOfLaw = ServiceCentreAreasOfLaw.builder()
+            .serviceCentreId(serviceCentreId)
+            .areasOfLaw(List.of(serviceArea.getAreaOfLawId()))
+            .build();
+
+        final Response areasOfLawResponse = http.doPut(
+            "/service-centres/" + serviceCentreId + "/v1/areas-of-law",
+            areasOfLaw
+        );
+
+        assertThat(areasOfLawResponse.statusCode())
+            .as("Expected 201 CREATED when setting areas of law for service centre %s", serviceCentreId)
+            .isEqualTo(CREATED.value());
+
+        return serviceCentreId;
+    }
+
     @AfterAll
     static void cleanUpTestData() {
         http.doDelete("/testing-support/courts/name-prefix/" + TEST_COURT_PREFIX);
+        http.doDelete("/testing-support/service-centres/name-prefix/" + TEST_SERVICE_CENTRE_PREFIX);
     }
 }
