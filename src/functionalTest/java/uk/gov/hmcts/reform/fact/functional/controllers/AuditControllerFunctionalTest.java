@@ -71,11 +71,17 @@ public final class AuditControllerFunctionalTest {
         final Response auditsResponse = http.doGet(auditsPath);
         AssertionHelper.assertStatus(auditsResponse, OK);
 
-        final List<String> auditedCourtIds = auditsResponse.jsonPath().getList("content.court.id", String.class);
+        final List<String> auditedCourtIds = auditsResponse.jsonPath().getList("content.subjectId", String.class);
         assertThat(auditedCourtIds)
             .as("All audit records should be filtered to the requested court ID")
             .isNotEmpty()
             .allMatch(courtId.toString()::equals);
+
+        final List<String> auditedSubjectTypes = auditsResponse.jsonPath().getList("content.subjectType", String.class);
+        assertThat(auditedSubjectTypes)
+            .as("All audit records should be court subject records")
+            .isNotEmpty()
+            .allMatch("COURT"::equals);
 
         final List<String> courtActionTypes = extractActionTypesForEntity(auditsResponse, "Court");
         assertThat(courtActionTypes)
