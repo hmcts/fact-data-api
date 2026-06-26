@@ -34,7 +34,7 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
     @EntityGraph(attributePaths = {"user"})
     Page<Audit> findBySubjectTypeAndCreatedAtAfter(
         AuditSubjectType subjectType,
-        ZonedDateTime fromDateTime,
+        ZonedDateTime createdAtAfter,
         Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
@@ -47,8 +47,8 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
     @EntityGraph(attributePaths = {"user"})
     Page<Audit> findBySubjectTypeAndCreatedAtBetween(
         AuditSubjectType subjectType,
-        ZonedDateTime fromDateTime,
-        ZonedDateTime toDateTime,
+        ZonedDateTime createdAtAfter,
+        ZonedDateTime createdAtBefore,
         Pageable pageable);
 
     @EntityGraph(attributePaths = {"user"})
@@ -123,7 +123,7 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
     @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_AFTER + AND_SUBJECT_TYPE_EQUALS)
     Page<Audit> findBySubjectTypeAndCreatedAtAfterAndEmailAddressLike(
         AuditSubjectType subjectType,
-        ZonedDateTime fromDateTime,
+        ZonedDateTime createdAtAfter,
         String email,
         Pageable pageable);
 
@@ -131,8 +131,8 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
     @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_BETWEEN + AND_SUBJECT_TYPE_EQUALS)
     Page<Audit> findBySubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
         AuditSubjectType subjectType,
-        ZonedDateTime fromDateTime,
-        ZonedDateTime toDateTime,
+        ZonedDateTime createdAtAfter,
+        ZonedDateTime createdAtBefore,
         String email,
         Pageable pageable);
 
