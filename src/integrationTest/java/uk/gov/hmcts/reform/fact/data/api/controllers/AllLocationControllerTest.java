@@ -19,7 +19,6 @@ import uk.gov.hmcts.reform.fact.data.api.services.AllLocationService;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -115,70 +114,6 @@ class AllLocationControllerTest {
         mockMvc.perform(get("/all/details.json"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].locationType").value("SERVICE_CENTRE"));
-    }
-
-    @Test
-    @DisplayName("GET /all/courts/v1 returns court locations")
-    void getAllCourtsReturnsCourtLocations() throws Exception {
-        when(allLocationService.getFilteredAndPaginatedCourts(
-            anyInt(),
-            anyInt(),
-            any(),
-            nullable(String.class),
-            nullable(String.class),
-            nullable(String.class),
-            nullable(String.class)
-        )).thenReturn(page(buildLocation("COURT", false)));
-
-        mockMvc.perform(get("/all/courts/v1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content[0].locationType").value("COURT"))
-            .andExpect(jsonPath("$.content[0].serviceCentre").value(false));
-    }
-
-    @Test
-    @DisplayName("GET /all/courts/details/v1 returns court details")
-    void getAllCourtDetailsReturnsCourtDetails() throws Exception {
-        when(allLocationService.getAllCourtDetails()).thenReturn(List.of(
-            AllLocationDetails.fromCourt(buildCourtDetails())
-        ));
-
-        mockMvc.perform(get("/all/courts/details/v1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].locationType").value("COURT"))
-            .andExpect(jsonPath("$[0].court.name").value("Test Court"));
-    }
-
-    @Test
-    @DisplayName("GET /all/service-centres/v1 returns service centre locations")
-    void getAllServiceCentresReturnsServiceCentreLocations() throws Exception {
-        when(allLocationService.getFilteredAndPaginatedServiceCentres(
-            anyInt(),
-            anyInt(),
-            any(),
-            nullable(String.class),
-            nullable(String.class),
-            nullable(String.class),
-            nullable(String.class)
-        )).thenReturn(page(buildLocation("SERVICE_CENTRE", true)));
-
-        mockMvc.perform(get("/all/service-centres/v1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content[0].locationType").value("SERVICE_CENTRE"))
-            .andExpect(jsonPath("$.content[0].serviceCentre").value(true));
-    }
-
-    @Test
-    @DisplayName("GET /all/service-centres/details/v1 returns service centre details")
-    void getAllServiceCentreDetailsReturnsServiceCentreDetails() throws Exception {
-        when(allLocationService.getAllServiceCentreDetails()).thenReturn(List.of(
-            AllLocationDetails.fromServiceCentre(buildServiceCentreDetails())
-        ));
-
-        mockMvc.perform(get("/all/service-centres/details/v1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].locationType").value("SERVICE_CENTRE"))
-            .andExpect(jsonPath("$[0].serviceCentreDetails.name").value("Test Service Centre"));
     }
 
     private Page<AllLocation> page(AllLocation location) {

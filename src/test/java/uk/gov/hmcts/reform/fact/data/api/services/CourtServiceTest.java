@@ -692,20 +692,6 @@ class CourtServiceTest {
     }
 
     @Test
-    void getCourtsByPrefixAndActiveSearchShouldReturnMatchingCourts() {
-        Court court = new Court();
-        List<Court> courts = List.of(court);
-
-        when(courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc("A", true))
-            .thenReturn(courts);
-
-        List<Court> response = courtService.getCourtsByPrefixAndActiveSearch("A");
-
-        assertThat(response).isEqualTo(courts);
-        verify(courtRepository).findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc("A", true);
-    }
-
-    @Test
     void searchOpenCourtsByNameOrAddressShouldTrimQuery() {
         Court court = new Court();
         List<Court> courts = List.of(court);

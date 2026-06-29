@@ -223,103 +223,31 @@ class AllLocationServiceTest {
     }
 
     @Test
-    void getFilteredAndPaginatedCourtsExcludesServiceCentres() {
-        when(courtRepository.findAll()).thenReturn(List.of(buildCourt("Alpha Court", true)));
+    void getOpenLocationsByPrefixReturnsCourtsAndServiceCentresOrderedByName() {
+        when(courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc("A", true))
+            .thenReturn(List.of(
+                buildCourt("Alpha Court", true),
+                buildCourt("Arlington Court", true)
+            ));
+        when(serviceCentreRepository.findByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc("A", true))
+            .thenReturn(List.of(
+                buildServiceCentre("Aardvark Service Centre", true),
+                buildServiceCentre("Alpha Service Centre", true)
+            ));
 
-        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedCourts(
-            0,
-            25,
-            false,
-            null,
-            null,
-            "name",
-            "asc"
-        );
+        List<AllLocation> result = allLocationService.getOpenLocationsByPrefix("A");
 
-        assertThat(result.getContent()).singleElement()
-            .extracting(AllLocation::getLocationType)
-            .isEqualTo("COURT");
-    }
-
-    @Test
-    void getFilteredAndPaginatedCourtsFiltersByPartialName() {
-        when(courtRepository.findAll()).thenReturn(List.of(
-            buildCourt("Alpha Court", true),
-            buildCourt("Beta Court", true)
-        ));
-
-        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedCourts(
-            0,
-            25,
-            false,
-            null,
-            "Alpha",
-            "name",
-            null
-        );
-
-        assertThat(result.getContent()).singleElement()
+        assertThat(result)
             .extracting(AllLocation::getName)
-            .isEqualTo("Alpha Court");
-    }
-
-    @Test
-    void getFilteredAndPaginatedServiceCentresExcludesCourts() {
-        when(serviceCentreRepository.findAll()).thenReturn(List.of(buildServiceCentre("Beta Service Centre", true)));
-
-        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedServiceCentres(
-            0,
-            25,
-            false,
-            null,
-            null,
-            "name",
-            "asc"
-        );
-
-        assertThat(result.getContent()).singleElement()
+            .containsExactly(
+                "Aardvark Service Centre",
+                "Alpha Court",
+                "Alpha Service Centre",
+                "Arlington Court"
+            );
+        assertThat(result)
             .extracting(AllLocation::getLocationType)
-            .isEqualTo("SERVICE_CENTRE");
-    }
-
-    @Test
-    void getFilteredAndPaginatedServiceCentresFiltersByPartialName() {
-        when(serviceCentreRepository.findAll()).thenReturn(List.of(
-            buildServiceCentre("Alpha Service Centre", true),
-            buildServiceCentre("Beta Service Centre", true)
-        ));
-
-        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedServiceCentres(
-            0,
-            25,
-            false,
-            null,
-            "Alpha",
-            "name",
-            null
-        );
-
-        assertThat(result.getContent()).singleElement()
-            .extracting(AllLocation::getName)
-            .isEqualTo("Alpha Service Centre");
-    }
-
-    @Test
-    void getFilteredAndPaginatedServiceCentresReturnsEmptyPageWhenRegionFilterIsApplied() {
-        when(regionService.getRegionById(REGION_ID)).thenReturn(Region.builder().id(REGION_ID).build());
-
-        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedServiceCentres(
-            0,
-            25,
-            false,
-            REGION_ID.toString(),
-            null,
-            "name",
-            "asc"
-        );
-
-        assertThat(result.getTotalElements()).isZero();
-        assertThat(result.getContent()).isEmpty();
+            .containsExactly("SERVICE_CENTRE", "COURT", "SERVICE_CENTRE", "COURT");
     }
 
     @Test
@@ -572,42 +500,6 @@ class AllLocationServiceTest {
             .extracting(AllLocationDetails::getLocationType)
             .containsExactly("COURT", "SERVICE_CENTRE");
         verify(courtDetailsViewService).prepareDetailsView(courtDetails);
-        verify(serviceCentreDetailsViewService).prepareDetailsView(serviceCentreDetails);
-    }
-
-    @Test
-    void getAllCourtDetailsReturnsCourtDetailsOnly() {
-        CourtDetails courtDetails = buildCourtDetails("Alpha Court");
-
-        when(courtDetailsRepository.findAll()).thenReturn(List.of(courtDetails));
-        when(courtDetailsViewService.prepareDetailsView(any(CourtDetails.class))).thenAnswer(
-            invocation -> invocation.getArgument(0)
-        );
-
-        List<AllLocationDetails> result = allLocationService.getAllCourtDetails();
-
-        assertThat(result).singleElement()
-            .extracting(AllLocationDetails::getLocationType)
-            .isEqualTo("COURT");
-        verify(courtDetailsViewService).prepareDetailsView(courtDetails);
-    }
-
-    @Test
-    void getAllServiceCentreDetailsReturnsServiceCentreDetailsOnly() {
-        ServiceCentreDetails serviceCentreDetails = buildServiceCentreDetails("Beta Service Centre");
-
-        when(serviceCentreDetailsRepository.findAll()).thenReturn(List.of(
-            serviceCentreDetails
-        ));
-        when(serviceCentreDetailsViewService.prepareDetailsView(any(ServiceCentreDetails.class))).thenAnswer(
-            invocation -> invocation.getArgument(0)
-        );
-
-        List<AllLocationDetails> result = allLocationService.getAllServiceCentreDetails();
-
-        assertThat(result).singleElement()
-            .extracting(AllLocationDetails::getLocationType)
-            .isEqualTo("SERVICE_CENTRE");
         verify(serviceCentreDetailsViewService).prepareDetailsView(serviceCentreDetails);
     }
 

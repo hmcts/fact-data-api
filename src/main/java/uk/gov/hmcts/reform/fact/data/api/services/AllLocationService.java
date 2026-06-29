@@ -57,37 +57,28 @@ public class AllLocationService {
         return page(sortIfRequested(locations, sortBy, sortOrder), pageNumber, pageSize);
     }
 
-    public Page<AllLocation> getFilteredAndPaginatedCourts(int pageNumber, int pageSize, Boolean includeClosed,
-                                                           String regionId, String partialName,
-                                                           String sortBy, String sortOrder) {
-        UUID regionFilter = resolveRegionFilter(regionId);
-        String nameFilter = partialName == null ? "" : partialName.toLowerCase(Locale.ROOT);
-        Stream<AllLocation> locations = getFilteredCourts(includeClosed, regionFilter, nameFilter)
-            .map(AllLocation::fromCourt);
-
-        return page(sortIfRequested(locations, sortBy, sortOrder), pageNumber, pageSize);
-    }
-
-    public Page<AllLocation> getFilteredAndPaginatedServiceCentres(int pageNumber, int pageSize, Boolean includeClosed,
-                                                                   String regionId, String partialName,
-                                                                   String sortBy, String sortOrder) {
-        UUID regionFilter = resolveRegionFilter(regionId);
-        String nameFilter = partialName == null ? "" : partialName.toLowerCase(Locale.ROOT);
-        Stream<AllLocation> locations = getFilteredServiceCentres(includeClosed, regionFilter, nameFilter)
-            .map(AllLocation::fromServiceCentre);
-
-        return page(sortIfRequested(locations, sortBy, sortOrder), pageNumber, pageSize);
-    }
-
     public List<AllLocationDetails> getAllLocationDetails() {
         return Stream.concat(
-                getAllCourtDetails().stream(),
-                getAllServiceCentreDetails().stream()
+                getCourtDetails().stream(),
+                getServiceCentreDetails().stream()
             )
             .toList();
     }
 
-    public List<AllLocationDetails> getAllCourtDetails() {
+    public List<AllLocation> getOpenLocationsByPrefix(String prefix) {
+        return Stream.concat(
+                courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(prefix, true)
+                    .stream()
+                    .map(AllLocation::fromCourt),
+                serviceCentreRepository.findByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(prefix, true)
+                    .stream()
+                    .map(AllLocation::fromServiceCentre)
+            )
+            .sorted(byName(SORT_ORDER_ASC))
+            .toList();
+    }
+
+    private List<AllLocationDetails> getCourtDetails() {
         return courtDetailsRepository.findAll()
             .stream()
             .map(courtDetailsViewService::prepareDetailsView)
@@ -95,7 +86,7 @@ public class AllLocationService {
             .toList();
     }
 
-    public List<AllLocationDetails> getAllServiceCentreDetails() {
+    private List<AllLocationDetails> getServiceCentreDetails() {
         return serviceCentreDetailsRepository.findAll()
             .stream()
             .map(serviceCentreDetailsViewService::prepareDetailsView)

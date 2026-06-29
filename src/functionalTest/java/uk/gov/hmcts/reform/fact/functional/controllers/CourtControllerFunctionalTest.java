@@ -183,29 +183,13 @@ public final class CourtControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("GET /all/courts/v1 without params returns paginated structure")
-    void shouldReturnPaginatedStructureWithoutParams() {
-        final Response response = http.doGet("/all/courts/v1");
-
-        AssertionHelper.assertStatus(response, OK);
-
-        assertThat(response.contentType())
-            .as("Response content type should be JSON")
-            .contains("json");
-        assertThat(response.jsonPath().getMap("page"))
-            .as("Response should contain page metadata")
-            .isNotNull();
-        assertThat(response.jsonPath().getList("content"))
-            .as("Response should contain content array")
-            .isNotNull();
-    }
-
-    @Test
-    @DisplayName("GET /all/courts/v1 with filters returns created court in list")
+    @DisplayName("GET /all/v1 with filters returns created court in list")
     void shouldReturnCreatedCourtInFilteredList() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court for List Retrieval", false);
 
-        final Response listResponse = http.doGet("/all/courts/v1?pageNumber=0&pageSize=200&includeClosed=true");
+        final Response listResponse = http.doGet(
+            "/all/v1?pageNumber=0&pageSize=200&includeClosed=true&partialCourtName=List Retrieval"
+        );
 
         AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
     }
@@ -239,59 +223,7 @@ public final class CourtControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("GET /all/courts/v1 returns only court rows")
-    void shouldReturnOnlyCourtsFromAllCourtsEndpoint() throws Exception {
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court All Courts Split", false);
-
-        final Response response = http.doGet(
-            "/all/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&partialCourtName=All Courts Split"
-        );
-
-        AssertionHelper.assertStatus(response, OK);
-
-        final JsonNode body = mapper.readTree(response.getBody().asString());
-        final Optional<JsonNode> matchingCourt = StreamSupport.stream(body.path("content").spliterator(), false)
-            .filter(location -> courtId.toString().equals(location.path("id").asString()))
-            .findFirst();
-
-        assertThat(matchingCourt)
-            .as("/all/courts/v1 should contain the created court with ID %s", courtId)
-            .isPresent();
-        assertThat(matchingCourt.orElseThrow().path("locationType").asString())
-            .as("Created court should be marked as a court row")
-            .isEqualTo("COURT");
-    }
-
-    @Test
-    @DisplayName("GET /all/service-centres/v1 returns only service centre rows")
-    void shouldReturnOnlyServiceCentresFromAllServiceCentresEndpoint() throws Exception {
-        final UUID serviceCentreId = TestDataHelper.createServiceCentre(
-            http,
-            "Test Service Centre Split List"
-        );
-
-        final Response response = http.doGet(
-            "/all/service-centres/v1?pageNumber=0&pageSize=200&includeClosed=true&partialCourtName=Split List"
-        );
-
-        AssertionHelper.assertStatus(response, OK);
-
-        final JsonNode body = mapper.readTree(response.getBody().asString());
-        final Optional<JsonNode> matchingServiceCentre = StreamSupport
-            .stream(body.path("content").spliterator(), false)
-            .filter(location -> serviceCentreId.toString().equals(location.path("id").asString()))
-            .findFirst();
-
-        assertThat(matchingServiceCentre)
-            .as("/all/service-centres/v1 should contain the created service centre with ID %s", serviceCentreId)
-            .isPresent();
-        assertThat(matchingServiceCentre.orElseThrow().path("locationType").asString())
-            .as("Created service centre should be marked as a service centre row")
-            .isEqualTo("SERVICE_CENTRE");
-    }
-
-    @Test
-    @DisplayName("GET /all/courts/v1 with includeClosed=false returns only open courts")
+    @DisplayName("GET /all/v1 with includeClosed=false returns only open courts")
     void shouldReturnOnlyActiveCourts() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Open", false);
 
@@ -305,43 +237,43 @@ public final class CourtControllerFunctionalTest {
         AssertionHelper.assertStatus(updateResponse, OK);
 
         final Response listResponse = http.doGet(
-            "/all/courts/v1?pageNumber=0&pageSize=200&includeClosed=false"
+            "/all/v1?pageNumber=0&pageSize=200&includeClosed=false"
         );
 
         AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
     }
 
     @Test
-    @DisplayName("GET /all/courts/v1 filtered only by valid region id")
+    @DisplayName("GET /all/v1 filtered only by valid region id")
     void shouldReturnCourtsFilteredByValidRegionId() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court for regionId filtering", false);
 
         final Response listResponse = http.doGet(
-            "/all/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId
+            "/all/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId
         );
 
         AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
     }
 
     @Test
-    @DisplayName("GET /all/courts/v1 filtered by partialCourtName")
+    @DisplayName("GET /all/v1 filtered by partialCourtName")
     void shouldReturnCourtsFilteredByPartialCourtName() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Birmingham", false);
 
         final Response listResponse = http.doGet(
-            "/all/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&partialCourtName=Birmingham"
+            "/all/v1?pageNumber=0&pageSize=200&includeClosed=true&partialCourtName=Birmingham"
         );
 
         AssertionHelper.assertCourtIdInListResponse(listResponse, courtId);
     }
 
     @Test
-    @DisplayName("GET /all/courts/v1 filtered by combined filters (regionId + partialCourtName + includeClosed)")
+    @DisplayName("GET /all/v1 filtered by combined filters (regionId + partialCourtName + includeClosed)")
     void shouldReturnCourtsFilteredByCombinedFilters() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Manchester", false);
 
         final Response listResponse = http.doGet(
-            "/all/courts/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId
+            "/all/v1?pageNumber=0&pageSize=200&includeClosed=true&regionId=" + regionId
                 + "&partialCourtName=Manchester"
         );
 
