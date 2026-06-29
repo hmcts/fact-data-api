@@ -39,13 +39,11 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @Entity
 @EntityListeners(AuditableCourtEntityListener.class)
 @ValidConditional(
-    selected = "accessibleParking", selectedValueForRequired = "true", required = "accessibleParkingPhoneNumber"
-)
-@ValidConditional(
-    selected = "accessibleEntrance", selectedValueForRequired = "true", required = "accessibleEntrancePhoneNumber"
+    selected = "accessibleEntrance", selectedValueForRequired = "false", required = "accessibleEntrancePhoneNumber"
 )
 @ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorWidth")
 @ValidConditional(selected = "lift", selectedValueForRequired = "true", required = "liftDoorLimit")
+@ValidConditional(selected = "lift", selectedValueForRequired = "false", required = "liftSupportPhoneNumber")
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_accessibility_options")
 public class CourtAccessibilityOptions implements AuditableCourtEntity {
@@ -115,6 +113,14 @@ public class CourtAccessibilityOptions implements AuditableCourtEntity {
     @Min(value = 1, message = "Lift weight limit should be at least 1kg")
     @Max(value = 10000, message = "Lift weight limit should be at most 10000kg")
     private Integer liftDoorLimit;
+
+    @Schema(
+        description = "Telephone number for organising support at court when there is no lift"
+    )
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
+    @Column(name = "lift_support_phone_number")
+    private String liftSupportPhoneNumber;
 
     @Schema(description = "Quiet room availability status")
     @NotNull
