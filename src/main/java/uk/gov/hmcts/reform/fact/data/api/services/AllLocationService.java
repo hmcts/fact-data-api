@@ -45,16 +45,12 @@ public class AllLocationService {
                                                               String sortBy, String sortOrder) {
         UUID regionFilter = resolveRegionFilter(regionId);
         String nameFilter = partialName == null ? "" : partialName.toLowerCase(Locale.ROOT);
-        Comparator<AllLocation> comparator = buildComparator(sortBy, sortOrder);
-
-        List<AllLocation> locations = Stream.concat(
+        Stream<AllLocation> locations = Stream.concat(
                 getFilteredCourts(includeClosed, regionFilter, nameFilter).map(AllLocation::fromCourt),
                 getFilteredServiceCentres(includeClosed, regionFilter, nameFilter).map(AllLocation::fromServiceCentre)
-            )
-            .sorted(comparator)
-            .toList();
+            );
 
-        return page(locations, pageNumber, pageSize);
+        return page(sortIfRequested(locations, sortBy, sortOrder), pageNumber, pageSize);
     }
 
     public Page<AllLocation> getFilteredAndPaginatedCourts(int pageNumber, int pageSize, Boolean includeClosed,
@@ -62,14 +58,10 @@ public class AllLocationService {
                                                            String sortBy, String sortOrder) {
         UUID regionFilter = resolveRegionFilter(regionId);
         String nameFilter = partialName == null ? "" : partialName.toLowerCase(Locale.ROOT);
-        Comparator<AllLocation> comparator = buildComparator(sortBy, sortOrder);
+        Stream<AllLocation> locations = getFilteredCourts(includeClosed, regionFilter, nameFilter)
+            .map(AllLocation::fromCourt);
 
-        List<AllLocation> locations = getFilteredCourts(includeClosed, regionFilter, nameFilter)
-            .map(AllLocation::fromCourt)
-            .sorted(comparator)
-            .toList();
-
-        return page(locations, pageNumber, pageSize);
+        return page(sortIfRequested(locations, sortBy, sortOrder), pageNumber, pageSize);
     }
 
     public Page<AllLocation> getFilteredAndPaginatedServiceCentres(int pageNumber, int pageSize, Boolean includeClosed,
@@ -77,14 +69,10 @@ public class AllLocationService {
                                                                    String sortBy, String sortOrder) {
         UUID regionFilter = resolveRegionFilter(regionId);
         String nameFilter = partialName == null ? "" : partialName.toLowerCase(Locale.ROOT);
-        Comparator<AllLocation> comparator = buildComparator(sortBy, sortOrder);
+        Stream<AllLocation> locations = getFilteredServiceCentres(includeClosed, regionFilter, nameFilter)
+            .map(AllLocation::fromServiceCentre);
 
-        List<AllLocation> locations = getFilteredServiceCentres(includeClosed, regionFilter, nameFilter)
-            .map(AllLocation::fromServiceCentre)
-            .sorted(comparator)
-            .toList();
-
-        return page(locations, pageNumber, pageSize);
+        return page(sortIfRequested(locations, sortBy, sortOrder), pageNumber, pageSize);
     }
 
     public List<AllLocationDetails> getAllLocationDetails() {
@@ -145,13 +133,6 @@ public class AllLocationService {
     }
 
     private Comparator<AllLocation> buildComparator(String sortBy, String sortOrder) {
-        if (StringUtils.isBlank(sortBy)) {
-            if (!StringUtils.isBlank(sortOrder)) {
-                throw new InvalidParameterCombinationException("sortOrder cannot be provided without sortBy");
-            }
-            return byName(SORT_ORDER_ASC);
-        }
-
         String normalizedSortBy = sortBy.trim().toLowerCase(Locale.ROOT);
         String normalizedSortOrder = StringUtils.isBlank(sortOrder) ? SORT_ORDER_ASC
             : sortOrder.trim().toLowerCase(Locale.ROOT);
@@ -165,6 +146,17 @@ public class AllLocationService {
             case SORT_BY_LAST_UPDATED -> byLastUpdated(normalizedSortOrder);
             default -> throw new InvalidParameterCombinationException("sortBy must be one of: name, lastUpdated");
         };
+    }
+
+    private List<AllLocation> sortIfRequested(Stream<AllLocation> locations, String sortBy, String sortOrder) {
+        if (StringUtils.isBlank(sortBy)) {
+            if (!StringUtils.isBlank(sortOrder)) {
+                throw new InvalidParameterCombinationException("sortOrder cannot be provided without sortBy");
+            }
+            return locations.toList();
+        }
+
+        return locations.sorted(buildComparator(sortBy, sortOrder)).toList();
     }
 
     private Comparator<AllLocation> byName(String sortOrder) {

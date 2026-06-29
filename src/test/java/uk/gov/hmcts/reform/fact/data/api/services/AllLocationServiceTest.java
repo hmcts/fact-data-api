@@ -72,6 +72,29 @@ class AllLocationServiceTest {
     }
 
     @Test
+    void getFilteredAndPaginatedLocationsPreservesRepositoryOrderWhenSortIsNotRequested() {
+        when(courtRepository.findAll()).thenReturn(List.of(
+            buildCourt("Charlie Court", true),
+            buildCourt("Alpha Court", true)
+        ));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(buildServiceCentre("Beta Service Centre", true)));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            null,
+            null,
+            null,
+            null
+        );
+
+        assertThat(result.getContent())
+            .extracting(AllLocation::name)
+            .containsExactly("Charlie Court", "Alpha Court", "Beta Service Centre");
+    }
+
+    @Test
     void getFilteredAndPaginatedLocationsFiltersClosedLocationsUnlessIncluded() {
         Court openCourt = buildCourt("Open Court", true);
         ServiceCentre closedServiceCentre = buildServiceCentre("Closed Service Centre", false);
