@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocationDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
@@ -112,7 +111,8 @@ public class AllLocationService {
         return courtRepository.findAll().stream().filter(predicate);
     }
 
-    private Stream<ServiceCentre> getFilteredServiceCentres(Boolean includeClosed, UUID regionFilter, String nameFilter) {
+    private Stream<ServiceCentre> getFilteredServiceCentres(Boolean includeClosed, UUID regionFilter,
+                                                            String nameFilter) {
         if (regionFilter != null) {
             return Stream.empty();
         }
