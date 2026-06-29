@@ -341,4 +341,49 @@ class CourtAccessibilityOptionsControllerTest {
                             .content(objectMapper.writeValueAsString(accessibilityOptions)))
             .andExpect(status().isBadRequest());
     }
+
+    @Test
+    @DisplayName(
+        "POST /courts/{courtId}/v1/accessibility-options return 400 when lift is false & liftSupportPhoneNumber is null"
+    )
+    void postAccessibilityOptionsLiftFalseSupportPhoneNull() throws Exception {
+        CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
+            .id(courtId)
+            .courtId(courtId)
+            .court(null)
+            .accessibleEntrance(true)
+            .accessibleParking(false)
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
+            .lift(false)
+            .quietRoom(true)
+            .build();
+
+        mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(accessibilityOptions)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName(
+        "POST /courts/{courtId}/v1/accessibility-options return 400 when lift is false & liftSupportPhoneNumber invalid"
+    )
+    void postAccessibilityOptionsLiftFalseSupportPhoneInvalid() throws Exception {
+        CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
+            .id(courtId)
+            .courtId(courtId)
+            .court(null)
+            .accessibleEntrance(true)
+            .accessibleParking(false)
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
+            .lift(false)
+            .liftSupportPhoneNumber("invalid-phone")
+            .quietRoom(true)
+            .build();
+
+        mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(accessibilityOptions)))
+            .andExpect(status().isBadRequest());
+    }
 }
