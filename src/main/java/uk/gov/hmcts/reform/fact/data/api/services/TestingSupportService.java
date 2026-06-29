@@ -434,7 +434,7 @@ public class TestingSupportService {
                 ACCESSIBLE_TOILET_DESCRIPTIONS.size())))
             .build();
 
-        if (courtAccessibilityOptions.getAccessibleEntrance().booleanValue()) {
+        if (!courtAccessibilityOptions.getAccessibleEntrance().booleanValue()) {
             courtAccessibilityOptions.setAccessibleEntrancePhoneNumber(rndPhoneNumber(random));
         }
 
@@ -445,6 +445,8 @@ public class TestingSupportService {
         if (courtAccessibilityOptions.getLift().booleanValue()) {
             courtAccessibilityOptions.setLiftDoorWidth(200 + random.nextInt(600));
             courtAccessibilityOptions.setLiftDoorLimit(3000 + random.nextInt(5000));
+        } else {
+            courtAccessibilityOptions.setLiftSupportPhoneNumber(rndPhoneNumber(random));
         }
 
         courtAccessibilityOptionsService.setAccessibilityOptions(courtId, courtAccessibilityOptions);
