@@ -181,9 +181,13 @@ public class AuthFunctionalTest {
             "/courts/" + courtId + "/v1",
             "/courts/" + courtId + ".json",
             "/courts/slug/" + createdCourt.getSlug() + "/v1",
-            "/courts/all/v1",
-            "/courts/all.json",
-            "/courts/v1?pageNumber=0&pageSize=10&includeClosed=true"
+            "/all/courts/v1",
+            "/all/courts/details/v1",
+            "/all/service-centres/v1",
+            "/all/service-centres/details/v1",
+            "/all/v1",
+            "/all/details/v1",
+            "/all/details.json"
         };
 
         // ensure that both roles can access read endpoints
@@ -200,7 +204,7 @@ public class AuthFunctionalTest {
         assertViewerForbidden(updateViewer, "/courts/{courtId}/v1 [PUT]");
         assertThat(updateAdmin.statusCode()).isEqualTo(200);
 
-        assertUnauthenticated(http.doGet("/courts/v1", ""), "/courts/v1 [GET]");
+        assertUnauthenticated(http.doGet("/all/courts/v1", ""), "/all/courts/v1 [GET]");
         assertUnauthenticated(http.doPost("/courts/v1", testingCourt, ""), "/courts/v1 [POST]");
     }
 

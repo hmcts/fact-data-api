@@ -227,15 +227,6 @@ public class CourtService {
     }
 
     /**
-     * Get all court details.
-     *
-     * @return The list of court details entities.
-     */
-    public List<CourtDetails> getAllCourtDetails() {
-        return courtDetailsRepository.findAll();
-    }
-
-    /**
      * Marks courts received from CaTH as open and records which MRD IDs could not be matched.
      *
      * @param mrdIds the MRD IDs supplied by CaTH.

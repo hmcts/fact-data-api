@@ -171,7 +171,7 @@ public final class HttpClient {
 
     /**
      * GET request with query parameters.
-     * Example: doGet("/courts/v1", Map.of("pageNumber", 0, "pageSize", 25))
+     * Example: doGet("/all/courts/v1", Map.of("pageNumber", 0, "pageSize", 25))
      */
     public Response doGet(final String path, final Map<String, Object> queryParams, final String bearerToken) {
         RequestSpecification request = requestWithOptionalAuthorization(bearerToken);
