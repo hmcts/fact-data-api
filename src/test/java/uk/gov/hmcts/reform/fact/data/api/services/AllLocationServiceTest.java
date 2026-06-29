@@ -13,15 +13,18 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -129,6 +132,51 @@ class AllLocationServiceTest {
     }
 
     @Test
+    void getFilteredAndPaginatedLocationsFiltersClosedCourtsUnlessIncluded() {
+        when(courtRepository.findAll()).thenReturn(List.of(
+            buildCourt("Open Court", true),
+            buildCourt("Closed Court", false)
+        ));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of());
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            false,
+            null,
+            null,
+            "name",
+            "asc"
+        );
+
+        assertThat(result.getContent()).singleElement()
+            .extracting(AllLocation::getName)
+            .isEqualTo("Open Court");
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsIncludesClosedLocationsWhenRequested() {
+        when(courtRepository.findAll()).thenReturn(List.of(buildCourt("Open Court", true)));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(buildServiceCentre("Closed Service Centre", false)));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            true,
+            false,
+            null,
+            null,
+            "name",
+            "asc"
+        );
+
+        assertThat(result.getContent())
+            .extracting(AllLocation::getName)
+            .containsExactly("Closed Service Centre", "Open Court");
+    }
+
+    @Test
     void getFilteredAndPaginatedLocationsReturnsServiceCentresOnlyWhenRequested() {
         when(serviceCentreRepository.findAll()).thenReturn(List.of(buildServiceCentre("Beta Service Centre", true)));
 
@@ -146,6 +194,32 @@ class AllLocationServiceTest {
         assertThat(result.getContent()).singleElement()
             .extracting(AllLocation::getLocationType)
             .isEqualTo("SERVICE_CENTRE");
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsFiltersByPartialNameCaseInsensitively() {
+        when(courtRepository.findAll()).thenReturn(List.of(
+            buildCourt("Alpha Court", true),
+            buildCourt("Beta Court", true)
+        ));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(
+            buildServiceCentre("Alpha Service Centre", true)
+        ));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            false,
+            null,
+            "aLpHa",
+            "name",
+            "asc"
+        );
+
+        assertThat(result.getContent())
+            .extracting(AllLocation::getName)
+            .containsExactly("Alpha Court", "Alpha Service Centre");
     }
 
     @Test
@@ -168,6 +242,28 @@ class AllLocationServiceTest {
     }
 
     @Test
+    void getFilteredAndPaginatedCourtsFiltersByPartialName() {
+        when(courtRepository.findAll()).thenReturn(List.of(
+            buildCourt("Alpha Court", true),
+            buildCourt("Beta Court", true)
+        ));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedCourts(
+            0,
+            25,
+            false,
+            null,
+            "Alpha",
+            "name",
+            null
+        );
+
+        assertThat(result.getContent()).singleElement()
+            .extracting(AllLocation::getName)
+            .isEqualTo("Alpha Court");
+    }
+
+    @Test
     void getFilteredAndPaginatedServiceCentresExcludesCourts() {
         when(serviceCentreRepository.findAll()).thenReturn(List.of(buildServiceCentre("Beta Service Centre", true)));
 
@@ -184,6 +280,46 @@ class AllLocationServiceTest {
         assertThat(result.getContent()).singleElement()
             .extracting(AllLocation::getLocationType)
             .isEqualTo("SERVICE_CENTRE");
+    }
+
+    @Test
+    void getFilteredAndPaginatedServiceCentresFiltersByPartialName() {
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(
+            buildServiceCentre("Alpha Service Centre", true),
+            buildServiceCentre("Beta Service Centre", true)
+        ));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedServiceCentres(
+            0,
+            25,
+            false,
+            null,
+            "Alpha",
+            "name",
+            null
+        );
+
+        assertThat(result.getContent()).singleElement()
+            .extracting(AllLocation::getName)
+            .isEqualTo("Alpha Service Centre");
+    }
+
+    @Test
+    void getFilteredAndPaginatedServiceCentresReturnsEmptyPageWhenRegionFilterIsApplied() {
+        when(regionService.getRegionById(REGION_ID)).thenReturn(Region.builder().id(REGION_ID).build());
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedServiceCentres(
+            0,
+            25,
+            false,
+            REGION_ID.toString(),
+            null,
+            "name",
+            "asc"
+        );
+
+        assertThat(result.getTotalElements()).isZero();
+        assertThat(result.getContent()).isEmpty();
     }
 
     @Test
@@ -209,6 +345,184 @@ class AllLocationServiceTest {
         assertThat(result.getContent()).singleElement()
             .extracting(AllLocation::getName)
             .isEqualTo("Matching Court");
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsDefaultsSortOrderToAscendingWhenSortByIsProvided() {
+        when(courtRepository.findAll()).thenReturn(List.of(
+            buildCourt("Charlie Court", true),
+            buildCourt("Alpha Court", true)
+        ));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(buildServiceCentre("Beta Service Centre", true)));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            false,
+            null,
+            null,
+            "name",
+            null
+        );
+
+        assertThat(result.getContent())
+            .extracting(AllLocation::getName)
+            .containsExactly("Alpha Court", "Beta Service Centre", "Charlie Court");
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsSortsByNameDescending() {
+        when(courtRepository.findAll()).thenReturn(List.of(
+            buildCourt("Alpha Court", true),
+            buildCourt("Charlie Court", true)
+        ));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(buildServiceCentre("Beta Service Centre", true)));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            false,
+            null,
+            null,
+            "name",
+            "desc"
+        );
+
+        assertThat(result.getContent())
+            .extracting(AllLocation::getName)
+            .containsExactly("Charlie Court", "Beta Service Centre", "Alpha Court");
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsSortsByLastUpdatedAscendingAndThenName() {
+        ZonedDateTime sameLastUpdatedAt = ZonedDateTime.parse("2026-01-01T10:00:00Z");
+        when(courtRepository.findAll()).thenReturn(List.of(
+            buildCourt("Beta Court", true, sameLastUpdatedAt),
+            buildCourt("Alpha Court", true, sameLastUpdatedAt)
+        ));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(
+            buildServiceCentre("Later Service Centre", true, ZonedDateTime.parse("2026-01-02T10:00:00Z"))
+        ));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            false,
+            null,
+            null,
+            "lastUpdated",
+            "asc"
+        );
+
+        assertThat(result.getContent())
+            .extracting(AllLocation::getName)
+            .containsExactly("Alpha Court", "Beta Court", "Later Service Centre");
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsSortsByLastUpdatedDescending() {
+        when(courtRepository.findAll()).thenReturn(List.of(
+            buildCourt("Old Court", true, ZonedDateTime.parse("2026-01-01T10:00:00Z")),
+            buildCourt("New Court", true, ZonedDateTime.parse("2026-01-03T10:00:00Z"))
+        ));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(
+            buildServiceCentre("Middle Service Centre", true, ZonedDateTime.parse("2026-01-02T10:00:00Z"))
+        ));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            false,
+            null,
+            null,
+            "lastUpdated",
+            "desc"
+        );
+
+        assertThat(result.getContent())
+            .extracting(AllLocation::getName)
+            .containsExactly("New Court", "Middle Service Centre", "Old Court");
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsReturnsEmptyPageWhenPageNumberIsOutOfRange() {
+        when(courtRepository.findAll()).thenReturn(List.of(buildCourt("Alpha Court", true)));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(buildServiceCentre("Beta Service Centre", true)));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            10,
+            25,
+            false,
+            false,
+            null,
+            null,
+            null,
+            null
+        );
+
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getContent()).isEmpty();
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsRejectsSortOrderWithoutSortBy() {
+        when(courtRepository.findAll()).thenReturn(List.of(buildCourt("Alpha Court", true)));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of());
+
+        assertThatThrownBy(() -> allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            false,
+            null,
+            null,
+            null,
+            "asc"
+        ))
+            .isInstanceOf(InvalidParameterCombinationException.class)
+            .hasMessage("sortOrder cannot be provided without sortBy");
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsRejectsInvalidSortBy() {
+        when(courtRepository.findAll()).thenReturn(List.of(buildCourt("Alpha Court", true)));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of());
+
+        assertThatThrownBy(() -> allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            false,
+            null,
+            null,
+            "createdAt",
+            "asc"
+        ))
+            .isInstanceOf(InvalidParameterCombinationException.class)
+            .hasMessage("sortBy must be one of: name, lastUpdated");
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsRejectsInvalidSortOrder() {
+        when(courtRepository.findAll()).thenReturn(List.of(buildCourt("Alpha Court", true)));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of());
+
+        assertThatThrownBy(() -> allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            false,
+            null,
+            null,
+            "name",
+            "sideways"
+        ))
+            .isInstanceOf(InvalidParameterCombinationException.class)
+            .hasMessage("sortOrder must be one of: asc, desc");
     }
 
     @Test
@@ -298,21 +612,31 @@ class AllLocationServiceTest {
     }
 
     private Court buildCourt(String name, boolean open) {
+        return buildCourt(name, open, null);
+    }
+
+    private Court buildCourt(String name, boolean open, ZonedDateTime lastUpdatedAt) {
         return Court.builder()
             .id(UUID.randomUUID())
             .name(name)
             .slug(name.toLowerCase().replace(" ", "-"))
             .open(open)
             .regionId(REGION_ID)
+            .lastUpdatedAt(lastUpdatedAt)
             .build();
     }
 
     private ServiceCentre buildServiceCentre(String name, boolean open) {
+        return buildServiceCentre(name, open, null);
+    }
+
+    private ServiceCentre buildServiceCentre(String name, boolean open, ZonedDateTime lastUpdatedAt) {
         return ServiceCentre.builder()
             .id(UUID.randomUUID())
             .name(name)
             .slug(name.toLowerCase().replace(" ", "-"))
             .open(open)
+            .lastUpdatedAt(lastUpdatedAt)
             .build();
     }
 
