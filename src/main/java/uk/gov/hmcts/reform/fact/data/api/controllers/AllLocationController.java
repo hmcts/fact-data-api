@@ -42,6 +42,7 @@ public class AllLocationController {
         @RequestParam(name = "pageSize", defaultValue = "25")
         @Positive(message = "pageSize must be greater than 0") int pageSize,
         @RequestParam(name = "includeClosed", required = false) Boolean includeClosed,
+        @RequestParam(name = "onlyServiceCentres", required = false) Boolean onlyServiceCentres,
         @RequestParam(name = "regionId", required = false) @ValidUUID(allowNull = true) String regionId,
         @RequestParam(name = "partialCourtName", required = false)
         @Size(max = 250, message = "Partial court name must be less than 250 characters")
@@ -57,6 +58,7 @@ public class AllLocationController {
             pageNumber,
             pageSize,
             includeClosed,
+            onlyServiceCentres,
             regionId,
             partialCourtName,
             sortBy,

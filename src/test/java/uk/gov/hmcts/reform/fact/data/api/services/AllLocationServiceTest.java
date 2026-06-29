@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +46,12 @@ class AllLocationServiceTest {
     @Mock
     private RegionService regionService;
 
+    @Mock
+    private CourtDetailsViewService courtDetailsViewService;
+
+    @Mock
+    private ServiceCentreDetailsViewService serviceCentreDetailsViewService;
+
     @InjectMocks
     private AllLocationService allLocationService;
 
@@ -58,6 +66,7 @@ class AllLocationServiceTest {
         Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
             0,
             25,
+            false,
             false,
             null,
             null,
@@ -83,6 +92,7 @@ class AllLocationServiceTest {
             0,
             25,
             false,
+            false,
             null,
             null,
             null,
@@ -106,6 +116,7 @@ class AllLocationServiceTest {
             0,
             25,
             false,
+            false,
             null,
             null,
             "name",
@@ -115,6 +126,26 @@ class AllLocationServiceTest {
         assertThat(result.getContent()).singleElement()
             .extracting(AllLocation::name)
             .isEqualTo("Open Court");
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsReturnsServiceCentresOnlyWhenRequested() {
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(buildServiceCentre("Beta Service Centre", true)));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            true,
+            null,
+            null,
+            "name",
+            "asc"
+        );
+
+        assertThat(result.getContent()).singleElement()
+            .extracting(AllLocation::locationType)
+            .isEqualTo("SERVICE_CENTRE");
     }
 
     @Test
@@ -168,6 +199,7 @@ class AllLocationServiceTest {
             0,
             25,
             false,
+            false,
             REGION_ID.toString(),
             null,
             "name",
@@ -191,6 +223,7 @@ class AllLocationServiceTest {
             1,
             1,
             false,
+            false,
             null,
             null,
             "name",
@@ -205,40 +238,63 @@ class AllLocationServiceTest {
 
     @Test
     void getAllLocationDetailsReturnsCourtAndServiceCentreDetails() {
-        when(courtDetailsRepository.findAll()).thenReturn(List.of(buildCourtDetails("Alpha Court")));
+        CourtDetails courtDetails = buildCourtDetails("Alpha Court");
+        ServiceCentreDetails serviceCentreDetails = buildServiceCentreDetails("Beta Service Centre");
+
+        when(courtDetailsRepository.findAll()).thenReturn(List.of(courtDetails));
         when(serviceCentreDetailsRepository.findAll()).thenReturn(List.of(
-            buildServiceCentreDetails("Beta Service Centre")
+            serviceCentreDetails
         ));
+        when(courtDetailsViewService.prepareDetailsView(any(CourtDetails.class))).thenAnswer(
+            invocation -> invocation.getArgument(0)
+        );
+        when(serviceCentreDetailsViewService.prepareDetailsView(any(ServiceCentreDetails.class))).thenAnswer(
+            invocation -> invocation.getArgument(0)
+        );
 
         List<AllLocationDetails> result = allLocationService.getAllLocationDetails();
 
         assertThat(result)
             .extracting(AllLocationDetails::locationType)
             .containsExactly("COURT", "SERVICE_CENTRE");
+        verify(courtDetailsViewService).prepareDetailsView(courtDetails);
+        verify(serviceCentreDetailsViewService).prepareDetailsView(serviceCentreDetails);
     }
 
     @Test
     void getAllCourtDetailsReturnsCourtDetailsOnly() {
-        when(courtDetailsRepository.findAll()).thenReturn(List.of(buildCourtDetails("Alpha Court")));
+        CourtDetails courtDetails = buildCourtDetails("Alpha Court");
+
+        when(courtDetailsRepository.findAll()).thenReturn(List.of(courtDetails));
+        when(courtDetailsViewService.prepareDetailsView(any(CourtDetails.class))).thenAnswer(
+            invocation -> invocation.getArgument(0)
+        );
 
         List<AllLocationDetails> result = allLocationService.getAllCourtDetails();
 
         assertThat(result).singleElement()
             .extracting(AllLocationDetails::locationType)
             .isEqualTo("COURT");
+        verify(courtDetailsViewService).prepareDetailsView(courtDetails);
     }
 
     @Test
     void getAllServiceCentreDetailsReturnsServiceCentreDetailsOnly() {
+        ServiceCentreDetails serviceCentreDetails = buildServiceCentreDetails("Beta Service Centre");
+
         when(serviceCentreDetailsRepository.findAll()).thenReturn(List.of(
-            buildServiceCentreDetails("Beta Service Centre")
+            serviceCentreDetails
         ));
+        when(serviceCentreDetailsViewService.prepareDetailsView(any(ServiceCentreDetails.class))).thenAnswer(
+            invocation -> invocation.getArgument(0)
+        );
 
         List<AllLocationDetails> result = allLocationService.getAllServiceCentreDetails();
 
         assertThat(result).singleElement()
             .extracting(AllLocationDetails::locationType)
             .isEqualTo("SERVICE_CENTRE");
+        verify(serviceCentreDetailsViewService).prepareDetailsView(serviceCentreDetails);
     }
 
     private Court buildCourt(String name, boolean open) {

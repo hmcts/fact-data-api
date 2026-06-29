@@ -39,16 +39,21 @@ public class AllLocationService {
     private final CourtDetailsRepository courtDetailsRepository;
     private final ServiceCentreDetailsRepository serviceCentreDetailsRepository;
     private final RegionService regionService;
+    private final CourtDetailsViewService courtDetailsViewService;
+    private final ServiceCentreDetailsViewService serviceCentreDetailsViewService;
 
     public Page<AllLocation> getFilteredAndPaginatedLocations(int pageNumber, int pageSize, Boolean includeClosed,
-                                                              String regionId, String partialName,
+                                                              Boolean onlyServiceCentres, String regionId,
+                                                              String partialName,
                                                               String sortBy, String sortOrder) {
         UUID regionFilter = resolveRegionFilter(regionId);
         String nameFilter = partialName == null ? "" : partialName.toLowerCase(Locale.ROOT);
-        Stream<AllLocation> locations = Stream.concat(
+        Stream<AllLocation> locations = Boolean.TRUE.equals(onlyServiceCentres)
+            ? getFilteredServiceCentres(includeClosed, regionFilter, nameFilter).map(AllLocation::fromServiceCentre)
+            : Stream.concat(
                 getFilteredCourts(includeClosed, regionFilter, nameFilter).map(AllLocation::fromCourt),
                 getFilteredServiceCentres(includeClosed, regionFilter, nameFilter).map(AllLocation::fromServiceCentre)
-            );
+        );
 
         return page(sortIfRequested(locations, sortBy, sortOrder), pageNumber, pageSize);
     }
@@ -86,6 +91,7 @@ public class AllLocationService {
     public List<AllLocationDetails> getAllCourtDetails() {
         return courtDetailsRepository.findAll()
             .stream()
+            .map(courtDetailsViewService::prepareDetailsView)
             .map(AllLocationDetails::fromCourt)
             .toList();
     }
@@ -93,6 +99,7 @@ public class AllLocationService {
     public List<AllLocationDetails> getAllServiceCentreDetails() {
         return serviceCentreDetailsRepository.findAll()
             .stream()
+            .map(serviceCentreDetailsViewService::prepareDetailsView)
             .map(AllLocationDetails::fromServiceCentre)
             .toList();
     }

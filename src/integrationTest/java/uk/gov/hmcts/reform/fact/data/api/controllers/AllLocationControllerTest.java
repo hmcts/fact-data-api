@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -47,9 +48,10 @@ class AllLocationControllerTest {
         when(allLocationService.getFilteredAndPaginatedLocations(
             anyInt(),
             anyInt(),
-            any(),
+            eq(true),
+            eq(false),
             nullable(String.class),
-            nullable(String.class),
+            eq("Test"),
             nullable(String.class),
             nullable(String.class)
         )).thenReturn(page(buildLocation("COURT", false)));
@@ -58,10 +60,33 @@ class AllLocationControllerTest {
                             .param("pageNumber", "0")
                             .param("pageSize", "25")
                             .param("includeClosed", "true")
+                            .param("onlyServiceCentres", "false")
                             .param("partialCourtName", "Test"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value(LOCATION_ID.toString()))
             .andExpect(jsonPath("$.content[0].locationType").value("COURT"));
+    }
+
+    @Test
+    @DisplayName("GET /all/v1 can return service centres only")
+    void getAllLocationsCanReturnServiceCentresOnly() throws Exception {
+        when(allLocationService.getFilteredAndPaginatedLocations(
+            anyInt(),
+            anyInt(),
+            eq(false),
+            eq(true),
+            nullable(String.class),
+            nullable(String.class),
+            nullable(String.class),
+            nullable(String.class)
+        )).thenReturn(page(buildLocation("SERVICE_CENTRE", true)));
+
+        mockMvc.perform(get("/all/v1")
+                            .param("onlyServiceCentres", "true")
+                            .param("includeClosed", "false"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].locationType").value("SERVICE_CENTRE"))
+            .andExpect(jsonPath("$.content[0].serviceCentre").value(true));
     }
 
     @Test
