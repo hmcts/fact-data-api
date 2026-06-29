@@ -76,7 +76,7 @@ class AllLocationServiceTest {
 
         assertThat(result.getTotalElements()).isEqualTo(2);
         assertThat(result.getContent())
-            .extracting(AllLocation::locationType)
+            .extracting(AllLocation::getLocationType)
             .containsExactly("COURT", "SERVICE_CENTRE");
     }
 
@@ -100,7 +100,7 @@ class AllLocationServiceTest {
         );
 
         assertThat(result.getContent())
-            .extracting(AllLocation::name)
+            .extracting(AllLocation::getName)
             .containsExactly("Charlie Court", "Alpha Court", "Beta Service Centre");
     }
 
@@ -124,7 +124,7 @@ class AllLocationServiceTest {
         );
 
         assertThat(result.getContent()).singleElement()
-            .extracting(AllLocation::name)
+            .extracting(AllLocation::getName)
             .isEqualTo("Open Court");
     }
 
@@ -144,7 +144,7 @@ class AllLocationServiceTest {
         );
 
         assertThat(result.getContent()).singleElement()
-            .extracting(AllLocation::locationType)
+            .extracting(AllLocation::getLocationType)
             .isEqualTo("SERVICE_CENTRE");
     }
 
@@ -163,7 +163,7 @@ class AllLocationServiceTest {
         );
 
         assertThat(result.getContent()).singleElement()
-            .extracting(AllLocation::locationType)
+            .extracting(AllLocation::getLocationType)
             .isEqualTo("COURT");
     }
 
@@ -182,7 +182,7 @@ class AllLocationServiceTest {
         );
 
         assertThat(result.getContent()).singleElement()
-            .extracting(AllLocation::locationType)
+            .extracting(AllLocation::getLocationType)
             .isEqualTo("SERVICE_CENTRE");
     }
 
@@ -207,7 +207,7 @@ class AllLocationServiceTest {
         );
 
         assertThat(result.getContent()).singleElement()
-            .extracting(AllLocation::name)
+            .extracting(AllLocation::getName)
             .isEqualTo("Matching Court");
     }
 
@@ -232,7 +232,7 @@ class AllLocationServiceTest {
 
         assertThat(result.getTotalElements()).isEqualTo(3);
         assertThat(result.getContent()).singleElement()
-            .extracting(AllLocation::name)
+            .extracting(AllLocation::getName)
             .isEqualTo("Beta Service Centre");
     }
 
@@ -255,7 +255,7 @@ class AllLocationServiceTest {
         List<AllLocationDetails> result = allLocationService.getAllLocationDetails();
 
         assertThat(result)
-            .extracting(AllLocationDetails::locationType)
+            .extracting(AllLocationDetails::getLocationType)
             .containsExactly("COURT", "SERVICE_CENTRE");
         verify(courtDetailsViewService).prepareDetailsView(courtDetails);
         verify(serviceCentreDetailsViewService).prepareDetailsView(serviceCentreDetails);
@@ -273,7 +273,7 @@ class AllLocationServiceTest {
         List<AllLocationDetails> result = allLocationService.getAllCourtDetails();
 
         assertThat(result).singleElement()
-            .extracting(AllLocationDetails::locationType)
+            .extracting(AllLocationDetails::getLocationType)
             .isEqualTo("COURT");
         verify(courtDetailsViewService).prepareDetailsView(courtDetails);
     }
@@ -292,7 +292,7 @@ class AllLocationServiceTest {
         List<AllLocationDetails> result = allLocationService.getAllServiceCentreDetails();
 
         assertThat(result).singleElement()
-            .extracting(AllLocationDetails::locationType)
+            .extracting(AllLocationDetails::getLocationType)
             .isEqualTo("SERVICE_CENTRE");
         verify(serviceCentreDetailsViewService).prepareDetailsView(serviceCentreDetails);
     }

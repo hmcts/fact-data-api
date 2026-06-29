@@ -168,20 +168,20 @@ public class AllLocationService {
 
     private Comparator<AllLocation> byName(String sortOrder) {
         Comparator<AllLocation> comparator = Comparator
-            .comparing((AllLocation location) -> location.name().toLowerCase(Locale.ROOT))
-            .thenComparing(AllLocation::locationType)
-            .thenComparing(AllLocation::id);
+            .comparing((AllLocation location) -> location.getName().toLowerCase(Locale.ROOT))
+            .thenComparing(AllLocation::getLocationType)
+            .thenComparing(AllLocation::getId);
         return SORT_ORDER_DESC.equals(sortOrder) ? comparator.reversed() : comparator;
     }
 
     private Comparator<AllLocation> byLastUpdated(String sortOrder) {
         Comparator<AllLocation> comparator = Comparator
             .comparing(
-                AllLocation::lastUpdatedAt,
+                AllLocation::getLastUpdatedAt,
                 Comparator.nullsLast(Comparator.naturalOrder())
             )
-            .thenComparing((AllLocation location) -> location.name().toLowerCase(Locale.ROOT))
-            .thenComparing(AllLocation::id);
+            .thenComparing((AllLocation location) -> location.getName().toLowerCase(Locale.ROOT))
+            .thenComparing(AllLocation::getId);
         return SORT_ORDER_DESC.equals(sortOrder) ? comparator.reversed() : comparator;
     }
 

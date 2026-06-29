@@ -186,20 +186,14 @@ class AllLocationControllerTest {
     }
 
     private AllLocation buildLocation(String locationType, boolean serviceCentre) {
-        return new AllLocation(
-            LOCATION_ID,
-            "Test Location",
-            "test-location",
-            true,
-            null,
-            null,
-            null,
-            locationType,
-            serviceCentre,
-            null,
-            null,
-            null
-        );
+        return AllLocation.builder()
+            .id(LOCATION_ID)
+            .name("Test Location")
+            .slug("test-location")
+            .open(true)
+            .locationType(locationType)
+            .serviceCentre(serviceCentre)
+            .build();
     }
 
     private CourtDetails buildCourtDetails() {
