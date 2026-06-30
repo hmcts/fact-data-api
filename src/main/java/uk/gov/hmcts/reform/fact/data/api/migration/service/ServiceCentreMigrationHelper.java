@@ -72,6 +72,7 @@ class ServiceCentreMigrationHelper {
                 .slug(dto.getSlug())
                 .open(Boolean.FALSE)
                 .serviceAreaIds(serviceAreaSelection.serviceAreaIds())
+                .regionId(mapRegionId(dto, context))
                 .catchmentType(serviceAreaSelection.catchmentType().orElse(null))
                 .build();
 
@@ -169,6 +170,18 @@ class ServiceCentreMigrationHelper {
         }
 
         return results.isEmpty() ? List.of() : results;
+    }
+
+    private static UUID mapRegionId(CourtDto dto, MigrationContext context) {
+        if (dto.getRegionId() == null) {
+            return null;
+        }
+
+        UUID mappedRegionId = context.getRegionIds().get(dto.getRegionId());
+        if (mappedRegionId == null) {
+            LOG.warn("Unable to map service centre region identifier '{}' in migration payload", dto.getRegionId());
+        }
+        return mappedRegionId;
     }
 
     private static boolean isEmpty(Collection<?> values) {

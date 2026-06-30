@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
+import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
@@ -22,6 +23,7 @@ public class ServiceCentreService {
     private final ServiceCentreRepository serviceCentreRepository;
     private final ServiceCentreDetailsRepository serviceCentreDetailsRepository;
     private final ServiceAreaRepository serviceAreaRepository;
+    private final RegionService regionService;
 
     /**
      * Get a service centre by id.
@@ -82,6 +84,7 @@ public class ServiceCentreService {
         serviceCentre.setSlug(toUniqueSlug(serviceCentre.getName()));
         serviceCentre.setOpen(false);
         serviceCentre.setServiceAreaIds(getValidatedServiceAreaIds(serviceCentre.getServiceAreaIds()));
+        serviceCentre.setRegionId(getValidatedRegionId(serviceCentre.getRegionId()));
         serviceCentre.setCatchmentType(getCatchmentTypeOrDefault(serviceCentre.getCatchmentType()));
 
         return serviceCentreRepository.save(serviceCentre);
@@ -106,6 +109,7 @@ public class ServiceCentreService {
         existingServiceCentre.setOpen(serviceCentre.getOpen());
         existingServiceCentre.setWarningNotice(serviceCentre.getWarningNotice());
         existingServiceCentre.setServiceAreaIds(getValidatedServiceAreaIds(serviceCentre.getServiceAreaIds()));
+        existingServiceCentre.setRegionId(getValidatedRegionId(serviceCentre.getRegionId()));
         existingServiceCentre.setCatchmentType(getCatchmentTypeOrDefault(serviceCentre.getCatchmentType()));
 
         return serviceCentreRepository.save(existingServiceCentre);
@@ -168,6 +172,15 @@ public class ServiceCentreService {
 
     private CatchmentType getCatchmentTypeOrDefault(CatchmentType catchmentType) {
         return catchmentType == null ? CatchmentType.NATIONAL : catchmentType;
+    }
+
+    private UUID getValidatedRegionId(UUID regionId) {
+        if (regionId == null) {
+            return null;
+        }
+
+        Region foundRegion = regionService.getRegionById(regionId);
+        return foundRegion.getId();
     }
 
 }

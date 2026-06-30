@@ -59,7 +59,7 @@ public class AllLocation {
             .locationType("SERVICE_CENTRE")
             .serviceCentre(Boolean.TRUE)
             // Service centres do not currently carry court/CaTH fields in the summary response.
-            .regionId(null)
+            .regionId(serviceCentre.getRegionId())
             .openOnCath(null)
             .mrdId(null)
             .build();

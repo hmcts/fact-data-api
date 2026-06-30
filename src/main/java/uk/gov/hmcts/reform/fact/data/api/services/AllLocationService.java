@@ -104,12 +104,9 @@ public class AllLocationService {
 
     private Stream<ServiceCentre> getFilteredServiceCentres(Boolean includeClosed, UUID regionFilter,
                                                             String nameFilter) {
-        if (regionFilter != null) {
-            return Stream.empty();
-        }
-
         Predicate<ServiceCentre> predicate = serviceCentre -> matchesOpen(serviceCentre.getOpen(), includeClosed)
-            && matchesName(serviceCentre.getName(), nameFilter);
+            && matchesName(serviceCentre.getName(), nameFilter)
+            && (regionFilter == null || regionFilter.equals(serviceCentre.getRegionId()));
 
         return serviceCentreRepository.findAll().stream().filter(predicate);
     }

@@ -251,13 +251,18 @@ class AllLocationServiceTest {
     }
 
     @Test
-    void getFilteredAndPaginatedLocationsAppliesRegionFilterToCourtsAndExcludesServiceCentres() {
+    void getFilteredAndPaginatedLocationsAppliesRegionFilterToCourtsAndServiceCentres() {
         Court matchingCourt = buildCourt("Matching Court", true);
         Court otherCourt = buildCourt("Other Court", true);
         otherCourt.setRegionId(UUID.randomUUID());
+        when(courtRepository.findAll()).thenReturn(List.of(matchingCourt, otherCourt));
+
+        final ServiceCentre matchingServiceCentre = buildServiceCentre("Matching Service Centre", true);
+        ServiceCentre otherServiceCentre = buildServiceCentre("Other Service Centre", true);
+        otherServiceCentre.setRegionId(UUID.randomUUID());
 
         when(regionService.getRegionById(REGION_ID)).thenReturn(Region.builder().id(REGION_ID).build());
-        when(courtRepository.findAll()).thenReturn(List.of(matchingCourt, otherCourt));
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(matchingServiceCentre, otherServiceCentre));
 
         Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
             0,
@@ -270,9 +275,34 @@ class AllLocationServiceTest {
             "asc"
         );
 
+        assertThat(result.getContent())
+            .extracting(AllLocation::getName)
+            .containsExactly("Matching Court", "Matching Service Centre");
+    }
+
+    @Test
+    void getFilteredAndPaginatedLocationsAppliesRegionFilterWhenOnlyServiceCentresRequested() {
+        ServiceCentre matchingServiceCentre = buildServiceCentre("Matching Service Centre", true);
+        ServiceCentre otherServiceCentre = buildServiceCentre("Other Service Centre", true);
+        otherServiceCentre.setRegionId(UUID.randomUUID());
+
+        when(regionService.getRegionById(REGION_ID)).thenReturn(Region.builder().id(REGION_ID).build());
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(matchingServiceCentre, otherServiceCentre));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            true,
+            REGION_ID.toString(),
+            null,
+            "name",
+            "asc"
+        );
+
         assertThat(result.getContent()).singleElement()
             .extracting(AllLocation::getName)
-            .isEqualTo("Matching Court");
+            .isEqualTo("Matching Service Centre");
     }
 
     @Test
@@ -528,6 +558,7 @@ class AllLocationServiceTest {
             .name(name)
             .slug(name.toLowerCase().replace(" ", "-"))
             .open(open)
+            .regionId(REGION_ID)
             .lastUpdatedAt(lastUpdatedAt)
             .build();
     }
@@ -548,6 +579,7 @@ class AllLocationServiceTest {
             .name(name)
             .slug(name.toLowerCase().replace(" ", "-"))
             .open(true)
+            .regionId(REGION_ID)
             .build();
     }
 }

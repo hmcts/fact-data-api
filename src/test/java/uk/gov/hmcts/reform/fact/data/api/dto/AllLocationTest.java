@@ -59,6 +59,7 @@ class AllLocationTest {
             .warningNotice("Service centre warning")
             .createdAt(CREATED_AT)
             .lastUpdatedAt(LAST_UPDATED_AT)
+            .regionId(REGION_ID)
             .build();
 
         AllLocation result = AllLocation.fromServiceCentre(serviceCentre);
@@ -72,7 +73,7 @@ class AllLocationTest {
         assertThat(result.getLastUpdatedAt()).isEqualTo(LAST_UPDATED_AT);
         assertThat(result.getLocationType()).isEqualTo("SERVICE_CENTRE");
         assertThat(result.getServiceCentre()).isTrue();
-        assertThat(result.getRegionId()).isNull();
+        assertThat(result.getRegionId()).isEqualTo(REGION_ID);
         assertThat(result.getOpenOnCath()).isNull();
         assertThat(result.getMrdId()).isNull();
     }

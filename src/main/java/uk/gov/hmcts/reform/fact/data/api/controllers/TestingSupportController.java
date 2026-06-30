@@ -140,12 +140,14 @@ public class TestingSupportController {
     })
     public ResponseEntity<ServiceCentreDetails> createSampleServiceCentre(
         @RequestParam(required = true) String serviceCentreName,
+        @RequestParam(required = false) UUID regionId,
         @RequestParam(required = false) Long seed,
         @RequestParam(required = false, defaultValue = "true") boolean open,
         @RequestParam(required = false, defaultValue = "false") boolean addWarningNotice,
         @RequestParam(required = false, defaultValue = "true") boolean withContactDetails) {
         UUID serviceCentreId = testingSupportService.createServiceCentre(
             serviceCentreName,
+            regionId,
             seed,
             open,
             addWarningNotice,
