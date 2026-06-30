@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
-import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
@@ -175,12 +174,7 @@ public class ServiceCentreService {
     }
 
     private UUID getValidatedRegionId(UUID regionId) {
-        if (regionId == null) {
-            return null;
-        }
-
-        Region foundRegion = regionService.getRegionById(regionId);
-        return foundRegion.getId();
+        return regionId == null ? null : regionService.getRegionById(regionId).getId();
     }
 
 }
