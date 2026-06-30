@@ -13,10 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
+import uk.gov.hmcts.reform.fact.data.api.services.AllLocationService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
@@ -33,11 +35,14 @@ public class SearchCourtController {
     private static final String SINGLE_LETTER_REGEX = "^[A-Za-z]$";
     private final SearchCourtService searchCourtService;
     private final CourtService courtService;
+    private final AllLocationService allLocationService;
 
     public SearchCourtController(SearchCourtService searchCourtService,
-                                 CourtService courtService) {
+                                 CourtService courtService,
+                                 AllLocationService allLocationService) {
         this.searchCourtService = searchCourtService;
         this.courtService = courtService;
+        this.allLocationService = allLocationService;
     }
 
     @GetMapping("/v1/postcode")
@@ -80,14 +85,14 @@ public class SearchCourtController {
 
     @GetMapping("/v1/prefix")
     @Operation(
-        summary = "Search courts by prefix.",
-        description = "Retrieve courts based on a provided prefix."
+        summary = "Search courts and service centres by prefix.",
+        description = "Retrieve courts and service centres based on a provided prefix."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved court(s) based on provided postcode."),
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved locations by prefix."),
         @ApiResponse(responseCode = "400", description = "Prefix is missing or is not valid.")
     })
-    public ResponseEntity<List<Court>> getCourtsByPrefix(
+    public ResponseEntity<List<AllLocation>> getCourtsByPrefix(
         @RequestParam("prefix")
         @Pattern(
             regexp = SINGLE_LETTER_REGEX,
@@ -95,7 +100,7 @@ public class SearchCourtController {
         )
         final String prefix
     ) {
-        return ResponseEntity.ok(courtService.getCourtsByPrefixAndActiveSearch(prefix));
+        return ResponseEntity.ok(allLocationService.getOpenLocationsByPrefix(prefix));
     }
 
     @GetMapping("/v1/name")

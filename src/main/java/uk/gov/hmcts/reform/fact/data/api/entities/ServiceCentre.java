@@ -103,6 +103,10 @@ public class ServiceCentre implements AuditableEntity {
     @Column(columnDefinition = "uuid[]")
     private List<UUID> serviceAreaIds;
 
+    @Schema(description = "The ID of the associated Region")
+    @Column(name = "region_id")
+    private UUID regionId;
+
     @Schema(description = "The catchment type")
     @Enumerated(EnumType.STRING)
     private CatchmentType catchmentType;

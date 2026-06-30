@@ -51,10 +51,12 @@ class ServiceCentreMigrationHelperTest {
         UUID nationalServiceAreaId = UUID.randomUUID();
         UUID localServiceAreaId = UUID.randomUUID();
         UUID areaOfLawId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
 
         context.getServiceAreaIds().put(1, localServiceAreaId);
         context.getServiceAreaIds().put(2, nationalServiceAreaId);
         context.getAreaOfLawIds().put(10, areaOfLawId);
+        context.getRegionIds().put(5, regionId);
 
         when(serviceCentreRepository.save(any(ServiceCentre.class))).thenAnswer(invocation -> {
             ServiceCentre serviceCentre = invocation.getArgument(0);
@@ -75,6 +77,7 @@ class ServiceCentreMigrationHelperTest {
         assertThat(serviceCentreCaptor.getValue().getSlug()).isEqualTo("legacy-service-centre");
         assertThat(serviceCentreCaptor.getValue().getOpen()).isFalse();
         assertThat(serviceCentreCaptor.getValue().getServiceAreaIds()).containsExactly(nationalServiceAreaId);
+        assertThat(serviceCentreCaptor.getValue().getRegionId()).isEqualTo(regionId);
         assertThat(serviceCentreCaptor.getValue().getCatchmentType()).isEqualTo(CatchmentType.NATIONAL);
 
         ArgumentCaptor<ServiceCentreAreasOfLaw> areasCaptor =
@@ -175,6 +178,22 @@ class ServiceCentreMigrationHelperTest {
         verify(serviceCentreRepository).save(serviceCentreCaptor.capture());
         assertThat(serviceCentreCaptor.getValue().getServiceAreaIds()).isEmpty();
         assertThat(serviceCentreCaptor.getValue().getCatchmentType()).isEqualTo(CatchmentType.LOCAL);
+    }
+
+    @Test
+    void shouldLeaveRegionNullWhenLegacyRegionIsUnmapped() {
+        mockServiceCentreSave();
+
+        CourtDto serviceCentreDto = buildMinimalServiceCentreDto("Legacy Service Centre");
+        serviceCentreDto.setRegionId(999);
+
+        int migrated = helper.migrateServiceCentres(List.of(serviceCentreDto), context);
+
+        assertThat(migrated).isEqualTo(1);
+
+        ArgumentCaptor<ServiceCentre> serviceCentreCaptor = ArgumentCaptor.forClass(ServiceCentre.class);
+        verify(serviceCentreRepository).save(serviceCentreCaptor.capture());
+        assertThat(serviceCentreCaptor.getValue().getRegionId()).isNull();
     }
 
     @Test
@@ -389,6 +408,7 @@ class ServiceCentreMigrationHelperTest {
         serviceCentreDto.setSlug("legacy-service-centre");
         serviceCentreDto.setOpen(true);
         serviceCentreDto.setIsServiceCentre(true);
+        serviceCentreDto.setRegionId(5);
         serviceCentreDto.setCourtServiceAreas(List.of(
             new CourtServiceAreaDto(1, CatchmentType.LOCAL.name(), List.of(1)),
             new CourtServiceAreaDto(2, CatchmentType.NATIONAL.name(), List.of(2))

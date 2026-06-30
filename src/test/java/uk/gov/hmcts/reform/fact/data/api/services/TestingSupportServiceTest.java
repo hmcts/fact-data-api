@@ -389,6 +389,7 @@ class TestingSupportServiceTest {
         verify(serviceCentreService).createServiceCentre(serviceCentreArgumentCaptor.capture());
         assertThat(serviceCentreArgumentCaptor.getValue().getName()).isEqualTo(serviceCentreName);
         assertThat(serviceCentreArgumentCaptor.getValue().getServiceAreaIds()).isNotEmpty();
+        assertThat(serviceCentreArgumentCaptor.getValue().getRegionId()).isNotNull();
         assertThat(serviceCentreArgumentCaptor.getValue().getCatchmentType()).isEqualTo(CatchmentType.NATIONAL);
         verify(serviceCentreService).updateServiceCentre(eq(serviceCentreId), any(ServiceCentre.class));
         verify(serviceCentreAreasOfLawService).setServiceCentreAreasOfLaw(
@@ -400,6 +401,34 @@ class TestingSupportServiceTest {
             eq(serviceCentreId),
             any(ServiceCentreContactDetails.class)
         );
+    }
+
+    @Test
+    void createServiceCentreWithRegionIdUsesProvidedRegion() {
+        String serviceCentreName = "Test Service Centre";
+        UUID serviceCentreId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
+
+        when(serviceCentreService.createServiceCentre(any())).thenAnswer(inv -> {
+            ServiceCentre serviceCentre = ServiceCentre.class.cast(inv.getArguments()[0]);
+            serviceCentre.setSlug("test-service-centre");
+            serviceCentre.setId(serviceCentreId);
+            return serviceCentre;
+        });
+
+        ServiceCentre result = testingSupportService.createServiceCentre(
+            serviceCentreName,
+            regionId,
+            1L,
+            false,
+            false,
+            false
+        );
+
+        assertThat(result.getSlug()).isEqualTo("test-service-centre");
+        ArgumentCaptor<ServiceCentre> captor = ArgumentCaptor.forClass(ServiceCentre.class);
+        verify(serviceCentreService).createServiceCentre(captor.capture());
+        assertThat(captor.getValue().getRegionId()).isEqualTo(regionId);
     }
 
     @Test

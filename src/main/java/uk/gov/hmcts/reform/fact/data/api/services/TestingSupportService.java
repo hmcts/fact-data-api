@@ -323,6 +323,7 @@ public class TestingSupportService {
 
     public ServiceCentre createServiceCentre(
         @NonNull String serviceCentreName,
+        UUID regionId,
         Long seed,
         boolean open,
         boolean addWarningNotice,
@@ -334,7 +335,7 @@ public class TestingSupportService {
 
             Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
 
-            ServiceCentre serviceCentre = createServiceCentre(serviceCentreName, addWarningNotice, random);
+            ServiceCentre serviceCentre = createServiceCentre(serviceCentreName, regionId, addWarningNotice, random);
             UUID serviceCentreId = serviceCentre.getId();
             setServiceCentreAreasOfLaw(serviceCentreId, random);
             setServiceCentreAddress(serviceCentreId, random);
@@ -354,7 +355,17 @@ public class TestingSupportService {
         }
     }
 
-    private ServiceCentre createServiceCentre(String name, boolean addWarningNotice, Random random) {
+    public ServiceCentre createServiceCentre(
+        @NonNull String serviceCentreName,
+        Long seed,
+        boolean open,
+        boolean addWarningNotice,
+        boolean withContactDetails
+    ) {
+        return createServiceCentre(serviceCentreName, null, seed, open, addWarningNotice, withContactDetails);
+    }
+
+    private ServiceCentre createServiceCentre(String name, UUID regionId, boolean addWarningNotice, Random random) {
         List<UUID> serviceAreaIds = SERVICE_AREA_IDS.stream().filter(l -> random.nextBoolean()).toList();
         if (serviceAreaIds.isEmpty()) {
             serviceAreaIds = List.of(SERVICE_AREA_IDS.get(random.nextInt(SERVICE_AREA_IDS.size())));
@@ -369,6 +380,7 @@ public class TestingSupportService {
                     : null
             )
             .serviceAreaIds(serviceAreaIds)
+            .regionId(Optional.ofNullable(regionId).orElseGet(() -> REGION_IDS.get(random.nextInt(REGION_IDS.size()))))
             .catchmentType(CatchmentType.NATIONAL)
             .build();
 

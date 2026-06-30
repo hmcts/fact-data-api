@@ -21,6 +21,8 @@ public interface ServiceCentreRepository extends JpaRepository<ServiceCentre, UU
 
     List<ServiceCentre> findByNameStartingWithIgnoreCase(String namePrefix);
 
+    List<ServiceCentre> findByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(String namePrefix, boolean open);
+
     @Query(
         value = "SELECT * FROM service_centre sc WHERE CAST(:serviceAreaId AS uuid) = ANY(sc.service_area_ids)",
         nativeQuery = true

@@ -136,6 +136,7 @@ class TestingSupportControllerTest {
     @Test
     void createSampleServiceCentreReturns201() {
         UUID serviceCentreId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
         ServiceCentre serviceCentre = ServiceCentre.builder()
             .id(serviceCentreId)
             .name("Test Service Centre")
@@ -149,13 +150,14 @@ class TestingSupportControllerTest {
             .open(true)
             .build();
 
-        when(testingSupportService.createServiceCentre("Test Service Centre", 1L, true, false, true))
+        when(testingSupportService.createServiceCentre("Test Service Centre", regionId, 1L, true, false, true))
             .thenReturn(serviceCentre);
         when(serviceCentreService.getServiceCentreDetailsById(serviceCentreId)).thenReturn(serviceCentreDetails);
         when(serviceCentreDetailsViewService.prepareDetailsView(serviceCentreDetails)).thenReturn(serviceCentreDetails);
 
         ResponseEntity<ServiceCentreDetails> response = testingSupportController.createSampleServiceCentre(
             "Test Service Centre",
+            regionId,
             1L,
             true,
             false,
@@ -164,7 +166,7 @@ class TestingSupportControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).isEqualTo(serviceCentreDetails);
-        verify(testingSupportService).createServiceCentre("Test Service Centre", 1L, true, false, true);
+        verify(testingSupportService).createServiceCentre("Test Service Centre", regionId, 1L, true, false, true);
         verify(serviceCentreService).getServiceCentreDetailsById(serviceCentreId);
         verify(serviceCentreDetailsViewService).prepareDetailsView(serviceCentreDetails);
     }
