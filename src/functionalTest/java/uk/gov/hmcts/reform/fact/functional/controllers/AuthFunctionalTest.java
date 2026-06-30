@@ -181,9 +181,9 @@ public class AuthFunctionalTest {
             "/courts/" + courtId + "/v1",
             "/courts/" + courtId + ".json",
             "/courts/slug/" + createdCourt.getSlug() + "/v1",
-            "/courts/all/v1",
-            "/courts/all.json",
-            "/courts/v1?pageNumber=0&pageSize=10&includeClosed=true"
+            "/all/v1",
+            "/all/details/v1",
+            "/all/details.json"
         };
 
         // ensure that both roles can access read endpoints
@@ -200,7 +200,7 @@ public class AuthFunctionalTest {
         assertViewerForbidden(updateViewer, "/courts/{courtId}/v1 [PUT]");
         assertThat(updateAdmin.statusCode()).isEqualTo(200);
 
-        assertUnauthenticated(http.doGet("/courts/v1", ""), "/courts/v1 [GET]");
+        assertUnauthenticated(http.doGet("/all/v1", ""), "/all/v1 [GET]");
         assertUnauthenticated(http.doPost("/courts/v1", testingCourt, ""), "/courts/v1 [POST]");
     }
 
@@ -775,7 +775,7 @@ public class AuthFunctionalTest {
         Map<String, String> endpoints = Map.of(
             "/search/address/v1/postcode/SW1A1AA", "address",
             "/search/courts/v1/postcode?postcode=SW1A1AA&limit=5", "courts by postcode",
-            "/search/courts/v1/prefix?prefix=A", "courts by prefix",
+            "/search/courts/v1/prefix?prefix=A", "locations by prefix",
             "/search/courts/v1/name?q=court", "courts by name",
             "/search/services/v1", "services",
             "/search/services/v1/divorce/service-areas", "service areas by service"

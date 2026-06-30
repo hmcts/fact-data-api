@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.functional.controllers.search;
 
 import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -77,7 +78,7 @@ public final class SearchCourtControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("GET /search/courts/v1/prefix returns courts starting with letter")
+    @DisplayName("GET /search/courts/v1/prefix returns locations starting with letter")
     void shouldReturnCourtsStartingWithPrefix() throws Exception {
         final String courtName = TEST_COURT_PREFIX + " Alpha";
         createOpenCourt(courtName);
@@ -88,19 +89,22 @@ public final class SearchCourtControllerFunctionalTest {
             .as("Expected 200 OK for prefix search")
             .isEqualTo(OK.value());
 
-        final List<Court> courts = mapper.readValue(
-            searchResponse.getBody().asString(),
-            new TypeReference<List<Court>>() {}
-        );
+        final JsonNode locations = mapper.readTree(searchResponse.getBody().asString());
 
-        assertThat(courts)
+        assertThat(locations)
             .as("Expected to find courts starting with 'T'")
-            .isNotEmpty()
-            .extracting(Court::getName)
+            .isNotEmpty();
+        assertThat(locations)
+            .extracting(location -> location.path("name").asText())
             .as("All returned courts should start with 'T'")
             .allMatch(name -> name.toUpperCase().startsWith("T"))
             .as("Expected to find the created court '%s' in prefix results", courtName)
             .anyMatch(name -> name.startsWith(courtName));
+        assertThat(locations)
+            .filteredOn(location -> location.path("name").asText().startsWith(courtName))
+            .singleElement()
+            .extracting(location -> location.path("locationType").asText())
+            .isEqualTo("COURT");
     }
 
     @Test

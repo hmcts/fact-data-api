@@ -26,7 +26,6 @@ import feign.FeignException;
 import feign.Request;
 import feign.RequestTemplate;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -693,20 +692,6 @@ class CourtServiceTest {
     }
 
     @Test
-    void getCourtsByPrefixAndActiveSearchShouldReturnMatchingCourts() {
-        Court court = new Court();
-        List<Court> courts = List.of(court);
-
-        when(courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc("A", true))
-            .thenReturn(courts);
-
-        List<Court> response = courtService.getCourtsByPrefixAndActiveSearch("A");
-
-        assertThat(response).isEqualTo(courts);
-        verify(courtRepository).findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc("A", true);
-    }
-
-    @Test
     void searchOpenCourtsByNameOrAddressShouldTrimQuery() {
         Court court = new Court();
         List<Court> courts = List.of(court);
@@ -802,24 +787,4 @@ class CourtServiceTest {
         assertThat(exception.getMessage()).isEqualTo("Court not found, slug: " + courtSlug);
     }
 
-    @Test
-    void getAllCourtDetailsReturnsCourtDetailsListWhenFound() {
-        List<CourtDetails> courtDetailsList = new ArrayList<>();
-
-        for (int i = 0; i < 10; i++) {
-            UUID courtId = UUID.randomUUID();
-            CourtDetails courtDetails = new CourtDetails();
-            courtDetails.setId(courtId);
-            courtDetails.setName(String.format("Test Court %s", (char) (i + 0x41)));
-            courtDetailsList.add(courtDetails);
-        }
-
-        when(courtDetailsRepository.findAll()).thenReturn(courtDetailsList);
-
-        List<CourtDetails> result = courtService.getAllCourtDetails();
-
-        assertThat(result)
-            .isNotNull()
-            .isEqualTo(courtDetailsList);
-    }
 }

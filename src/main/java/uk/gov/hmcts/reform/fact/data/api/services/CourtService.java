@@ -159,19 +159,6 @@ public class CourtService {
     }
 
     /**
-     * Return a list of courts based on a provided prefix.
-     *
-     * @param prefix The prefix.
-     * @return A list of courts based on the provided prefix.
-     */
-    public List<Court> getCourtsByPrefixAndActiveSearch(String prefix) {
-        return new ArrayList<>(courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(
-            prefix,
-            true
-        ));
-    }
-
-    /**
      * Search courts by a provided string query. Matches currently if the string
      * matches in part an address or court name.
      *
@@ -224,15 +211,6 @@ public class CourtService {
         return courtDetailsRepository.findBySlug(courtSlug)
             .orElseThrow(() -> new NotFoundException("Court not found, slug: " + courtSlug)
             );
-    }
-
-    /**
-     * Get all court details.
-     *
-     * @return The list of court details entities.
-     */
-    public List<CourtDetails> getAllCourtDetails() {
-        return courtDetailsRepository.findAll();
     }
 
     /**

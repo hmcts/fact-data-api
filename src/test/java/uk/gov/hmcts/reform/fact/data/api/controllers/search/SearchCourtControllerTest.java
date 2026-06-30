@@ -7,9 +7,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
+import uk.gov.hmcts.reform.fact.data.api.services.AllLocationService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
 
@@ -28,6 +30,9 @@ class SearchCourtControllerTest {
 
     @Mock
     private CourtService courtService;
+
+    @Mock
+    private AllLocationService allLocationService;
 
     @InjectMocks
     private SearchCourtController controller;
@@ -68,17 +73,25 @@ class SearchCourtControllerTest {
 
     @Test
     void getCourtsByPrefixShouldReturnOk() {
-        Court court = new Court();
-        court.setName("Alpha Court");
-        List<Court> courts = List.of(court);
+        AllLocation court = AllLocation.builder()
+            .name("Alpha Court")
+            .locationType("COURT")
+            .serviceCentre(false)
+            .build();
+        AllLocation serviceCentre = AllLocation.builder()
+            .name("Alpha Service Centre")
+            .locationType("SERVICE_CENTRE")
+            .serviceCentre(true)
+            .build();
+        List<AllLocation> locations = List.of(court, serviceCentre);
 
-        when(courtService.getCourtsByPrefixAndActiveSearch("A")).thenReturn(courts);
+        when(allLocationService.getOpenLocationsByPrefix("A")).thenReturn(locations);
 
-        ResponseEntity<List<Court>> response = controller.getCourtsByPrefix("A");
+        ResponseEntity<List<AllLocation>> response = controller.getCourtsByPrefix("A");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(courts);
-        verify(courtService).getCourtsByPrefixAndActiveSearch("A");
+        assertThat(response.getBody()).isEqualTo(locations);
+        verify(allLocationService).getOpenLocationsByPrefix("A");
     }
 
     @Test
