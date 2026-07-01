@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
@@ -37,6 +38,9 @@ class ServiceCentreServiceTest {
 
     @Mock
     private ServiceAreaRepository serviceAreaRepository;
+
+    @Mock
+    private RegionService regionService;
 
     @InjectMocks
     private ServiceCentreService serviceCentreService;
@@ -134,15 +138,18 @@ class ServiceCentreServiceTest {
     void createServiceCentreGeneratesUniqueSlugStartsClosedAndNormalisesServiceAreas() {
         UUID suppliedServiceAreaId = UUID.randomUUID();
         UUID validServiceAreaId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
         ServiceArea serviceArea = ServiceArea.builder().id(validServiceAreaId).build();
         ServiceCentre request = ServiceCentre.builder()
             .name("Bulk Scan Centre")
             .open(true)
             .serviceAreaIds(List.of(suppliedServiceAreaId))
+            .regionId(regionId)
             .catchmentType(CatchmentType.REGIONAL)
             .build();
 
         when(serviceAreaRepository.findAllById(List.of(suppliedServiceAreaId))).thenReturn(List.of(serviceArea));
+        when(regionService.getRegionById(regionId)).thenReturn(Region.builder().id(regionId).build());
         when(serviceCentreRepository.existsBySlug("bulk-scan-centre")).thenReturn(true);
         when(serviceCentreRepository.existsBySlug("bulk-scan-centre-1")).thenReturn(false);
         when(serviceCentreRepository.save(any(ServiceCentre.class)))
@@ -153,12 +160,14 @@ class ServiceCentreServiceTest {
         assertThat(result.getSlug()).isEqualTo("bulk-scan-centre-1");
         assertThat(result.getOpen()).isFalse();
         assertThat(result.getServiceAreaIds()).containsExactly(validServiceAreaId);
+        assertThat(result.getRegionId()).isEqualTo(regionId);
         assertThat(result.getCatchmentType()).isEqualTo(CatchmentType.REGIONAL);
     }
 
     @Test
     void updateServiceCentreRegeneratesSlugWhenNameChanges() {
         UUID serviceCentreId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
         ServiceCentre existing = ServiceCentre.builder()
             .id(serviceCentreId)
             .name("Old Service Centre")
@@ -170,12 +179,14 @@ class ServiceCentreServiceTest {
             .open(true)
             .warningNotice("Warning")
             .serviceAreaIds(List.of())
+            .regionId(regionId)
             .catchmentType(CatchmentType.LOCAL)
             .build();
 
         when(serviceCentreRepository.findById(serviceCentreId)).thenReturn(Optional.of(existing));
         when(serviceCentreRepository.existsBySlug("new-service-centre")).thenReturn(false);
         when(serviceAreaRepository.findAllById(List.of())).thenReturn(List.of());
+        when(regionService.getRegionById(regionId)).thenReturn(Region.builder().id(regionId).build());
         when(serviceCentreRepository.save(existing)).thenReturn(existing);
 
         ServiceCentre result = serviceCentreService.updateServiceCentre(serviceCentreId, request);
@@ -184,6 +195,7 @@ class ServiceCentreServiceTest {
         assertThat(result.getSlug()).isEqualTo("new-service-centre");
         assertThat(result.getOpen()).isTrue();
         assertThat(result.getWarningNotice()).isEqualTo("Warning");
+        assertThat(result.getRegionId()).isEqualTo(regionId);
         assertThat(result.getCatchmentType()).isEqualTo(CatchmentType.LOCAL);
     }
 

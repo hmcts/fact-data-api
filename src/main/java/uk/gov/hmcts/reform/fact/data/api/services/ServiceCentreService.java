@@ -23,6 +23,7 @@ public class ServiceCentreService {
     private final ServiceCentreRepository serviceCentreRepository;
     private final ServiceCentreDetailsRepository serviceCentreDetailsRepository;
     private final ServiceAreaRepository serviceAreaRepository;
+    private final RegionService regionService;
 
     /**
      * Get a service centre by id.
@@ -83,6 +84,7 @@ public class ServiceCentreService {
         serviceCentre.setSlug(toUniqueSlug(serviceCentre.getName()));
         serviceCentre.setOpen(false);
         serviceCentre.setServiceAreaIds(getValidatedServiceAreaIds(serviceCentre.getServiceAreaIds()));
+        serviceCentre.setRegionId(getValidatedRegionId(serviceCentre.getRegionId()));
         serviceCentre.setCatchmentType(getCatchmentTypeOrDefault(serviceCentre.getCatchmentType()));
 
         return serviceCentreRepository.save(serviceCentre);
@@ -107,6 +109,7 @@ public class ServiceCentreService {
         existingServiceCentre.setOpen(serviceCentre.getOpen());
         existingServiceCentre.setWarningNotice(serviceCentre.getWarningNotice());
         existingServiceCentre.setServiceAreaIds(getValidatedServiceAreaIds(serviceCentre.getServiceAreaIds()));
+        existingServiceCentre.setRegionId(getValidatedRegionId(serviceCentre.getRegionId()));
         existingServiceCentre.setCatchmentType(getCatchmentTypeOrDefault(serviceCentre.getCatchmentType()));
 
         return serviceCentreRepository.save(existingServiceCentre);
@@ -178,6 +181,10 @@ public class ServiceCentreService {
 
     private CatchmentType getCatchmentTypeOrDefault(CatchmentType catchmentType) {
         return catchmentType == null ? CatchmentType.NATIONAL : catchmentType;
+    }
+
+    private UUID getValidatedRegionId(UUID regionId) {
+        return regionId == null ? null : regionService.getRegionById(regionId).getId();
     }
 
 }

@@ -110,6 +110,10 @@ public class ServiceCentreDetails {
     @JsonIgnore
     private List<UUID> serviceAreaIds;
 
+    @Schema(description = "The ID of the associated Region")
+    @Column(name = "region_id")
+    private UUID regionId;
+
     @Transient
     @JsonIgnore
     private List<ServiceArea> serviceAreaDetails;

@@ -8,10 +8,12 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.services.AllLocationService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
 
@@ -41,6 +43,9 @@ class SearchCourtControllerTest {
 
     @MockitoBean
     private CourtService courtService;
+
+    @MockitoBean
+    private AllLocationService allLocationService;
 
     @Test
     @DisplayName("GET /search/courts/v1/postcode returns courts by postcode")
@@ -114,19 +119,31 @@ class SearchCourtControllerTest {
     }
 
     @Test
-    @DisplayName("GET /search/courts/v1/prefix returns courts by prefix")
+    @DisplayName("GET /search/courts/v1/prefix returns locations by prefix")
     void getCourtsByPrefixReturnsOk() throws Exception {
-        Court court = new Court();
-        court.setId(COURT_ID);
-        court.setName("Alpha Court");
+        AllLocation court = AllLocation.builder()
+            .id(COURT_ID)
+            .name("Alpha Court")
+            .locationType("COURT")
+            .serviceCentre(false)
+            .build();
+        AllLocation serviceCentre = AllLocation.builder()
+            .id(UUID.fromString("223e4567-e89b-12d3-a456-426614174000"))
+            .name("Alpha Service Centre")
+            .locationType("SERVICE_CENTRE")
+            .serviceCentre(true)
+            .build();
 
-        when(courtService.getCourtsByPrefixAndActiveSearch("A"))
-            .thenReturn(List.of(court));
+        when(allLocationService.getOpenLocationsByPrefix("A"))
+            .thenReturn(List.of(court, serviceCentre));
 
         mockMvc.perform(get("/search/courts/v1/prefix")
                             .param("prefix", "A"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].name").value("Alpha Court"));
+            .andExpect(jsonPath("$[0].name").value("Alpha Court"))
+            .andExpect(jsonPath("$[0].locationType").value("COURT"))
+            .andExpect(jsonPath("$[1].name").value("Alpha Service Centre"))
+            .andExpect(jsonPath("$[1].locationType").value("SERVICE_CENTRE"));
     }
 
     @Test
