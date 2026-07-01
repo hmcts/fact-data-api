@@ -34,7 +34,7 @@ module "postgresql" {
   env       = var.env
   pgsql_databases = [
     {
-      name                      : "fact"
+      name : "fact"
       schemas_for_reader_access : ["public"]
     }
   ]
