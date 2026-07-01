@@ -387,6 +387,7 @@ public class TestingSupportService {
         return serviceCentreService.createServiceCentre(serviceCentre);
     }
 
+    @Synchronized
     private UUID getTestingSupportUserId() {
         User user = User.builder()
             .email(TESTING_SUPPORT_USER_EMAIL)
