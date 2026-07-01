@@ -34,13 +34,15 @@ module "postgresql" {
   env       = var.env
   pgsql_databases = [
     {
-      name : "fact"
+      name                      : "fact"
+      schemas_for_reader_access : ["public"]
     }
   ]
-  common_tags          = var.common_tags
-  business_area        = "cft"
-  pgsql_version        = "17"
-  admin_user_object_id = var.jenkins_AAD_objectId
+  common_tags                    = var.common_tags
+  business_area                  = "cft"
+  pgsql_version                  = "17"
+  admin_user_object_id           = var.jenkins_AAD_objectId
+  force_user_permissions_trigger = "1"
   pgsql_server_configuration = [{
     name  = "azure.extensions"
     value = "pgcrypto,cube,earthdistance"
