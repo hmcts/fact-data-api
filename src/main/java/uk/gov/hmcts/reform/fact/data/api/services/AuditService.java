@@ -3,12 +3,16 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import uk.gov.hmcts.reform.fact.data.api.config.properties.AuditConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuditService {
 
     private final AuditRepository auditRepository;
+    private final CourtService courtService;
+    private final ServiceCentreService serviceCentreService;
     private final AuditConfigurationProperties auditConfiguration;
 
     /**
@@ -41,8 +47,8 @@ public class AuditService {
      * @return a {@link Page} of {@link Audit} results.
      */
     public Page<Audit> getFilteredAndPaginatedAudits(int pageNumber, int pageSize, @NonNull LocalDate fromDate,
-                                                     LocalDate toDate, String courtId, String serviceCentreId,
-                                                     String email) {
+                                                     LocalDate toDate, AuditSubjectType subjectType, String courtId,
+                                                     String serviceCentreId, String email) {
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
 
@@ -56,7 +62,7 @@ public class AuditService {
             ZoneOffset.UTC
         )).orElse(null);
 
-        SubjectFilter subjectFilter = resolveSubjectFilter(courtId, serviceCentreId);
+        SubjectFilter subjectFilter = resolveSubjectFilter(courtId, serviceCentreId, subjectType);
 
         return performAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
     }
@@ -80,7 +86,12 @@ public class AuditService {
         boolean hasEmail = email != null && !email.isBlank();
 
         if (subjectFilter != null) {
-            return performSubjectAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
+            if (subjectFilter.subjectId != null) {
+                return performSubjectAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
+            } else {
+                return performSubjectTypeAuditQuery(
+                    fromDateTime, toDateTime, subjectFilter.subjectType(), email, pageable);
+            }
         }
         if (hasToDate && hasEmail) {
             return auditRepository.findByCreatedAtBetweenAndEmailAddressLike(
@@ -118,7 +129,29 @@ public class AuditService {
             subjectId, subjectType, fromDateTime, pageable);
     }
 
-    private static SubjectFilter resolveSubjectFilter(String courtId, String serviceCentreId) {
+    private Page<Audit> performSubjectTypeAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
+                                                 AuditSubjectType subjectType, String email, Pageable pageable) {
+        boolean hasToDate = toDateTime != null;
+        boolean hasEmail = email != null && !email.isBlank();
+
+        if (hasToDate && hasEmail) {
+            return auditRepository.findBySubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
+                subjectType, fromDateTime, toDateTime, email, pageable);
+        }
+        if (hasToDate) {
+            return auditRepository.findBySubjectTypeAndCreatedAtBetween(
+                subjectType, fromDateTime, toDateTime, pageable);
+        }
+        if (hasEmail) {
+            return auditRepository.findBySubjectTypeAndCreatedAtAfterAndEmailAddressLike(
+                subjectType, fromDateTime, email, pageable);
+        }
+        return auditRepository.findBySubjectTypeAndCreatedAtAfter(
+            subjectType, fromDateTime, pageable);
+    }
+
+    private static SubjectFilter resolveSubjectFilter(String courtId, String serviceCentreId,
+                                                      AuditSubjectType subjectType) {
         if (courtId != null && serviceCentreId != null) {
             throw new InvalidParameterCombinationException("Only one of courtId or serviceCentreId can be provided");
         }
@@ -128,8 +161,38 @@ public class AuditService {
         if (serviceCentreId != null) {
             return new SubjectFilter(UUID.fromString(serviceCentreId), AuditSubjectType.SERVICE_CENTRE);
         }
+        // if a subject type is provided without a specific subject id, we can still filter by subject type
+        if (subjectType != null) {
+            return new SubjectFilter(null, subjectType);
+        }
         return null;
     }
 
     private record SubjectFilter(UUID subjectId, AuditSubjectType subjectType) {}
+
+    /**
+     * Retrieves the complete set of supported audit subjects with their corresponding name and id pairs.
+     *
+     * @return a {@link Map} of {@link AuditSubjectType} to a list of {@link NameAndId} pairs
+     *         representing the names and ids of the subjects.
+     */
+    public Map<AuditSubjectType, List<NameAndId>> getSubjectNameAndIdMap() {
+        return Map.of(
+            AuditSubjectType.COURT, courtService.getAllCourtNameAndIds(),
+            AuditSubjectType.SERVICE_CENTRE, serviceCentreService.getAllServiceCentreNameAndIds()
+        );
+    }
+
+    /**
+     * Retrieves an {@link Audit} by its id.
+     *
+     * @param auditId the ID of the audit record.
+     * @return the {@link Audit} record with the specified ID.
+     * @throws NotFoundException if no audit record is found with the given ID.
+     */
+    public Audit getAuditById(final UUID auditId) {
+        return auditRepository.findWithUserById(auditId).orElseThrow(() ->
+            new NotFoundException("Audit not found, ID: " + auditId)
+        );
+    }
 }

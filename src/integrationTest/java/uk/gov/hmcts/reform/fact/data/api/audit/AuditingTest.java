@@ -366,6 +366,7 @@ class AuditingTest {
             1000,
             CREATED_AFTER,
             null,
+            null,
             owningCourt.getId().toString(),
             null,
             null

@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
@@ -26,6 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.jayway.jsonpath.JsonPath;
 import io.qameta.allure.Feature;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hamcrest.Description;
@@ -346,9 +348,98 @@ class AuditControllerTest {
     }
 
     @Test
+    @DisplayName("GET /audits/v1 returns results when subjectType is provided")
+    void getFilteredAndPaginatedAuditsReturnsResultsWhenSubjectTypeProvided() throws Exception {
+        createTestCourts(2);
+        createTestServiceCentre();
+
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "10")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("subjectType", AuditSubjectType.COURT.name()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(2))
+            .andExpect(jsonPath("$.content[*].subjectType")
+                           .value(allElementsEqual(AuditSubjectType.COURT.name())))
+            .andExpect(jsonPath("$.page.number").value(0))
+            .andExpect(jsonPath("$.page.totalElements").value(2));
+    }
+
+    @Test
+    @DisplayName("GET /audits/v1 returns 400 when subjectType is invalid")
+    void getFilteredAndPaginatedAuditsReturnsBadRequestForInvalidSubjectType() throws Exception {
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "5")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("subjectType", "NOT_A_REAL_TYPE"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("DELETE /audits/v1 returns 204")
     void deleteAuditsRemovesExpiredAuditsAndReturns204() throws Exception {
         mvc.perform(delete("/audits/v1")).andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("GET /audits/subjectoptions/v1 returns subject options map")
+    void getSubjectNameAndIdMapReturnsResults() throws Exception {
+        // Seed at least one court so COURT options are present
+        createTestCourts(1);
+        createTestServiceCentre();
+
+        mvc.perform(get("/audits/subjectoptions/v1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.COURT").isArray())
+            .andExpect(jsonPath("$.SERVICE_CENTRE").isArray())
+            .andExpect(jsonPath("$.COURT[0].name").exists())
+            .andExpect(jsonPath("$.COURT[0].id").exists())
+            .andExpect(jsonPath("$.SERVICE_CENTRE[0].name").exists())
+            .andExpect(jsonPath("$.SERVICE_CENTRE[0].id").exists());
+    }
+
+    @Test
+    @DisplayName("GET /audits/{auditId}/v1 returns audit when id is valid")
+    void getAuditByIdReturnsAuditWhenIdIsValid() throws Exception {
+        Court court = createTestCourts(1).getFirst();
+
+        String auditsResponse = mvc.perform(get("/audits/v1")
+                                                .param("pageNumber", "0")
+                                                .param("pageSize", "10")
+                                                .param("fromDate", LocalDate.now().toString())
+                                                .param("courtId", court.getId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        String auditId = JsonPath.read(auditsResponse, "$.content[0].id");
+
+        mvc.perform(get("/audits/" + auditId + "/v1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(auditId))
+            .andExpect(jsonPath("$.subjectId").value(court.getCourtId().toString()))
+            .andExpect(jsonPath("$.actionType").exists())
+            .andExpect(jsonPath("$.createdAt").exists());
+    }
+
+    @Test
+    @DisplayName("GET /audits/{auditId}/v1 returns 400 when auditId is not a UUID")
+    void getAuditByIdReturnsBadRequestWhenAuditIdIsInvalid() throws Exception {
+        mvc.perform(get("/audits/not-a-valid-uuid/v1"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /audits/{auditId}/v1 returns 404 when audit does not exist")
+    void getAuditByIdReturnsNotFoundWhenAuditDoesNotExist() throws Exception {
+        mvc.perform(get("/audits/" + UUID.randomUUID() + "/v1"))
+            .andExpect(status().isNotFound());
     }
 
     private List<Court> createTestCourts(int num) {
