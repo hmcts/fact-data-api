@@ -10,11 +10,13 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -209,5 +211,29 @@ class ServiceCentreServiceTest {
 
         assertThat(deleted).isEqualTo(2);
         verify(serviceCentreRepository).deleteAllInBatch(serviceCentres);
+    }
+
+    @Test
+    void getAllServiceCentreNameAndIdsReturnsRepositoryResults() {
+        NameAndId first = new NameAndId("ServiceCentre A", UUID.randomUUID());
+        NameAndId second = new NameAndId("ServiceCentre B", UUID.randomUUID());
+        List<NameAndId> expected = List.of(first, second);
+
+        when(serviceCentreRepository.findAllNameAndId()).thenReturn(expected);
+
+        List<NameAndId> result = serviceCentreService.getAllServiceCentreNameAndIds();
+
+        assertThat(result).isEqualTo(expected);
+        verify(serviceCentreRepository).findAllNameAndId();
+    }
+
+    @Test
+    void getAllServiceCentreNameAndIdsReturnsEmptyListWhenNoServiceCentresExist() {
+        when(serviceCentreRepository.findAllNameAndId()).thenReturn(Collections.emptyList());
+
+        List<NameAndId> result = serviceCentreService.getAllServiceCentreNameAndIds();
+
+        assertThat(result).isEmpty();
+        verify(serviceCentreRepository).findAllNameAndId();
     }
 }

@@ -62,7 +62,7 @@ public class Audit {
 
     @Schema(description = "The associated User")
     @ManyToOne
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", insertable = false, updatable = false)
     private User user;
 
     @Schema(description = "The action type")

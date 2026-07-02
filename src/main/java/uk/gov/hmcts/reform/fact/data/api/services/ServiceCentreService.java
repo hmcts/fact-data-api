@@ -7,6 +7,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreDetailsRepository;
@@ -131,6 +132,15 @@ public class ServiceCentreService {
 
         serviceCentreRepository.deleteAllInBatch(serviceCentresToDelete);
         return serviceCentresToDelete.size();
+    }
+
+    /**
+     * get all service centre names mapped to their ids.
+     *
+     * @return a {@link List} of service centre names with their ids.
+     */
+    public List<NameAndId> getAllServiceCentreNameAndIds() {
+        return serviceCentreRepository.findAllNameAndId();
     }
 
     /**
