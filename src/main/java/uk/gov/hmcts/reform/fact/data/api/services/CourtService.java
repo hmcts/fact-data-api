@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
@@ -211,6 +212,24 @@ public class CourtService {
         return courtDetailsRepository.findBySlug(courtSlug)
             .orElseThrow(() -> new NotFoundException("Court not found, slug: " + courtSlug)
             );
+    }
+
+    /**
+     * Get all court details.
+     *
+     * @return The list of court details entities.
+     */
+    public List<CourtDetails> getAllCourtDetails() {
+        return courtDetailsRepository.findAll();
+    }
+
+    /**
+     * get all court names mapped to their ids.
+     *
+     * @return a {@link List} of court names with their ids.
+     */
+    public List<NameAndId> getAllCourtNameAndIds() {
+        return courtRepository.findAllNameAndId();
     }
 
     /**

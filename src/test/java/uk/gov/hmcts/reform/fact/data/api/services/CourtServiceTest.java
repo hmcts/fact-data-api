@@ -17,6 +17,7 @@ import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
@@ -26,6 +27,7 @@ import feign.FeignException;
 import feign.Request;
 import feign.RequestTemplate;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -787,4 +789,48 @@ class CourtServiceTest {
         assertThat(exception.getMessage()).isEqualTo("Court not found, slug: " + courtSlug);
     }
 
+    @Test
+    void getAllCourtDetailsReturnsCourtDetailsListWhenFound() {
+        List<CourtDetails> courtDetailsList = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            UUID courtId = UUID.randomUUID();
+            CourtDetails courtDetails = new CourtDetails();
+            courtDetails.setId(courtId);
+            courtDetails.setName(String.format("Test Court %s", (char) (i + 0x41)));
+            courtDetailsList.add(courtDetails);
+        }
+
+        when(courtDetailsRepository.findAll()).thenReturn(courtDetailsList);
+
+        List<CourtDetails> result = courtService.getAllCourtDetails();
+
+        assertThat(result)
+            .isNotNull()
+            .isEqualTo(courtDetailsList);
+    }
+
+    @Test
+    void getAllCourtNameAndIdsReturnsRepositoryResults() {
+        NameAndId first = new NameAndId("Court A", UUID.randomUUID());
+        NameAndId second = new NameAndId("Court B", UUID.randomUUID());
+        List<NameAndId> expected = List.of(first, second);
+
+        when(courtRepository.findAllNameAndId()).thenReturn(expected);
+
+        List<NameAndId> result = courtService.getAllCourtNameAndIds();
+
+        assertThat(result).isEqualTo(expected);
+        verify(courtRepository).findAllNameAndId();
+    }
+
+    @Test
+    void getAllCourtNameAndIdsReturnsEmptyListWhenNoCourtsExist() {
+        when(courtRepository.findAllNameAndId()).thenReturn(Collections.emptyList());
+
+        List<NameAndId> result = courtService.getAllCourtNameAndIds();
+
+        assertThat(result).isEmpty();
+        verify(courtRepository).findAllNameAndId();
+    }
 }
