@@ -58,7 +58,6 @@ public class CourtLock {
     @Column(name = "user_id")
     private UUID userId;
 
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
