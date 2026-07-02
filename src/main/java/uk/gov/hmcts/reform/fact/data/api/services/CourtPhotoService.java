@@ -7,20 +7,29 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 
 import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class CourtPhotoService {
 
     private final CourtPhotoRepository courtPhotoRepository;
     private final CourtService courtService;
     private final AzureBlobService azureBlobService;
     private final AuditUserContext auditUserContext;
+
+    public CourtPhotoService(CourtPhotoRepository courtPhotoRepository,
+                             CourtService courtService,
+                             @Qualifier("photoAzureBlobService") AzureBlobService azureBlobService,
+                             AuditUserContext auditUserContext) {
+        this.courtPhotoRepository = courtPhotoRepository;
+        this.courtService = courtService;
+        this.azureBlobService = azureBlobService;
+        this.auditUserContext = auditUserContext;
+    }
 
     /**
      * Get a court photo by court id.
