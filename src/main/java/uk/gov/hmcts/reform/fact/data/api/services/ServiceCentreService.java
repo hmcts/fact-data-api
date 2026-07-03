@@ -3,12 +3,14 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class ServiceCentreService {
 
     private final ServiceCentreRepository serviceCentreRepository;
+    private final AuditRepository auditRepository;
     private final ServiceCentreDetailsRepository serviceCentreDetailsRepository;
     private final ServiceAreaRepository serviceAreaRepository;
     private final RegionService regionService;
@@ -122,12 +125,16 @@ public class ServiceCentreService {
      * @return The number of service centres deleted.
      */
     @Transactional
-    public long deleteServiceCentresByNamePrefix(String serviceCentreNamePrefix) {
+    public long deleteServiceCentresByNamePrefix(String serviceCentreNamePrefix, boolean purgeAudits) {
         List<ServiceCentre> serviceCentresToDelete =
             serviceCentreRepository.findByNameStartingWithIgnoreCase(serviceCentreNamePrefix.trim());
 
         if (serviceCentresToDelete.isEmpty()) {
             return 0;
+        }
+
+        if  (purgeAudits) {
+            auditRepository.deleteBySubjectIdIn(serviceCentresToDelete.stream().map(ServiceCentre::getId).toList());
         }
 
         serviceCentreRepository.deleteAllInBatch(serviceCentresToDelete);

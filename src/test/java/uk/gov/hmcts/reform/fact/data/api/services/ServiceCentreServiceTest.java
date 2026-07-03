@@ -12,6 +12,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
@@ -32,6 +33,9 @@ class ServiceCentreServiceTest {
 
     @Mock
     private ServiceCentreRepository serviceCentreRepository;
+
+    @Mock
+    private AuditRepository auditRepository;
 
     @Mock
     private ServiceCentreDetailsRepository serviceCentreDetailsRepository;
@@ -207,7 +211,7 @@ class ServiceCentreServiceTest {
         List<ServiceCentre> serviceCentres = List.of(first, second);
         when(serviceCentreRepository.findByNameStartingWithIgnoreCase("SC Delete")).thenReturn(serviceCentres);
 
-        long deleted = serviceCentreService.deleteServiceCentresByNamePrefix("SC Delete");
+        long deleted = serviceCentreService.deleteServiceCentresByNamePrefix("SC Delete", true);
 
         assertThat(deleted).isEqualTo(2);
         verify(serviceCentreRepository).deleteAllInBatch(serviceCentres);
