@@ -20,6 +20,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
@@ -51,6 +52,9 @@ class CourtServiceTest {
 
     @Mock
     private CourtRepository courtRepository;
+
+    @Mock
+    private AuditRepository auditRepository;
 
     @Mock
     private CourtDetailsRepository courtDetailsRepository;
@@ -710,7 +714,7 @@ class CourtServiceTest {
     void deleteCourtsByNamePrefixShouldReturnZeroWhenNoMatchesFound() {
         when(courtRepository.findByNameStartingWithIgnoreCase("Missing")).thenReturn(Collections.emptyList());
 
-        long deleted = courtService.deleteCourtsByNamePrefix("Missing");
+        long deleted = courtService.deleteCourtsByNamePrefix("Missing", true);
 
         assertThat(deleted).isZero();
         verify(courtRepository, never()).deleteAllInBatch(anyList());
@@ -722,7 +726,7 @@ class CourtServiceTest {
         List<Court> courts = List.of(court);
         when(courtRepository.findByNameStartingWithIgnoreCase("Example")).thenReturn(courts);
 
-        long deleted = courtService.deleteCourtsByNamePrefix("  Example ");
+        long deleted = courtService.deleteCourtsByNamePrefix("  Example ",true);
 
         assertThat(deleted).isEqualTo(1);
         verify(courtRepository).findByNameStartingWithIgnoreCase("Example");

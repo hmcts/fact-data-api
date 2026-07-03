@@ -4,6 +4,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -143,4 +144,11 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
     // Housekeeping queries
 
     void deleteAllByCreatedAtBefore(ZonedDateTime createdAtBefore);
+
+    /**
+     * removes all audits where the subject id is in the given list.
+     *
+     * @param auditSubjectIds the list of audit subject ids to delete
+     */
+    void deleteBySubjectIdIn(List<UUID> auditSubjectIds);
 }
