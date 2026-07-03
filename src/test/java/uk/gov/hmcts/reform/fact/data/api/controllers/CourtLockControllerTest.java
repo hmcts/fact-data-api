@@ -57,10 +57,10 @@ class CourtLockControllerTest {
 
     @Test
     void getCourtLockStatusReturns200() {
-        Optional<CourtLock> lock = Optional.of(new CourtLock());
-        when(courtLockService.getPageLock(COURT_ID, TEST_PAGE)).thenReturn(lock);
+        CourtLock lock = new CourtLock();
+        when(courtLockService.getPageLock(COURT_ID, TEST_PAGE)).thenReturn(Optional.of(lock));
 
-        ResponseEntity<Optional<CourtLock>> response = courtLockController.getCourtLockStatus(
+        ResponseEntity<CourtLock> response = courtLockController.getCourtLockStatus(
             COURT_ID.toString(),
             TEST_PAGE
         );

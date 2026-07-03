@@ -87,6 +87,7 @@ public class CourtLockService {
 
         courtLock.setCourtId(court.getId());
         courtLock.setUserId(user.getId());
+        courtLock.setUser(user);
         courtLock.setPage(page);
         courtLock.setLockAcquired(ZonedDateTime.now());
 

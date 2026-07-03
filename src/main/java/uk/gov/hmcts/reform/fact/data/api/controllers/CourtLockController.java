@@ -56,13 +56,16 @@ public class CourtLockController {
     @Operation(summary = "Get lock status for a specific page of a court")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved lock status"),
+        @ApiResponse(responseCode = "204", description = "No lock data found for the specified page"),
         @ApiResponse(responseCode = "400", description = "Invalid court ID or page supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    public ResponseEntity<Optional<CourtLock>> getCourtLockStatus(
+    public ResponseEntity<CourtLock> getCourtLockStatus(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Page to check lock status", required = true) @PathVariable Page page) {
-        return ResponseEntity.ok(courtLockService.getPageLock(UUID.fromString(courtId), page));
+        return courtLockService.getPageLock(UUID.fromString(courtId), page)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.noContent().build());
     }
 
     @PostMapping("/v1/locks/{page}")
