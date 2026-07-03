@@ -51,18 +51,19 @@ class TestingSupportControllerTest {
 
     @Test
     void deleteCourtsByNamePrefixReturns200() {
-        when(courtService.deleteCourtsByNamePrefix(COURT_NAME_PREFIX)).thenReturn(3L);
+        when(courtService.deleteCourtsByNamePrefix(COURT_NAME_PREFIX, true)).thenReturn(3L);
 
         ResponseEntity<String> response = testingSupportController.deleteCourtsByNamePrefix(COURT_NAME_PREFIX);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).contains("3 court(s)").doesNotContain(COURT_NAME_PREFIX);
-        verify(courtService).deleteCourtsByNamePrefix(COURT_NAME_PREFIX);
+        verify(courtService).deleteCourtsByNamePrefix(COURT_NAME_PREFIX, true);
     }
 
     @Test
     void deleteCourtsByNamePrefixPropagatesIllegalArgumentExceptionForBlankPrefix() {
-        when(courtService.deleteCourtsByNamePrefix(BLANK_PREFIX)).thenThrow(new IllegalArgumentException("Invalid"));
+        when(courtService.deleteCourtsByNamePrefix(BLANK_PREFIX, true))
+            .thenThrow(new IllegalArgumentException("Invalid"));
 
         assertThrows(IllegalArgumentException.class, () ->
             testingSupportController.deleteCourtsByNamePrefix(BLANK_PREFIX)
@@ -71,14 +72,14 @@ class TestingSupportControllerTest {
 
     @Test
     void deleteServiceCentresByNamePrefixReturns200() {
-        when(serviceCentreService.deleteServiceCentresByNamePrefix(SERVICE_CENTRE_NAME_PREFIX)).thenReturn(2L);
+        when(serviceCentreService.deleteServiceCentresByNamePrefix(SERVICE_CENTRE_NAME_PREFIX, true)).thenReturn(2L);
 
         ResponseEntity<String> response =
             testingSupportController.deleteServiceCentresByNamePrefix(SERVICE_CENTRE_NAME_PREFIX);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).contains("2 service centre(s)").doesNotContain(SERVICE_CENTRE_NAME_PREFIX);
-        verify(serviceCentreService).deleteServiceCentresByNamePrefix(SERVICE_CENTRE_NAME_PREFIX);
+        verify(serviceCentreService).deleteServiceCentresByNamePrefix(SERVICE_CENTRE_NAME_PREFIX, true);
     }
 
     @Test

@@ -9,6 +9,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
@@ -41,6 +42,7 @@ public class CourtService {
 
     private final CourtRepository courtRepository;
     private final CourtDetailsRepository courtDetailsRepository;
+    private final AuditRepository auditRepository;
     private final RegionService regionService;
     private final CathClient cathClient;
     private final SlackClient slackClient;
@@ -177,7 +179,7 @@ public class CourtService {
      * @return the number of courts removed.
      */
     @Transactional
-    public long deleteCourtsByNamePrefix(String courtNamePrefix) {
+    public long deleteCourtsByNamePrefix(String courtNamePrefix, boolean purgeAudits) {
         List<Court> courtsToDelete = courtRepository.findByNameStartingWithIgnoreCase(courtNamePrefix.trim());
 
         if (courtsToDelete.isEmpty()) {
@@ -185,6 +187,11 @@ public class CourtService {
         }
 
         courtRepository.deleteAllInBatch(courtsToDelete);
+
+        if  (purgeAudits) {
+            auditRepository.deleteBySubjectIdIn(courtsToDelete.stream().map(Court::getId).toList());
+        }
+
         return courtsToDelete.size();
     }
 

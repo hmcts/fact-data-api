@@ -62,7 +62,7 @@ public class TestingSupportController {
         String courtNamePrefix
     ) {
         return ResponseEntity.status(HttpStatus.OK)
-            .body(courtService.deleteCourtsByNamePrefix(courtNamePrefix)
+            .body(courtService.deleteCourtsByNamePrefix(courtNamePrefix,true)
                       + " court(s) deleted successfully");
     }
 
@@ -81,7 +81,7 @@ public class TestingSupportController {
         String serviceCentreNamePrefix
     ) {
         return ResponseEntity.status(HttpStatus.OK)
-            .body(serviceCentreService.deleteServiceCentresByNamePrefix(serviceCentreNamePrefix)
+            .body(serviceCentreService.deleteServiceCentresByNamePrefix(serviceCentreNamePrefix, true)
                       + " service centre(s) deleted successfully");
     }
 
