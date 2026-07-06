@@ -169,6 +169,14 @@ public class TestingSupportService {
         "hmcts.org", "justice.gov.uk", "tribunalnetwork.org", "outsourcedjustice.com"
     );
 
+    private static final List<DayOfTheWeek> VALID_SPECIFIC_DAYS = List.of(
+        DayOfTheWeek.MONDAY,
+        DayOfTheWeek.TUESDAY,
+        DayOfTheWeek.WEDNESDAY,
+        DayOfTheWeek.THURSDAY,
+        DayOfTheWeek.FRIDAY
+    );
+
     // ------------------------------------------------------------------------
     // Repositories and services required to insert the data
 
@@ -838,12 +846,11 @@ public class TestingSupportService {
             openingHours.accept(rndOpeningTimesDetails(random, List.of(DayOfTheWeek.EVERYDAY)));
         } else {
             // specific days
-            List<DayOfTheWeek> days = Arrays.asList(DayOfTheWeek.values()).stream()
-                .filter(d -> d != DayOfTheWeek.EVERYDAY)
+            List<DayOfTheWeek> days = VALID_SPECIFIC_DAYS.stream()
                 .filter(b -> random.nextInt(100) > 30)
                 .toList();
             if (days.isEmpty()) {
-                days = List.of(DayOfTheWeek.values()[random.nextInt(DayOfTheWeek.values().length - 1)]);
+                days = List.of(VALID_SPECIFIC_DAYS.get(random.nextInt(VALID_SPECIFIC_DAYS.size())));
             }
             openingHours.accept(rndOpeningTimesDetails(random, days));
         }
