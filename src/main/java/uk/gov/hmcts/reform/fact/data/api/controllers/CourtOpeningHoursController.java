@@ -89,20 +89,22 @@ public class CourtOpeningHoursController {
     })
     public ResponseEntity<List<CourtCounterServiceOpeningHours>> getCounterServiceOpeningHoursByCourtId(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
-        return ResponseEntity.ok(courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(UUID.fromString(courtId)));
+        return ResponseEntity.ok(courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(
+            UUID.fromString(courtId))
+        );
     }
 
     @GetMapping("/v1/opening-hours/counter-service/{counterServiceId}")
     @Operation(
-        summary = "Get court counter service opening hours by court ID and opening hours ID",
+        summary = "Get court counter service opening hours by court ID and counter service ID",
         description = "Fetch counter service opening hours for a given court."
-            + "Returns 204 if no opening hours exist for the court with this ID."
+            + "Returns 204 if no counter service opening hours exist for the court with this ID."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved court counter service opening hours"),
-        @ApiResponse(responseCode = "204", description = "No court counter service opening hours found for the court with this ID"),
-        @ApiResponse(responseCode = "400", description = "Invalid court ID or court counter service opening hours ID supplied"),
-        @ApiResponse(responseCode = "404", description = "Court or court counter service opening hours not found")
+        @ApiResponse(responseCode = "204", description = "No counter service found for the court with this ID"),
+        @ApiResponse(responseCode = "400", description = "Invalid court ID or court counter service ID supplied"),
+        @ApiResponse(responseCode = "404", description = "Court or counter service opening hours not found")
     })
     public ResponseEntity<CourtCounterServiceOpeningHours> getCounterServiceOpeningHoursById(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
@@ -189,7 +191,9 @@ public class CourtOpeningHoursController {
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the counter service", required = true)
         @ValidUUID @PathVariable String counterServiceId) {
-        courtOpeningHoursService.deleteCourtCounterServiceOpeningHours(UUID.fromString(courtId), UUID.fromString(counterServiceId));
+        courtOpeningHoursService.deleteCourtCounterServiceOpeningHours(
+            UUID.fromString(courtId), UUID.fromString(counterServiceId)
+        );
         return ResponseEntity.ok().body(null);
     }
 }

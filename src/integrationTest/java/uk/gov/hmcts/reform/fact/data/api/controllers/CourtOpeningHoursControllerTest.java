@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
-import org.springframework.web.bind.annotation.GetMapping;
 import tools.jackson.databind.ObjectMapper;
 import io.qameta.allure.Feature;
 import org.junit.jupiter.api.Assertions;
@@ -55,7 +54,6 @@ class CourtOpeningHoursControllerTest {
 
     private UUID courtId;
     private UUID nonExistentCourtId;
-    private UUID nonExistentCourterServiceId;
     private UUID openingHourTypeId;
     private Court court;
     private OpeningHourType openingHourType;
@@ -66,7 +64,6 @@ class CourtOpeningHoursControllerTest {
     @BeforeEach
     public void setup() {
         nonExistentCourtId = UUID.randomUUID();
-        nonExistentCourterServiceId = UUID.randomUUID();
         openingHourTypeId = UUID.randomUUID();
         courtId = UUID.randomUUID();
         openingHourType = new OpeningHourType();
@@ -570,8 +567,9 @@ class CourtOpeningHoursControllerTest {
     @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/counter-service deletes opening hours successfully")
     void deleteCounterServiceOpeningHoursDeletesSuccessfully() throws Exception {
         mockMvc.perform(delete(
-                "/courts/{courtId}/v1/opening-hours/counter-service",
-                courtId
+                "/courts/{courtId}/v1/opening-hours/counter-service/{counterServiceId}",
+                courtId,
+                counterServiceOpeningHours.getId()
             ))
             .andExpect(status().isOk());
     }
@@ -581,11 +579,12 @@ class CourtOpeningHoursControllerTest {
     void deleteCounterServiceOpeningHoursNonExistentCourtReturnsNotFound() throws Exception {
         doThrow(new NotFoundException("Court not found"))
             .when(courtOpeningHoursService)
-            .deleteCourtCounterServiceOpeningHours(nonExistentCourtId, nonExistentCourterServiceId);
+            .deleteCourtCounterServiceOpeningHours(nonExistentCourtId, counterServiceOpeningHours.getId());
 
         mockMvc.perform(delete(
-                "/courts/{courtId}/v1/opening-hours/counter-service",
-                nonExistentCourtId
+                "/courts/{courtId}/v1/opening-hours/counter-service/{counterServiceId}",
+                nonExistentCourtId,
+                counterServiceOpeningHours.getId()
             ))
             .andExpect(status().isNotFound());
     }
@@ -594,8 +593,9 @@ class CourtOpeningHoursControllerTest {
     @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/counter-service returns 400 for invalid UUID")
     void deleteCounterServiceOpeningHoursInvalidUUID() throws Exception {
         mockMvc.perform(delete(
-                "/courts/{courtId}/v1/opening-hours/counter-service",
-                "invalid-uuid"
+                "/courts/{courtId}/v1/opening-hours/counter-service/{counterServiceId}",
+                "invalid-uuid",
+                counterServiceOpeningHours.getId()
             ))
             .andExpect(status().isBadRequest());
     }

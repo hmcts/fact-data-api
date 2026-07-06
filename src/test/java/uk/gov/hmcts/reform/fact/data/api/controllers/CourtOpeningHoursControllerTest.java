@@ -209,7 +209,7 @@ class CourtOpeningHoursControllerTest {
             = courtOpeningHoursController.getCounterServiceOpeningHoursByCourtId(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(counterServiceOpeningHours);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(List.of(counterServiceOpeningHours));
     }
 
     @Test
