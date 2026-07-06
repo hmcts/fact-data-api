@@ -162,10 +162,13 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/counter-service");
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
-        final CourtCounterServiceOpeningHours retrievedHours = mapper.readValue(
+        final List<CourtCounterServiceOpeningHours> retrievedHoursList = mapper.readValue(
             getResponse.asString(),
-            CourtCounterServiceOpeningHours.class
+            mapper.getTypeFactory().constructCollectionType(List.class, CourtCounterServiceOpeningHours.class)
         );
+
+        assertThat((retrievedHoursList)).hasSize(1);
+        final CourtCounterServiceOpeningHours retrievedHours = retrievedHoursList.getFirst();
 
         assertThat(retrievedHours.getOpeningTimesDetails()).hasSize(5);
         assertThat(retrievedHours.getOpeningTimesDetails().getFirst().getOpeningTime())
