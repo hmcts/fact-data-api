@@ -210,8 +210,6 @@ dependencies {
 
   implementation group: 'com.slack.api', name: 'slack-api-client', version: '1.49.0'
 
-  implementation group: 'com.azure', name: 'azure-storage-blob', version: '12.26.0'
-
   //Solves CVE-2025-48976
   implementation group: 'commons-fileupload', name: 'commons-fileupload', version: '1.6.0'
 
