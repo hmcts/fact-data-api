@@ -232,6 +232,40 @@ class CourtOpeningHoursServiceTest {
     }
 
     @Test
+    void getCounterServiceOpeningHoursByIdReturnsCounterServiceOpeningHoursWhenFound() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtCounterServiceOpeningHoursRepository.findByCourtIdAndId(courtId, counterServiceOpeningHours.getId()))
+            .thenReturn(Optional.of(counterServiceOpeningHours));
+
+        CourtCounterServiceOpeningHours result = courtOpeningHoursService
+            .getCounterServiceOpeningHoursById(courtId, counterServiceOpeningHours.getId());
+
+        assertThat(result).isEqualTo(counterServiceOpeningHours);
+    }
+
+    @Test
+    void getCounterServiceOpeningHoursThrowsExceptionWhenNotFound() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtCounterServiceOpeningHoursRepository.findByCourtIdAndId(courtId, counterServiceOpeningHours.getId()))
+            .thenReturn(Optional.empty());
+
+        assertThrows(
+            CourtResourceNotFoundException.class,
+            () -> courtOpeningHoursService.getCounterServiceOpeningHoursById(
+                courtId, counterServiceOpeningHours.getId())
+        );
+    }
+
+    @Test
+    void getCounterServiceOpeningHoursByIdThrowsExceptionWhenCourtDoesNotExist() {
+        when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
+
+        assertThrows(NotFoundException.class, () ->
+            courtOpeningHoursService.getCounterServiceOpeningHoursById(courtId, counterServiceOpeningHours.getId())
+        );
+    }
+
+    @Test
     void setOpeningHoursSuccessfullyCreatesNewOpeningHours() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(openingHoursTypeService.getOpeningHourTypeById(openingHourType.getId())).thenReturn(openingHourType);
@@ -474,6 +508,13 @@ class CourtOpeningHoursServiceTest {
         courtOpeningHoursService.deleteCourtOpeningHours(courtId, openingHours.getId());
 
         verify(courtOpeningHoursRepository).deleteById(openingHours.getId());
+    }
+
+    @Test
+    void deleteCounterServiceOpeningHoursSuccessfullyDeletesHours() {
+        courtOpeningHoursService.deleteCourtCounterServiceOpeningHours(courtId, counterServiceOpeningHours.getId());
+
+        verify(courtCounterServiceOpeningHoursRepository).deleteById(counterServiceOpeningHours.getId());
     }
 }
 
