@@ -9,8 +9,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
+import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
@@ -271,17 +272,18 @@ public final class UserControllerFunctionalTest {
         final UUID court2Id = TestDataHelper
             .createCourt(http, generateUniqueCourtName("Test Court Clear Locks Two"));
 
-        TestDataHelper.createCourtLock(http, court1Id, Page.COURT, userId);
-        TestDataHelper.createCourtLock(http, court2Id, Page.COURT_ACCESSIBILITY, userId);
+        TestDataHelper.createCourtLock(http, court1Id, Page.GENERAL, userId);
+        TestDataHelper.createCourtLock(http, court2Id, Page.ACCESSIBILITY, userId);
 
-        final Response getLocksBeforeClearResponse = http.doGet("/courts/" + court1Id + "/v1/locks");
+        final Response getLocksBeforeClearResponse = http.doGet("/locks/" + AuditSubjectType.COURT
+                                                                    + "/" + court1Id + "/v1");
 
         assertThat(getLocksBeforeClearResponse.statusCode())
             .as("Expected 200 OK when getting locks before clearing")
             .isEqualTo(OK.value());
 
-        final List<CourtLock> locksBeforeClear = getLocksBeforeClearResponse.jsonPath()
-            .getList("", CourtLock.class);
+        final List<Lock> locksBeforeClear = getLocksBeforeClearResponse.jsonPath()
+            .getList("", Lock.class);
 
         assertThat(locksBeforeClear)
             .as("Expected at least 1 lock before clearing for user %s", userId)
@@ -293,26 +295,27 @@ public final class UserControllerFunctionalTest {
             .as("Expected 204 NO CONTENT when clearing locks for user %s", userId)
             .isEqualTo(NO_CONTENT.value());
 
-        final Response getLock1StatusResponse = http.doGet("/courts/" + court1Id + "/v1/locks/" + Page.COURT);
+        final Response getLock1StatusResponse = http.doGet("/locks/" + AuditSubjectType.COURT + "/"
+                                                               + court1Id + "/v1/" + Page.GENERAL);
 
         assertThat(getLock1StatusResponse.statusCode())
-            .as("Expected 200 OK when checking lock status after clearing")
-            .isEqualTo(OK.value());
+            .as("Expected 204 OK when checking lock status after clearing")
+            .isEqualTo(NO_CONTENT.value());
 
         assertThat(getLock1StatusResponse.getBody().asString())
-            .as("Expected null response after clearing user locks")
-            .isEqualTo("null");
+            .as("Expected empty response after clearing user locks")
+            .isEqualTo("");
 
-        final Response getLock2StatusResponse = http.doGet("/courts/"
-                                                               + court2Id + "/v1/locks/" + Page.COURT_ACCESSIBILITY);
+        final Response getLock2StatusResponse = http.doGet("/locks/" + AuditSubjectType.COURT + "/"
+                                                               + court2Id + "/v1/" + Page.ACCESSIBILITY);
 
         assertThat(getLock2StatusResponse.statusCode())
-            .as("Expected 200 OK when checking second lock status after clearing")
-            .isEqualTo(OK.value());
+            .as("Expected 204 OK when checking second lock status after clearing")
+            .isEqualTo(NO_CONTENT.value());
 
         assertThat(getLock2StatusResponse.getBody().asString())
-            .as("Expected null response for second lock after clearing user locks")
-            .isEqualTo("null");
+            .as("Expected empty response for second lock after clearing user locks")
+            .isEqualTo("");
     }
 
     @Test

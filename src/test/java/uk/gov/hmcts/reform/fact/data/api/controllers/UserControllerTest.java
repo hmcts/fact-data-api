@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
+import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
 
 import java.util.List;
@@ -37,7 +37,7 @@ class UserControllerTest {
     private UserService userService;
 
     @Mock
-    private CourtLockService courtLockService;
+    private LockService lockService;
 
     @InjectMocks
     private UserController userController;
@@ -149,7 +149,7 @@ class UserControllerTest {
     @Test
     void clearUserLocksThrowsNotFoundExceptionWhenUserNotFound() {
         doThrow(new NotFoundException("User not found"))
-            .when(courtLockService).clearUserLocks(UNKNOWN_USER_ID);
+            .when(lockService).clearUserLocks(UNKNOWN_USER_ID);
 
         assertThrows(
             NotFoundException.class, () ->

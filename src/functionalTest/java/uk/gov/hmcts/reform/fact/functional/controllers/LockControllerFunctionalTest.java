@@ -8,7 +8,8 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
+import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
@@ -24,7 +25,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 @Feature("Court Lock Controller")
 @DisplayName("Court Lock Controller")
-public final class CourtLockControllerFunctionalTest {
+public final class LockControllerFunctionalTest {
 
     private static final HttpClient http = new HttpClient();
     private static final ObjectMapper mapper = JsonMapper.builder()
@@ -32,114 +33,111 @@ public final class CourtLockControllerFunctionalTest {
         .build();
 
     @Test
-    @DisplayName("POST /courts/{courtId}/v1/locks/{page} creates lock successfully")
+    @DisplayName("POST /locks/{subjectType}/{subjectId}/v1/{page} creates lock successfully")
     void shouldCreateCourtLockSuccessfully() throws Exception {
         final UUID userId = TestDataHelper.createUser(http, "test.user.create");
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Lock Create");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Lock Create");
 
-        final CourtLock createdLock = TestDataHelper.createCourtLock(http, courtId, Page.COURT, userId);
+        final Lock createdLock = TestDataHelper.createCourtLock(http, courtId, Page.GENERAL, userId);
 
         assertThat(createdLock.getId())
             .as("Created lock should have auto-generated ID")
             .isNotNull();
-        assertThat(createdLock.getCourtId())
+        assertThat(createdLock.getSubjectId())
             .as("Created lock court ID should match request court ID %s", courtId)
             .isEqualTo(courtId);
         assertThat(createdLock.getUserId())
             .as("Created lock user ID should match request user ID %s", userId)
             .isEqualTo(userId);
         assertThat(createdLock.getPage())
-            .as("Created lock page should match request page %s", Page.COURT)
-            .isEqualTo(Page.COURT);
+            .as("Created lock page should match request page %s", Page.GENERAL)
+            .isEqualTo(Page.GENERAL);
         assertThat(createdLock.getLockAcquired())
             .as("Created lock should have lockAcquired timestamp set")
             .isNotNull();
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/locks/{page} returns lock status successfully")
+    @DisplayName("GET /locks/{subjectType}/{subjectId}/v1/{page} returns lock status successfully")
     void shouldGetCourtLockStatusSuccessfully() throws Exception {
         final UUID userId = TestDataHelper.createUser(http, "test.user.getstatus");
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Lock Get Status");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Lock Get Status");
 
-        TestDataHelper.createCourtLock(http, courtId, Page.COURT_ACCESSIBILITY, userId);
+        TestDataHelper.createCourtLock(http, courtId, Page.ACCESSIBILITY, userId);
 
         final Response getLockStatusResponse = http.doGet(
-            "/courts/" + courtId + "/v1/locks/" + Page.COURT_ACCESSIBILITY
+            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.ACCESSIBILITY
         );
 
         assertThat(getLockStatusResponse.statusCode())
             .as("Expected 200 OK when getting lock status for court %s page %s",
-                courtId, Page.COURT_ACCESSIBILITY)
+                courtId, Page.ACCESSIBILITY
+            )
             .isEqualTo(OK.value());
 
         assertThat(getLockStatusResponse.contentType())
             .as("Expected JSON content type when getting lock status")
             .contains("json");
 
-        final CourtLock fetchedLock = mapper.readValue(
+        final Lock fetchedLock = mapper.readValue(
             getLockStatusResponse.getBody().asString(),
-            CourtLock.class
+            Lock.class
         );
 
-        assertThat(fetchedLock.getCourtId())
+        assertThat(fetchedLock.getSubjectId())
             .as("Fetched lock court ID should match %s", courtId)
             .isEqualTo(courtId);
         assertThat(fetchedLock.getUserId())
             .as("Fetched lock user ID should match %s", userId)
             .isEqualTo(userId);
         assertThat(fetchedLock.getPage())
-            .as("Fetched lock page should match %s", Page.COURT_ACCESSIBILITY)
-            .isEqualTo(Page.COURT_ACCESSIBILITY);
+            .as("Fetched lock page should match %s", Page.ACCESSIBILITY)
+            .isEqualTo(Page.ACCESSIBILITY);
         assertThat(fetchedLock.getLockAcquired())
             .as("Fetched lock should have lockAcquired timestamp")
             .isNotNull();
     }
 
     @Test
-    @DisplayName("DELETE /courts/{courtId}/v1/locks/{page} deletes lock successfully")
+    @DisplayName("DELETE /locks/{subjectType}/{subjectId}/v1/{page} deletes lock successfully")
     void shouldDeleteCourtLockSuccessfully() throws Exception {
         final UUID userId = TestDataHelper.createUser(http, "test.user.delete");
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Lock Delete");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Lock Delete");
 
-        TestDataHelper.createCourtLock(http, courtId, Page.COURT_LOCAL_AUTHORITY, userId);
+        TestDataHelper.createCourtLock(http, courtId, Page.LOCAL_AUTHORITIES, userId);
 
         final Response deleteLockResponse = http.doDelete(
-            "/courts/" + courtId + "/v1/locks/" + Page.COURT_LOCAL_AUTHORITY
+            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
         );
 
         assertThat(deleteLockResponse.statusCode())
             .as("Expected 204 NO CONTENT when deleting lock for court %s page %s",
-                courtId, Page.COURT_LOCAL_AUTHORITY)
+                courtId, Page.LOCAL_AUTHORITIES)
             .isEqualTo(NO_CONTENT.value());
 
         final Response getLockStatusResponse = http.doGet(
-            "/courts/" + courtId + "/v1/locks/" + Page.COURT_LOCAL_AUTHORITY
+            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
         );
 
         assertThat(getLockStatusResponse.statusCode())
-            .as("Expected 200 OK when checking lock status after deletion")
-            .isEqualTo(OK.value());
-
-        assertThat(getLockStatusResponse.contentType())
-            .as("Expected JSON content type when checking lock status")
-            .contains("json");
+            .as("Expected 204 OK when checking lock status after deletion")
+            .isEqualTo(NO_CONTENT.value());
 
         assertThat(getLockStatusResponse.getBody().asString())
             .as("Expected null response body after lock deletion indicating no lock exists")
-            .isEqualTo("null");
+            .isEqualTo("");
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/locks returns all locks for a court")
+    @DisplayName("GET /locks/{subjectType}/{subjectId}/v1 returns all locks for a court")
     void shouldGetAllLocksForCourtSuccessfully() throws Exception {
         final UUID userId = TestDataHelper.createUser(http, "test.user.getall");
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Lock Get All");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Lock Get All");
 
-        TestDataHelper.createCourtLock(http, courtId, Page.COURT, userId);
-        TestDataHelper.createCourtLock(http, courtId, Page.COURT_ACCESSIBILITY, userId);
+        TestDataHelper.createCourtLock(http, courtId, Page.GENERAL, userId);
+        TestDataHelper.createCourtLock(http, courtId, Page.ACCESSIBILITY, userId);
 
-        final Response getAllLocksResponse = http.doGet("/courts/" + courtId + "/v1/locks");
+        final Response getAllLocksResponse = http.doGet("/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1");
 
         assertThat(getAllLocksResponse.statusCode())
             .as("Expected 200 OK when getting all locks for court %s", courtId)
@@ -149,7 +147,7 @@ public final class CourtLockControllerFunctionalTest {
             .as("Expected JSON content type when getting all locks")
             .contains("json");
 
-        final List<CourtLock> locks = getAllLocksResponse.jsonPath().getList("", CourtLock.class);
+        final List<Lock> locks = getAllLocksResponse.jsonPath().getList("", Lock.class);
 
         assertThat(locks)
             .as("Expected 2 locks for court %s", courtId)
@@ -157,27 +155,27 @@ public final class CourtLockControllerFunctionalTest {
 
         assertThat(locks)
             .as("All locks should belong to court %s", courtId)
-            .allSatisfy(lock -> assertThat(lock.getCourtId())
+            .allSatisfy(lock -> assertThat(lock.getSubjectId())
                 .as("Lock court ID should be %s", courtId)
                 .isEqualTo(courtId));
 
         assertThat(locks)
             .as("Expected locks for pages COURT and COURT_ACCESSIBILITY")
-            .extracting(CourtLock::getPage)
-            .containsExactlyInAnyOrder(Page.COURT, Page.COURT_ACCESSIBILITY);
+            .extracting(Lock::getPage)
+            .containsExactlyInAnyOrder(Page.GENERAL, Page.ACCESSIBILITY);
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/v1/locks/{page} returns 409 when page already locked by another user")
+    @DisplayName("POST /locks/{subjectType/{subjectId}/v1/{page} returns 409 when page already locked by another user")
     void shouldReturnConflictWhenPageLockedByAnotherUser() throws Exception {
         final UUID userAId = TestDataHelper.createUser(http, "test.user.conflict.usera");
         final UUID userBId = TestDataHelper.createUser(http, "test.user.conflict.userb");
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Lock Conflict");
 
-        TestDataHelper.createCourtLock(http, courtId, Page.COURT, userAId);
+        TestDataHelper.createCourtLock(http, courtId, Page.GENERAL, userAId);
 
         final Response userBLockResponse = http.doPost(
-            "/courts/" + courtId + "/v1/locks/" + Page.COURT,
+            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.GENERAL,
             mapper.writeValueAsString(userBId)
         );
 
@@ -199,18 +197,18 @@ public final class CourtLockControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/v1/locks/{page} allows same user to refresh lock")
+    @DisplayName("POST /locks/{subjectType}/{subjectId}/v1/{page} allows same user to refresh lock")
     void shouldAllowSameUserToRefreshLock() throws Exception {
         final UUID userId = TestDataHelper.createUser(http, "test.user.refresh");
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Lock Refresh");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Lock Refresh");
 
-        final CourtLock initialLock = TestDataHelper.createCourtLock(http, courtId, Page.COURT, userId);
+        final Lock initialLock = TestDataHelper.createCourtLock(http, courtId, Page.GENERAL, userId);
 
         final ZonedDateTime initialTimestamp = initialLock.getLockAcquired();
 
         Thread.sleep(1000);
 
-        final CourtLock refreshedLock = TestDataHelper.createCourtLock(http, courtId, Page.COURT, userId);
+        final Lock refreshedLock = TestDataHelper.createCourtLock(http, courtId, Page.GENERAL, userId);
 
         assertThat(refreshedLock.getId())
             .as("Lock ID should remain the same after refresh")
@@ -220,7 +218,7 @@ public final class CourtLockControllerFunctionalTest {
             .as("Lock acquired timestamp should be updated after refresh")
             .isAfter(initialTimestamp);
 
-        assertThat(refreshedLock.getCourtId())
+        assertThat(refreshedLock.getSubjectId())
             .as("Lock court ID should remain %s", courtId)
             .isEqualTo(courtId);
 
@@ -229,34 +227,34 @@ public final class CourtLockControllerFunctionalTest {
             .isEqualTo(userId);
 
         assertThat(refreshedLock.getPage())
-            .as("Lock page should remain %s", Page.COURT)
-            .isEqualTo(Page.COURT);
+            .as("Lock page should remain %s", Page.GENERAL)
+            .isEqualTo(Page.GENERAL);
     }
 
     @Test
     @DisplayName("End-to-end: Create lock, get status, refresh lock, delete, verify deletion")
     void shouldCompleteEndToEndLockWorkflow() throws Exception {
         final UUID userId = TestDataHelper.createUser(http, "test.user.endtoend");
-        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Lock End To End");
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Lock End To End");
 
-        final CourtLock createdLock = TestDataHelper
-            .createCourtLock(http, courtId, Page.COURT_LOCAL_AUTHORITY, userId);
+        final Lock createdLock = TestDataHelper
+            .createCourtLock(http, courtId, Page.LOCAL_AUTHORITIES, userId);
 
-        assertThat(createdLock.getCourtId())
+        assertThat(createdLock.getSubjectId())
             .as("Created lock court ID should be %s", courtId)
             .isEqualTo(courtId);
 
         final Response getLockStatusResponse = http.doGet(
-            "/courts/" + courtId + "/v1/locks/" + Page.COURT_LOCAL_AUTHORITY
+            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
         );
 
         assertThat(getLockStatusResponse.statusCode())
             .as("Expected 200 OK when getting lock status")
             .isEqualTo(OK.value());
 
-        final CourtLock fetchedLock = mapper.readValue(
+        final Lock fetchedLock = mapper.readValue(
             getLockStatusResponse.getBody().asString(),
-            CourtLock.class
+            Lock.class
         );
 
         assertThat(fetchedLock.getId())
@@ -265,15 +263,15 @@ public final class CourtLockControllerFunctionalTest {
 
         Thread.sleep(1000);
 
-        final CourtLock refreshedLock = TestDataHelper
-            .createCourtLock(http, courtId, Page.COURT_LOCAL_AUTHORITY, userId);
+        final Lock refreshedLock = TestDataHelper
+            .createCourtLock(http, courtId, Page.LOCAL_AUTHORITIES, userId);
 
         assertThat(refreshedLock.getLockAcquired())
             .as("Refreshed lock timestamp should be after original timestamp")
             .isAfter(createdLock.getLockAcquired());
 
         final Response deleteLockResponse = http.doDelete(
-            "/courts/" + courtId + "/v1/locks/" + Page.COURT_LOCAL_AUTHORITY
+            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
         );
 
         assertThat(deleteLockResponse.statusCode())
@@ -281,16 +279,16 @@ public final class CourtLockControllerFunctionalTest {
             .isEqualTo(NO_CONTENT.value());
 
         final Response verifyDeletedResponse = http.doGet(
-            "/courts/" + courtId + "/v1/locks/" + Page.COURT_LOCAL_AUTHORITY
+            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
         );
 
         assertThat(verifyDeletedResponse.statusCode())
-            .as("Expected 200 OK when checking deleted lock status")
-            .isEqualTo(OK.value());
+            .as("Expected 204 OK when checking deleted lock status")
+            .isEqualTo(NO_CONTENT.value());
 
         assertThat(verifyDeletedResponse.getBody().asString())
             .as("Expected null response after lock deletion")
-            .isEqualTo("null");
+            .isEqualTo("");
     }
 
     @AfterAll

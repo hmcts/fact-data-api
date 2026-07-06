@@ -3,7 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
+import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -34,11 +34,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class UserController {
 
     private final UserService userService;
-    private final CourtLockService courtLockService;
+    private final LockService lockService;
 
-    public UserController(UserService userService, CourtLockService courtLockService) {
+    public UserController(UserService userService, LockService lockService) {
         this.userService = userService;
-        this.courtLockService = courtLockService;
+        this.lockService = lockService;
     }
 
     @GetMapping("/v1/{userId}/favourites")
@@ -96,7 +96,7 @@ public class UserController {
     @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> clearUserLocks(
         @Parameter(description = "UUID of the user", required = true) @ValidUUID @PathVariable String userId) {
-        courtLockService.clearUserLocks(UUID.fromString(userId));
+        lockService.clearUserLocks(UUID.fromString(userId));
         return ResponseEntity.noContent().build();
     }
 

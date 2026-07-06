@@ -1,6 +1,7 @@
-package uk.gov.hmcts.reform.fact.data.api.validation.validator;
+package uk.gov.hmcts.reform.fact.data.api.aspect;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -11,9 +12,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
+import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
+import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 
 import java.lang.reflect.Parameter;
 import java.time.Duration;
@@ -22,34 +24,36 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Aspect that intercepts methods annotated with @ValidateLockTimeout.
+ * Aspect that intercepts methods annotated with @LockTimeoutCheck.
  * Validates lock timeout before allowing the method to execute.
  */
+@Slf4j
 @Aspect
 @Component
 @RequiredArgsConstructor
-public class CourtLockTimeoutValidator {
+public class LockAspect {
 
-    private final CourtLockService courtLockService;
+    private final LockService lockService;
 
     @Value("${courtLock.timeout-minutes}")
     private long lockTimeoutMinutes;
 
     /**
-     * Executes BEFORE any method annotated with @ValidateLockTimeout.
-     * Extracts courtId, page, and userId from method parameters and validates lock.
+     * Executes BEFORE any method annotated with @LockTimeoutCheck.
+     * Extracts subjectType, subjectId, page, and userId from method parameters and validates lock.
      */
-    @Before("@annotation(uk.gov.hmcts.reform.fact.data.api.validation.annotations.CourtLockTimeoutCheck)")
+    @Before("@annotation(uk.gov.hmcts.reform.fact.data.api.aspect.annotations.LockTimeoutCheck)")
     public void validateLockTimeout(JoinPoint joinPoint) {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Parameter[] parameters = signature.getMethod().getParameters();
         Object[] args = joinPoint.getArgs();
 
-        UUID courtId = extractUuid(parameters, args, "courtId");
+        AuditSubjectType subjectType = extractSubjectType(parameters, args, "subjectType");
+        UUID subjectId = extractUuid(parameters, args, "subjectId");
         Page page = extractPage(parameters, args, "page");
         UUID userId = extractUuid(parameters, args, "userId");
 
-        Optional<CourtLock> lock = courtLockService.getPageLock(courtId, page);
+        Optional<Lock> lock = lockService.getPageLock(subjectType, subjectId, page);
         if (lock.isEmpty() || lock.get().getUserId().equals(userId)) {
             return; // No lock or same user owns it
         }
@@ -61,7 +65,34 @@ public class CourtLockTimeoutValidator {
                 String.format("Page locked by another user (%d/%d min)", minutesLocked, lockTimeoutMinutes));
         }
 
-        courtLockService.deleteLock(courtId, page);
+        lockService.deleteLock(subjectType, subjectId, page);
+    }
+
+    /**
+     * Executes BEFORE any method annotated with @LockCleanupCheck.
+     */
+    @Before("@annotation(uk.gov.hmcts.reform.fact.data.api.aspect.annotations.LockCleanupCheck)")
+    public void lockCleanup(JoinPoint joinPoint) {
+        try {
+            this.lockService.deleteExpiredLocks();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Extracts SubjectType parameter by name from method arguments.
+     */
+    private AuditSubjectType extractSubjectType(Parameter[] parameters, Object[] args, String paramName) {
+        for (int i = 0; i < parameters.length; i++) {
+            if (isNamedParameter(parameters[i], paramName)) {
+                Object value = args[i];
+                return value instanceof String valueStr
+                    ? AuditSubjectType.valueOf(valueStr.toUpperCase())
+                    : (AuditSubjectType) value;
+            }
+        }
+        throw new IllegalArgumentException("Required parameter not found: " + paramName);
     }
 
     /**
@@ -71,7 +102,9 @@ public class CourtLockTimeoutValidator {
         for (int i = 0; i < parameters.length; i++) {
             if (isNamedParameter(parameters[i], paramName)) {
                 Object value = args[i];
-                return value instanceof String ? UUID.fromString((String) value) : (UUID) value;
+                return value instanceof String valueStr
+                    ? UUID.fromString(valueStr)
+                    : (UUID) value;
             }
         }
         throw new IllegalArgumentException("Required parameter not found: " + paramName);
@@ -84,7 +117,9 @@ public class CourtLockTimeoutValidator {
         for (int i = 0; i < parameters.length; i++) {
             if (isNamedParameter(parameters[i], paramName)) {
                 Object value = args[i];
-                return value instanceof String ? Page.valueOf(((String) value).toUpperCase()) : (Page) value;
+                return value instanceof String valueStr
+                    ? Page.valueOf(valueStr.toUpperCase())
+                    : (Page) value;
             }
         }
         throw new IllegalArgumentException("Required parameter not found: " + paramName);

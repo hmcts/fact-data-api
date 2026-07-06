@@ -7,11 +7,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
+import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLockRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.LockRepository;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -27,10 +28,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CourtLockServiceTest {
+class LockServiceTest {
 
     @Mock
-    private CourtLockRepository courtLockRepository;
+    private LockRepository lockRepository;
 
     @Mock
     private CourtService courtService;
@@ -39,13 +40,13 @@ class CourtLockServiceTest {
     private UserService userService;
 
     @InjectMocks
-    private CourtLockService courtLockService;
+    private LockService lockService;
 
     private UUID userId;
     private User user;
     private UUID courtId;
     private Court court;
-    private CourtLock lock;
+    private Lock lock;
 
     @BeforeEach
     void setup() {
@@ -59,25 +60,26 @@ class CourtLockServiceTest {
         user.setId(userId);
         user.setEmail("email@justice.gov.uk");
 
-        lock = new CourtLock();
-        lock.setCourtId(courtId);
-        lock.setPage(Page.COURT);
+        lock = new Lock();
+        lock.setSubjectType(AuditSubjectType.COURT);
+        lock.setSubjectId(courtId);
+        lock.setPage(Page.GENERAL);
         lock.setLockAcquired(ZonedDateTime.now());
     }
 
     @Test
     void clearUserLocksShouldDeleteAllLocksForUser() {
         when(userService.getUserById(userId)).thenReturn(user);
-        courtLockService.clearUserLocks(userId);
+        lockService.clearUserLocks(userId);
 
-        verify(courtLockRepository).deleteAllByUserId(userId);
+        verify(lockRepository).deleteAllByUserId(userId);
     }
 
     @Test
     void clearUserLocksShouldThrowNotFoundExceptionWhenUserDoesNotExist() {
         when(userService.getUserById(userId)).thenThrow(new NotFoundException("User not found"));
 
-        assertThrows(NotFoundException.class, () -> courtLockService.clearUserLocks(userId));
+        assertThrows(NotFoundException.class, () -> lockService.clearUserLocks(userId));
     }
 
     @Test
@@ -86,62 +88,65 @@ class CourtLockServiceTest {
         User newUser = new User();
         newUser.setId(newUserId);
         when(userService.getUserById(newUserId)).thenReturn(newUser);
-        courtLockService.clearUserLocks(newUserId);
-        verify(courtLockRepository).deleteAllByUserId(newUserId);
+        lockService.clearUserLocks(newUserId);
+        verify(lockRepository).deleteAllByUserId(newUserId);
     }
 
     @Test
     void getLocksByCourtIdShouldGetLocksByCourtId() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtLockRepository.findAllByCourtId(courtId)).thenReturn(List.of(lock));
-        List<CourtLock> result = courtLockService.getLocksByCourtId(courtId);
+        when(lockRepository.findAllBySubjectTypeAndSubjectId(AuditSubjectType.COURT, courtId))
+            .thenReturn(List.of(lock));
+        List<Lock> result = lockService.getAllSubjectLocks(AuditSubjectType.COURT, courtId);
         assertEquals(1, result.size());
         verify(courtService).getCourtById(courtId);
-        verify(courtLockRepository).findAllByCourtId(courtId);
+        verify(lockRepository).findAllBySubjectTypeAndSubjectId(AuditSubjectType.COURT, courtId);
     }
 
     @Test
     void getPageLockShouldGetPageLock() {
-        Page page = Page.COURT;
+        Page page = Page.GENERAL;
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtLockRepository.findByCourtIdAndPage(courtId, page)).thenReturn(Optional.of(lock));
-        Optional<CourtLock> result = courtLockService.getPageLock(courtId, page);
+        when(lockRepository.findBySubjectTypeAndSubjectIdAndPage(AuditSubjectType.COURT, courtId, page))
+            .thenReturn(Optional.of(lock));
+        Optional<Lock> result = lockService.getPageLock(AuditSubjectType.COURT, courtId, page);
         assertTrue(result.isPresent());
         verify(courtService).getCourtById(courtId);
-        verify(courtLockRepository).findByCourtIdAndPage(courtId, page);
+        verify(lockRepository).findBySubjectTypeAndSubjectIdAndPage(AuditSubjectType.COURT, courtId, page);
     }
 
     @Test
     void createLockShouldCreateLock() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(courtLockRepository.save(any(CourtLock.class))).thenReturn(lock);
-        CourtLock result = courtLockService.createOrUpdateLock(courtId, Page.COURT, userId);
+        when(lockRepository.save(any(Lock.class))).thenReturn(lock);
+        Lock result = lockService.createOrUpdateLock(AuditSubjectType.COURT, courtId, Page.GENERAL, userId);
         assertNotNull(result);
-        verify(courtLockRepository).save(any(CourtLock.class));
+        verify(lockRepository).save(any(Lock.class));
     }
 
     @Test
     void createOrUpdateLockShouldUpdateExistingLock() {
-        Page page = Page.COURT;
+        Page page = Page.GENERAL;
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(courtLockRepository.findByCourtIdAndPage(courtId, page)).thenReturn(Optional.of(lock));
-        when(courtLockRepository.save(any(CourtLock.class))).thenReturn(lock);
-        CourtLock result = courtLockService.createOrUpdateLock(courtId, page, userId);
+        when(lockRepository.findBySubjectTypeAndSubjectIdAndPage(AuditSubjectType.COURT, courtId, page))
+            .thenReturn(Optional.of(lock));
+        when(lockRepository.save(any(Lock.class))).thenReturn(lock);
+        Lock result = lockService.createOrUpdateLock(AuditSubjectType.COURT, courtId, page, userId);
         assertNotNull(result);
         verify(courtService).getCourtById(courtId);
-        verify(courtLockRepository).findByCourtIdAndPage(courtId, page);
-        verify(courtLockRepository).save(any(CourtLock.class));
+        verify(lockRepository).findBySubjectTypeAndSubjectIdAndPage(AuditSubjectType.COURT, courtId, page);
+        verify(lockRepository).save(any(Lock.class));
     }
 
     @Test
     void deleteLockShouldDeleteLock() {
-        Page page = Page.COURT;
+        Page page = Page.GENERAL;
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        courtLockService.deleteLock(courtId, page);
+        lockService.deleteLock(AuditSubjectType.COURT, courtId, page);
         verify(courtService).getCourtById(courtId);
-        verify(courtLockRepository).deleteByCourtIdAndPage(courtId, page);
+        verify(lockRepository).deleteBySubjectTypeAndSubjectIdAndPage(AuditSubjectType.COURT, courtId, page);
     }
 }
 

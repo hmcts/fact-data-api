@@ -6,9 +6,10 @@ import tools.jackson.databind.json.JsonMapper;
 import io.restassured.response.Response;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
+import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
@@ -298,10 +299,10 @@ public final class TestDataHelper {
      * @param userId the user ID
      * @return the created court lock
      */
-    public static CourtLock createCourtLock(final HttpClient http, final UUID courtId,
-                                            final Page page, final UUID userId) throws Exception {
+    public static Lock createCourtLock(final HttpClient http, final UUID courtId,
+                                       final Page page, final UUID userId) throws Exception {
         final Response response = http.doPost(
-            "/courts/" + courtId + "/v1/locks/" + page,
+            "/locks/" + AuditSubjectType.COURT.name() + "/" + courtId + "/v1/" + page,
             mapper.writeValueAsString(userId)
         );
 
@@ -309,7 +310,7 @@ public final class TestDataHelper {
             .as("Expected 201 CREATED when creating lock for court %s page %s", courtId, page)
             .isEqualTo(CREATED.value());
 
-        return mapper.readValue(response.getBody().asString(), CourtLock.class);
+        return mapper.readValue(response.getBody().asString(), Lock.class);
     }
 
     /**
