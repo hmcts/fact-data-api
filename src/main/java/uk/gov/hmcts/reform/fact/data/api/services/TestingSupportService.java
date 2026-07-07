@@ -453,6 +453,8 @@ public class TestingSupportService {
                 HearingEnhancementEquipment.values().length)])
             .accessibleToiletDescription(ACCESSIBLE_TOILET_DESCRIPTIONS.get(random.nextInt(
                 ACCESSIBLE_TOILET_DESCRIPTIONS.size())))
+            .accessibleToiletDescriptionCy(ACCESSIBLE_TOILET_DESCRIPTIONS.get(random.nextInt(
+                ACCESSIBLE_TOILET_DESCRIPTIONS.size())))
             .build();
 
         if (!courtAccessibilityOptions.getAccessibleEntrance().booleanValue()) {
