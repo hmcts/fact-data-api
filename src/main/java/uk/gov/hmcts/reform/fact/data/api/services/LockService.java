@@ -82,6 +82,7 @@ public class LockService {
      * @param userId      The user's unique identifier
      * @return The updated court lock
      */
+    @Transactional
     public Lock createOrUpdateLock(SubjectType subjectType, UUID subjectId, Page page, UUID userId) {
         UUID id = subjectType == SubjectType.SERVICE_CENTRE
             ? serviceCentreService.getServiceCentreById(subjectId).getId()
@@ -101,7 +102,7 @@ public class LockService {
 
         Lock savedLock = lockRepository.save(lock);
         // remove any existing locks for other pages owned by this user
-        lockRepository.deleteAllByUserIdAndSubjectTypeIsNotAndPageIsNot(user.getId(), subjectType, page);
+        lockRepository.deleteAllByUserIdAndIdIsNot(user.getId(), savedLock.getId());
         return savedLock;
     }
 

@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import uk.gov.hmcts.reform.fact.data.api.aspect.annotations.LockCleanupCheck;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
@@ -40,6 +41,7 @@ public class LockController {
         this.lockService = lockService;
     }
 
+    @LockCleanupCheck
     @GetMapping("/{subjectType}/{subjectId}/v1")
     @Operation(summary = "Get all active locks for a subject")
     @ApiResponses(value = {
@@ -53,6 +55,7 @@ public class LockController {
         return ResponseEntity.ok(lockService.getAllSubjectLocks(subjectType, UUID.fromString(subjectId)));
     }
 
+    @LockCleanupCheck
     @GetMapping("/{subjectType}/{subjectId}/v1/{page}")
     @Operation(summary = "Get lock status for a specific page of a subject")
     @ApiResponses(value = {
@@ -70,8 +73,8 @@ public class LockController {
             .orElse(ResponseEntity.noContent().build());
     }
 
-    @PostMapping("/{subjectType}/{subjectId}/v1/{page}")
     @LockTimeoutCheck
+    @PostMapping("/{subjectType}/{subjectId}/v1/{page}")
     @Operation(summary = "Create or update subject lock for a specific page")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Successfully created or updated subject lock"),

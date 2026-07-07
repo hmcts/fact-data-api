@@ -26,7 +26,7 @@ public interface LockRepository extends JpaRepository<Lock, UUID> {
 
     void deleteBySubjectTypeAndSubjectIdAndPage(SubjectType subjectType, UUID subjectId, Page page);
 
-    void deleteAllByUserIdAndSubjectTypeIsNotAndPageIsNot(UUID userId, SubjectType subjectType, Page page);
-
     void deleteByLockAcquiredBefore(ZonedDateTime lockAcquired);
+
+    void deleteAllByUserIdAndIdIsNot(UUID userId, UUID id);
 }

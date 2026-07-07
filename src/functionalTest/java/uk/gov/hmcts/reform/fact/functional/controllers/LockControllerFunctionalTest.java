@@ -150,8 +150,8 @@ public final class LockControllerFunctionalTest {
         final List<Lock> locks = getAllLocksResponse.jsonPath().getList("", Lock.class);
 
         assertThat(locks)
-            .as("Expected 2 locks for court %s", courtId)
-            .hasSize(2);
+            .as("Expected 1 locks for court %s", courtId)
+            .hasSize(1);
 
         assertThat(locks)
             .as("All locks should belong to court %s", courtId)
@@ -162,7 +162,7 @@ public final class LockControllerFunctionalTest {
         assertThat(locks)
             .as("Expected locks for pages COURT and COURT_ACCESSIBILITY")
             .extracting(Lock::getPage)
-            .containsExactlyInAnyOrder(Page.GENERAL, Page.ACCESSIBILITY);
+            .containsExactlyInAnyOrder(Page.ACCESSIBILITY);
     }
 
     @Test

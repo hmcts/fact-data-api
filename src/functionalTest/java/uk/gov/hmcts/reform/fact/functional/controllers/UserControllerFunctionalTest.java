@@ -267,13 +267,14 @@ public final class UserControllerFunctionalTest {
     @DisplayName("DELETE /user/v1/{userId}/locks clears user locks successfully")
     void shouldReturnNoContentWhenClearingUserLocksSuccessfully() throws Exception {
         final UUID userId = TestDataHelper.createUser(http, "test.user.clear.locks");
+        final UUID userId2 = TestDataHelper.createUser(http, "test.user2.clear.locks");
         final UUID court1Id = TestDataHelper
             .createCourt(http, generateUniqueCourtName("Test Court Clear Locks One"));
         final UUID court2Id = TestDataHelper
             .createCourt(http, generateUniqueCourtName("Test Court Clear Locks Two"));
 
         TestDataHelper.createCourtLock(http, court1Id, Page.GENERAL, userId);
-        TestDataHelper.createCourtLock(http, court2Id, Page.ACCESSIBILITY, userId);
+        TestDataHelper.createCourtLock(http, court2Id, Page.ACCESSIBILITY, userId2);
 
         final Response getLocksBeforeClearResponse = http.doGet("/locks/" + SubjectType.COURT
                                                                     + "/" + court1Id + "/v1");
@@ -305,6 +306,12 @@ public final class UserControllerFunctionalTest {
         assertThat(getLock1StatusResponse.getBody().asString())
             .as("Expected empty response after clearing user locks")
             .isEqualTo("");
+
+        final Response clearLocksResponse2 = http.doDelete("/user/v1/" + userId2 + "/locks");
+
+        assertThat(clearLocksResponse.statusCode())
+            .as("Expected 204 NO CONTENT when clearing locks for user %s", userId2)
+            .isEqualTo(NO_CONTENT.value());
 
         final Response getLock2StatusResponse = http.doGet("/locks/" + SubjectType.COURT + "/"
                                                                + court2Id + "/v1/" + Page.ACCESSIBILITY);
