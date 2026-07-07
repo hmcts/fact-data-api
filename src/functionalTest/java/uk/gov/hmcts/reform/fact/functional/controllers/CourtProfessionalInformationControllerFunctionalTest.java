@@ -64,18 +64,22 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
         final CourtDxCodeDto dxCode1 = new CourtDxCodeDto();
         dxCode1.setDxCode("120551 Marylebone 9");
         dxCode1.setExplanation("(County Court) primary");
+        dxCode1.setExplanationCy("(FamilyCourt) primary");
 
         final CourtDxCodeDto dxCode2 = new CourtDxCodeDto();
         dxCode2.setDxCode("703360 Hanley 3");
         dxCode2.setExplanation("(Crown Court) secondary");
+        dxCode2.setExplanationCy("(FamilyCourt) secondary");
 
         final CourtFaxDto fax1 = new CourtFaxDto();
         fax1.setFaxNumber("0207 222 3333");
         fax1.setDescription("General enquiries");
+        fax1.setDescriptionCy("Ymholiadau cyffredinol");
 
         final CourtFaxDto fax2 = new CourtFaxDto();
         fax2.setFaxNumber("0207 444 5555");
         fax2.setDescription("Urgent matters");
+        fax2.setDescriptionCy("Ymholiadau cyffredinol");
 
         final CourtProfessionalInformationDetailsDto professionalInfoDetails =
             new CourtProfessionalInformationDetailsDto();
