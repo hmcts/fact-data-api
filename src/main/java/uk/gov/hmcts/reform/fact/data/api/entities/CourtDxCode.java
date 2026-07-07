@@ -72,4 +72,11 @@ public class CourtDxCode implements AuditableCourtEntity {
     @Column(length = 250)
     private String explanation;
 
+    @Schema(description = "The Welsh language explanation")
+    @Size(max = 250)
+    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
+        message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
+    @Column(name = "explanation_cy", length = 250)
+    private String explanationCy;
+
 }

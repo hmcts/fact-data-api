@@ -217,6 +217,7 @@ public class CourtProfessionalInformationService {
                 CourtDxCode courtDxCode = CourtDxCode.builder()
                     .dxCode(StringUtils.trimToNull(code.getDxCode()))
                     .explanation(StringUtils.trimToNull(code.getExplanation()))
+                    .explanationCy(StringUtils.trimToNull(code.getExplanationCy()))
                     .courtId(courtId)
                     .build();
                 courtDxCode.setCourt(court);
@@ -253,6 +254,7 @@ public class CourtProfessionalInformationService {
                 CourtFax courtFax = CourtFax.builder()
                     .faxNumber(fax.getFaxNumber())
                     .description(StringUtils.trimToNull(fax.getDescription()))
+                    .descriptionCy(StringUtils.trimToNull(fax.getDescriptionCy()))
                     .courtId(courtId)
                     .build();
                 courtFax.setCourt(court);

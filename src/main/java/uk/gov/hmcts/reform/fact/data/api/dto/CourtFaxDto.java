@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -9,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFax;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
@@ -30,10 +32,22 @@ public class CourtFaxDto {
         message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
     private String description;
 
+    @Schema(description = "Welsh language fax description")
+    @Size(max = 250, message = "Welsh fax description must be {max} characters or fewer")
+    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
+        message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
+    private String descriptionCy;
+
+    @AssertTrue(message = "Fax description and Welsh fax description must be provided together")
+    public boolean isDescriptionCyPresentWhenDescriptionProvided() {
+        return StringUtils.isBlank(description) == StringUtils.isBlank(descriptionCy);
+    }
+
     public static CourtFaxDto fromEntity(CourtFax entity) {
         return CourtFaxDto.builder()
             .faxNumber(entity.getFaxNumber())
             .description(entity.getDescription())
+            .descriptionCy(entity.getDescriptionCy())
             .build();
     }
 }
