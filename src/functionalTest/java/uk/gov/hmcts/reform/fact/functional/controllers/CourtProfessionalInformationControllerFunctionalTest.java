@@ -204,6 +204,7 @@ public final class CourtProfessionalInformationControllerFunctionalTest {
         final CourtDxCodeDto updatedDxCode = new CourtDxCodeDto();
         updatedDxCode.setDxCode("999999 Updated 1");
         updatedDxCode.setExplanation("Updated explanation");
+        updatedDxCode.setExplanationCy("Updated Welsh explanation");
 
         final CourtProfessionalInformationDetailsDto updatedDetails =
             new CourtProfessionalInformationDetailsDto();
