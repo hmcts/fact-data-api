@@ -8,7 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 
@@ -40,10 +40,10 @@ class LockControllerTest {
     @Test
     void getCourtLocksReturns200() {
         List<Lock> locks = List.of(new Lock());
-        when(lockService.getAllSubjectLocks(AuditSubjectType.COURT, COURT_ID)).thenReturn(locks);
+        when(lockService.getAllSubjectLocks(SubjectType.COURT, COURT_ID)).thenReturn(locks);
 
         ResponseEntity<List<Lock>> response =
-            lockController.getSubjectLocks(AuditSubjectType.COURT, COURT_ID.toString());
+            lockController.getSubjectLocks(SubjectType.COURT, COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(locks);
@@ -53,17 +53,17 @@ class LockControllerTest {
     void getCourtLocksThrowsIllegalArgumentExceptionForInvalidUUID() {
         assertThrows(
             IllegalArgumentException.class, () ->
-                lockController.getSubjectLocks(AuditSubjectType.COURT, INVALID_UUID)
+                lockController.getSubjectLocks(SubjectType.COURT, INVALID_UUID)
         );
     }
 
     @Test
     void getCourtLockStatusReturns200() {
         Lock lock = new Lock();
-        when(lockService.getPageLock(AuditSubjectType.COURT, COURT_ID, TEST_PAGE)).thenReturn(Optional.of(lock));
+        when(lockService.getPageLock(SubjectType.COURT, COURT_ID, TEST_PAGE)).thenReturn(Optional.of(lock));
 
         ResponseEntity<Lock> response = lockController.getSubjectLockStatus(
-            AuditSubjectType.COURT,
+            SubjectType.COURT,
             COURT_ID.toString(),
             TEST_PAGE
         );
@@ -76,17 +76,17 @@ class LockControllerTest {
     void getCourtLockStatusThrowsIllegalArgumentExceptionForInvalidUUID() {
         assertThrows(
             IllegalArgumentException.class, () ->
-                lockController.getSubjectLockStatus(AuditSubjectType.COURT, INVALID_UUID, TEST_PAGE)
+                lockController.getSubjectLockStatus(SubjectType.COURT, INVALID_UUID, TEST_PAGE)
         );
     }
 
     @Test
     void createCourtLockReturns201() {
         Lock lock = new Lock();
-        when(lockService.createOrUpdateLock(AuditSubjectType.COURT, COURT_ID, TEST_PAGE, USER_ID)).thenReturn(lock);
+        when(lockService.createOrUpdateLock(SubjectType.COURT, COURT_ID, TEST_PAGE, USER_ID)).thenReturn(lock);
 
         ResponseEntity<Lock> response = lockController.createOrUpdateSubjectLock(
-            AuditSubjectType.COURT,
+            SubjectType.COURT,
             COURT_ID.toString(),
             TEST_PAGE,
             USER_ID
@@ -100,17 +100,17 @@ class LockControllerTest {
     void createCourtLockThrowsIllegalArgumentExceptionForInvalidUUID() {
         assertThrows(
             IllegalArgumentException.class, () ->
-                lockController.createOrUpdateSubjectLock(AuditSubjectType.COURT, INVALID_UUID, TEST_PAGE, USER_ID)
+                lockController.createOrUpdateSubjectLock(SubjectType.COURT, INVALID_UUID, TEST_PAGE, USER_ID)
         );
     }
 
     @Test
     void updateCourtLockReturns201() {
         Lock lock = new Lock();
-        when(lockService.createOrUpdateLock(AuditSubjectType.COURT, COURT_ID, TEST_PAGE, USER_ID)).thenReturn(lock);
+        when(lockService.createOrUpdateLock(SubjectType.COURT, COURT_ID, TEST_PAGE, USER_ID)).thenReturn(lock);
 
         ResponseEntity<Lock> response = lockController.createOrUpdateSubjectLock(
-            AuditSubjectType.COURT,
+            SubjectType.COURT,
             COURT_ID.toString(),
             TEST_PAGE,
             USER_ID
@@ -123,7 +123,7 @@ class LockControllerTest {
     @Test
     void deleteCourtLockReturns204() {
         ResponseEntity<Void> response =
-            lockController.deleteSubjectLock(AuditSubjectType.COURT, COURT_ID.toString(), TEST_PAGE);
+            lockController.deleteSubjectLock(SubjectType.COURT, COURT_ID.toString(), TEST_PAGE);
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.NO_CONTENT);
     }
@@ -132,7 +132,7 @@ class LockControllerTest {
     void deleteCourtLockThrowsIllegalArgumentExceptionForInvalidUUID() {
         assertThrows(
             IllegalArgumentException.class, () ->
-                lockController.deleteSubjectLock(AuditSubjectType.COURT, INVALID_UUID, TEST_PAGE)
+                lockController.deleteSubjectLock(SubjectType.COURT, INVALID_UUID, TEST_PAGE)
         );
     }
 }

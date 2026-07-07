@@ -7,7 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
@@ -61,7 +61,7 @@ class LockServiceTest {
         user.setEmail("email@justice.gov.uk");
 
         lock = new Lock();
-        lock.setSubjectType(AuditSubjectType.COURT);
+        lock.setSubjectType(SubjectType.COURT);
         lock.setSubjectId(courtId);
         lock.setPage(Page.GENERAL);
         lock.setLockAcquired(ZonedDateTime.now());
@@ -95,24 +95,24 @@ class LockServiceTest {
     @Test
     void getLocksByCourtIdShouldGetLocksByCourtId() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(lockRepository.findAllBySubjectTypeAndSubjectId(AuditSubjectType.COURT, courtId))
+        when(lockRepository.findAllBySubjectTypeAndSubjectId(SubjectType.COURT, courtId))
             .thenReturn(List.of(lock));
-        List<Lock> result = lockService.getAllSubjectLocks(AuditSubjectType.COURT, courtId);
+        List<Lock> result = lockService.getAllSubjectLocks(SubjectType.COURT, courtId);
         assertEquals(1, result.size());
         verify(courtService).getCourtById(courtId);
-        verify(lockRepository).findAllBySubjectTypeAndSubjectId(AuditSubjectType.COURT, courtId);
+        verify(lockRepository).findAllBySubjectTypeAndSubjectId(SubjectType.COURT, courtId);
     }
 
     @Test
     void getPageLockShouldGetPageLock() {
         Page page = Page.GENERAL;
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(lockRepository.findBySubjectTypeAndSubjectIdAndPage(AuditSubjectType.COURT, courtId, page))
+        when(lockRepository.findBySubjectTypeAndSubjectIdAndPage(SubjectType.COURT, courtId, page))
             .thenReturn(Optional.of(lock));
-        Optional<Lock> result = lockService.getPageLock(AuditSubjectType.COURT, courtId, page);
+        Optional<Lock> result = lockService.getPageLock(SubjectType.COURT, courtId, page);
         assertTrue(result.isPresent());
         verify(courtService).getCourtById(courtId);
-        verify(lockRepository).findBySubjectTypeAndSubjectIdAndPage(AuditSubjectType.COURT, courtId, page);
+        verify(lockRepository).findBySubjectTypeAndSubjectIdAndPage(SubjectType.COURT, courtId, page);
     }
 
     @Test
@@ -120,7 +120,7 @@ class LockServiceTest {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(userService.getUserById(userId)).thenReturn(user);
         when(lockRepository.save(any(Lock.class))).thenReturn(lock);
-        Lock result = lockService.createOrUpdateLock(AuditSubjectType.COURT, courtId, Page.GENERAL, userId);
+        Lock result = lockService.createOrUpdateLock(SubjectType.COURT, courtId, Page.GENERAL, userId);
         assertNotNull(result);
         verify(lockRepository).save(any(Lock.class));
     }
@@ -130,13 +130,13 @@ class LockServiceTest {
         Page page = Page.GENERAL;
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(lockRepository.findBySubjectTypeAndSubjectIdAndPage(AuditSubjectType.COURT, courtId, page))
+        when(lockRepository.findBySubjectTypeAndSubjectIdAndPage(SubjectType.COURT, courtId, page))
             .thenReturn(Optional.of(lock));
         when(lockRepository.save(any(Lock.class))).thenReturn(lock);
-        Lock result = lockService.createOrUpdateLock(AuditSubjectType.COURT, courtId, page, userId);
+        Lock result = lockService.createOrUpdateLock(SubjectType.COURT, courtId, page, userId);
         assertNotNull(result);
         verify(courtService).getCourtById(courtId);
-        verify(lockRepository).findBySubjectTypeAndSubjectIdAndPage(AuditSubjectType.COURT, courtId, page);
+        verify(lockRepository).findBySubjectTypeAndSubjectIdAndPage(SubjectType.COURT, courtId, page);
         verify(lockRepository).save(any(Lock.class));
     }
 
@@ -144,9 +144,9 @@ class LockServiceTest {
     void deleteLockShouldDeleteLock() {
         Page page = Page.GENERAL;
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        lockService.deleteLock(AuditSubjectType.COURT, courtId, page);
+        lockService.deleteLock(SubjectType.COURT, courtId, page);
         verify(courtService).getCourtById(courtId);
-        verify(lockRepository).deleteBySubjectTypeAndSubjectIdAndPage(AuditSubjectType.COURT, courtId, page);
+        verify(lockRepository).deleteBySubjectTypeAndSubjectIdAndPage(SubjectType.COURT, courtId, page);
     }
 }
 

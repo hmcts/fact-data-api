@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 
@@ -60,7 +60,7 @@ class LockAspectTest {
     @DisplayName("Should allow operation when no lock exists")
     void shouldAllowWhenNoLockExists() {
         setupJoinPoint(courtId, page, userId);
-        when(lockService.getPageLock(AuditSubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
         verify(lockService, never()).deleteLock(any(), any(), any());
@@ -71,7 +71,7 @@ class LockAspectTest {
     void shouldAllowWhenSameUserOwnsLock() {
         setupJoinPoint(courtId, page, userId);
         Lock lock = createLock(userId, ZonedDateTime.now().minusMinutes(30));
-        when(lockService.getPageLock(AuditSubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
         verify(lockService, never()).deleteLock(any(), any(), any());
@@ -82,7 +82,7 @@ class LockAspectTest {
     void shouldThrowConflictWhenLockIsValid() {
         setupJoinPoint(courtId, page, userId);
         Lock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(30));
-        when(lockService.getPageLock(AuditSubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         ResponseStatusException exception = assertThrows(
             ResponseStatusException.class,
@@ -100,10 +100,10 @@ class LockAspectTest {
     void shouldDeleteStaleLockAndAllow() {
         setupJoinPoint(courtId, page, userId);
         Lock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(61));
-        when(lockService.getPageLock(AuditSubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
-        verify(lockService).deleteLock(AuditSubjectType.COURT, courtId, page);
+        verify(lockService).deleteLock(SubjectType.COURT, courtId, page);
     }
 
     @Test
@@ -111,10 +111,10 @@ class LockAspectTest {
     void shouldDeleteLockAtExactTimeout() {
         setupJoinPoint(courtId, page, userId);
         Lock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(60));
-        when(lockService.getPageLock(AuditSubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
-        verify(lockService).deleteLock(AuditSubjectType.COURT, courtId, page);
+        verify(lockService).deleteLock(SubjectType.COURT, courtId, page);
     }
 
     @Test
@@ -122,7 +122,7 @@ class LockAspectTest {
     void shouldNotDeleteLockJustBeforeTimeout() {
         setupJoinPoint(courtId, page, userId);
         Lock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(59));
-        when(lockService.getPageLock(AuditSubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         ResponseStatusException exception = assertThrows(
             ResponseStatusException.class,
@@ -138,10 +138,10 @@ class LockAspectTest {
     void shouldHandleVeryOldStaleLocks() {
         setupJoinPoint(courtId, page, userId);
         Lock lock = createLock(otherUserId, ZonedDateTime.now().minusHours(24));
-        when(lockService.getPageLock(AuditSubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
-        verify(lockService).deleteLock(AuditSubjectType.COURT, courtId, page);
+        verify(lockService).deleteLock(SubjectType.COURT, courtId, page);
     }
 
     @Test
@@ -150,10 +150,10 @@ class LockAspectTest {
         ReflectionTestUtils.setField(validator, "lockTimeoutMinutes", 15L);
         setupJoinPoint(courtId, page, userId);
         Lock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(20));
-        when(lockService.getPageLock(AuditSubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
-        verify(lockService).deleteLock(AuditSubjectType.COURT, courtId, page);
+        verify(lockService).deleteLock(SubjectType.COURT, courtId, page);
     }
 
     @Test
@@ -196,7 +196,7 @@ class LockAspectTest {
     @DisplayName("Should handle courtId as String and convert to UUID")
     void shouldHandleCourtIdAsString() {
         setupJoinPointWithStringCourtId(courtId.toString(), page, userId);
-        when(lockService.getPageLock(AuditSubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
     }
@@ -205,7 +205,7 @@ class LockAspectTest {
     @DisplayName("Should handle page as String and convert to enum")
     void shouldHandlePageAsString() {
         setupJoinPointWithStringPage(courtId, "GENERAL", userId);
-        when(lockService.getPageLock(AuditSubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
     }
@@ -216,7 +216,7 @@ class LockAspectTest {
         Lock lock = new Lock();
         lock.setUserId(userId);
         lock.setLockAcquired(lockAcquired);
-        lock.setSubjectType(AuditSubjectType.COURT);
+        lock.setSubjectType(SubjectType.COURT);
         lock.setSubjectId(courtId);
         lock.setPage(page);
         return lock;
@@ -225,11 +225,11 @@ class LockAspectTest {
     private void setupJoinPoint(UUID courtId, Page page, UUID userId) {
         try {
             Method method = TestController.class.getMethod("testMethod",
-                                                           AuditSubjectType.class, UUID.class, Page.class, UUID.class);
+                                                           SubjectType.class, UUID.class, Page.class, UUID.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
             when(joinPoint.getArgs()).thenReturn(new Object[]{
-                AuditSubjectType.COURT, courtId, page, userId});
+                SubjectType.COURT, courtId, page, userId});
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -238,10 +238,10 @@ class LockAspectTest {
     private void setupJoinPointWithStringCourtId(String courtId, Page page, UUID userId) {
         try {
             Method method = TestController.class.getMethod(
-                "testMethodWithStringSubjectId", AuditSubjectType.class,  String.class, Page.class, UUID.class);
+                "testMethodWithStringSubjectId", SubjectType.class,  String.class, Page.class, UUID.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{AuditSubjectType.COURT, courtId, page, userId});
+            when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, page, userId});
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -250,10 +250,10 @@ class LockAspectTest {
     private void setupJoinPointWithStringPage(UUID courtId, String page, UUID userId) {
         try {
             Method method = TestController.class.getMethod(
-                "testMethodWithStringPage", AuditSubjectType.class, UUID.class, String.class, UUID.class);
+                "testMethodWithStringPage", SubjectType.class, UUID.class, String.class, UUID.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{AuditSubjectType.COURT, courtId, page, userId});
+            when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, page, userId});
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -273,10 +273,10 @@ class LockAspectTest {
     private void setupJoinPointWithoutPage(UUID courtId, UUID userId) {
         try {
             Method method = TestController.class.getMethod("testMethodWithoutPage",
-                                                           AuditSubjectType.class, UUID.class, UUID.class);
+                                                           SubjectType.class, UUID.class, UUID.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{AuditSubjectType.COURT, courtId, userId});
+            when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, userId});
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -285,10 +285,10 @@ class LockAspectTest {
     private void setupJoinPointWithoutUserId(UUID courtId, Page page) {
         try {
             Method method = TestController.class.getMethod("testMethodWithoutUserId",
-                                                           AuditSubjectType.class, UUID.class, Page.class);
+                                                           SubjectType.class, UUID.class, Page.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{AuditSubjectType.COURT, courtId, page});
+            when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, page});
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -298,21 +298,21 @@ class LockAspectTest {
     @SuppressWarnings("unused")
     static class TestController {
         public void testMethod(
-            @PathVariable("subjectType") AuditSubjectType subjectType,
+            @PathVariable("subjectType") SubjectType subjectType,
             @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") Page page,
             @RequestParam("userId") UUID userId) {
         }
 
         public void testMethodWithStringSubjectId(
-            @PathVariable("subjectType") AuditSubjectType subjectType,
+            @PathVariable("subjectType") SubjectType subjectType,
             @PathVariable("subjectId") String subjectId,
             @PathVariable("page") Page page,
             @RequestParam("userId") UUID userId) {
         }
 
         public void testMethodWithStringPage(
-            @PathVariable("subjectType") AuditSubjectType subjectType,
+            @PathVariable("subjectType") SubjectType subjectType,
             @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") String page,
             @RequestParam("userId") UUID userId) {
@@ -324,13 +324,13 @@ class LockAspectTest {
         }
 
         public void testMethodWithoutPage(
-            @PathVariable("subjectType") AuditSubjectType subjectType,
+            @PathVariable("subjectType") SubjectType subjectType,
             @PathVariable("subjectId") UUID subjectId,
             @RequestParam("userId") UUID userId) {
         }
 
         public void testMethodWithoutUserId(
-            @PathVariable("subjectType") AuditSubjectType subjectType,
+            @PathVariable("subjectType") SubjectType subjectType,
             @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") Page page) {
         }

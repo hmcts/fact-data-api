@@ -12,7 +12,7 @@ import static org.mockito.Mockito.when;
 import uk.gov.hmcts.reform.fact.data.api.config.properties.AuditConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
@@ -134,7 +134,7 @@ class AuditServiceTest {
 
         when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
                  eq(COURT_ID),
-                 eq(AuditSubjectType.COURT),
+                 eq(SubjectType.COURT),
                  eq(fromDateTime),
                  any(Pageable.class)
              )
@@ -154,7 +154,7 @@ class AuditServiceTest {
 
         assertThat(result.getContent()).hasSize(1);
         verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
-            eq(COURT_ID), eq(AuditSubjectType.COURT), eq(fromDateTime), any(Pageable.class)
+            eq(COURT_ID), eq(SubjectType.COURT), eq(fromDateTime), any(Pageable.class)
         );
     }
 
@@ -163,7 +163,7 @@ class AuditServiceTest {
 
         when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtBetween(
                  eq(COURT_ID),
-                 eq(AuditSubjectType.COURT),
+                 eq(SubjectType.COURT),
                  eq(fromDateTime),
                  eq(toDateTime),
                  any(Pageable.class)
@@ -184,7 +184,7 @@ class AuditServiceTest {
 
         assertThat(result.getContent()).hasSize(1);
         verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtBetween(
-            eq(COURT_ID), eq(AuditSubjectType.COURT), eq(fromDateTime), eq(toDateTime), any(Pageable.class)
+            eq(COURT_ID), eq(SubjectType.COURT), eq(fromDateTime), eq(toDateTime), any(Pageable.class)
         );
     }
 
@@ -252,7 +252,7 @@ class AuditServiceTest {
 
         when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfterAndEmailAddressLike(
                  eq(COURT_ID),
-                 eq(AuditSubjectType.COURT),
+                 eq(SubjectType.COURT),
                  eq(fromDateTime),
                  eq(EMAIL),
                  any(Pageable.class)
@@ -273,7 +273,7 @@ class AuditServiceTest {
 
         assertThat(result.getContent()).hasSize(1);
         verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtAfterAndEmailAddressLike(
-            eq(COURT_ID), eq(AuditSubjectType.COURT), eq(fromDateTime), eq(EMAIL), any(Pageable.class)
+            eq(COURT_ID), eq(SubjectType.COURT), eq(fromDateTime), eq(EMAIL), any(Pageable.class)
         );
     }
 
@@ -282,7 +282,7 @@ class AuditServiceTest {
 
         when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
                  eq(COURT_ID),
-                 eq(AuditSubjectType.COURT),
+                 eq(SubjectType.COURT),
                  eq(fromDateTime),
                  eq(toDateTime),
                  eq(EMAIL),
@@ -304,7 +304,7 @@ class AuditServiceTest {
 
         assertThat(result.getContent()).hasSize(1);
         verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
-            eq(COURT_ID), eq(AuditSubjectType.COURT), eq(fromDateTime), eq(toDateTime), eq(EMAIL), any(Pageable.class)
+            eq(COURT_ID), eq(SubjectType.COURT), eq(fromDateTime), eq(toDateTime), eq(EMAIL), any(Pageable.class)
         );
     }
 
@@ -328,7 +328,7 @@ class AuditServiceTest {
 
         when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
                  eq(SERVICE_CENTRE_ID),
-                 eq(AuditSubjectType.SERVICE_CENTRE),
+                 eq(SubjectType.SERVICE_CENTRE),
                  eq(fromDateTime),
                  any(Pageable.class)
              )
@@ -348,7 +348,7 @@ class AuditServiceTest {
 
         assertThat(result.getContent()).hasSize(1);
         verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
-            eq(SERVICE_CENTRE_ID), eq(AuditSubjectType.SERVICE_CENTRE), eq(fromDateTime), any(Pageable.class)
+            eq(SERVICE_CENTRE_ID), eq(SubjectType.SERVICE_CENTRE), eq(fromDateTime), any(Pageable.class)
         );
     }
 
@@ -429,11 +429,11 @@ class AuditServiceTest {
         when(courtService.getAllCourtNameAndIds()).thenReturn(courts);
         when(serviceCentreService.getAllServiceCentreNameAndIds()).thenReturn(serviceCentres);
 
-        Map<AuditSubjectType, List<NameAndId>> result = auditService.getSubjectNameAndIdMap();
+        Map<SubjectType, List<NameAndId>> result = auditService.getSubjectNameAndIdMap();
 
-        assertThat(result).hasSize(2).containsKeys(AuditSubjectType.COURT, AuditSubjectType.SERVICE_CENTRE);
-        assertThat(result.get(AuditSubjectType.COURT)).containsExactlyElementsOf(courts);
-        assertThat(result.get(AuditSubjectType.SERVICE_CENTRE)).containsExactlyElementsOf(serviceCentres);
+        assertThat(result).hasSize(2).containsKeys(SubjectType.COURT, SubjectType.SERVICE_CENTRE);
+        assertThat(result.get(SubjectType.COURT)).containsExactlyElementsOf(courts);
+        assertThat(result.get(SubjectType.SERVICE_CENTRE)).containsExactlyElementsOf(serviceCentres);
         verify(courtService).getAllCourtNameAndIds();
         verify(serviceCentreService).getAllServiceCentreNameAndIds();
     }
@@ -443,11 +443,11 @@ class AuditServiceTest {
         when(courtService.getAllCourtNameAndIds()).thenReturn(List.of());
         when(serviceCentreService.getAllServiceCentreNameAndIds()).thenReturn(List.of());
 
-        Map<AuditSubjectType, List<NameAndId>> result = auditService.getSubjectNameAndIdMap();
+        Map<SubjectType, List<NameAndId>> result = auditService.getSubjectNameAndIdMap();
 
-        assertThat(result).containsKeys(AuditSubjectType.COURT, AuditSubjectType.SERVICE_CENTRE);
-        assertThat(result.get(AuditSubjectType.COURT)).isEmpty();
-        assertThat(result.get(AuditSubjectType.SERVICE_CENTRE)).isEmpty();
+        assertThat(result).containsKeys(SubjectType.COURT, SubjectType.SERVICE_CENTRE);
+        assertThat(result.get(SubjectType.COURT)).isEmpty();
+        assertThat(result.get(SubjectType.SERVICE_CENTRE)).isEmpty();
         verify(courtService).getAllCourtNameAndIds();
         verify(serviceCentreService).getAllServiceCentreNameAndIds();
     }
@@ -480,7 +480,7 @@ class AuditServiceTest {
     @Test
     void getFilteredAndPaginatedAuditsShouldCallFindBySubjectTypeAndCreatedAtAfterWhenOnlySubjectTypeProvided() {
         when(auditRepository.findBySubjectTypeAndCreatedAtAfter(
-                 eq(AuditSubjectType.COURT),
+                 eq(SubjectType.COURT),
                  eq(fromDateTime),
                  any(Pageable.class)
              )
@@ -492,7 +492,7 @@ class AuditServiceTest {
                 PAGE_SIZE,
                 fromDate,
                 null,
-                AuditSubjectType.COURT,
+                SubjectType.COURT,
                 null,
                 null,
                 null
@@ -500,14 +500,14 @@ class AuditServiceTest {
 
         assertThat(result.getContent()).hasSize(1);
         verify(auditRepository).findBySubjectTypeAndCreatedAtAfter(
-            eq(AuditSubjectType.COURT), eq(fromDateTime), any(Pageable.class)
+            eq(SubjectType.COURT), eq(fromDateTime), any(Pageable.class)
         );
     }
 
     @Test
     void getFilteredAndPaginatedAuditsShouldCallFindBySubjectTypeAndCreatedAtBetweenWhenSubjectTypeAndToDateProvided() {
         when(auditRepository.findBySubjectTypeAndCreatedAtBetween(
-                 eq(AuditSubjectType.COURT),
+                 eq(SubjectType.COURT),
                  eq(fromDateTime),
                  eq(toDateTime),
                  any(Pageable.class)
@@ -520,7 +520,7 @@ class AuditServiceTest {
                 PAGE_SIZE,
                 fromDate,
                 toDate,
-                AuditSubjectType.COURT,
+                SubjectType.COURT,
                 null,
                 null,
                 null
@@ -528,14 +528,14 @@ class AuditServiceTest {
 
         assertThat(result.getContent()).hasSize(1);
         verify(auditRepository).findBySubjectTypeAndCreatedAtBetween(
-            eq(AuditSubjectType.COURT), eq(fromDateTime), eq(toDateTime), any(Pageable.class)
+            eq(SubjectType.COURT), eq(fromDateTime), eq(toDateTime), any(Pageable.class)
         );
     }
 
     @Test
     void shouldCallFindBySubjectTypeAndCreatedAtAfterAndEmailAddressLikeWhenSubjectTypeAndEmailProvided() {
         when(auditRepository.findBySubjectTypeAndCreatedAtAfterAndEmailAddressLike(
-                 eq(AuditSubjectType.SERVICE_CENTRE),
+                 eq(SubjectType.SERVICE_CENTRE),
                  eq(fromDateTime),
                  eq(EMAIL),
                  any(Pageable.class)
@@ -548,7 +548,7 @@ class AuditServiceTest {
                 PAGE_SIZE,
                 fromDate,
                 null,
-                AuditSubjectType.SERVICE_CENTRE,
+                SubjectType.SERVICE_CENTRE,
                 null,
                 null,
                 EMAIL
@@ -556,14 +556,14 @@ class AuditServiceTest {
 
         assertThat(result.getContent()).hasSize(1);
         verify(auditRepository).findBySubjectTypeAndCreatedAtAfterAndEmailAddressLike(
-            eq(AuditSubjectType.SERVICE_CENTRE), eq(fromDateTime), eq(EMAIL), any(Pageable.class)
+            eq(SubjectType.SERVICE_CENTRE), eq(fromDateTime), eq(EMAIL), any(Pageable.class)
         );
     }
 
     @Test
     void shouldCallFindBySubjectTypeAndCreatedAtBetweenAndEmailAddressLikeWhenAllFiltersProvided() {
         when(auditRepository.findBySubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
-                 eq(AuditSubjectType.SERVICE_CENTRE),
+                 eq(SubjectType.SERVICE_CENTRE),
                  eq(fromDateTime),
                  eq(toDateTime),
                  eq(EMAIL),
@@ -577,7 +577,7 @@ class AuditServiceTest {
                 PAGE_SIZE,
                 fromDate,
                 toDate,
-                AuditSubjectType.SERVICE_CENTRE,
+                SubjectType.SERVICE_CENTRE,
                 null,
                 null,
                 EMAIL
@@ -585,14 +585,14 @@ class AuditServiceTest {
 
         assertThat(result.getContent()).hasSize(1);
         verify(auditRepository).findBySubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
-            eq(AuditSubjectType.SERVICE_CENTRE), eq(fromDateTime), eq(toDateTime), eq(EMAIL), any(Pageable.class)
+            eq(SubjectType.SERVICE_CENTRE), eq(fromDateTime), eq(toDateTime), eq(EMAIL), any(Pageable.class)
         );
     }
 
     @Test
     void getFilteredAndPaginatedAuditsShouldIgnoreBlankEmailForSubjectTypeAndUseSimpleSubjectTypeQuery() {
         when(auditRepository.findBySubjectTypeAndCreatedAtAfter(
-                 eq(AuditSubjectType.COURT),
+                 eq(SubjectType.COURT),
                  eq(fromDateTime),
                  any(Pageable.class)
              )
@@ -604,7 +604,7 @@ class AuditServiceTest {
                 PAGE_SIZE,
                 fromDate,
                 null,
-                AuditSubjectType.COURT,
+                SubjectType.COURT,
                 null,
                 null,
                 ""
@@ -616,7 +616,7 @@ class AuditServiceTest {
                 PAGE_SIZE,
                 fromDate,
                 null,
-                AuditSubjectType.COURT,
+                SubjectType.COURT,
                 null,
                 null,
                 " "
@@ -625,7 +625,7 @@ class AuditServiceTest {
         assertThat(firstResult.getContent()).hasSize(1);
         assertThat(secondResult.getContent()).hasSize(1);
         verify(auditRepository, times(2)).findBySubjectTypeAndCreatedAtAfter(
-            eq(AuditSubjectType.COURT), eq(fromDateTime), any(Pageable.class)
+            eq(SubjectType.COURT), eq(fromDateTime), any(Pageable.class)
         );
     }
 
@@ -633,7 +633,7 @@ class AuditServiceTest {
     void getFilteredAndPaginatedAuditsShouldPrioritiseCourtIdOverSubjectTypeWhenBothProvided() {
         when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
                  eq(COURT_ID),
-                 eq(AuditSubjectType.COURT),
+                 eq(SubjectType.COURT),
                  eq(fromDateTime),
                  any(Pageable.class)
              )
@@ -645,7 +645,7 @@ class AuditServiceTest {
                 PAGE_SIZE,
                 fromDate,
                 null,
-                AuditSubjectType.SERVICE_CENTRE,
+                SubjectType.SERVICE_CENTRE,
                 COURT_ID.toString(),
                 null,
                 null
@@ -653,7 +653,7 @@ class AuditServiceTest {
 
         assertThat(result.getContent()).hasSize(1);
         verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
-            eq(COURT_ID), eq(AuditSubjectType.COURT), eq(fromDateTime), any(Pageable.class)
+            eq(COURT_ID), eq(SubjectType.COURT), eq(fromDateTime), any(Pageable.class)
         );
     }
 
@@ -661,7 +661,7 @@ class AuditServiceTest {
         return Audit.builder()
             .id(AUDIT_ID)
             .subjectId(COURT_ID)
-            .subjectType(AuditSubjectType.COURT)
+            .subjectType(SubjectType.COURT)
             .actionEntity(Court.class.getSimpleName())
             .actionDataDiff(List.of(
                 new Change("isOpen", Boolean.FALSE, Boolean.TRUE),

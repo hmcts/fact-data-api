@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 
@@ -48,7 +48,7 @@ public class LockAspect {
         Parameter[] parameters = signature.getMethod().getParameters();
         Object[] args = joinPoint.getArgs();
 
-        AuditSubjectType subjectType = extractSubjectType(parameters, args, "subjectType");
+        SubjectType subjectType = extractSubjectType(parameters, args, "subjectType");
         UUID subjectId = extractUuid(parameters, args, "subjectId");
         Page page = extractPage(parameters, args, "page");
         UUID userId = extractUuid(parameters, args, "userId");
@@ -83,13 +83,13 @@ public class LockAspect {
     /**
      * Extracts SubjectType parameter by name from method arguments.
      */
-    private AuditSubjectType extractSubjectType(Parameter[] parameters, Object[] args, String paramName) {
+    private SubjectType extractSubjectType(Parameter[] parameters, Object[] args, String paramName) {
         for (int i = 0; i < parameters.length; i++) {
             if (isNamedParameter(parameters[i], paramName)) {
                 Object value = args[i];
                 return value instanceof String valueStr
-                    ? AuditSubjectType.valueOf(valueStr.toUpperCase())
-                    : (AuditSubjectType) value;
+                    ? SubjectType.valueOf(valueStr.toUpperCase())
+                    : (SubjectType) value;
             }
         }
         throw new IllegalArgumentException("Required parameter not found: " + paramName);

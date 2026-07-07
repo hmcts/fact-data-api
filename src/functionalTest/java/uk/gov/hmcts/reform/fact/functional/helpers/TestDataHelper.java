@@ -9,7 +9,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
@@ -302,7 +302,7 @@ public final class TestDataHelper {
     public static Lock createCourtLock(final HttpClient http, final UUID courtId,
                                        final Page page, final UUID userId) throws Exception {
         final Response response = http.doPost(
-            "/locks/" + AuditSubjectType.COURT.name() + "/" + courtId + "/v1/" + page,
+            "/locks/" + SubjectType.COURT.name() + "/" + courtId + "/v1/" + page,
             mapper.writeValueAsString(userId)
         );
 

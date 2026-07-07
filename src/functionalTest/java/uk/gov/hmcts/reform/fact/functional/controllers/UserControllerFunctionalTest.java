@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
@@ -275,7 +275,7 @@ public final class UserControllerFunctionalTest {
         TestDataHelper.createCourtLock(http, court1Id, Page.GENERAL, userId);
         TestDataHelper.createCourtLock(http, court2Id, Page.ACCESSIBILITY, userId);
 
-        final Response getLocksBeforeClearResponse = http.doGet("/locks/" + AuditSubjectType.COURT
+        final Response getLocksBeforeClearResponse = http.doGet("/locks/" + SubjectType.COURT
                                                                     + "/" + court1Id + "/v1");
 
         assertThat(getLocksBeforeClearResponse.statusCode())
@@ -295,7 +295,7 @@ public final class UserControllerFunctionalTest {
             .as("Expected 204 NO CONTENT when clearing locks for user %s", userId)
             .isEqualTo(NO_CONTENT.value());
 
-        final Response getLock1StatusResponse = http.doGet("/locks/" + AuditSubjectType.COURT + "/"
+        final Response getLock1StatusResponse = http.doGet("/locks/" + SubjectType.COURT + "/"
                                                                + court1Id + "/v1/" + Page.GENERAL);
 
         assertThat(getLock1StatusResponse.statusCode())
@@ -306,7 +306,7 @@ public final class UserControllerFunctionalTest {
             .as("Expected empty response after clearing user locks")
             .isEqualTo("");
 
-        final Response getLock2StatusResponse = http.doGet("/locks/" + AuditSubjectType.COURT + "/"
+        final Response getLock2StatusResponse = http.doGet("/locks/" + SubjectType.COURT + "/"
                                                                + court2Id + "/v1/" + Page.ACCESSIBILITY);
 
         assertThat(getLock2StatusResponse.statusCode())

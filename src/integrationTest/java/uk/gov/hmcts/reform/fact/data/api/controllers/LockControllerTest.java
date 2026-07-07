@@ -11,7 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.LockService;
@@ -52,9 +52,9 @@ class LockControllerTest {
     @DisplayName("GET /locks/{subjectType}/{subjectId}/v1/returns court locks successfully")
     void getCourtLocksReturnsSuccessfully() throws Exception {
         List<Lock> locks = List.of(new Lock());
-        when(lockService.getAllSubjectLocks(AuditSubjectType.COURT, courtId)).thenReturn(locks);
+        when(lockService.getAllSubjectLocks(SubjectType.COURT, courtId)).thenReturn(locks);
 
-        mockMvc.perform(get("/locks/{subjectType}/{subjectId}/v1", AuditSubjectType.COURT, courtId))
+        mockMvc.perform(get("/locks/{subjectType}/{subjectId}/v1", SubjectType.COURT, courtId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isArray());
     }
@@ -62,17 +62,17 @@ class LockControllerTest {
     @Test
     @DisplayName("GET /locks/{subjectType}/{subjectId}/v1/returns 404 if court does not exist")
     void getCourtLocksNonExistentReturnsNotFound() throws Exception {
-        when(lockService.getAllSubjectLocks(AuditSubjectType.COURT, nonExistentCourtId))
+        when(lockService.getAllSubjectLocks(SubjectType.COURT, nonExistentCourtId))
             .thenThrow(new NotFoundException("Court not found"));
 
-        mockMvc.perform(get("/locks/{subjectType}/{subjectId}/v1", AuditSubjectType.COURT, nonExistentCourtId))
+        mockMvc.perform(get("/locks/{subjectType}/{subjectId}/v1", SubjectType.COURT, nonExistentCourtId))
             .andExpect(status().isNotFound());
     }
 
     @Test
     @DisplayName("GET /locks/{subjectType}/{subjectId}/v1/returns 400 for invalid UUID")
     void getCourtLocksInvalidUUID() throws Exception {
-        mockMvc.perform(get("/locks/{subjectType}/{subjectId}/v1",AuditSubjectType.COURT,  "invalid-uuid"))
+        mockMvc.perform(get("/locks/{subjectType}/{subjectId}/v1", SubjectType.COURT,  "invalid-uuid"))
             .andExpect(status().isBadRequest());
     }
 
@@ -80,20 +80,20 @@ class LockControllerTest {
     @DisplayName("GET /locks/{subjectType}/{subjectId}/v1/{page} returns lock status successfully")
     void getCourtLockStatusReturnsSuccessfully() throws Exception {
         Lock lock = new Lock();
-        when(lockService.getPageLock(AuditSubjectType.COURT, courtId, testPage)).thenReturn(Optional.of(lock));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, testPage)).thenReturn(Optional.of(lock));
 
-        mockMvc.perform(get("/locks/{subjectType}/{subjectId}/v1/{page}", AuditSubjectType.COURT, courtId, testPage))
+        mockMvc.perform(get("/locks/{subjectType}/{subjectId}/v1/{page}", SubjectType.COURT, courtId, testPage))
             .andExpect(status().isOk());
     }
 
     @Test
     @DisplayName("GET /locks/{subjectType}/{subjectId}/v1/{page} returns 404 if court not found")
     void getCourtLockStatusNonExistentReturnsNotFound() throws Exception {
-        when(lockService.getPageLock(AuditSubjectType.COURT, nonExistentCourtId, testPage))
+        when(lockService.getPageLock(SubjectType.COURT, nonExistentCourtId, testPage))
             .thenThrow(new NotFoundException("Court not found"));
 
         mockMvc.perform(get("/locks/{subjectType}/{subjectId}/v1/{page}",
-                            AuditSubjectType.COURT, nonExistentCourtId, testPage))
+                            SubjectType.COURT, nonExistentCourtId, testPage))
             .andExpect(status().isNotFound());
     }
 
@@ -101,9 +101,9 @@ class LockControllerTest {
     @DisplayName("POST /locks/{subjectType}/{subjectId}/v1/{page} creates lock successfully")
     void createCourtLockSuccessfully() throws Exception {
         Lock lock = new Lock();
-        when(lockService.createOrUpdateLock(AuditSubjectType.COURT, courtId, testPage, userId)).thenReturn(lock);
+        when(lockService.createOrUpdateLock(SubjectType.COURT, courtId, testPage, userId)).thenReturn(lock);
 
-        mockMvc.perform(post("/locks/{subjectType}/{subjectId}/v1/{page}", AuditSubjectType.COURT, courtId, testPage)
+        mockMvc.perform(post("/locks/{subjectType}/{subjectId}/v1/{page}", SubjectType.COURT, courtId, testPage)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(userId)))
             .andExpect(status().isCreated());
@@ -112,11 +112,11 @@ class LockControllerTest {
     @Test
     @DisplayName("POST /locks/{subjectType}/{subjectId}/v1/{page} returns 404 if court not found")
     void createCourtLockNonExistentReturnsNotFound() throws Exception {
-        when(lockService.createOrUpdateLock(AuditSubjectType.COURT, nonExistentCourtId, testPage, userId))
+        when(lockService.createOrUpdateLock(SubjectType.COURT, nonExistentCourtId, testPage, userId))
             .thenThrow(new NotFoundException("Court not found"));
 
         mockMvc.perform(post("/locks/{subjectType}/{subjectId}/v1/{page}",
-                             AuditSubjectType.COURT, nonExistentCourtId, testPage)
+                             SubjectType.COURT, nonExistentCourtId, testPage)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(userId)))
             .andExpect(status().isNotFound());
@@ -126,7 +126,7 @@ class LockControllerTest {
     @DisplayName("DELETE /locks/{subjectType}/{subjectId}/v1/{page} deletes lock successfully")
     void deleteCourtLockSuccessfully() throws Exception {
         mockMvc.perform(delete("/locks/{subjectType}/{subjectId}/v1/{page}",
-                               AuditSubjectType.COURT, courtId, testPage))
+                               SubjectType.COURT, courtId, testPage))
             .andExpect(status().isNoContent());
     }
 
@@ -134,10 +134,10 @@ class LockControllerTest {
     @DisplayName("DELETE /locks/{subjectType}/{subjectId}/v1/{page} returns 404 if court or lock not found")
     void deleteCourtLockNonExistentReturnsNotFound() throws Exception {
         doThrow(new NotFoundException("Court or lock not found"))
-            .when(lockService).deleteLock(AuditSubjectType.COURT, nonExistentCourtId, testPage);
+            .when(lockService).deleteLock(SubjectType.COURT, nonExistentCourtId, testPage);
 
         mockMvc.perform(delete("/locks/{subjectType}/{subjectId}/v1/{page}",
-                               AuditSubjectType.COURT, nonExistentCourtId, testPage))
+                               SubjectType.COURT, nonExistentCourtId, testPage))
             .andExpect(status().isNotFound());
     }
 }

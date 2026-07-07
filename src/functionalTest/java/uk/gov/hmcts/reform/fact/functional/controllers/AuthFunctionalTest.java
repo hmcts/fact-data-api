@@ -25,7 +25,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
@@ -529,14 +529,14 @@ public class AuthFunctionalTest {
     void courtLockAuth() throws Exception {
         UUID courtId = createCourtAsAdmin("Test Auth Lock");
         UUID userId = createUserAsAdmin("test.user.auth.lock");
-        String lockPath = "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.GENERAL;
+        String lockPath = "/locks/" + SubjectType.COURT + "/" + courtId + "/v1/" + Page.GENERAL;
 
         Response postAdmin = http.doPost(lockPath, mapper.writeValueAsString(userId), adminToken);
         assertThat(postAdmin.statusCode()).isIn(200, 201);
 
         assertViewerAllowed(
-            http.doGet("/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/", adminToken),
-            http.doGet("/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/", viewerToken),
+            http.doGet("/locks/" + SubjectType.COURT + "/" + courtId + "/v1/", adminToken),
+            http.doGet("/locks/" + SubjectType.COURT + "/" + courtId + "/v1/", viewerToken),
             "/locks/{subjectType}/{subjectId}/v1 [GET]"
         );
         assertViewerAllowed(

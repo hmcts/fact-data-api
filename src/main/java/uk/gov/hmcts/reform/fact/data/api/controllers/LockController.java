@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.LockService;
@@ -48,7 +48,7 @@ public class LockController {
         @ApiResponse(responseCode = "404", description = "Subject not found")
     })
     public ResponseEntity<List<Lock>> getSubjectLocks(
-        @Parameter(description = "The subject type", required = true) @PathVariable AuditSubjectType subjectType,
+        @Parameter(description = "The subject type", required = true) @PathVariable SubjectType subjectType,
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId) {
         return ResponseEntity.ok(lockService.getAllSubjectLocks(subjectType, UUID.fromString(subjectId)));
     }
@@ -62,7 +62,7 @@ public class LockController {
         @ApiResponse(responseCode = "404", description = "Subject not found")
     })
     public ResponseEntity<Lock> getSubjectLockStatus(
-        @Parameter(description = "The subject type", required = true) @PathVariable AuditSubjectType subjectType,
+        @Parameter(description = "The subject type", required = true) @PathVariable SubjectType subjectType,
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to check lock status", required = true) @PathVariable Page page) {
         return lockService.getPageLock(subjectType, UUID.fromString(subjectId), page)
@@ -81,7 +81,7 @@ public class LockController {
     })
     @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Lock> createOrUpdateSubjectLock(
-        @Parameter(description = "The subject type", required = true) @PathVariable AuditSubjectType subjectType,
+        @Parameter(description = "The subject type", required = true) @PathVariable SubjectType subjectType,
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to lock", required = true) @PathVariable Page page,
         @Parameter(description = "User ID creating the lock", required = true) @Valid @RequestBody UUID userId) {
@@ -98,7 +98,7 @@ public class LockController {
     })
     @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteSubjectLock(
-        @Parameter(description = "The subject type", required = true) @PathVariable AuditSubjectType subjectType,
+        @Parameter(description = "The subject type", required = true) @PathVariable SubjectType subjectType,
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to delete lock", required = true) @PathVariable Page page) {
         lockService.deleteLock(subjectType, UUID.fromString(subjectId), page);

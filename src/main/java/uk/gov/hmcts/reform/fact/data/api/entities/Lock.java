@@ -1,6 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 
 import java.time.ZonedDateTime;
@@ -49,7 +49,7 @@ public class Lock {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    private AuditSubjectType subjectType;
+    private SubjectType subjectType;
 
     @Schema(description = "The ID of the associated User")
     @NotNull

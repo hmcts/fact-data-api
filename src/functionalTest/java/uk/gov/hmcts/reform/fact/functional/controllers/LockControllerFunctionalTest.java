@@ -9,7 +9,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
@@ -66,7 +66,7 @@ public final class LockControllerFunctionalTest {
         TestDataHelper.createCourtLock(http, courtId, Page.ACCESSIBILITY, userId);
 
         final Response getLockStatusResponse = http.doGet(
-            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.ACCESSIBILITY
+            "/locks/" + SubjectType.COURT + "/" + courtId + "/v1/" + Page.ACCESSIBILITY
         );
 
         assertThat(getLockStatusResponse.statusCode())
@@ -107,7 +107,7 @@ public final class LockControllerFunctionalTest {
         TestDataHelper.createCourtLock(http, courtId, Page.LOCAL_AUTHORITIES, userId);
 
         final Response deleteLockResponse = http.doDelete(
-            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
+            "/locks/" + SubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
         );
 
         assertThat(deleteLockResponse.statusCode())
@@ -116,7 +116,7 @@ public final class LockControllerFunctionalTest {
             .isEqualTo(NO_CONTENT.value());
 
         final Response getLockStatusResponse = http.doGet(
-            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
+            "/locks/" + SubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
         );
 
         assertThat(getLockStatusResponse.statusCode())
@@ -137,7 +137,7 @@ public final class LockControllerFunctionalTest {
         TestDataHelper.createCourtLock(http, courtId, Page.GENERAL, userId);
         TestDataHelper.createCourtLock(http, courtId, Page.ACCESSIBILITY, userId);
 
-        final Response getAllLocksResponse = http.doGet("/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1");
+        final Response getAllLocksResponse = http.doGet("/locks/" + SubjectType.COURT + "/" + courtId + "/v1");
 
         assertThat(getAllLocksResponse.statusCode())
             .as("Expected 200 OK when getting all locks for court %s", courtId)
@@ -175,7 +175,7 @@ public final class LockControllerFunctionalTest {
         TestDataHelper.createCourtLock(http, courtId, Page.GENERAL, userAId);
 
         final Response userBLockResponse = http.doPost(
-            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.GENERAL,
+            "/locks/" + SubjectType.COURT + "/" + courtId + "/v1/" + Page.GENERAL,
             mapper.writeValueAsString(userBId)
         );
 
@@ -245,7 +245,7 @@ public final class LockControllerFunctionalTest {
             .isEqualTo(courtId);
 
         final Response getLockStatusResponse = http.doGet(
-            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
+            "/locks/" + SubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
         );
 
         assertThat(getLockStatusResponse.statusCode())
@@ -271,7 +271,7 @@ public final class LockControllerFunctionalTest {
             .isAfter(createdLock.getLockAcquired());
 
         final Response deleteLockResponse = http.doDelete(
-            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
+            "/locks/" + SubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
         );
 
         assertThat(deleteLockResponse.statusCode())
@@ -279,7 +279,7 @@ public final class LockControllerFunctionalTest {
             .isEqualTo(NO_CONTENT.value());
 
         final Response verifyDeletedResponse = http.doGet(
-            "/locks/" + AuditSubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
+            "/locks/" + SubjectType.COURT + "/" + courtId + "/v1/" + Page.LOCAL_AUTHORITIES
         );
 
         assertThat(verifyDeletedResponse.statusCode())

@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LockRepository;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
@@ -49,8 +49,8 @@ public class LockService {
      * @param subjectId   the id of the subject
      * @return the {@link List} of {@link Lock}s for the given subject
      */
-    public List<Lock> getAllSubjectLocks(AuditSubjectType subjectType, UUID subjectId) {
-        UUID id = subjectType == AuditSubjectType.SERVICE_CENTRE
+    public List<Lock> getAllSubjectLocks(SubjectType subjectType, UUID subjectId) {
+        UUID id = subjectType == SubjectType.SERVICE_CENTRE
             ? serviceCentreService.getServiceCentreById(subjectId).getId()
             : courtService.getCourtById(subjectId).getId();
 
@@ -65,8 +65,8 @@ public class LockService {
      * @param page        The page to check
      * @return Optional containing the lock if it exists
      */
-    public Optional<Lock> getPageLock(AuditSubjectType subjectType, UUID subjectId, Page page) {
-        UUID id = subjectType == AuditSubjectType.SERVICE_CENTRE
+    public Optional<Lock> getPageLock(SubjectType subjectType, UUID subjectId, Page page) {
+        UUID id = subjectType == SubjectType.SERVICE_CENTRE
             ? serviceCentreService.getServiceCentreById(subjectId).getId()
             : courtService.getCourtById(subjectId).getId();
 
@@ -82,8 +82,8 @@ public class LockService {
      * @param userId      The user's unique identifier
      * @return The updated court lock
      */
-    public Lock createOrUpdateLock(AuditSubjectType subjectType, UUID subjectId, Page page, UUID userId) {
-        UUID id = subjectType == AuditSubjectType.SERVICE_CENTRE
+    public Lock createOrUpdateLock(SubjectType subjectType, UUID subjectId, Page page, UUID userId) {
+        UUID id = subjectType == SubjectType.SERVICE_CENTRE
             ? serviceCentreService.getServiceCentreById(subjectId).getId()
             : courtService.getCourtById(subjectId).getId();
 
@@ -113,8 +113,8 @@ public class LockService {
      * @param page    The page to unlock
      */
     @Transactional
-    public void deleteLock(AuditSubjectType subjectType, UUID subjectId, Page page) {
-        UUID id = subjectType == AuditSubjectType.SERVICE_CENTRE
+    public void deleteLock(SubjectType subjectType, UUID subjectId, Page page) {
+        UUID id = subjectType == SubjectType.SERVICE_CENTRE
             ? serviceCentreService.getServiceCentreById(subjectId).getId()
             : courtService.getCourtById(subjectId).getId();
 
