@@ -6,6 +6,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -24,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +41,9 @@ class LockServiceTest {
     private CourtService courtService;
 
     @Mock
+    private ServiceCentreService serviceCentreService;
+
+    @Mock
     private UserService userService;
 
     @InjectMocks
@@ -47,6 +54,8 @@ class LockServiceTest {
     private UUID courtId;
     private Court court;
     private Lock lock;
+    private UUID serviceCentreId;
+    private ServiceCentre serviceCentre;
 
     @BeforeEach
     void setup() {
@@ -61,10 +70,19 @@ class LockServiceTest {
         user.setEmail("email@justice.gov.uk");
 
         lock = new Lock();
+        lock.setId(UUID.randomUUID());
         lock.setSubjectType(SubjectType.COURT);
         lock.setSubjectId(courtId);
         lock.setPage(Page.GENERAL);
         lock.setLockAcquired(ZonedDateTime.now());
+
+        serviceCentreId = UUID.randomUUID();
+        serviceCentre = new ServiceCentre();
+        serviceCentre.setId(serviceCentreId);
+        serviceCentre.setName("Test Service Centre");
+
+        // needed for deleteExpiredLocks test
+        ReflectionTestUtils.setField(lockService, "lockTimeoutMinutes", 30L);
     }
 
     @Test
@@ -148,5 +166,66 @@ class LockServiceTest {
         verify(courtService).getCourtById(courtId);
         verify(lockRepository).deleteBySubjectTypeAndSubjectIdAndPage(SubjectType.COURT, courtId, page);
     }
-}
 
+    @Test
+    void getLocksByServiceCentreIdShouldGetLocksByServiceCentreId() {
+        when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
+        when(lockRepository.findAllBySubjectTypeAndSubjectId(SubjectType.SERVICE_CENTRE, serviceCentreId))
+            .thenReturn(List.of(lock));
+
+        List<Lock> result = lockService.getAllSubjectLocks(SubjectType.SERVICE_CENTRE, serviceCentreId);
+
+        assertEquals(1, result.size());
+        verify(serviceCentreService).getServiceCentreById(serviceCentreId);
+        verify(lockRepository).findAllBySubjectTypeAndSubjectId(SubjectType.SERVICE_CENTRE, serviceCentreId);
+    }
+
+    @Test
+    void getPageLockShouldGetPageLockForServiceCentre() {
+        Page page = Page.GENERAL;
+        when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
+        when(lockRepository.findBySubjectTypeAndSubjectIdAndPage(SubjectType.SERVICE_CENTRE, serviceCentreId, page))
+            .thenReturn(Optional.of(lock));
+
+        Optional<Lock> result = lockService.getPageLock(SubjectType.SERVICE_CENTRE, serviceCentreId, page);
+
+        assertTrue(result.isPresent());
+        verify(serviceCentreService).getServiceCentreById(serviceCentreId);
+        verify(lockRepository).findBySubjectTypeAndSubjectIdAndPage(SubjectType.SERVICE_CENTRE, serviceCentreId, page);
+    }
+
+    @Test
+    void createLockShouldCreateLockForServiceCentre() {
+        when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
+        when(userService.getUserById(userId)).thenReturn(user);
+        when(lockRepository.save(any(Lock.class))).thenReturn(lock);
+
+        Lock result = lockService.createOrUpdateLock(SubjectType.SERVICE_CENTRE, serviceCentreId, Page.GENERAL, userId);
+
+        assertNotNull(result);
+        verify(serviceCentreService).getServiceCentreById(serviceCentreId);
+        verify(lockRepository).findBySubjectTypeAndSubjectIdAndPage(
+            SubjectType.SERVICE_CENTRE, serviceCentreId, Page.GENERAL);
+        verify(lockRepository).save(any(Lock.class));
+        verify(lockRepository).deleteAllByUserIdAndIdIsNot(eq(userId), any(UUID.class));
+    }
+
+    @Test
+    void deleteLockShouldDeleteLockForServiceCentre() {
+        Page page = Page.GENERAL;
+        when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
+
+        lockService.deleteLock(SubjectType.SERVICE_CENTRE, serviceCentreId, page);
+
+        verify(serviceCentreService).getServiceCentreById(serviceCentreId);
+        verify(lockRepository).deleteBySubjectTypeAndSubjectIdAndPage(
+            SubjectType.SERVICE_CENTRE, serviceCentreId, page);
+    }
+
+    @Test
+    void deleteExpiredLocksShouldDeleteLocksBeforeConfiguredTimeout() {
+        lockService.deleteExpiredLocks();
+
+        verify(lockRepository).deleteByLockAcquiredBefore(any(ZonedDateTime.class));
+    }
+}

@@ -102,7 +102,7 @@ public class LockService {
 
         Lock savedLock = lockRepository.save(lock);
         // remove any existing locks for other pages owned by this user
-        lockRepository.deleteAllByUserIdAndIdIsNot(user.getId(), savedLock.getId());
+        lockRepository.deleteAllByUserIdAndIdIsNot(userId, savedLock.getId());
         return savedLock;
     }
 

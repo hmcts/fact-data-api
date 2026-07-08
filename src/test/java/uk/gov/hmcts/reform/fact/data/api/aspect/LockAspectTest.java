@@ -27,7 +27,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -208,6 +210,24 @@ class LockAspectTest {
         when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
+    }
+
+    @Test
+    @DisplayName("Should call deleteExpiredLocks when LockCleanupCheck advice runs")
+    void shouldCleanupExpiredLocks() {
+        assertDoesNotThrow(() -> validator.lockCleanup(joinPoint));
+
+        verify(lockService, times(1)).deleteExpiredLocks();
+    }
+
+    @Test
+    @DisplayName("Should swallow exception when deleteExpiredLocks fails")
+    void shouldSwallowCleanupException() {
+        doThrow(new RuntimeException("cleanup failed")).when(lockService).deleteExpiredLocks();
+
+        assertDoesNotThrow(() -> validator.lockCleanup(joinPoint));
+
+        verify(lockService, times(1)).deleteExpiredLocks();
     }
 
     // Helper methods
