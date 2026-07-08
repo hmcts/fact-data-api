@@ -777,7 +777,6 @@ public class TestingSupportService {
             if (random.nextBoolean()) {
                 CourtDxCodeDto code = CourtDxCodeDto.builder()
                     .dxCode(rndAlphaNumeric(6, random))
-                    .explanation(COURT_TYPES.stream().findAny().map(CourtType::getName).orElse("General") + " DX code")
                     .build();
                 dxCodes.add(code);
             }
@@ -792,7 +791,6 @@ public class TestingSupportService {
             faxNumbers.add(
                 CourtFaxDto.builder()
                     .faxNumber(rndPhoneNumber(random))
-                    .description(i == 0 ? "Fax number" : "Urgent documents fax number")
                     .build()
             );
         }
