@@ -20,7 +20,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
@@ -148,17 +147,21 @@ public class CourtLocalAuthoritiesService {
      *
      * @param courtId The court id to get areas of law for.
      * @return The list of allowed areas of law for the court.
-     * @throws CourtResourceNotFoundException if no areas of law are set for the court.
      */
     private List<AreaOfLawType> getAllowedAreasOfLawForCourt(UUID courtId) {
-        CourtAreasOfLaw courtAreasOfLaw = courtAreasOfLawRepository.findByCourtId(courtId)
-            .orElseThrow(() ->
-                             new CourtResourceNotFoundException("No areas of law set for the court, ID: " + courtId));
+        List<UUID> courtAreaOfLawIds = courtAreasOfLawRepository.findByCourtId(courtId)
+            .map(CourtAreasOfLaw::getAreasOfLaw)
+            .map(areasOfLaw -> areasOfLaw == null ? List.<UUID>of() : areasOfLaw)
+            .orElse(List.of());
+
+        if (courtAreaOfLawIds.isEmpty()) {
+            return List.of();
+        }
 
         List<AreaOfLawType> allowedAreas =
             areaOfLawTypeRepository.findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames());
 
-        return areaOfLawTypeRepository.findAllById(courtAreasOfLaw.getAreasOfLaw())
+        return areaOfLawTypeRepository.findAllById(courtAreaOfLawIds)
             .stream()
             .filter(allowedAreas::contains)
             .toList();
@@ -173,6 +176,10 @@ public class CourtLocalAuthoritiesService {
      * @return The list of CourtLocalAuthorityDto objects.
      */
     private List<CourtLocalAuthorityDto> buildCourtLocalAuthorityDtoList(UUID courtId, List<AreaOfLawType> areas) {
+        if (areas.isEmpty()) {
+            return List.of();
+        }
+
         List<LocalAuthorityType> allLocalAuthorities = localAuthorityTypeRepository.findAllParents()
             .stream()
             .sorted(Comparator.comparing(LocalAuthorityType::getName, String.CASE_INSENSITIVE_ORDER))

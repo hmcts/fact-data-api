@@ -32,15 +32,25 @@ public final class CourtAreasOfLawControllerFunctionalTest {
         .build();
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/areas-of-law returns 404 when no areas of law exist")
-    void shouldReturn404WhenNoAreasOfLawExist() {
+    @DisplayName("GET /courts/{courtId}/v1/areas-of-law returns all areas as unselected when no areas of law exist")
+    void shouldReturnAllAreasAsUnselectedWhenNoAreasOfLawExist() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court No Areas");
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/areas-of-law");
 
-        assertThat(getResponse.statusCode()).isEqualTo(404);
-        assertThat(getResponse.jsonPath().getString("message"))
-            .contains("No court areas of law found for court id: " + courtId);
+        assertThat(getResponse.statusCode()).isEqualTo(OK.value());
+
+        final Map<String, Boolean> areasMap = mapper.readValue(
+            getResponse.asString(),
+            new TypeReference<Map<String, Boolean>>() {}
+        );
+
+        assertThat(areasMap)
+            .as("Expected all area of law types to be returned")
+            .isNotEmpty()
+            .allSatisfy((areaOfLaw, selected) -> assertThat(selected)
+                .as("Area of law should not be selected by default: %s", areaOfLaw)
+                .isFalse());
     }
 
     @Test
