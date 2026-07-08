@@ -7,9 +7,9 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
 
-import java.util.UUID;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,10 +40,15 @@ public class CourtAreasOfLawService {
      *
      * @param courtId The court id to find the areas of law for.
      * @return Map of area of law types with boolean values indicating if they are available at the court.
-     * @throws NotFoundException if no areas of law record exists for the court.
+     * @throws NotFoundException if the court does not exist.
      */
     public Map<AreaOfLawType, Boolean> getAreasOfLawStatusByCourtId(UUID courtId) {
-        List<UUID> courtAreasOfLawIds = getCourtAreasOfLawByCourtId(courtId).getAreasOfLaw();
+        courtService.getCourtById(courtId);
+
+        List<UUID> courtAreasOfLawIds = courtAreasOfLawRepository.findByCourtId(courtId)
+            .map(CourtAreasOfLaw::getAreasOfLaw)
+            .map(areasOfLaw -> areasOfLaw == null ? List.<UUID>of() : areasOfLaw)
+            .orElse(List.of());
         List<AreaOfLawType> allAreasOfLawTypes = typesService.getAreaOfLawTypes();
 
         return allAreasOfLawTypes.stream()

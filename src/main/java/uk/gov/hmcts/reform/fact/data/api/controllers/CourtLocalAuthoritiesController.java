@@ -43,7 +43,6 @@ public class CourtLocalAuthoritiesController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved court local authorities"),
-        @ApiResponse(responseCode = "204", description = "No local authority configuration found for the court"),
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
@@ -64,7 +63,6 @@ public class CourtLocalAuthoritiesController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully updated local authorities"),
-        @ApiResponse(responseCode = "204", description = "No local authority configuration found for the court"),
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or request validation failed"),
         @ApiResponse(responseCode = "404", description = "Court or local authority not found")
     })

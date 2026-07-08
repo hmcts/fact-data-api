@@ -108,6 +108,34 @@ class CourtAreasOfLawServiceTest {
     }
 
     @Test
+    void getAreasOfLawStatusByCourtIdReturnsAllAreasAsUnselectedWhenNoConfigExists() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtAreasOfLawRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
+        when(typesService.getAreaOfLawTypes()).thenReturn(areaOfLawTypes);
+
+        Map<AreaOfLawType, Boolean> result = courtAreasOfLawService.getAreasOfLawStatusByCourtId(courtId);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.keySet()).containsExactlyInAnyOrderElementsOf(areaOfLawTypes);
+        assertThat(result.values()).containsOnly(false);
+    }
+
+    @Test
+    void getAreasOfLawStatusByCourtIdReturnsAllAreasAsUnselectedWhenConfigHasNullAreasOfLaw() {
+        courtAreasOfLaw.setAreasOfLaw(null);
+
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtAreasOfLawRepository.findByCourtId(courtId)).thenReturn(Optional.of(courtAreasOfLaw));
+        when(typesService.getAreaOfLawTypes()).thenReturn(areaOfLawTypes);
+
+        Map<AreaOfLawType, Boolean> result = courtAreasOfLawService.getAreasOfLawStatusByCourtId(courtId);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.keySet()).containsExactlyInAnyOrderElementsOf(areaOfLawTypes);
+        assertThat(result.values()).containsOnly(false);
+    }
+
+    @Test
     void setCourtAreasOfLawCreatesNewRecord() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(courtAreasOfLawRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
@@ -134,4 +162,3 @@ class CourtAreasOfLawServiceTest {
         assertThat(courtAreasOfLaw.getId()).isEqualTo(existing.getId());
     }
 }
-

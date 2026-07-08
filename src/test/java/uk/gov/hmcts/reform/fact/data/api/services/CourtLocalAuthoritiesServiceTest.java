@@ -12,7 +12,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtCodes;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLocalAuthorities;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
@@ -120,12 +119,30 @@ class CourtLocalAuthoritiesServiceTest {
     }
 
     @Test
-    void shouldThrowWhenNoAreasOfLawConfiguredForCourt() {
+    void shouldReturnEmptyListWhenNoAreasOfLawConfiguredForCourt() {
         when(courtService.getCourtById(COURT_ID)).thenReturn(court);
         when(courtAreasOfLawRepository.findByCourtId(COURT_ID)).thenReturn(Optional.empty());
 
-        assertThrows(CourtResourceNotFoundException.class,
-                     () -> courtLocalAuthoritiesService.getCourtLocalAuthorities(COURT_ID));
+        List<CourtLocalAuthorityDto> result = courtLocalAuthoritiesService.getCourtLocalAuthorities(COURT_ID);
+
+        assertThat(result).isEmpty();
+        verify(localAuthorityTypeRepository, never()).findAllParents();
+        verify(areaOfLawTypeRepository, never()).findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames());
+        verify(areaOfLawTypeRepository, never()).findAllById(List.of());
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenAreasOfLawConfiguredAsNullForCourt() {
+        courtAreasOfLaw.setAreasOfLaw(null);
+        when(courtService.getCourtById(COURT_ID)).thenReturn(court);
+        when(courtAreasOfLawRepository.findByCourtId(COURT_ID)).thenReturn(Optional.of(courtAreasOfLaw));
+
+        List<CourtLocalAuthorityDto> result = courtLocalAuthoritiesService.getCourtLocalAuthorities(COURT_ID);
+
+        assertThat(result).isEmpty();
+        verify(localAuthorityTypeRepository, never()).findAllParents();
+        verify(areaOfLawTypeRepository, never()).findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames());
+        verify(areaOfLawTypeRepository, never()).findAllById(List.of());
     }
 
     @Test
