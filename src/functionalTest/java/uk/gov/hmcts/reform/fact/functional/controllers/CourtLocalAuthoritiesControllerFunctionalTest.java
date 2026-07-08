@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
-import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 
 @Feature("Court Local Authorities Controller")
@@ -36,13 +35,20 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
         .build();
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/local-authorities returns 204 when no areas of law exist")
-    void shouldReturn204WhenNoAreasOfLawExist() {
+    @DisplayName("GET /courts/{courtId}/v1/local-authorities returns empty list when no areas of law exist")
+    void shouldReturnEmptyListWhenNoAreasOfLawExist() throws Exception {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court No Areas");
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/local-authorities");
 
-        AssertionHelper.assertStatus(getResponse, NO_CONTENT);
+        AssertionHelper.assertStatus(getResponse, OK);
+
+        final List<CourtLocalAuthorityDto> localAuthorities = mapper.readValue(
+            getResponse.asString(),
+            new TypeReference<List<CourtLocalAuthorityDto>>() {}
+        );
+
+        assertThat(localAuthorities).isEmpty();
     }
 
     @Test
@@ -180,14 +186,14 @@ public final class CourtLocalAuthoritiesControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("PUT /courts/{courtId}/v1/local-authorities returns 204 when no areas of law exist")
-    void shouldReturn204WhenNoAreasOfLawExistOnPut() {
+    @DisplayName("PUT /courts/{courtId}/v1/local-authorities returns 200 when no areas of law exist")
+    void shouldReturn200WhenNoAreasOfLawExistOnPut() {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court No Areas Put");
         final String putBody = "[]";
 
         final Response putResponse = http.doPut("/courts/" + courtId + "/v1/local-authorities", putBody);
 
-        AssertionHelper.assertStatus(putResponse, NO_CONTENT);
+        AssertionHelper.assertStatus(putResponse, OK);
     }
 
     @Test
