@@ -135,27 +135,42 @@ class LockServiceTest {
 
     @Test
     void createLockShouldCreateLock() {
+        UUID lockId = UUID.randomUUID();
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(lockRepository.save(any(Lock.class))).thenReturn(lock);
+        when(lockRepository.upsertLockAndDeleteOtherUserLocks(
+            any(), eq(SubjectType.COURT.name()), eq(courtId),
+            eq(Page.GENERAL.name()), eq(userId), any(ZonedDateTime.class)
+        )).thenReturn(lockId);
+
         Lock result = lockService.createOrUpdateLock(SubjectType.COURT, courtId, Page.GENERAL, userId);
+
         assertNotNull(result);
-        verify(lockRepository).save(any(Lock.class));
+        assertEquals(lockId, result.getId());
+        verify(lockRepository).upsertLockAndDeleteOtherUserLocks(
+            any(),  eq(SubjectType.COURT.name()), eq(courtId),
+            eq(Page.GENERAL.name()), eq(userId), any(ZonedDateTime.class)
+        );
     }
 
     @Test
     void createOrUpdateLockShouldUpdateExistingLock() {
         Page page = Page.GENERAL;
+        UUID lockId = UUID.randomUUID();
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(lockRepository.findBySubjectTypeAndSubjectIdAndPage(SubjectType.COURT, courtId, page))
-            .thenReturn(Optional.of(lock));
-        when(lockRepository.save(any(Lock.class))).thenReturn(lock);
+        when(lockRepository.upsertLockAndDeleteOtherUserLocks(
+             any(), eq(SubjectType.COURT.name()), eq(courtId), eq(page.name()), eq(userId), any(ZonedDateTime.class)
+        )).thenReturn(lockId);
+
         Lock result = lockService.createOrUpdateLock(SubjectType.COURT, courtId, page, userId);
+
         assertNotNull(result);
+        assertEquals(lockId, result.getId());
         verify(courtService).getCourtById(courtId);
-        verify(lockRepository).findBySubjectTypeAndSubjectIdAndPage(SubjectType.COURT, courtId, page);
-        verify(lockRepository).save(any(Lock.class));
+        verify(lockRepository).upsertLockAndDeleteOtherUserLocks(
+             any(), eq(SubjectType.COURT.name()), eq(courtId), eq(page.name()), eq(userId), any(ZonedDateTime.class)
+        );
     }
 
     @Test
@@ -164,7 +179,7 @@ class LockServiceTest {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         lockService.deleteLock(SubjectType.COURT, courtId, page);
         verify(courtService).getCourtById(courtId);
-        verify(lockRepository).deleteBySubjectTypeAndSubjectIdAndPage(SubjectType.COURT, courtId, page);
+        verify(lockRepository).deleteBySubjectTypeAndSubjectIdAndPage(SubjectType.COURT.name(), courtId, page.name());
     }
 
     @Test
@@ -196,18 +211,23 @@ class LockServiceTest {
 
     @Test
     void createLockShouldCreateLockForServiceCentre() {
+        UUID lockId = UUID.randomUUID();
         when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(lockRepository.save(any(Lock.class))).thenReturn(lock);
+        when(lockRepository.upsertLockAndDeleteOtherUserLocks(
+            any(), eq(SubjectType.SERVICE_CENTRE.name()), eq(serviceCentreId), eq(Page.GENERAL.name()), eq(userId),
+            any(ZonedDateTime.class)
+        )).thenReturn(lockId);
 
         Lock result = lockService.createOrUpdateLock(SubjectType.SERVICE_CENTRE, serviceCentreId, Page.GENERAL, userId);
 
         assertNotNull(result);
+        assertEquals(lockId, result.getId());
         verify(serviceCentreService).getServiceCentreById(serviceCentreId);
-        verify(lockRepository).findBySubjectTypeAndSubjectIdAndPage(
-            SubjectType.SERVICE_CENTRE, serviceCentreId, Page.GENERAL);
-        verify(lockRepository).save(any(Lock.class));
-        verify(lockRepository).deleteAllByUserIdAndIdIsNot(eq(userId), any(UUID.class));
+        verify(lockRepository).upsertLockAndDeleteOtherUserLocks(
+            any(), eq(SubjectType.SERVICE_CENTRE.name()), eq(serviceCentreId), eq(Page.GENERAL.name()), eq(userId),
+            any(ZonedDateTime.class)
+        );
     }
 
     @Test
@@ -219,7 +239,7 @@ class LockServiceTest {
 
         verify(serviceCentreService).getServiceCentreById(serviceCentreId);
         verify(lockRepository).deleteBySubjectTypeAndSubjectIdAndPage(
-            SubjectType.SERVICE_CENTRE, serviceCentreId, page);
+            SubjectType.SERVICE_CENTRE.name(), serviceCentreId, page.name());
     }
 
     @Test

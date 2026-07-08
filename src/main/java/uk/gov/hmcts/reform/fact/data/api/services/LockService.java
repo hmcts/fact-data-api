@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.LockRepository;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -50,9 +51,7 @@ public class LockService {
      * @return the {@link List} of {@link Lock}s for the given subject
      */
     public List<Lock> getAllSubjectLocks(SubjectType subjectType, UUID subjectId) {
-        UUID id = subjectType == SubjectType.SERVICE_CENTRE
-            ? serviceCentreService.getServiceCentreById(subjectId).getId()
-            : courtService.getCourtById(subjectId).getId();
+        UUID id = verifySubject(subjectType, subjectId);
 
         return lockRepository.findAllBySubjectTypeAndSubjectId(subjectType,id);
     }
@@ -66,9 +65,7 @@ public class LockService {
      * @return Optional containing the lock if it exists
      */
     public Optional<Lock> getPageLock(SubjectType subjectType, UUID subjectId, Page page) {
-        UUID id = subjectType == SubjectType.SERVICE_CENTRE
-            ? serviceCentreService.getServiceCentreById(subjectId).getId()
-            : courtService.getCourtById(subjectId).getId();
+        UUID id = verifySubject(subjectType, subjectId);
 
         return lockRepository.findBySubjectTypeAndSubjectIdAndPage(subjectType, id, page);
     }
@@ -84,26 +81,29 @@ public class LockService {
      */
     @Transactional
     public Lock createOrUpdateLock(SubjectType subjectType, UUID subjectId, Page page, UUID userId) {
-        UUID id = subjectType == SubjectType.SERVICE_CENTRE
-            ? serviceCentreService.getServiceCentreById(subjectId).getId()
-            : courtService.getCourtById(subjectId).getId();
+        UUID id = verifySubject(subjectType, subjectId);
 
         User user = userService.getUserById(userId);
+        ZonedDateTime lockAcquired = ZonedDateTime.now(ZoneOffset.UTC);
 
-        Lock lock = lockRepository.findBySubjectTypeAndSubjectIdAndPage(subjectType, id, page)
-            .orElse(new Lock());
+        UUID lockId = lockRepository.upsertLockAndDeleteOtherUserLocks(
+            UUID.randomUUID(),
+            subjectType.name(),
+            id,
+            page.name(),
+            user.getId(),
+            lockAcquired
+        );
 
-        lock.setSubjectId(id);
-        lock.setSubjectType(subjectType);
-        lock.setUserId(user.getId());
-        lock.setUser(user);
-        lock.setPage(page);
-        lock.setLockAcquired(ZonedDateTime.now());
-
-        Lock savedLock = lockRepository.save(lock);
-        // remove any existing locks for other pages owned by this user
-        lockRepository.deleteAllByUserIdAndIdIsNot(userId, savedLock.getId());
-        return savedLock;
+        return Lock.builder()
+            .id(lockId)
+            .subjectId(id)
+            .subjectType(subjectType)
+            .userId(user.getId())
+            .user(user)
+            .page(page)
+            .lockAcquired(lockAcquired)
+            .build();
     }
 
     /**
@@ -115,11 +115,9 @@ public class LockService {
      */
     @Transactional
     public void deleteLock(SubjectType subjectType, UUID subjectId, Page page) {
-        UUID id = subjectType == SubjectType.SERVICE_CENTRE
-            ? serviceCentreService.getServiceCentreById(subjectId).getId()
-            : courtService.getCourtById(subjectId).getId();
+        UUID id = verifySubject(subjectType, subjectId);
 
-        lockRepository.deleteBySubjectTypeAndSubjectIdAndPage(subjectType, id, page);
+        lockRepository.deleteBySubjectTypeAndSubjectIdAndPage(subjectType.name(), id, page.name());
     }
 
     /**
@@ -127,6 +125,21 @@ public class LockService {
      */
     @Transactional
     public void deleteExpiredLocks() {
-        lockRepository.deleteByLockAcquiredBefore(ZonedDateTime.now().minusMinutes(lockTimeoutMinutes));
+        lockRepository.deleteByLockAcquiredBefore(ZonedDateTime.now(ZoneOffset.UTC).minusMinutes(lockTimeoutMinutes));
+    }
+
+    /**
+     * Verifies the subject type and id, returning the corresponding subject id.
+     *
+     * @param subjectType the {@link SubjectType}
+     * @param subjectId the id
+     * @return the subject id as a UUID
+     *
+     * @throws uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException if the entity does not exist
+     */
+    private UUID verifySubject(final SubjectType subjectType, final UUID subjectId) {
+        return subjectType == SubjectType.SERVICE_CENTRE
+            ? serviceCentreService.getServiceCentreById(subjectId).getId()
+            : courtService.getCourtById(subjectId).getId();
     }
 }

@@ -65,10 +65,6 @@ public class Lock {
     @Enumerated(EnumType.STRING)
     private Page page;
 
-    // TODO - consider using @UpdateTimestamp here to automate lock timestamping?
-    // as the intention is that a lock can be re-acquired to prevent
-    // being timed out, it may be prudent to automate the value in this field
-    // using an @UpdateTimestamp as well as removing the Setter.
     @Schema(description = "Acquire timestamp for the lock")
     @NotNull
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)

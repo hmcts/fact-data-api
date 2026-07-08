@@ -322,6 +322,7 @@ class LockAspectTest {
             @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") Page page,
             @RequestParam("userId") UUID userId) {
+            // empty
         }
 
         public void testMethodWithStringSubjectId(
@@ -329,6 +330,7 @@ class LockAspectTest {
             @PathVariable("subjectId") String subjectId,
             @PathVariable("page") Page page,
             @RequestParam("userId") UUID userId) {
+            // empty
         }
 
         public void testMethodWithStringPage(
@@ -336,24 +338,27 @@ class LockAspectTest {
             @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") String page,
             @RequestParam("userId") UUID userId) {
+            // empty
         }
 
         public void testMethodWithoutSubject(
             @PathVariable("page") Page page,
             @RequestParam("userId") UUID userId) {
+            // empty
         }
 
         public void testMethodWithoutPage(
             @PathVariable("subjectType") SubjectType subjectType,
             @PathVariable("subjectId") UUID subjectId,
             @RequestParam("userId") UUID userId) {
+            // empty
         }
 
         public void testMethodWithoutUserId(
             @PathVariable("subjectType") SubjectType subjectType,
             @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") Page page) {
+            // empty
         }
     }
 }
-

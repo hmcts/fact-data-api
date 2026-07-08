@@ -81,7 +81,7 @@ class LockControllerTest {
     }
 
     @Test
-    void createCourtLockReturns201() {
+    void createOrUpdateCourtLockReturns201() {
         Lock lock = new Lock();
         when(lockService.createOrUpdateLock(SubjectType.COURT, COURT_ID, TEST_PAGE, USER_ID)).thenReturn(lock);
 
@@ -102,22 +102,6 @@ class LockControllerTest {
             IllegalArgumentException.class, () ->
                 lockController.createOrUpdateSubjectLock(SubjectType.COURT, INVALID_UUID, TEST_PAGE, USER_ID)
         );
-    }
-
-    @Test
-    void updateCourtLockReturns201() {
-        Lock lock = new Lock();
-        when(lockService.createOrUpdateLock(SubjectType.COURT, COURT_ID, TEST_PAGE, USER_ID)).thenReturn(lock);
-
-        ResponseEntity<Lock> response = lockController.createOrUpdateSubjectLock(
-            SubjectType.COURT,
-            COURT_ID.toString(),
-            TEST_PAGE,
-            USER_ID
-        );
-
-        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(lock);
     }
 
     @Test

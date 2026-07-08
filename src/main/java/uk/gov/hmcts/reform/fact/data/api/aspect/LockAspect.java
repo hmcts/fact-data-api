@@ -19,6 +19,7 @@ import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 
 import java.lang.reflect.Parameter;
 import java.time.Duration;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -58,7 +59,10 @@ public class LockAspect {
             return; // No lock or same user owns it
         }
 
-        long minutesLocked = Duration.between(lock.get().getLockAcquired(), ZonedDateTime.now()).toMinutes();
+        long minutesLocked = Duration.between(
+            lock.get().getLockAcquired(),
+            ZonedDateTime.now(ZoneOffset.UTC)
+        ).toMinutes();
 
         if (minutesLocked < lockTimeoutMinutes) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
