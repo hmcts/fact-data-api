@@ -6,8 +6,10 @@ import org.apache.commons.lang3.StringUtils;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 
@@ -40,6 +42,7 @@ public class CourtService {
 
     private final CourtRepository courtRepository;
     private final CourtDetailsRepository courtDetailsRepository;
+    private final AuditRepository auditRepository;
     private final RegionService regionService;
     private final CathClient cathClient;
     private final SlackClient slackClient;
@@ -111,7 +114,7 @@ public class CourtService {
     }
 
     /**
-     * Creates a new court or service centre.
+     * Creates a new court.
      *
      * @param court The court to create.
      * @return The created court.
@@ -159,19 +162,6 @@ public class CourtService {
     }
 
     /**
-     * Return a list of courts based on a provided prefix.
-     *
-     * @param prefix The prefix.
-     * @return A list of courts based on the provided prefix.
-     */
-    public List<Court> getCourtsByPrefixAndActiveSearch(String prefix) {
-        return new ArrayList<>(courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(
-            prefix,
-            true
-        ));
-    }
-
-    /**
      * Search courts by a provided string query. Matches currently if the string
      * matches in part an address or court name.
      *
@@ -189,7 +179,7 @@ public class CourtService {
      * @return the number of courts removed.
      */
     @Transactional
-    public long deleteCourtsByNamePrefix(String courtNamePrefix) {
+    public long deleteCourtsByNamePrefix(String courtNamePrefix, boolean purgeAudits) {
         List<Court> courtsToDelete = courtRepository.findByNameStartingWithIgnoreCase(courtNamePrefix.trim());
 
         if (courtsToDelete.isEmpty()) {
@@ -197,6 +187,11 @@ public class CourtService {
         }
 
         courtRepository.deleteAllInBatch(courtsToDelete);
+
+        if  (purgeAudits) {
+            auditRepository.deleteBySubjectIdIn(courtsToDelete.stream().map(Court::getId).toList());
+        }
+
         return courtsToDelete.size();
     }
 
@@ -233,6 +228,15 @@ public class CourtService {
      */
     public List<CourtDetails> getAllCourtDetails() {
         return courtDetailsRepository.findAll();
+    }
+
+    /**
+     * get all court names mapped to their ids.
+     *
+     * @return a {@link List} of court names with their ids.
+     */
+    public List<NameAndId> getAllCourtNameAndIds() {
+        return courtRepository.findAllNameAndId();
     }
 
     /**

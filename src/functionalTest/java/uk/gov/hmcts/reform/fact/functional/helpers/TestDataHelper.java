@@ -7,7 +7,9 @@ import io.restassured.response.Response;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
@@ -50,10 +52,10 @@ public final class TestDataHelper {
 
     /**
      * Fetches a specific opening hour type ID by index from the opening hour types endpoint.
-     * Valid indices are 0-8 for the 9 available opening hour types.
+     * Valid indices are 0-9 for the 10 available opening hour types.
      *
      * @param http the HTTP client
-     * @param index the index of the opening hour type (0-8)
+     * @param index the index of the opening hour type (0-9)
      * @return the opening hour type ID at the specified index as a UUID
      */
     public static UUID getOpeningHourTypeId(final HttpClient http, final int index) {
@@ -131,7 +133,6 @@ public final class TestDataHelper {
         final Court court = new Court();
         court.setName(appendRandomSuffixToCourtName(courtName));
         court.setRegionId(UUID.fromString(fetchFirstRegionId(http)));
-        court.setIsServiceCentre(true);
         court.setOpen(isOpen);
 
         final Response createResponse = http.doPost("/courts/v1", court);
@@ -156,12 +157,73 @@ public final class TestDataHelper {
         final Court court = new Court();
         court.setName(appendRandomSuffixToCourtName(courtName));
         court.setRegionId(UUID.fromString(fetchFirstRegionId(http)));
-        court.setIsServiceCentre(true);
         court.setOpen(isOpen);
         court.setMrdId(mrdId);
         court.setOpenOnCath(openOnCath);
 
         final Response createResponse = http.doPost("/courts/v1", court);
+        assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
+
+        return UUID.fromString(createResponse.jsonPath().getString("id"));
+    }
+
+    /**
+     * Builds a test service centre with the given name.
+     *
+     * @param http the HTTP client
+     * @param serviceCentreName the name for the test service centre
+     * @return the service centre body
+     */
+    public static ServiceCentre buildServiceCentre(final HttpClient http, final String serviceCentreName) {
+        return buildServiceCentre(http, serviceCentreName, HttpClient.getAdminBearerToken());
+    }
+
+    /**
+     * Builds a test service centre with the given name.
+     *
+     * @param http the HTTP client
+     * @param serviceCentreName the name for the test service centre
+     * @param bearerToken the bearer token to use when fetching reference data
+     * @return the service centre body
+     */
+    public static ServiceCentre buildServiceCentre(final HttpClient http,
+                                                  final String serviceCentreName,
+                                                  final String bearerToken) {
+        final ServiceCentre serviceCentre = new ServiceCentre();
+        serviceCentre.setName(appendRandomSuffixToCourtName(serviceCentreName));
+        serviceCentre.setOpen(false);
+        serviceCentre.setServiceAreaIds(List.of(UUID.fromString(
+            http.doGet("/types/v1/service-areas", bearerToken).jsonPath().getString("[0].id")
+        )));
+        serviceCentre.setCatchmentType(CatchmentType.NATIONAL);
+        return serviceCentre;
+    }
+
+    /**
+     * Creates a test service centre with the given name.
+     *
+     * @param http the HTTP client
+     * @param serviceCentreName the name for the test service centre
+     * @return the created service centre UUID
+     */
+    public static UUID createServiceCentre(final HttpClient http, final String serviceCentreName) {
+        return createServiceCentre(http, serviceCentreName, HttpClient.getAdminBearerToken());
+    }
+
+    /**
+     * Creates a test service centre with the given name.
+     *
+     * @param http the HTTP client
+     * @param serviceCentreName the name for the test service centre
+     * @param bearerToken the bearer token to use when creating the service centre
+     * @return the created service centre UUID
+     */
+    public static UUID createServiceCentre(final HttpClient http,
+                                           final String serviceCentreName,
+                                           final String bearerToken) {
+        final ServiceCentre serviceCentre = buildServiceCentre(http, serviceCentreName, bearerToken);
+
+        final Response createResponse = http.doPost("/service-centres/v1", serviceCentre, bearerToken);
         assertThat(createResponse.statusCode()).isEqualTo(CREATED.value());
 
         return UUID.fromString(createResponse.jsonPath().getString("id"));

@@ -1,22 +1,27 @@
 package uk.gov.hmcts.reform.fact.data.api.dto;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
  * DTO for deserializing {@link CourtWithDistance} JSON responses.
- *
- * @param courtId the court ID
- * @param courtName the court name
- * @param courtSlug the court slug
- * @param distance the distance from the searched point
  */
-public record CourtWithDistanceResponse(
-    UUID courtId,
-    String courtName,
-    String courtSlug,
-    BigDecimal distance
-) implements CourtWithDistance {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PUBLIC)
+public class CourtWithDistanceResponse implements CourtWithDistance {
+
+    private UUID courtId;
+    private String courtName;
+    private String courtSlug;
+    private BigDecimal distance;
 
     @Override
     public UUID getCourtId() {

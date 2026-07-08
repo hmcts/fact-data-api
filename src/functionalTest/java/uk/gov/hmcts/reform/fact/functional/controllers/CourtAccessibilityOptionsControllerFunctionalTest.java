@@ -44,7 +44,7 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
             .accessibleParking(true)
             .accessibleParkingPhoneNumber("+44 20 7946 0958")
             .accessibleToiletDescription("Accessible toilets on ground floor")
-            .accessibleEntrance(true)
+            .accessibleEntrance(false)
             .accessibleEntrancePhoneNumber("020 7946 0959")
             .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(true)
@@ -108,9 +108,10 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
         final CourtAccessibilityOptions initialOptions = CourtAccessibilityOptions.builder()
             .courtId(courtId)
             .accessibleParking(false)
-            .accessibleEntrance(false)
+            .accessibleEntrance(true)
             .hearingEnhancementEquipment(HearingEnhancementEquipment.INFRARED_SYSTEMS)
             .lift(false)
+            .liftSupportPhoneNumber("020 7946 0960")
             .quietRoom(false)
             .build();
 
@@ -125,7 +126,7 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
             .courtId(courtId)
             .accessibleParking(true)
             .accessibleParkingPhoneNumber("+44 161 496 0123")
-            .accessibleEntrance(true)
+            .accessibleEntrance(false)
             .accessibleEntrancePhoneNumber("0117 496 0456")
             .hearingEnhancementEquipment(HearingEnhancementEquipment.INFRARED_SYSTEMS_AND_HEARING_LOOP_SYSTEMS)
             .lift(true)
@@ -182,9 +183,10 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
         final CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
             .courtId(nonExistentCourtId)
             .accessibleParking(false)
-            .accessibleEntrance(false)
+            .accessibleEntrance(true)
             .hearingEnhancementEquipment(HearingEnhancementEquipment.HEARING_LOOP_SYSTEMS)
             .lift(false)
+            .liftSupportPhoneNumber("020 7946 0961")
             .quietRoom(false)
             .build();
 

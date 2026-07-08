@@ -5,8 +5,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -23,7 +21,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,11 +34,7 @@ class CourtControllerTest {
     private static final String UNKNOWN_COURT_SLUG = "missing-court";
     private static final String COURT_NAME_WITH_SPECIAL_CHARACTER = "King's Lynn Crown Court";
 
-    private static final int PAGE_NUMBER = 0;
-    private static final int PAGE_SIZE = 25;
-    private static final Boolean INCLUDE_CLOSED = Boolean.TRUE;
     private static final String REGION_ID = UUID.randomUUID().toString();
-    private static final String PARTIAL_COURT_NAME = "Test Court";
 
     private static final String RESPONSE_STATUS_MESSAGE = "Response status does not match";
     private static final String RESPONSE_BODY_MESSAGE = "Response body does not match";
@@ -158,61 +151,6 @@ class CourtControllerTest {
     }
 
     @Test
-    void getFilteredAndPaginatedCourtsReturns200() {
-        Court court = createCourt();
-        Page<Court> courtPage = new PageImpl<>(List.of(court));
-
-        when(courtService.getFilteredAndPaginatedCourts(
-            eq(PAGE_NUMBER),
-            eq(PAGE_SIZE),
-            eq(INCLUDE_CLOSED),
-            eq(REGION_ID),
-            eq(PARTIAL_COURT_NAME),
-            eq(null),
-            eq(null)
-        )).thenReturn(courtPage);
-
-        ResponseEntity<Page<Court>> response = courtController.getFilteredAndPaginatedCourts(
-            PAGE_NUMBER,
-            PAGE_SIZE,
-            INCLUDE_CLOSED,
-            REGION_ID,
-            PARTIAL_COURT_NAME,
-            null,
-            null
-        );
-
-        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(courtPage);
-    }
-
-    @Test
-    void getFilteredAndPaginatedCourtsPassesSortingArgumentsToService() {
-        Court court = createCourt();
-        Page<Court> courtPage = new PageImpl<>(List.of(court));
-
-        when(courtService.getFilteredAndPaginatedCourts(
-            eq(PAGE_NUMBER),
-            eq(PAGE_SIZE),
-            eq(INCLUDE_CLOSED),
-            eq(REGION_ID),
-            eq(PARTIAL_COURT_NAME),
-            eq("name"),
-            eq("desc")
-        )).thenReturn(courtPage);
-
-        courtController.getFilteredAndPaginatedCourts(
-            PAGE_NUMBER,
-            PAGE_SIZE,
-            INCLUDE_CLOSED,
-            REGION_ID,
-            PARTIAL_COURT_NAME,
-            "name",
-            "desc"
-        );
-    }
-
-    @Test
     void createCourtReturns201() {
         Court court = createCourt();
 
@@ -309,7 +247,6 @@ class CourtControllerTest {
         court.setSlug("test-court");
         court.setOpen(Boolean.TRUE);
         court.setRegionId(UUID.randomUUID());
-        court.setIsServiceCentre(Boolean.TRUE);
         court.setOpenOnCath(Boolean.TRUE);
         court.setWarningNotice("Warning notice");
         court.setMrdId("MRD123");

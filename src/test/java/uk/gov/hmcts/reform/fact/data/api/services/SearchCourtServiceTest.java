@@ -8,7 +8,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtServiceAreas;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
@@ -22,6 +21,7 @@ import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchExecuter;
 
@@ -56,9 +56,6 @@ class SearchCourtServiceTest {
     private CourtSinglePointOfEntryService courtSinglePointOfEntryService;
 
     @Mock
-    private CourtServiceAreaService courtServiceAreaService;
-
-    @Mock
     private CourtAddressService courtAddressService;
 
     @Mock
@@ -66,6 +63,9 @@ class SearchCourtServiceTest {
 
     @Mock
     LocalAuthorityTypeRepository localAuthorityTypeRepository;
+
+    @Mock
+    private ServiceCentreRepository serviceCentreRepository;
 
     @InjectMocks
     private SearchCourtService searchCourtService;
@@ -177,14 +177,14 @@ class SearchCourtServiceTest {
     }
 
     @Test
-    void selectSearchStrategyShouldReturnFamilyRegionalWhenRegionalCatchmentExists() {
+    void selectSearchStrategyShouldReturnFamilyRegionalWhenRegionalServiceCentreExists() {
         ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
         area.setCatchmentMethod(CatchmentMethod.LOCAL_AUTHORITY);
-        CourtServiceAreas courtServiceAreas = new CourtServiceAreas();
-        courtServiceAreas.setCatchmentType(CatchmentType.REGIONAL);
 
-        when(courtServiceAreaService.findByServiceAreaId(area.getId()))
-            .thenReturn(List.of(courtServiceAreas));
+        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+            area.getId(),
+            List.of(CatchmentType.REGIONAL)
+        )).thenReturn(true);
 
         SearchStrategy strategy = searchCourtService.selectSearchStrategy(
             SearchAction.DOCUMENTS,
@@ -196,14 +196,9 @@ class SearchCourtServiceTest {
     }
 
     @Test
-    void selectSearchStrategyShouldReturnFamilyNonRegionalWhenNoRegionalCatchment() {
+    void selectSearchStrategyShouldReturnFamilyNonRegionalWhenRegionalServiceCentreDoesNotExist() {
         ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
         area.setCatchmentMethod(CatchmentMethod.LOCAL_AUTHORITY);
-        CourtServiceAreas courtServiceAreas = new CourtServiceAreas();
-        courtServiceAreas.setCatchmentType(CatchmentType.LOCAL);
-
-        when(courtServiceAreaService.findByServiceAreaId(area.getId()))
-            .thenReturn(List.of(courtServiceAreas));
 
         SearchStrategy strategy = searchCourtService.selectSearchStrategy(
             SearchAction.DOCUMENTS,

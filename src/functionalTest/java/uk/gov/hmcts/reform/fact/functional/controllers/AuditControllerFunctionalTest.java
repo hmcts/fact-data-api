@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 @Feature("Audit Controller")
@@ -71,11 +72,17 @@ public final class AuditControllerFunctionalTest {
         final Response auditsResponse = http.doGet(auditsPath);
         AssertionHelper.assertStatus(auditsResponse, OK);
 
-        final List<String> auditedCourtIds = auditsResponse.jsonPath().getList("content.court.id", String.class);
+        final List<String> auditedCourtIds = auditsResponse.jsonPath().getList("content.subjectId", String.class);
         assertThat(auditedCourtIds)
             .as("All audit records should be filtered to the requested court ID")
             .isNotEmpty()
             .allMatch(courtId.toString()::equals);
+
+        final List<String> auditedSubjectTypes = auditsResponse.jsonPath().getList("content.subjectType", String.class);
+        assertThat(auditedSubjectTypes)
+            .as("All audit records should be court subject records")
+            .isNotEmpty()
+            .allMatch("COURT"::equals);
 
         final List<String> courtActionTypes = extractActionTypesForEntity(auditsResponse, "Court");
         assertThat(courtActionTypes)
@@ -86,6 +93,42 @@ public final class AuditControllerFunctionalTest {
         assertThat(addressActionTypes)
             .as("Expected CourtAddress DELETE/UPDATE/INSERT audit actions in descending order")
             .containsExactly("DELETE", "UPDATE", ACTION_INSERT);
+    }
+
+    @Test
+    @DisplayName("GET /audits/{auditId}/v1 returns a single audit record for an existing id")
+    void shouldReturnSingleAuditRecordById() {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Audit By Id");
+        final String auditsPath = String.format(
+            "/audits/v1?pageNumber=0&pageSize=%d&fromDate=%s&courtId=%s",
+            50,
+            LocalDate.now().minusDays(1),
+            courtId
+        );
+
+        final Response auditsResponse = http.doGet(auditsPath);
+        AssertionHelper.assertStatus(auditsResponse, OK);
+
+        final String auditId = auditsResponse.jsonPath().getString("content[0].id");
+        assertThat(auditId).as("Expected at least one audit id to be present").isNotBlank();
+
+        final Response singleAuditResponse = http.doGet("/audits/" + auditId + "/v1");
+        AssertionHelper.assertStatus(singleAuditResponse, OK);
+
+        assertThat(singleAuditResponse.jsonPath().getString("id"))
+            .as("Returned audit id should match requested id")
+            .isEqualTo(auditId);
+
+        assertThat(singleAuditResponse.jsonPath().getString("subjectId"))
+            .as("Returned audit should belong to the created court")
+            .isEqualTo(courtId.toString());
+    }
+
+    @Test
+    @DisplayName("GET /audits/{auditId}/v1 returns not found for unknown id")
+    void shouldReturnNotFoundForUnknownAuditId() {
+        final Response response = http.doGet("/audits/" + UUID.randomUUID() + "/v1");
+        AssertionHelper.assertStatus(response, NOT_FOUND);
     }
 
     private static List<String> extractActionTypesForEntity(final Response response, final String actionEntity) {

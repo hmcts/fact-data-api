@@ -2,40 +2,29 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import tools.jackson.databind.ObjectMapper;
 import io.qameta.allure.Feature;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
@@ -246,91 +235,6 @@ class CourtControllerTest {
     }
 
     @Test
-    @DisplayName("GET /courts/v1 returns paginated list")
-    void getFilteredAndPaginatedCourtsReturnsResults() throws Exception {
-        Court court = buildCourt(COURT_ID);
-        Page<Court> courts = new PageImpl<>(List.of(court));
-
-        when(courtService.getFilteredAndPaginatedCourts(
-            anyInt(),
-            anyInt(),
-            anyBoolean(),
-            anyString(),
-            anyString(),
-            nullable(String.class),
-            nullable(String.class)
-        )).thenReturn(courts);
-
-        mockMvc.perform(get("/courts/v1")
-                            .param("pageNumber", "0")
-                            .param("pageSize", "25")
-                            .param("includeClosed", "true")
-                            .param("regionId", REGION_ID.toString())
-                            .param("partialCourtName", "Test"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content[0].id").value(COURT_ID.toString()))
-            .andExpect(jsonPath("$.content[0].name").value("Test Court"));
-    }
-
-    @Test
-    @DisplayName("GET /courts/v1 applies requested sorting")
-    void getFilteredAndPaginatedCourtsAppliesSorting() throws Exception {
-        Court court = buildCourt(COURT_ID);
-        Page<Court> courts = new PageImpl<>(List.of(court));
-
-        when(courtService.getFilteredAndPaginatedCourts(
-            anyInt(),
-            anyInt(),
-            anyBoolean(),
-            anyString(),
-            anyString(),
-            nullable(String.class),
-            nullable(String.class)
-        )).thenReturn(courts);
-
-        mockMvc.perform(get("/courts/v1")
-                            .param("pageNumber", "0")
-                            .param("pageSize", "25")
-                            .param("includeClosed", "true")
-                            .param("regionId", REGION_ID.toString())
-                            .param("partialCourtName", "Test")
-                            .param("sortBy", "lastUpdated")
-                            .param("sortOrder", "desc"))
-            .andExpect(status().isOk());
-
-        verify(courtService).getFilteredAndPaginatedCourts(
-            eq(0),
-            eq(25),
-            eq(true),
-            eq(REGION_ID.toString()),
-            eq("Test"),
-            eq("lastUpdated"),
-            eq("desc")
-        );
-    }
-
-    @Test
-    @DisplayName("GET /courts/v1 rejects sortOrder without sortBy")
-    void getFilteredAndPaginatedCourtsRejectsSortOrderWithoutSortBy() throws Exception {
-        when(courtService.getFilteredAndPaginatedCourts(
-            eq(0),
-            eq(25),
-            eq(null),
-            eq(null),
-            eq(null),
-            eq(null),
-            eq("asc")
-        )).thenThrow(new InvalidParameterCombinationException("sortOrder cannot be provided without sortBy"));
-
-        mockMvc.perform(get("/courts/v1")
-                            .param("pageNumber", "0")
-                            .param("pageSize", "25")
-                            .param("sortOrder", "asc"))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.message").value("sortOrder cannot be provided without sortBy"));
-    }
-
-    @Test
     @DisplayName("POST /courts/v1 creates a new court")
     void createCourtReturnsCreated() throws Exception {
         Court request = buildCourt(null);
@@ -397,38 +301,6 @@ class CourtControllerTest {
         mockMvc.perform(put("/courts/{courtId}/v1", "invalid-uuid")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("GET /courts/v1 returns 400 for invalid partial court name")
-    void getFilteredCourtsReturnsBadRequestForInvalidPartialName() throws Exception {
-        mockMvc.perform(get("/courts/v1")
-                            .param("partialCourtName", "Invalid@Name"))
-            .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("GET /courts/v1 returns 400 for invalid region UUID")
-    void getFilteredCourtsReturnsBadRequestForInvalidRegionId() throws Exception {
-        mockMvc.perform(get("/courts/v1")
-                            .param("regionId", "not-a-uuid"))
-            .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("GET /courts/v1 returns 400 when partial court name exceeds max length")
-    void getFilteredCourtsReturnsBadRequestForPartialNameTooLong() throws Exception {
-        mockMvc.perform(get("/courts/v1")
-                            .param("partialCourtName", "A".repeat(251)))
-            .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("GET /courts/v1 returns 400 for negative page number")
-    void getFilteredCourtsReturnsBadRequestForNegativePageNumber() throws Exception {
-        mockMvc.perform(get("/courts/v1")
-                            .param("pageNumber", "-1"))
             .andExpect(status().isBadRequest());
     }
 
@@ -506,35 +378,6 @@ class CourtControllerTest {
             .andExpect(status().isNotFound());
     }
 
-    @Test
-    @DisplayName("GET /courts/all/v1 return 200 and the complete list of CourtDetails")
-    void getAllCourtsReturns200() throws Exception {
-        List<CourtDetails> courtDetailsList = new ArrayList<>();
-
-        for (int i = 0; i < 5; i++) {
-            courtDetailsList.add(buildCourtDetails(
-                UUID.randomUUID(),
-                String.format("Test Court %s", (char) (i + 0x41))
-            ));
-        }
-
-        when(courtService.getAllCourtDetails()).thenReturn(courtDetailsList);
-        when(courtDetailsViewService.prepareDetailsView(any(CourtDetails.class)))
-            .thenAnswer(invocation -> invocation.getArgument(0));
-
-        MvcResult result = mockMvc.perform(get("/courts/all/v1"))
-            .andExpect(status().isOk())
-            .andReturn();
-
-        List<CourtDetails> responseList = List.of(objectMapper.readValue(
-            result.getResponse().getContentAsString(),
-            CourtDetails[].class
-        ));
-
-        Assertions.assertThat(responseList).isEqualTo(courtDetailsList);
-    }
-
-
     private Court buildCourt(UUID id) {
         return Court.builder()
             .id(id)
@@ -543,7 +386,6 @@ class CourtControllerTest {
             .open(Boolean.TRUE)
             .warningNotice("Notice")
             .regionId(REGION_ID)
-            .isServiceCentre(Boolean.TRUE)
             .openOnCath(Boolean.TRUE)
             .mrdId("MRD123")
             .build();
@@ -557,7 +399,6 @@ class CourtControllerTest {
             .open(Boolean.TRUE)
             .warningNotice("Notice")
             .regionId(REGION_ID)
-            .isServiceCentre(Boolean.TRUE)
             .openOnCath(Boolean.TRUE)
             .mrdId("MRD123")
             .build();

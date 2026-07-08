@@ -3,8 +3,9 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.repositories.CourtServiceAreasRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 
 import java.text.MessageFormat;
 import java.util.List;
@@ -17,7 +18,8 @@ import org.springframework.stereotype.Service;
 public class ServiceAreaService {
 
     private final ServiceAreaRepository serviceAreaRepository;
-    private final CourtServiceAreasRepository courtServiceAreasRepository;
+    private final ServiceCentreRepository serviceCentreRepository;
+    private final CourtLocalAuthoritiesRepository courtLocalAuthoritiesRepository;
 
     /**
      * Retrieves a service area by name.
@@ -60,15 +62,16 @@ public class ServiceAreaService {
      */
     private ServiceArea enrichServiceArea(ServiceArea serviceArea) {
         serviceArea.setHasLocal(
-            courtServiceAreasRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
                 serviceArea.getId(), List.of(CatchmentType.LOCAL))
+                || courtLocalAuthoritiesRepository.existsByAreaOfLawId(serviceArea.getAreaOfLawId())
         );
         serviceArea.setHasNational(
-            courtServiceAreasRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
                 serviceArea.getId(), List.of(CatchmentType.NATIONAL))
         );
         serviceArea.setHasRegional(
-            courtServiceAreasRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
                 serviceArea.getId(), List.of(CatchmentType.REGIONAL))
         );
         return serviceArea;
