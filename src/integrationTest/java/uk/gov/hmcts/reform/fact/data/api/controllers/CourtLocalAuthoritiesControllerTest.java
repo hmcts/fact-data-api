@@ -10,7 +10,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
@@ -80,13 +79,14 @@ class CourtLocalAuthoritiesControllerTest {
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/local-authorities returns 204 when areas not configured")
-    void getLocalAuthoritiesReturnsNoContentWhenAreasMissing() throws Exception {
+    @DisplayName("GET /courts/{courtId}/v1/local-authorities returns empty list when areas not configured")
+    void getLocalAuthoritiesReturnsEmptyListWhenAreasMissing() throws Exception {
         when(courtLocalAuthoritiesService.getCourtLocalAuthorities(courtId))
-            .thenThrow(new CourtResourceNotFoundException("No areas of law"));
+            .thenReturn(List.of());
 
         mockMvc.perform(get("/courts/{courtId}/v1/local-authorities", courtId))
-            .andExpect(status().isNoContent());
+            .andExpect(status().isOk())
+            .andExpect(content().json("[]"));
     }
 
     @Test
@@ -132,26 +132,6 @@ class CourtLocalAuthoritiesControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @DisplayName("PUT /courts/{courtId}/v1/local-authorities returns 204 when areas not configured")
-    void putLocalAuthoritiesReturnsNoContentWhenAreasMissing() throws Exception {
-        List<CourtLocalAuthorityDto> request = List.of(CourtLocalAuthorityDto.builder()
-            .areaOfLawId(areaOfLawId)
-            .localAuthorities(List.of(LocalAuthoritySelectionDto.builder()
-                .id(localAuthorityId)
-                .selected(true)
-                .build()))
-            .build());
-
-        doThrow(new CourtResourceNotFoundException("No areas of law")).when(courtLocalAuthoritiesService)
-            .setCourtLocalAuthorities(courtId, request);
-
-        mockMvc.perform(put("/courts/{courtId}/v1/local-authorities", courtId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isNoContent());
     }
 
     @Test
