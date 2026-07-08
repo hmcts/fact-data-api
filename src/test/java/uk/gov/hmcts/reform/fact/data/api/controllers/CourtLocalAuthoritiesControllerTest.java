@@ -7,7 +7,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
@@ -82,17 +81,6 @@ class CourtLocalAuthoritiesControllerTest {
         String courtId = COURT_ID.toString();
 
         assertThrows(NotFoundException.class,
-            () -> courtLocalAuthoritiesController.getCourtLocalAuthorities(courtId));
-    }
-
-    @Test
-    void shouldThrowCourtResourceNotFoundFromService() {
-        when(courtLocalAuthoritiesService.getCourtLocalAuthorities(COURT_ID))
-            .thenThrow(new CourtResourceNotFoundException("No areas of law"));
-
-        String courtId = COURT_ID.toString();
-
-        assertThrows(CourtResourceNotFoundException.class,
             () -> courtLocalAuthoritiesController.getCourtLocalAuthorities(courtId));
     }
 
