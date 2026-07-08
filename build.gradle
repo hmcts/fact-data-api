@@ -193,7 +193,7 @@ dependencies {
 
   implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '3.0.3'
 
-  implementation group: 'org.postgresql', name: 'postgresql', version: '42.7.12'
+  implementation group: 'org.postgresql', name: 'postgresql', version: '42.7.13'
   implementation group:'org.springframework.boot', name:'spring-boot-flyway'
 
   implementation group: 'org.flywaydb', name: 'flyway-core', version: '12.10.0'
