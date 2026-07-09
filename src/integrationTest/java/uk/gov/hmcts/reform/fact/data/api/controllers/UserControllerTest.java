@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -17,11 +18,13 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -50,6 +53,33 @@ class UserControllerTest {
     private final UUID userId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
     private final UUID nonExistentUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private final UUID courtId = UUID.fromString("222e4567-e89b-12d3-a456-426614174000");
+
+    @Test
+    @DisplayName("GET /user/v1 returns filtered and paginated users successfully")
+    void getFilteredAndPaginatedUsersReturnsSuccessfully() throws Exception {
+        UUID ssoId = UUID.fromString("333e4567-e89b-12d3-a456-426614174000");
+        User user = User.builder()
+            .email("admin@justice.gov.uk")
+            .ssoId(ssoId)
+            .lastLogin(ZonedDateTime.parse("2026-07-08T10:15:30Z"))
+            .role(UserRole.ADMIN)
+            .build();
+        when(userService.getFilteredAndPaginatedUsers(0, 25, "admin", "lastLogin", "desc"))
+            .thenReturn(new PageImpl<>(List.of(user)));
+
+        mockMvc.perform(get("/user/v1")
+                            .param("pageNumber", "0")
+                            .param("pageSize", "25")
+                            .param("search", "admin")
+                            .param("sortBy", "lastLogin")
+                            .param("sortOrder", "desc"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].email").value("admin@justice.gov.uk"))
+            .andExpect(jsonPath("$.content[0].ssoId").value(ssoId.toString()))
+            .andExpect(jsonPath("$.content[0].role").value("Admin"));
+
+        verify(userService).getFilteredAndPaginatedUsers(0, 25, "admin", "lastLogin", "desc");
+    }
 
     @Test
     @DisplayName("GET /user/v1/{userId}/favourites returns favourite courts successfully")

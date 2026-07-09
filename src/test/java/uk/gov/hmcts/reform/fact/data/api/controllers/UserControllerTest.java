@@ -5,6 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -41,6 +43,18 @@ class UserControllerTest {
 
     @InjectMocks
     private UserController userController;
+
+    @Test
+    void getFilteredAndPaginatedUsersReturns200() {
+        Page<User> users = new PageImpl<>(List.of(new User()));
+        when(userService.getFilteredAndPaginatedUsers(0, 25, "admin", "lastLogin", "desc")).thenReturn(users);
+
+        ResponseEntity<Page<User>> response =
+            userController.getFilteredAndPaginatedUsers(0, 25, "admin", "lastLogin", "desc");
+
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(users);
+    }
 
     @Test
     void getUserFavoritesReturns200() {
