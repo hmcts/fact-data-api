@@ -15,6 +15,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @SecuredFactRestController(
     name = "User",
@@ -39,6 +44,32 @@ public class UserController {
     public UserController(UserService userService, CourtLockService courtLockService) {
         this.userService = userService;
         this.courtLockService = courtLockService;
+    }
+
+    @GetMapping("/v1")
+    @Operation(summary = "Get filtered and paginated users")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved users"),
+        @ApiResponse(responseCode = "400", description = "Invalid request parameters supplied")
+    })
+    @PreAuthorize("@authService.isAdmin()")
+    public ResponseEntity<Page<User>> getFilteredAndPaginatedUsers(
+        @RequestParam(name = "pageNumber", defaultValue = "0")
+        @PositiveOrZero(message = "pageNumber must be greater than or equal to 0") int pageNumber,
+        @RequestParam(name = "pageSize", defaultValue = "25")
+        @Positive(message = "pageSize must be greater than 0") int pageSize,
+        @RequestParam(name = "search", required = false)
+        @Size(max = 250, message = "Search must be less than 250 characters")
+        String search,
+        @RequestParam(name = "sortBy", required = false) String sortBy,
+        @RequestParam(name = "sortOrder", required = false) String sortOrder) {
+        return ResponseEntity.ok(userService.getFilteredAndPaginatedUsers(
+            pageNumber,
+            pageSize,
+            search,
+            sortBy,
+            sortOrder
+        ));
     }
 
     @GetMapping("/v1/{userId}/favourites")
