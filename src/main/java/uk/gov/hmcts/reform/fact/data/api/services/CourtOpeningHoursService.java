@@ -79,11 +79,13 @@ public class CourtOpeningHoursService {
      * @throws CourtResourceNotFoundException if no counter service record exists for the court or the list is empty.
      */
     public List<CourtCounterServiceOpeningHours> getCounterServiceOpeningHoursByCourtId(UUID courtId) {
-        return courtCounterServiceOpeningHoursRepository
-            .findByCourtId(courtService.getCourtById(courtId).getId())
-            .filter(list -> !list.isEmpty())
-            .orElseThrow(() -> new CourtResourceNotFoundException(
-                "No counter service opening hours found for court ID: " + courtId));
+        List<CourtCounterServiceOpeningHours> result =
+            courtCounterServiceOpeningHoursRepository.findByCourtId(courtService.getCourtById(courtId).getId());
+        if (result.isEmpty()) {
+            throw new CourtResourceNotFoundException(
+                "No counter service opening hours found for court ID: " + courtId);
+        }
+        return result;
     }
 
     /**

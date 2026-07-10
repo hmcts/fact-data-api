@@ -202,8 +202,7 @@ class CourtOpeningHoursServiceTest {
     void getCounterServiceOpeningHoursByCourtIdReturnsOpeningHoursWhenFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId))
-            .thenReturn(Optional.of(List.of(counterServiceOpeningHours)));
-
+            .thenReturn(List.of(counterServiceOpeningHours));
 
         List<CourtCounterServiceOpeningHours> result =
             courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(courtId);
@@ -214,7 +213,7 @@ class CourtOpeningHoursServiceTest {
     @Test
     void getCounterServiceOpeningHoursByCourtIdThrowsExceptionWhenNotFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
+        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)).thenReturn(List.of());
 
         assertThrows(
             CourtResourceNotFoundException.class,
@@ -244,24 +243,24 @@ class CourtOpeningHoursServiceTest {
     }
 
     @Test
-    void getCounterServiceOpeningHoursThrowsExceptionWhenNotFound() {
+    void getCounterServiceOpeningHoursByIdThrowsExceptionWhenNotFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(courtCounterServiceOpeningHoursRepository.findByCourtIdAndId(courtId, counterServiceOpeningHours.getId()))
             .thenReturn(Optional.empty());
 
+        final UUID counterServiceId = counterServiceOpeningHours.getId();
         assertThrows(
             CourtResourceNotFoundException.class,
-            () -> courtOpeningHoursService.getCounterServiceOpeningHoursById(
-                courtId, counterServiceOpeningHours.getId())
-        );
+            () -> courtOpeningHoursService.getCounterServiceOpeningHoursById(courtId, counterServiceId));
     }
 
     @Test
     void getCounterServiceOpeningHoursByIdThrowsExceptionWhenCourtDoesNotExist() {
         when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
 
+        final UUID counterServiceId = counterServiceOpeningHours.getId();
         assertThrows(NotFoundException.class, () ->
-            courtOpeningHoursService.getCounterServiceOpeningHoursById(courtId, counterServiceOpeningHours.getId())
+            courtOpeningHoursService.getCounterServiceOpeningHoursById(courtId, counterServiceId)
         );
     }
 

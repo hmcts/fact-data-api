@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 public interface CourtCounterServiceOpeningHoursRepository
     extends JpaRepository<CourtCounterServiceOpeningHours, UUID> {
 
-    Optional<List<CourtCounterServiceOpeningHours>> findByCourtId(UUID courtId);
+    List<CourtCounterServiceOpeningHours> findByCourtId(UUID courtId);
 
     Optional<CourtCounterServiceOpeningHours> findByCourtIdAndId(UUID courtId, UUID counterServiceOpeningHourId);
 }
