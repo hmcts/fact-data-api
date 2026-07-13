@@ -106,7 +106,7 @@ class CourtOpeningHoursControllerTest {
                 .id(UUID.randomUUID())
                 .courtId(COURT_ID)
                 .openingTimesDetails(openingTimesDetails)
-                .appointmentContact("Test Contact")
+                .appointmentContact("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)

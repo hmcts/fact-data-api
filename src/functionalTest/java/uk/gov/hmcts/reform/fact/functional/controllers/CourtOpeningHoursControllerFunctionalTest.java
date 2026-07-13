@@ -100,7 +100,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingTimesDetails(openingTimesDetails)
-                .appointmentContact("Test Contact")
+                .appointmentContact("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
