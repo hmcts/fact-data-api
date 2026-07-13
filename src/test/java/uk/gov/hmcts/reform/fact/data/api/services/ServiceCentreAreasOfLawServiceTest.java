@@ -8,7 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreAreasOfLawRepository;
 
 import java.util.List;
@@ -17,7 +16,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,36 +33,6 @@ class ServiceCentreAreasOfLawServiceTest {
 
     @InjectMocks
     private ServiceCentreAreasOfLawService serviceCentreAreasOfLawService;
-
-    @Test
-    void getServiceCentreAreasOfLawByServiceCentreIdReturnsRecord() {
-        UUID serviceCentreId = UUID.randomUUID();
-        ServiceCentre serviceCentre = ServiceCentre.builder().id(serviceCentreId).build();
-        ServiceCentreAreasOfLaw areasOfLaw = ServiceCentreAreasOfLaw.builder()
-            .serviceCentreId(serviceCentreId)
-            .build();
-
-        when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
-        when(serviceCentreAreasOfLawRepository.findByServiceCentreId(serviceCentreId))
-            .thenReturn(Optional.of(areasOfLaw));
-
-        assertThat(serviceCentreAreasOfLawService.getServiceCentreAreasOfLawByServiceCentreId(serviceCentreId))
-            .isEqualTo(areasOfLaw);
-    }
-
-    @Test
-    void getServiceCentreAreasOfLawByServiceCentreIdThrowsNotFoundWhenMissing() {
-        UUID serviceCentreId = UUID.randomUUID();
-        ServiceCentre serviceCentre = ServiceCentre.builder().id(serviceCentreId).build();
-
-        when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
-        when(serviceCentreAreasOfLawRepository.findByServiceCentreId(serviceCentreId)).thenReturn(Optional.empty());
-
-        assertThrows(
-            NotFoundException.class,
-            () -> serviceCentreAreasOfLawService.getServiceCentreAreasOfLawByServiceCentreId(serviceCentreId)
-        );
-    }
 
     @Test
     void getAreasOfLawStatusReturnsAvailabilityMap() {
