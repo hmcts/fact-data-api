@@ -21,21 +21,6 @@ public class ServiceCentreAreasOfLawService {
     private final TypesService typesService;
 
     /**
-     * Get areas of law by service centre id.
-     *
-     * @param serviceCentreId The service centre id to find the areas of law for.
-     * @return Areas of law record for the service centre.
-     * @throws NotFoundException if no areas of law record exists for the service centre.
-     */
-    public ServiceCentreAreasOfLaw getServiceCentreAreasOfLawByServiceCentreId(UUID serviceCentreId) {
-        return serviceCentreAreasOfLawRepository.findByServiceCentreId(
-            serviceCentreService.getServiceCentreById(serviceCentreId).getId()
-        ).orElseThrow(() -> new NotFoundException(
-            "No service centre areas of law found for service centre id: " + serviceCentreId
-        ));
-    }
-
-    /**
      * Get a map of areas of law types and their status for a service centre.
      *
      * @param serviceCentreId The service centre id to find the areas of law for.
@@ -43,14 +28,17 @@ public class ServiceCentreAreasOfLawService {
      * @throws NotFoundException if no areas of law record exists for the service centre.
      */
     public Map<AreaOfLawType, Boolean> getAreasOfLawStatusByServiceCentreId(UUID serviceCentreId) {
-        List<UUID> serviceCentreAreasOfLawIds =
-            getServiceCentreAreasOfLawByServiceCentreId(serviceCentreId).getAreasOfLaw();
+        serviceCentreService.getServiceCentreById(serviceCentreId);
+
+        List<UUID> serviceCentreAreasOfLaw = serviceCentreAreasOfLawRepository.findByServiceCentreId(serviceCentreId)
+            .map(ServiceCentreAreasOfLaw::getAreasOfLaw)
+            .orElse(List.of());
         List<AreaOfLawType> allAreasOfLawTypes = typesService.getAreaOfLawTypes();
 
         return allAreasOfLawTypes.stream()
             .collect(Collectors.toMap(
                 areaOfLawType -> areaOfLawType,
-                areaOfLawType -> serviceCentreAreasOfLawIds.contains(areaOfLawType.getId())
+                areaOfLawType -> serviceCentreAreasOfLaw.contains(areaOfLawType.getId())
             ));
     }
 
