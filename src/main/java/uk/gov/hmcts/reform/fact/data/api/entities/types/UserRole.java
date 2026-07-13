@@ -11,7 +11,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum UserRole {
     ADMIN("Admin"),
-    SUPER_ADMIN("SuperAdmin");
+    SUPER_ADMIN("SuperAdmin"),
+    VIEWER("Viewer");
 
     private final String label;
 
