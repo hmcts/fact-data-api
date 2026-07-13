@@ -144,6 +144,19 @@ class UserServiceTest {
     }
 
     @Test
+    void createOrUpdateUserShouldSaveViewerRole() {
+        User user = new User();
+        user.setRole(UserRole.VIEWER);
+
+        when(userRepository.save(user)).thenReturn(user);
+
+        User result = userService.createOrUpdateLastLoginUser(user);
+
+        assertThat(result.getRole()).isEqualTo(UserRole.VIEWER);
+        verify(userRepository).save(user);
+    }
+
+    @Test
     void createOrUpdateUserShouldThrowExceptionWhenSaveFails() {
         User user = new User();
         user.setRole(UserRole.ADMIN);
