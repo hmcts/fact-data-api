@@ -1,7 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
 
 import java.time.ZonedDateTime;
@@ -54,7 +54,7 @@ public class Audit {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    private AuditSubjectType subjectType;
+    private SubjectType subjectType;
 
     @NotNull
     @Column(name = "user_id")

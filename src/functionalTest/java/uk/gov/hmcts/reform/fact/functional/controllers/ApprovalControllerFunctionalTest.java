@@ -6,7 +6,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.Approval;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
@@ -34,7 +34,7 @@ public final class ApprovalControllerFunctionalTest {
     void shouldCreateAndReturnApprovalSuccessfully() {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Approval");
         final UUID userId = TestDataHelper.createUser(http, "test.approval.create");
-        final Approval approval = createApproval(courtId, AuditSubjectType.COURT, userId);
+        final Approval approval = createApproval(courtId, SubjectType.COURT, userId);
 
         final Response createResponse = http.doPost("/approvals/v1", approval);
         AssertionHelper.assertStatus(createResponse, CREATED);
@@ -47,7 +47,7 @@ public final class ApprovalControllerFunctionalTest {
             .isEqualTo(courtId.toString());
         assertThat(createResponse.jsonPath().getString("subjectType"))
             .as("Created approval should reference a court subject")
-            .isEqualTo(AuditSubjectType.COURT.name());
+            .isEqualTo(SubjectType.COURT.name());
         assertThat(createResponse.jsonPath().getString("userId"))
             .as("Created approval should reference the requested user")
             .isEqualTo(userId.toString());
@@ -81,7 +81,7 @@ public final class ApprovalControllerFunctionalTest {
     void shouldCreateServiceCentreApprovalSuccessfully() {
         final UUID serviceCentreId = TestDataHelper.createServiceCentre(http, "Test Service Centre Approval");
         final UUID userId = TestDataHelper.createUser(http, "test.approval.service.centre");
-        final Approval approval = createApproval(serviceCentreId, AuditSubjectType.SERVICE_CENTRE, userId);
+        final Approval approval = createApproval(serviceCentreId, SubjectType.SERVICE_CENTRE, userId);
 
         final Response createResponse = http.doPost("/approvals/v1", approval);
         AssertionHelper.assertStatus(createResponse, CREATED);
@@ -94,7 +94,7 @@ public final class ApprovalControllerFunctionalTest {
             .isEqualTo(serviceCentreId.toString());
         assertThat(createResponse.jsonPath().getString("subjectType"))
             .as("Created approval should reference a service centre subject")
-            .isEqualTo(AuditSubjectType.SERVICE_CENTRE.name());
+            .isEqualTo(SubjectType.SERVICE_CENTRE.name());
     }
 
     @Test
@@ -102,7 +102,7 @@ public final class ApprovalControllerFunctionalTest {
     void shouldDeleteApprovalSuccessfully() {
         final UUID courtId = TestDataHelper.createCourt(http, "Test Court Approval Delete");
         final UUID userId = TestDataHelper.createUser(http, "test.approval.delete");
-        final Response createResponse = http.doPost("/approvals/v1", createApproval(courtId, AuditSubjectType.COURT,
+        final Response createResponse = http.doPost("/approvals/v1", createApproval(courtId, SubjectType.COURT,
                                                                                     userId));
         AssertionHelper.assertStatus(createResponse, CREATED);
 
@@ -122,7 +122,7 @@ public final class ApprovalControllerFunctionalTest {
     void shouldReturnBadRequestForInvalidApproval() {
         final Approval approval = Approval.builder()
             .subjectId(UUID.randomUUID())
-            .subjectType(AuditSubjectType.COURT)
+            .subjectType(SubjectType.COURT)
             .build();
 
         final Response response = http.doPost("/approvals/v1", approval);
@@ -133,7 +133,7 @@ public final class ApprovalControllerFunctionalTest {
     @DisplayName("POST /approvals/v1 returns 404 when subject does not exist")
     void shouldReturnNotFoundWhenSubjectDoesNotExist() {
         final UUID userId = TestDataHelper.createUser(http, "test.approval.missing.subject");
-        final Approval approval = createApproval(UUID.randomUUID(), AuditSubjectType.COURT, userId);
+        final Approval approval = createApproval(UUID.randomUUID(), SubjectType.COURT, userId);
 
         final Response response = http.doPost("/approvals/v1", approval);
         AssertionHelper.assertStatus(response, NOT_FOUND);
@@ -150,7 +150,7 @@ public final class ApprovalControllerFunctionalTest {
         AssertionHelper.assertStatus(response, NOT_FOUND);
     }
 
-    private static Approval createApproval(final UUID subjectId, final AuditSubjectType subjectType,
+    private static Approval createApproval(final UUID subjectId, final SubjectType subjectType,
                                            final UUID userId) {
         return Approval.builder()
             .subjectId(subjectId)

@@ -15,7 +15,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
+import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
 
 import java.time.ZonedDateTime;
@@ -48,7 +48,7 @@ class UserControllerTest {
     private UserService userService;
 
     @MockitoBean
-    private CourtLockService courtLockService;
+    private LockService lockService;
 
     private final UUID userId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
     private final UUID nonExistentUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -161,7 +161,7 @@ class UserControllerTest {
     @DisplayName("DELETE /user/v1/{userId}/locks returns 404 if user not found")
     void clearUserLocksNonExistentUserReturnsNotFound() throws Exception {
         doThrow(new NotFoundException("User not found"))
-            .when(courtLockService).clearUserLocks(nonExistentUserId);
+            .when(lockService).clearUserLocks(nonExistentUserId);
 
         mockMvc.perform(delete("/user/v1/{userId}/locks", nonExistentUserId))
             .andExpect(status().isNotFound());

@@ -2,7 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import uk.gov.hmcts.reform.fact.data.api.config.properties.AuditConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -47,7 +47,7 @@ public class AuditService {
      * @return a {@link Page} of {@link Audit} results.
      */
     public Page<Audit> getFilteredAndPaginatedAudits(int pageNumber, int pageSize, @NonNull LocalDate fromDate,
-                                                     LocalDate toDate, AuditSubjectType subjectType, String courtId,
+                                                     LocalDate toDate, SubjectType subjectType, String courtId,
                                                      String serviceCentreId, String email) {
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
@@ -109,7 +109,7 @@ public class AuditService {
     private Page<Audit> performSubjectAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
                                                  SubjectFilter subjectFilter, String email, Pageable pageable) {
         UUID subjectId = subjectFilter.subjectId();
-        AuditSubjectType subjectType = subjectFilter.subjectType();
+        SubjectType subjectType = subjectFilter.subjectType();
         boolean hasToDate = toDateTime != null;
         boolean hasEmail = email != null && !email.isBlank();
 
@@ -130,7 +130,7 @@ public class AuditService {
     }
 
     private Page<Audit> performSubjectTypeAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
-                                                 AuditSubjectType subjectType, String email, Pageable pageable) {
+                                                     SubjectType subjectType, String email, Pageable pageable) {
         boolean hasToDate = toDateTime != null;
         boolean hasEmail = email != null && !email.isBlank();
 
@@ -151,15 +151,15 @@ public class AuditService {
     }
 
     private static SubjectFilter resolveSubjectFilter(String courtId, String serviceCentreId,
-                                                      AuditSubjectType subjectType) {
+                                                      SubjectType subjectType) {
         if (courtId != null && serviceCentreId != null) {
             throw new InvalidParameterCombinationException("Only one of courtId or serviceCentreId can be provided");
         }
         if (courtId != null) {
-            return new SubjectFilter(UUID.fromString(courtId), AuditSubjectType.COURT);
+            return new SubjectFilter(UUID.fromString(courtId), SubjectType.COURT);
         }
         if (serviceCentreId != null) {
-            return new SubjectFilter(UUID.fromString(serviceCentreId), AuditSubjectType.SERVICE_CENTRE);
+            return new SubjectFilter(UUID.fromString(serviceCentreId), SubjectType.SERVICE_CENTRE);
         }
         // if a subject type is provided without a specific subject id, we can still filter by subject type
         if (subjectType != null) {
@@ -168,18 +168,18 @@ public class AuditService {
         return null;
     }
 
-    private record SubjectFilter(UUID subjectId, AuditSubjectType subjectType) {}
+    private record SubjectFilter(UUID subjectId, SubjectType subjectType) {}
 
     /**
      * Retrieves the complete set of supported audit subjects with their corresponding name and id pairs.
      *
-     * @return a {@link Map} of {@link AuditSubjectType} to a list of {@link NameAndId} pairs
+     * @return a {@link Map} of {@link SubjectType} to a list of {@link NameAndId} pairs
      *         representing the names and ids of the subjects.
      */
-    public Map<AuditSubjectType, List<NameAndId>> getSubjectNameAndIdMap() {
+    public Map<SubjectType, List<NameAndId>> getSubjectNameAndIdMap() {
         return Map.of(
-            AuditSubjectType.COURT, courtService.getAllCourtNameAndIds(),
-            AuditSubjectType.SERVICE_CENTRE, serviceCentreService.getAllServiceCentreNameAndIds()
+            SubjectType.COURT, courtService.getAllCourtNameAndIds(),
+            SubjectType.SERVICE_CENTRE, serviceCentreService.getAllServiceCentreNameAndIds()
         );
     }
 
