@@ -1,11 +1,11 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,8 +32,8 @@ import org.hibernate.annotations.TimeZoneStorageType;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "court_lock")
-public class CourtLock {
+@Table(name = "lock")
+public class Lock {
 
     @Schema(
         description = "The internal ID - assigned by the server during creation",
@@ -43,22 +43,19 @@ public class CourtLock {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Schema(description = "The ID of the associated Court", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
-    @Column(name = "court_id")
-    private UUID courtId;
+    @Column(name = "subject_id")
+    private UUID subjectId;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "court_id", insertable = false, updatable = false)
-    private Court court;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private SubjectType subjectType;
 
     @Schema(description = "The ID of the associated User")
     @NotNull
     @Column(name = "user_id")
     private UUID userId;
 
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
@@ -68,10 +65,6 @@ public class CourtLock {
     @Enumerated(EnumType.STRING)
     private Page page;
 
-    // TODO - consider using @UpdateTimestamp here to automate lock timestamping?
-    // as the intention is that a lock can be re-acquired to prevent
-    // being timed out, it may be prudent to automate the value in this field
-    // using an @UpdateTimestamp as well as removing the Setter.
     @Schema(description = "Acquire timestamp for the lock")
     @NotNull
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)

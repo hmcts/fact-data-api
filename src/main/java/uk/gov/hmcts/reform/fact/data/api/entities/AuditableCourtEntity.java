@@ -1,6 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 
 import java.util.UUID;
 
@@ -13,7 +13,7 @@ public interface AuditableCourtEntity extends AuditableEntity {
     }
 
     @Override
-    default AuditSubjectType getAuditSubjectType() {
-        return AuditSubjectType.COURT;
+    default SubjectType getAuditSubjectType() {
+        return SubjectType.COURT;
     }
 }

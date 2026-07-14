@@ -1,4 +1,4 @@
-package uk.gov.hmcts.reform.fact.data.api.validator;
+package uk.gov.hmcts.reform.fact.data.api.aspect;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -13,10 +13,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
-import uk.gov.hmcts.reform.fact.data.api.entities.CourtLock;
+import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtLockService;
-import uk.gov.hmcts.reform.fact.data.api.validation.validator.CourtLockTimeoutValidator;
+import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 
 import java.lang.reflect.Method;
 import java.time.ZonedDateTime;
@@ -27,15 +27,17 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CourtLockTimeoutValidatorTest {
+class LockAspectTest {
 
     @Mock
-    private CourtLockService courtLockService;
+    private LockService lockService;
 
     @Mock
     private JoinPoint joinPoint;
@@ -43,16 +45,16 @@ class CourtLockTimeoutValidatorTest {
     @Mock
     private MethodSignature methodSignature;
 
-    private CourtLockTimeoutValidator validator;
+    private LockAspect validator;
 
     private final UUID courtId = UUID.randomUUID();
     private final UUID userId = UUID.randomUUID();
     private final UUID otherUserId = UUID.randomUUID();
-    private final Page page = Page.COURT;
+    private final Page page = Page.GENERAL;
 
     @BeforeEach
     void setUp() {
-        validator = new CourtLockTimeoutValidator(courtLockService);
+        validator = new LockAspect(lockService);
         ReflectionTestUtils.setField(validator, "lockTimeoutMinutes", 60L);
     }
 
@@ -60,29 +62,29 @@ class CourtLockTimeoutValidatorTest {
     @DisplayName("Should allow operation when no lock exists")
     void shouldAllowWhenNoLockExists() {
         setupJoinPoint(courtId, page, userId);
-        when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.empty());
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
-        verify(courtLockService, never()).deleteLock(any(), any());
+        verify(lockService, never()).deleteLock(any(), any(), any());
     }
 
     @Test
     @DisplayName("Should allow operation when same user owns the lock")
     void shouldAllowWhenSameUserOwnsLock() {
         setupJoinPoint(courtId, page, userId);
-        CourtLock lock = createLock(userId, ZonedDateTime.now().minusMinutes(30));
-        when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
+        Lock lock = createLock(userId, ZonedDateTime.now().minusMinutes(30));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
-        verify(courtLockService, never()).deleteLock(any(), any());
+        verify(lockService, never()).deleteLock(any(), any(), any());
     }
 
     @Test
     @DisplayName("Should throw 409 CONFLICT when lock is valid and held by another user")
     void shouldThrowConflictWhenLockIsValid() {
         setupJoinPoint(courtId, page, userId);
-        CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(30));
-        when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
+        Lock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(30));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         ResponseStatusException exception = assertThrows(
             ResponseStatusException.class,
@@ -92,37 +94,37 @@ class CourtLockTimeoutValidatorTest {
         // Then
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
         assertEquals("Page locked by another user (30/60 min)", exception.getReason());
-        verify(courtLockService, never()).deleteLock(any(), any());
+        verify(lockService, never()).deleteLock(any(), any(), any());
     }
 
     @Test
     @DisplayName("Should delete stale lock and allow operation when lock has exceeded timeout")
     void shouldDeleteStaleLockAndAllow() {
         setupJoinPoint(courtId, page, userId);
-        CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(61));
-        when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
+        Lock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(61));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
-        verify(courtLockService).deleteLock(courtId, page);
+        verify(lockService).deleteLock(SubjectType.COURT, courtId, page);
     }
 
     @Test
     @DisplayName("Should delete lock exactly at timeout threshold")
     void shouldDeleteLockAtExactTimeout() {
         setupJoinPoint(courtId, page, userId);
-        CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(60));
-        when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
+        Lock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(60));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
-        verify(courtLockService).deleteLock(courtId, page);
+        verify(lockService).deleteLock(SubjectType.COURT, courtId, page);
     }
 
     @Test
     @DisplayName("Should not delete lock just before timeout threshold")
     void shouldNotDeleteLockJustBeforeTimeout() {
         setupJoinPoint(courtId, page, userId);
-        CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(59));
-        when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
+        Lock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(59));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         ResponseStatusException exception = assertThrows(
             ResponseStatusException.class,
@@ -130,18 +132,18 @@ class CourtLockTimeoutValidatorTest {
         );
 
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
-        verify(courtLockService, never()).deleteLock(any(), any());
+        verify(lockService, never()).deleteLock(any(), any(), any());
     }
 
     @Test
     @DisplayName("Should handle very old stale locks")
     void shouldHandleVeryOldStaleLocks() {
         setupJoinPoint(courtId, page, userId);
-        CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusHours(24));
-        when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
+        Lock lock = createLock(otherUserId, ZonedDateTime.now().minusHours(24));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
-        verify(courtLockService).deleteLock(courtId, page);
+        verify(lockService).deleteLock(SubjectType.COURT, courtId, page);
     }
 
     @Test
@@ -149,11 +151,11 @@ class CourtLockTimeoutValidatorTest {
     void shouldRespectCustomTimeout() {
         ReflectionTestUtils.setField(validator, "lockTimeoutMinutes", 15L);
         setupJoinPoint(courtId, page, userId);
-        CourtLock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(20));
-        when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.of(lock));
+        Lock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(20));
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
-        verify(courtLockService).deleteLock(courtId, page);
+        verify(lockService).deleteLock(SubjectType.COURT, courtId, page);
     }
 
     @Test
@@ -165,7 +167,7 @@ class CourtLockTimeoutValidatorTest {
             IllegalArgumentException.class,
             () -> validator.validateLockTimeout(joinPoint)
         );
-        assertEquals("Required parameter not found: courtId", exception.getMessage());
+        assertEquals("Required parameter not found: subjectType", exception.getMessage());
     }
 
     @Test
@@ -196,7 +198,7 @@ class CourtLockTimeoutValidatorTest {
     @DisplayName("Should handle courtId as String and convert to UUID")
     void shouldHandleCourtIdAsString() {
         setupJoinPointWithStringCourtId(courtId.toString(), page, userId);
-        when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.empty());
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
     }
@@ -204,29 +206,50 @@ class CourtLockTimeoutValidatorTest {
     @Test
     @DisplayName("Should handle page as String and convert to enum")
     void shouldHandlePageAsString() {
-        setupJoinPointWithStringPage(courtId, "COURT", userId);
-        when(courtLockService.getPageLock(courtId, page)).thenReturn(Optional.empty());
+        setupJoinPointWithStringPage(courtId, "GENERAL", userId);
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
     }
 
+    @Test
+    @DisplayName("Should call deleteExpiredLocks when LockCleanupCheck advice runs")
+    void shouldCleanupExpiredLocks() {
+        assertDoesNotThrow(() -> validator.lockCleanup(joinPoint));
+
+        verify(lockService, times(1)).deleteExpiredLocks();
+    }
+
+    @Test
+    @DisplayName("Should swallow exception when deleteExpiredLocks fails")
+    void shouldSwallowCleanupException() {
+        doThrow(new RuntimeException("cleanup failed")).when(lockService).deleteExpiredLocks();
+
+        assertDoesNotThrow(() -> validator.lockCleanup(joinPoint));
+
+        verify(lockService, times(1)).deleteExpiredLocks();
+    }
+
     // Helper methods
 
-    private CourtLock createLock(UUID userId, ZonedDateTime lockAcquired) {
-        CourtLock lock = new CourtLock();
+    private Lock createLock(UUID userId, ZonedDateTime lockAcquired) {
+        Lock lock = new Lock();
         lock.setUserId(userId);
         lock.setLockAcquired(lockAcquired);
-        lock.setCourtId(courtId);
+        lock.setSubjectType(SubjectType.COURT);
+        lock.setSubjectId(courtId);
         lock.setPage(page);
         return lock;
     }
 
     private void setupJoinPoint(UUID courtId, Page page, UUID userId) {
         try {
-            Method method = TestController.class.getMethod("testMethod", UUID.class, Page.class, UUID.class);
+            Method method = TestController.class.getMethod("testMethod",
+                                                           SubjectType.class, UUID.class, Page.class, UUID.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{courtId, page, userId});
+            when(joinPoint.getArgs()).thenReturn(new Object[]{
+                SubjectType.COURT, courtId, page, userId});
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -235,10 +258,10 @@ class CourtLockTimeoutValidatorTest {
     private void setupJoinPointWithStringCourtId(String courtId, Page page, UUID userId) {
         try {
             Method method = TestController.class.getMethod(
-                "testMethodWithStringCourtId", String.class, Page.class, UUID.class);
+                "testMethodWithStringSubjectId", SubjectType.class,  String.class, Page.class, UUID.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{courtId, page, userId});
+            when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, page, userId});
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -247,10 +270,10 @@ class CourtLockTimeoutValidatorTest {
     private void setupJoinPointWithStringPage(UUID courtId, String page, UUID userId) {
         try {
             Method method = TestController.class.getMethod(
-                "testMethodWithStringPage", UUID.class, String.class, UUID.class);
+                "testMethodWithStringPage", SubjectType.class, UUID.class, String.class, UUID.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{courtId, page, userId});
+            when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, page, userId});
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -258,7 +281,7 @@ class CourtLockTimeoutValidatorTest {
 
     private void setupJoinPointWithoutCourtId(Page page, UUID userId) {
         try {
-            Method method = TestController.class.getMethod("testMethodWithoutCourtId", Page.class, UUID.class);
+            Method method = TestController.class.getMethod("testMethodWithoutSubject", Page.class, UUID.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
             when(joinPoint.getArgs()).thenReturn(new Object[]{page, userId});
@@ -269,10 +292,11 @@ class CourtLockTimeoutValidatorTest {
 
     private void setupJoinPointWithoutPage(UUID courtId, UUID userId) {
         try {
-            Method method = TestController.class.getMethod("testMethodWithoutPage", UUID.class, UUID.class);
+            Method method = TestController.class.getMethod("testMethodWithoutPage",
+                                                           SubjectType.class, UUID.class, UUID.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{courtId, userId});
+            when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, userId});
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -280,10 +304,11 @@ class CourtLockTimeoutValidatorTest {
 
     private void setupJoinPointWithoutUserId(UUID courtId, Page page) {
         try {
-            Method method = TestController.class.getMethod("testMethodWithoutUserId", UUID.class, Page.class);
+            Method method = TestController.class.getMethod("testMethodWithoutUserId",
+                                                           SubjectType.class, UUID.class, Page.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
-            when(joinPoint.getArgs()).thenReturn(new Object[]{courtId, page});
+            when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, page});
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -293,37 +318,47 @@ class CourtLockTimeoutValidatorTest {
     @SuppressWarnings("unused")
     static class TestController {
         public void testMethod(
-            @PathVariable("courtId") UUID courtId,
+            @PathVariable("subjectType") SubjectType subjectType,
+            @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") Page page,
             @RequestParam("userId") UUID userId) {
+            // empty
         }
 
-        public void testMethodWithStringCourtId(
-            @PathVariable("courtId") String courtId,
+        public void testMethodWithStringSubjectId(
+            @PathVariable("subjectType") SubjectType subjectType,
+            @PathVariable("subjectId") String subjectId,
             @PathVariable("page") Page page,
             @RequestParam("userId") UUID userId) {
+            // empty
         }
 
         public void testMethodWithStringPage(
-            @PathVariable("courtId") UUID courtId,
+            @PathVariable("subjectType") SubjectType subjectType,
+            @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") String page,
             @RequestParam("userId") UUID userId) {
+            // empty
         }
 
-        public void testMethodWithoutCourtId(
+        public void testMethodWithoutSubject(
             @PathVariable("page") Page page,
             @RequestParam("userId") UUID userId) {
+            // empty
         }
 
         public void testMethodWithoutPage(
-            @PathVariable("courtId") UUID courtId,
+            @PathVariable("subjectType") SubjectType subjectType,
+            @PathVariable("subjectId") UUID subjectId,
             @RequestParam("userId") UUID userId) {
+            // empty
         }
 
         public void testMethodWithoutUserId(
-            @PathVariable("courtId") UUID courtId,
+            @PathVariable("subjectType") SubjectType subjectType,
+            @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") Page page) {
+            // empty
         }
     }
 }
-

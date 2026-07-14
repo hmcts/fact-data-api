@@ -25,6 +25,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
@@ -524,32 +525,32 @@ public class AuthFunctionalTest {
     }
 
     @Test
-    @DisplayName("Court lock endpoints enforce admin-only writes")
+    @DisplayName("Lock endpoints enforce admin-only writes")
     void courtLockAuth() throws Exception {
-        UUID courtId = createCourtAsAdmin("Test Court Auth Lock");
+        UUID courtId = createCourtAsAdmin("Test Auth Lock");
         UUID userId = createUserAsAdmin("test.user.auth.lock");
-        String lockPath = "/courts/" + courtId + "/v1/locks/" + Page.COURT;
+        String lockPath = "/locks/" + SubjectType.COURT + "/" + courtId + "/v1/" + Page.GENERAL;
 
         Response postAdmin = http.doPost(lockPath, mapper.writeValueAsString(userId), adminToken);
         assertThat(postAdmin.statusCode()).isIn(200, 201);
 
         assertViewerAllowed(
-            http.doGet("/courts/" + courtId + "/v1/locks", adminToken),
-            http.doGet("/courts/" + courtId + "/v1/locks", viewerToken),
-            "/courts/{courtId}/v1/locks [GET]"
+            http.doGet("/locks/" + SubjectType.COURT + "/" + courtId + "/v1/", adminToken),
+            http.doGet("/locks/" + SubjectType.COURT + "/" + courtId + "/v1/", viewerToken),
+            "/locks/{subjectType}/{subjectId}/v1 [GET]"
         );
         assertViewerAllowed(
             http.doGet(lockPath, adminToken),
             http.doGet(lockPath, viewerToken),
-            "/courts/{courtId}/v1/locks/{page} [GET]"
+            "/locks/{subjectType}/{subjectId}/v1/{page} [GET]"
         );
         assertViewerForbidden(
             http.doPost(lockPath, mapper.writeValueAsString(userId), viewerToken),
-            "/courts/{courtId}/v1/locks/{page} [POST]"
+            "/locks/{subjectType}/{subjectId}/v1/{page} [POST]"
         );
         assertViewerForbidden(
             http.doDelete(lockPath, viewerToken),
-            "/courts/{courtId}/v1/locks/{page} [DELETE]"
+            "/locks/{subjectType}/{subjectId}/v1/{page} [DELETE]"
         );
     }
 

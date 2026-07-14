@@ -11,7 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
@@ -357,12 +357,12 @@ class AuditControllerTest {
                         .param("pageNumber", "0")
                         .param("pageSize", "10")
                         .param("fromDate", LocalDate.now().toString())
-                        .param("subjectType", AuditSubjectType.COURT.name()))
+                        .param("subjectType", SubjectType.COURT.name()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray())
             .andExpect(jsonPath("$.content.length()").value(2))
             .andExpect(jsonPath("$.content[*].subjectType")
-                           .value(allElementsEqual(AuditSubjectType.COURT.name())))
+                           .value(allElementsEqual(SubjectType.COURT.name())))
             .andExpect(jsonPath("$.page.number").value(0))
             .andExpect(jsonPath("$.page.totalElements").value(2));
     }

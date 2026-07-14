@@ -3,7 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 import uk.gov.hmcts.reform.fact.data.api.dto.ApprovalStatus;
 import uk.gov.hmcts.reform.fact.data.api.entities.Approval;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.ApprovalService;
 
@@ -93,7 +93,7 @@ class ApprovalControllerTest {
         return Approval.builder()
             .id(APPROVAL_ID)
             .subjectId(SUBJECT_ID)
-            .subjectType(AuditSubjectType.COURT)
+            .subjectType(SubjectType.COURT)
             .userId(USER_ID)
             .build();
     }
@@ -101,7 +101,7 @@ class ApprovalControllerTest {
     private ApprovalStatus createApprovalStatus() {
         return new ApprovalStatus(
             SUBJECT_ID,
-            AuditSubjectType.COURT,
+            SubjectType.COURT,
             "Test Court",
             true,
             APPROVAL_ID,

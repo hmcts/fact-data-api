@@ -11,7 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
@@ -142,7 +142,7 @@ class AuditingTest {
 
         Page<Audit> audits = auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
             serviceCentre.getId(),
-            AuditSubjectType.SERVICE_CENTRE,
+            SubjectType.SERVICE_CENTRE,
             CREATED_AFTER.atStartOfDay().atZone(java.time.ZoneOffset.UTC),
             org.springframework.data.domain.PageRequest.of(0, 1000)
         );
