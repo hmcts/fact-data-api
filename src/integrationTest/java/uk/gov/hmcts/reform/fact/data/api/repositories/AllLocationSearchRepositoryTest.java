@@ -9,10 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocationSearchResult;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
+import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
@@ -26,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("All Location Search Repository")
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 class AllLocationSearchRepositoryTest {
 
     @Autowired
@@ -58,15 +61,14 @@ class AllLocationSearchRepositoryTest {
     void setUp() {
         auditUserContext.clear();
         auditUserContext.suppressAudit();
-        regionId = regionRepository.findAll().getFirst().getId();
+        regionId = regionRepository.save(Region.builder()
+            .name("All Location Search Region")
+            .country("England")
+            .build()).getId();
     }
 
     @AfterEach
     void tearDown() {
-        courtAddressRepository.deleteAll();
-        serviceCentreAddressRepository.deleteAll();
-        courtRepository.deleteAll();
-        serviceCentreRepository.deleteAll();
         auditUserContext.clear();
     }
 
@@ -75,6 +77,7 @@ class AllLocationSearchRepositoryTest {
         final String query = "Ranktoken";
 
         final ServiceCentre postcodeMatch = saveServiceCentre("Zulu Postcode Service Centre", true);
+        serviceCentreRepository.flush();
         jdbcTemplate.update(
             """
                 INSERT INTO service_centre_address
