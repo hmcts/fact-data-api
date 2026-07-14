@@ -7,9 +7,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocationDetails;
+import uk.gov.hmcts.reform.fact.data.api.dto.AllLocationSearchResult;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.AllLocationSearchRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreDetailsRepository;
@@ -18,8 +20,12 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import lombok.RequiredArgsConstructor;
@@ -32,7 +38,10 @@ public class AllLocationService {
     private static final String SORT_BY_LAST_UPDATED = "lastupdated";
     private static final String SORT_ORDER_ASC = "asc";
     private static final String SORT_ORDER_DESC = "desc";
+    private static final String COURT_LOCATION_TYPE = "COURT";
+    private static final String SERVICE_CENTRE_LOCATION_TYPE = "SERVICE_CENTRE";
 
+    private final AllLocationSearchRepository allLocationSearchRepository;
     private final CourtRepository courtRepository;
     private final ServiceCentreRepository serviceCentreRepository;
     private final CourtDetailsRepository courtDetailsRepository;
@@ -78,12 +87,59 @@ public class AllLocationService {
             .toList();
     }
 
+    /**
+     * Searches open courts and service centres by name and public address fields.
+     *
+     * @param query query string to search for
+     * @return matching locations in global relevance order
+     */
+    public List<AllLocation> searchOpenLocationsByNameOrAddress(String query) {
+        List<AllLocationSearchResult> rankedResults =
+            allLocationSearchRepository.searchOpenByNameOrAddress(query.trim());
+
+        List<UUID> courtIds = idsForLocationType(rankedResults, COURT_LOCATION_TYPE);
+        List<UUID> serviceCentreIds = idsForLocationType(rankedResults, SERVICE_CENTRE_LOCATION_TYPE);
+
+        Map<UUID, Court> courtsById = courtRepository.findAllById(courtIds).stream()
+            .collect(Collectors.toMap(Court::getId, Function.identity()));
+        Map<UUID, ServiceCentre> serviceCentresById = serviceCentreRepository.findAllById(serviceCentreIds).stream()
+            .collect(Collectors.toMap(ServiceCentre::getId, Function.identity()));
+
+        return rankedResults.stream()
+            .map(result -> toAllLocation(result, courtsById, serviceCentresById))
+            .filter(Objects::nonNull)
+            .toList();
+    }
+
     private List<AllLocationDetails> getCourtDetails() {
         return courtDetailsRepository.findAll()
             .stream()
             .map(courtDetailsViewService::prepareDetailsView)
             .map(AllLocationDetails::fromCourt)
             .toList();
+    }
+
+    private List<UUID> idsForLocationType(List<AllLocationSearchResult> results, String locationType) {
+        return results.stream()
+            .filter(result -> locationType.equals(result.getLocationType()))
+            .map(AllLocationSearchResult::getId)
+            .toList();
+    }
+
+    private AllLocation toAllLocation(AllLocationSearchResult result,
+                                      Map<UUID, Court> courtsById,
+                                      Map<UUID, ServiceCentre> serviceCentresById) {
+        if (COURT_LOCATION_TYPE.equals(result.getLocationType())) {
+            Court court = courtsById.get(result.getId());
+            return court == null || !Boolean.TRUE.equals(court.getOpen()) ? null : AllLocation.fromCourt(court);
+        }
+        if (SERVICE_CENTRE_LOCATION_TYPE.equals(result.getLocationType())) {
+            ServiceCentre serviceCentre = serviceCentresById.get(result.getId());
+            return serviceCentre == null || !Boolean.TRUE.equals(serviceCentre.getOpen())
+                ? null
+                : AllLocation.fromServiceCentre(serviceCentre);
+        }
+        return null;
     }
 
     private List<AllLocationDetails> getServiceCentreDetails() {

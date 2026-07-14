@@ -8,12 +8,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocationDetails;
+import uk.gov.hmcts.reform.fact.data.api.dto.AllLocationSearchResult;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.AllLocationSearchRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreDetailsRepository;
@@ -26,6 +28,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,6 +36,9 @@ import static org.mockito.Mockito.when;
 class AllLocationServiceTest {
 
     private static final UUID REGION_ID = UUID.randomUUID();
+
+    @Mock
+    private AllLocationSearchRepository allLocationSearchRepository;
 
     @Mock
     private CourtRepository courtRepository;
@@ -248,6 +254,57 @@ class AllLocationServiceTest {
         assertThat(result)
             .extracting(AllLocation::getLocationType)
             .containsExactly("SERVICE_CENTRE", "COURT", "SERVICE_CENTRE", "COURT");
+    }
+
+    @Test
+    void searchOpenLocationsByNameOrAddressReturnsGloballyRankedLocationsAndTrimsQuery() {
+        Court court = buildCourt("Example Court", true);
+        ServiceCentre serviceCentre = buildServiceCentre("Example Service Centre", true);
+        AllLocationSearchResult serviceCentreResult = searchResult(serviceCentre.getId(), "SERVICE_CENTRE");
+        AllLocationSearchResult courtResult = searchResult(court.getId(), "COURT");
+
+        when(allLocationSearchRepository.searchOpenByNameOrAddress("Example"))
+            .thenReturn(List.of(serviceCentreResult, courtResult));
+        when(courtRepository.findAllById(List.of(court.getId()))).thenReturn(List.of(court));
+        when(serviceCentreRepository.findAllById(List.of(serviceCentre.getId())))
+            .thenReturn(List.of(serviceCentre));
+
+        List<AllLocation> result = allLocationService.searchOpenLocationsByNameOrAddress("  Example  ");
+
+        assertThat(result)
+            .extracting(AllLocation::getName)
+            .containsExactly("Example Service Centre", "Example Court");
+        assertThat(result)
+            .extracting(AllLocation::getSlug)
+            .containsExactly("example-service-centre", "example-court");
+        assertThat(result)
+            .extracting(AllLocation::getLocationType)
+            .containsExactly("SERVICE_CENTRE", "COURT");
+        assertThat(result)
+            .extracting(AllLocation::getServiceCentre)
+            .containsExactly(true, false);
+        verify(allLocationSearchRepository).searchOpenByNameOrAddress("Example");
+    }
+
+    @Test
+    void searchOpenLocationsByNameOrAddressExcludesLocationsClosedAfterRanking() {
+        Court closedCourt = buildCourt("Closed Court", false);
+        ServiceCentre closedServiceCentre = buildServiceCentre("Closed Service Centre", false);
+        AllLocationSearchResult courtResult = searchResult(closedCourt.getId(), "COURT");
+        AllLocationSearchResult serviceCentreResult = searchResult(
+            closedServiceCentre.getId(),
+            "SERVICE_CENTRE"
+        );
+
+        when(allLocationSearchRepository.searchOpenByNameOrAddress("Closed"))
+            .thenReturn(List.of(courtResult, serviceCentreResult));
+        when(courtRepository.findAllById(List.of(closedCourt.getId()))).thenReturn(List.of(closedCourt));
+        when(serviceCentreRepository.findAllById(List.of(closedServiceCentre.getId())))
+            .thenReturn(List.of(closedServiceCentre));
+
+        List<AllLocation> result = allLocationService.searchOpenLocationsByNameOrAddress("Closed");
+
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -581,5 +638,12 @@ class AllLocationServiceTest {
             .open(true)
             .regionId(REGION_ID)
             .build();
+    }
+
+    private AllLocationSearchResult searchResult(UUID id, String locationType) {
+        AllLocationSearchResult result = mock(AllLocationSearchResult.class);
+        when(result.getId()).thenReturn(id);
+        when(result.getLocationType()).thenReturn(locationType);
+        return result;
     }
 }
