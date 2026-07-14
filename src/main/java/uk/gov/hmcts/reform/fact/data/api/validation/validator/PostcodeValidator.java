@@ -14,10 +14,6 @@ public class PostcodeValidator implements ConstraintValidator<ValidPostcode, Str
             + "[A-Ha-hJ-Yj-y]\\d{1,2})|(([A-Za-z]\\d[A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y]"
             + "\\d[A-Za-z]?))))\\s?\\d[A-Za-z]{2})"
     );
-    private static final Pattern SCOTLAND_AREA_REGEX = Pattern.compile(
-        "^(ZE|KW|IV|HS|PH|AB|DD|PA|FK|G\\d|KY|KA|DG|EH|ML|TD)",
-        Pattern.CASE_INSENSITIVE
-    );
     private static final String NI_PREFIX = "BT";
     private static final Pattern CI_IOM_AREA_REGEX = Pattern.compile("^(IM|JE|GY)", Pattern.CASE_INSENSITIVE);
 
@@ -43,10 +39,6 @@ public class PostcodeValidator implements ConstraintValidator<ValidPostcode, Str
 
         if (!UK_POSTCODE_REGEX.matcher(postcode).matches()) {
             return fail(context, "Provided postcode is not valid");
-        }
-
-        if (SCOTLAND_AREA_REGEX.matcher(postcode).find()) {
-            return fail(context, "Scotland is not supported");
         }
 
         if (postcode.startsWith(NI_PREFIX)) {

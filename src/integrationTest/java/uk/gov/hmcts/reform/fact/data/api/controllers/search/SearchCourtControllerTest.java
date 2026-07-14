@@ -10,11 +10,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.services.AllLocationService;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
 
 import java.math.BigDecimal;
@@ -40,9 +38,6 @@ class SearchCourtControllerTest {
 
     @MockitoBean
     private SearchCourtService searchCourtService;
-
-    @MockitoBean
-    private CourtService courtService;
 
     @MockitoBean
     private AllLocationService allLocationService;
@@ -155,19 +150,39 @@ class SearchCourtControllerTest {
     }
 
     @Test
-    @DisplayName("GET /search/courts/v1/name returns courts by query")
+    @DisplayName("GET /search/courts/v1/name returns courts and service centres by query")
     void getCourtsByQueryReturnsOk() throws Exception {
-        Court court = new Court();
-        court.setId(COURT_ID);
-        court.setName("Example Court");
+        AllLocation court = AllLocation.builder()
+            .id(COURT_ID)
+            .name("Example Court")
+            .slug("example-court")
+            .locationType("COURT")
+            .serviceCentre(false)
+            .build();
+        AllLocation serviceCentre = AllLocation.builder()
+            .id(UUID.fromString("223e4567-e89b-12d3-a456-426614174000"))
+            .name("Example Service Centre")
+            .slug("example-service-centre")
+            .locationType("SERVICE_CENTRE")
+            .serviceCentre(true)
+            .build();
 
-        when(courtService.searchOpenCourtsByNameOrAddress("Example"))
-            .thenReturn(List.of(court));
+        when(allLocationService.searchOpenLocationsByNameOrAddress("Example"))
+            .thenReturn(List.of(court, serviceCentre));
 
         mockMvc.perform(get("/search/courts/v1/name")
                             .param("q", "Example"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].name").value("Example Court"));
+            .andExpect(jsonPath("$[0].name").value("Example Court"))
+            .andExpect(jsonPath("$[0].slug").value("example-court"))
+            .andExpect(jsonPath("$[0].locationType").value("COURT"))
+            .andExpect(jsonPath("$[0].serviceCentre").value(false))
+            .andExpect(jsonPath("$[1].name").value("Example Service Centre"))
+            .andExpect(jsonPath("$[1].slug").value("example-service-centre"))
+            .andExpect(jsonPath("$[1].locationType").value("SERVICE_CENTRE"))
+            .andExpect(jsonPath("$[1].serviceCentre").value(true));
+
+        verify(allLocationService).searchOpenLocationsByNameOrAddress("Example");
     }
 
     @Test

@@ -9,10 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.services.AllLocationService;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
 
 import java.util.List;
@@ -27,9 +25,6 @@ class SearchCourtControllerTest {
 
     @Mock
     private SearchCourtService searchCourtService;
-
-    @Mock
-    private CourtService courtService;
 
     @Mock
     private AllLocationService allLocationService;
@@ -96,16 +91,26 @@ class SearchCourtControllerTest {
 
     @Test
     void getCourtsByQueryShouldReturnOk() {
-        Court court = new Court();
-        court.setName("Example Court");
-        List<Court> courts = List.of(court);
+        AllLocation court = AllLocation.builder()
+            .name("Example Court")
+            .slug("example-court")
+            .locationType("COURT")
+            .serviceCentre(false)
+            .build();
+        AllLocation serviceCentre = AllLocation.builder()
+            .name("Example Service Centre")
+            .slug("example-service-centre")
+            .locationType("SERVICE_CENTRE")
+            .serviceCentre(true)
+            .build();
+        List<AllLocation> locations = List.of(court, serviceCentre);
 
-        when(courtService.searchOpenCourtsByNameOrAddress("Example")).thenReturn(courts);
+        when(allLocationService.searchOpenLocationsByNameOrAddress("Example")).thenReturn(locations);
 
-        ResponseEntity<List<Court>> response = controller.getCourtsByQuery("Example");
+        ResponseEntity<List<AllLocation>> response = controller.getCourtsByQuery("Example");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isEqualTo(courts);
-        verify(courtService).searchOpenCourtsByNameOrAddress("Example");
+        assertThat(response.getBody()).isEqualTo(locations);
+        verify(allLocationService).searchOpenLocationsByNameOrAddress("Example");
     }
 }
