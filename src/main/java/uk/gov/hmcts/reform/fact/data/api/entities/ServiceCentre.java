@@ -27,7 +27,7 @@ import org.hibernate.annotations.TimeZoneStorageType;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
 
@@ -117,7 +117,7 @@ public class ServiceCentre implements AuditableEntity {
     }
 
     @Override
-    public AuditSubjectType getAuditSubjectType() {
-        return AuditSubjectType.SERVICE_CENTRE;
+    public SubjectType getAuditSubjectType() {
+        return SubjectType.SERVICE_CENTRE;
     }
 }

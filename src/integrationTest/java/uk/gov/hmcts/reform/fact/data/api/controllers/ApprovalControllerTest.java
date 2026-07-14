@@ -4,7 +4,7 @@ import tools.jackson.databind.ObjectMapper;
 import uk.gov.hmcts.reform.fact.data.api.dto.ApprovalStatus;
 import uk.gov.hmcts.reform.fact.data.api.entities.Approval;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.ApprovalService;
 
@@ -58,7 +58,7 @@ class ApprovalControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isArray())
             .andExpect(jsonPath("$[0].subjectId").value(subjectId.toString()))
-            .andExpect(jsonPath("$[0].subjectType").value(AuditSubjectType.COURT.name()))
+            .andExpect(jsonPath("$[0].subjectType").value(SubjectType.COURT.name()))
             .andExpect(jsonPath("$[0].name").value("Test Court"))
             .andExpect(jsonPath("$[0].approved").value(true))
             .andExpect(jsonPath("$[0].approvalId").value(approvalId.toString()))
@@ -131,7 +131,7 @@ class ApprovalControllerTest {
         return Approval.builder()
             .id(approvalId)
             .subjectId(subjectId)
-            .subjectType(AuditSubjectType.COURT)
+            .subjectType(SubjectType.COURT)
             .userId(userId)
             .build();
     }
@@ -139,7 +139,7 @@ class ApprovalControllerTest {
     private ApprovalStatus createApprovalStatus() {
         return new ApprovalStatus(
             subjectId,
-            AuditSubjectType.COURT,
+            SubjectType.COURT,
             "Test Court",
             true,
             approvalId,

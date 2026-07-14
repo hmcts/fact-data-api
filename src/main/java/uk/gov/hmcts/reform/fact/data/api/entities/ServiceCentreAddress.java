@@ -25,7 +25,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.controllers.ServiceCentreController.ServiceCentreDetailsView;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
@@ -107,7 +107,7 @@ public class ServiceCentreAddress implements AuditableEntity {
     }
 
     @Override
-    public AuditSubjectType getAuditSubjectType() {
-        return AuditSubjectType.SERVICE_CENTRE;
+    public SubjectType getAuditSubjectType() {
+        return SubjectType.SERVICE_CENTRE;
     }
 }
