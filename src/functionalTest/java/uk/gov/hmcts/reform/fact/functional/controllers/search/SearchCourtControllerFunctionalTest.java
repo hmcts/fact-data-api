@@ -55,7 +55,7 @@ public final class SearchCourtControllerFunctionalTest {
     private static final String TEST_SERVICE_CENTRE_PREFIX = "Test Service Centre Search";
 
     @Test
-    @DisplayName("GET /search/courts/v1/name returns courts matching query")
+    @DisplayName("GET /search/courts/v1/name returns court locations matching query")
     void shouldReturnCourtsMatchingNameQuery() throws Exception {
         final String courtName = TEST_COURT_PREFIX + " Birmingham";
         createOpenCourt(courtName);
@@ -66,15 +66,112 @@ public final class SearchCourtControllerFunctionalTest {
             .as("Expected 200 OK for court name search")
             .isEqualTo(OK.value());
 
-        final List<Court> courts = mapper.readValue(
-            searchResponse.getBody().asString(),
-            new TypeReference<List<Court>>() {}
+        final JsonNode locations = mapper.readTree(searchResponse.getBody().asString());
+
+        assertThat(locations)
+            .as("Expected to find the created court '%s' in search results", courtName)
+            .anySatisfy(location -> {
+                assertThat(location.path("name").asText()).startsWith(courtName);
+                assertThat(location.path("slug").asText()).isNotBlank();
+                assertThat(location.path("locationType").asText()).isEqualTo("COURT");
+                assertThat(location.path("serviceCentre").asBoolean()).isFalse();
+            });
+    }
+
+    @Test
+    @DisplayName("GET /search/courts/v1/name returns service centres matching name query")
+    void shouldReturnServiceCentresMatchingNameQuery() throws Exception {
+        final String serviceCentreName = TEST_SERVICE_CENTRE_PREFIX + " Name Match";
+        final UUID serviceCentreId = createServiceCentre(serviceCentreName, true);
+
+        final Response searchResponse = http.doGet(
+            "/search/courts/v1/name",
+            Map.of("q", "Name Match")
         );
 
-        assertThat(courts)
-            .as("Expected to find the created court '%s' in search results", courtName)
-            .extracting(Court::getName)
-            .anyMatch(name -> name.startsWith(courtName));
+        assertThat(searchResponse.statusCode())
+            .as("Expected 200 OK for service-centre name search")
+            .isEqualTo(OK.value());
+
+        final JsonNode locations = mapper.readTree(searchResponse.getBody().asString());
+
+        assertThat(locations)
+            .as("Expected to find service centre '%s' by name", serviceCentreName)
+            .anySatisfy(location -> {
+                assertThat(location.path("id").asText()).isEqualTo(serviceCentreId.toString());
+                assertThat(location.path("name").asText()).startsWith(serviceCentreName);
+                assertThat(location.path("slug").asText()).isNotBlank();
+                assertThat(location.path("locationType").asText()).isEqualTo("SERVICE_CENTRE");
+                assertThat(location.path("serviceCentre").asBoolean()).isTrue();
+            });
+    }
+
+    @Test
+    @DisplayName("GET /search/courts/v1/name returns service centres matching public address and postcode")
+    void shouldReturnServiceCentresMatchingAddressAndPostcodeQuery() throws Exception {
+        final String serviceCentreName = TEST_SERVICE_CENTRE_PREFIX + " Address Match";
+        final UUID serviceCentreId = createServiceCentre(serviceCentreName, true);
+        final ServiceCentreAddress address = ServiceCentreAddress.builder()
+            .serviceCentreId(serviceCentreId)
+            .addressLine1("Unique Service Avenue")
+            .addressLine2("Public Counter")
+            .townCity("London")
+            .county("Greater London")
+            .postcode(STABLE_ENGLAND_POSTCODE)
+            .addressType(AddressType.VISIT_US)
+            .build();
+
+        final Response addressResponse = http.doPost(
+            "/service-centres/" + serviceCentreId + "/v1/address",
+            address
+        );
+        assertThat(addressResponse.statusCode())
+            .as("Expected 201 CREATED when adding a public service-centre address")
+            .isEqualTo(CREATED.value());
+
+        final Response addressSearchResponse = http.doGet(
+            "/search/courts/v1/name",
+            Map.of("q", "Unique Service Avenue")
+        );
+        assertThat(addressSearchResponse.statusCode()).isEqualTo(OK.value());
+        final JsonNode addressLocations = mapper.readTree(addressSearchResponse.getBody().asString());
+        assertThat(addressLocations)
+            .extracting(location -> location.path("id").asText())
+            .contains(serviceCentreId.toString());
+
+        final Response postcodeSearchResponse = http.doGet(
+            "/search/courts/v1/name",
+            Map.of("q", STABLE_ENGLAND_POSTCODE.replace(" ", ""))
+        );
+        assertThat(postcodeSearchResponse.statusCode()).isEqualTo(OK.value());
+        final JsonNode postcodeLocations = mapper.readTree(postcodeSearchResponse.getBody().asString());
+        assertThat(postcodeLocations)
+            .extracting(location -> location.path("id").asText())
+            .contains(serviceCentreId.toString());
+    }
+
+    @Test
+    @DisplayName("GET /search/courts/v1/name excludes closed courts and service centres")
+    void shouldExcludeClosedLocationsFromNameQuery() throws Exception {
+        final String closedLocationName = "Closed Location Match";
+        final UUID closedCourtId = TestDataHelper.createCourt(
+            http,
+            TEST_COURT_PREFIX + " " + closedLocationName
+        );
+        final UUID closedServiceCentreId = createServiceCentre(
+            TEST_SERVICE_CENTRE_PREFIX + " " + closedLocationName,
+            false
+        );
+
+        final Response searchResponse = http.doGet(
+            "/search/courts/v1/name",
+            Map.of("q", closedLocationName)
+        );
+        assertThat(searchResponse.statusCode()).isEqualTo(OK.value());
+        final JsonNode locations = mapper.readTree(searchResponse.getBody().asString());
+        assertThat(locations)
+            .extracting(location -> location.path("id").asText())
+            .doesNotContain(closedCourtId.toString(), closedServiceCentreId.toString());
     }
 
     @Test
@@ -816,6 +913,35 @@ public final class SearchCourtControllerFunctionalTest {
         assertThat(areasOfLawResponse.statusCode())
             .as("Expected 201 CREATED when setting areas of law for service centre %s", serviceCentreId)
             .isEqualTo(CREATED.value());
+
+        return serviceCentreId;
+    }
+
+    private static UUID createServiceCentre(final String serviceCentreName, final boolean open) {
+        final ServiceCentre serviceCentre = ServiceCentre.builder()
+            .name(TestDataHelper.appendRandomSuffixToCourtName(serviceCentreName))
+            .open(false)
+            .serviceAreaIds(List.of())
+            .regionId(UUID.fromString(regionId))
+            .catchmentType(CatchmentType.NATIONAL)
+            .build();
+
+        final Response createResponse = http.doPost("/service-centres/v1", serviceCentre);
+        assertThat(createResponse.statusCode())
+            .as("Expected 201 CREATED when creating service centre")
+            .isEqualTo(CREATED.value());
+
+        final UUID serviceCentreId = UUID.fromString(createResponse.jsonPath().getString("id"));
+        if (open) {
+            serviceCentre.setOpen(true);
+            final Response updateResponse = http.doPut(
+                "/service-centres/" + serviceCentreId + "/v1",
+                serviceCentre
+            );
+            assertThat(updateResponse.statusCode())
+                .as("Expected 200 OK when opening service centre %s", serviceCentreId)
+                .isEqualTo(OK.value());
+        }
 
         return serviceCentreId;
     }
