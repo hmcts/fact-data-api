@@ -1,4 +1,4 @@
-package uk.gov.hmcts.reform.fact.data.api.validation.annotations;
+package uk.gov.hmcts.reform.fact.data.api.aspect.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -11,5 +11,5 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CourtLockTimeoutCheck {
+public @interface LockTimeoutCheck {
 }

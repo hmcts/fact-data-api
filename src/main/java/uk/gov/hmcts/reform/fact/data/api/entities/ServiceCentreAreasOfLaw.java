@@ -26,7 +26,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.controllers.ServiceCentreController.ServiceCentreDetailsView;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 
 import java.util.List;
 import java.util.Map;
@@ -115,7 +115,7 @@ public class ServiceCentreAreasOfLaw implements AuditableEntity {
     }
 
     @Override
-    public AuditSubjectType getAuditSubjectType() {
-        return AuditSubjectType.SERVICE_CENTRE;
+    public SubjectType getAuditSubjectType() {
+        return SubjectType.SERVICE_CENTRE;
     }
 }

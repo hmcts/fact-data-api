@@ -5,7 +5,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Approval;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ApprovalRepository;
@@ -61,7 +61,7 @@ class ApprovalServiceTest {
         Approval approval = Approval.builder()
             .id(APPROVAL_ID)
             .subjectId(SUBJECT_ID)
-            .subjectType(AuditSubjectType.COURT)
+            .subjectType(SubjectType.COURT)
             .userId(USER_ID)
             .user(user)
             .lastUpdatedAt(LAST_UPDATED_AT)
@@ -76,7 +76,7 @@ class ApprovalServiceTest {
         assertThat(result).containsExactly(
             new ApprovalStatus(
                 SUBJECT_ID,
-                AuditSubjectType.COURT,
+                SubjectType.COURT,
                 "Test Court",
                 true,
                 APPROVAL_ID,
@@ -86,7 +86,7 @@ class ApprovalServiceTest {
             ),
             new ApprovalStatus(
                 SERVICE_CENTRE_ID,
-                AuditSubjectType.SERVICE_CENTRE,
+                SubjectType.SERVICE_CENTRE,
                 "Test Service Centre",
                 false,
                 null,
@@ -99,11 +99,11 @@ class ApprovalServiceTest {
 
     @Test
     void createApprovalValidatesCourtAndUserBeforeSaving() {
-        Approval approval = createApproval(AuditSubjectType.COURT);
+        Approval approval = createApproval(SubjectType.COURT);
         approval.setId(APPROVAL_ID);
         when(userService.getUserById(USER_ID)).thenReturn(new User());
         when(courtService.getCourtById(SUBJECT_ID)).thenReturn(new Court());
-        when(approvalRepository.findBySubjectIdAndSubjectType(SUBJECT_ID, AuditSubjectType.COURT))
+        when(approvalRepository.findBySubjectIdAndSubjectType(SUBJECT_ID, SubjectType.COURT))
             .thenReturn(Optional.empty());
         when(approvalRepository.save(any(Approval.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -119,11 +119,11 @@ class ApprovalServiceTest {
     void createApprovalValidatesServiceCentreBeforeSaving() {
         when(userService.getUserById(USER_ID)).thenReturn(new User());
         when(serviceCentreService.getServiceCentreById(SUBJECT_ID)).thenReturn(new ServiceCentre());
-        when(approvalRepository.findBySubjectIdAndSubjectType(SUBJECT_ID, AuditSubjectType.SERVICE_CENTRE))
+        when(approvalRepository.findBySubjectIdAndSubjectType(SUBJECT_ID, SubjectType.SERVICE_CENTRE))
             .thenReturn(Optional.empty());
         when(approvalRepository.save(any(Approval.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Approval approval = createApproval(AuditSubjectType.SERVICE_CENTRE);
+        Approval approval = createApproval(SubjectType.SERVICE_CENTRE);
         approvalService.createApproval(approval);
 
         verify(serviceCentreService).getServiceCentreById(SUBJECT_ID);
@@ -131,12 +131,12 @@ class ApprovalServiceTest {
 
     @Test
     void createApprovalReusesExistingApprovalIdForApprovedSubject() {
-        Approval existingApproval = createApproval(AuditSubjectType.COURT);
+        Approval existingApproval = createApproval(SubjectType.COURT);
         existingApproval.setId(APPROVAL_ID);
-        Approval approval = createApproval(AuditSubjectType.COURT);
+        Approval approval = createApproval(SubjectType.COURT);
         when(userService.getUserById(USER_ID)).thenReturn(new User());
         when(courtService.getCourtById(SUBJECT_ID)).thenReturn(new Court());
-        when(approvalRepository.findBySubjectIdAndSubjectType(SUBJECT_ID, AuditSubjectType.COURT))
+        when(approvalRepository.findBySubjectIdAndSubjectType(SUBJECT_ID, SubjectType.COURT))
             .thenReturn(Optional.of(existingApproval));
         when(approvalRepository.save(any(Approval.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -166,7 +166,7 @@ class ApprovalServiceTest {
         assertThat(exception.getMessage()).isEqualTo("Approval not found, ID: " + APPROVAL_ID);
     }
 
-    private Approval createApproval(AuditSubjectType subjectType) {
+    private Approval createApproval(SubjectType subjectType) {
         return Approval.builder()
             .subjectId(SUBJECT_ID)
             .subjectType(subjectType)

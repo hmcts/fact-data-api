@@ -2,7 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import uk.gov.hmcts.reform.fact.data.api.dto.ApprovalStatus;
 import uk.gov.hmcts.reform.fact.data.api.entities.Approval;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ApprovalRepository;
@@ -35,10 +35,10 @@ public class ApprovalService {
             ));
 
         return Stream.concat(
-            toApprovalStatuses(courtService.getAllCourtNameAndIds(), AuditSubjectType.COURT, approvalsBySubject),
+            toApprovalStatuses(courtService.getAllCourtNameAndIds(), SubjectType.COURT, approvalsBySubject),
             toApprovalStatuses(
                 serviceCentreService.getAllServiceCentreNameAndIds(),
-                AuditSubjectType.SERVICE_CENTRE,
+                SubjectType.SERVICE_CENTRE,
                 approvalsBySubject
             )
         ).toList();
@@ -68,20 +68,20 @@ public class ApprovalService {
     private void validateApprovalReferences(Approval approval) {
         userService.getUserById(approval.getUserId());
 
-        if (AuditSubjectType.COURT.equals(approval.getSubjectType())) {
+        if (SubjectType.COURT.equals(approval.getSubjectType())) {
             courtService.getCourtById(approval.getSubjectId());
-        } else if (AuditSubjectType.SERVICE_CENTRE.equals(approval.getSubjectType())) {
+        } else if (SubjectType.SERVICE_CENTRE.equals(approval.getSubjectType())) {
             serviceCentreService.getServiceCentreById(approval.getSubjectId());
         }
     }
 
-    private Stream<ApprovalStatus> toApprovalStatuses(List<NameAndId> subjects, AuditSubjectType subjectType,
+    private Stream<ApprovalStatus> toApprovalStatuses(List<NameAndId> subjects, SubjectType subjectType,
                                                       Map<SubjectKey, Approval> approvalsBySubject) {
         return subjects.stream()
             .map(subject -> toApprovalStatus(subject, subjectType, approvalsBySubject));
     }
 
-    private ApprovalStatus toApprovalStatus(NameAndId subject, AuditSubjectType subjectType,
+    private ApprovalStatus toApprovalStatus(NameAndId subject, SubjectType subjectType,
                                             Map<SubjectKey, Approval> approvalsBySubject) {
         Approval approval = approvalsBySubject.get(new SubjectKey(subject.id(), subjectType));
 
@@ -97,6 +97,6 @@ public class ApprovalService {
         );
     }
 
-    private record SubjectKey(UUID subjectId, AuditSubjectType subjectType) {
+    private record SubjectKey(UUID subjectId, SubjectType subjectType) {
     }
 }

@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditSubjectType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
@@ -123,18 +123,18 @@ class AuditControllerTest {
 
     @Test
     void getSubjectNameAndIdMapReturns200() {
-        Map<AuditSubjectType, List<NameAndId>> subjectMap = Map.of(
-            AuditSubjectType.COURT, List.of(
+        Map<SubjectType, List<NameAndId>> subjectMap = Map.of(
+            SubjectType.COURT, List.of(
                 new NameAndId("Exeter Law Courts", UUID.randomUUID())
             ),
-            AuditSubjectType.SERVICE_CENTRE, List.of(
+            SubjectType.SERVICE_CENTRE, List.of(
                 new NameAndId("Traffic Enforcement Centre", UUID.randomUUID())
             )
         );
 
         when(auditService.getSubjectNameAndIdMap()).thenReturn(subjectMap);
 
-        ResponseEntity<Map<AuditSubjectType, List<NameAndId>>> response = auditController.getSubjectNameAndIdMap();
+        ResponseEntity<Map<SubjectType, List<NameAndId>>> response = auditController.getSubjectNameAndIdMap();
 
         assertEquals(HttpStatus.OK, response.getStatusCode(), RESPONSE_STATUS_MISMATCH);
         assertEquals(subjectMap, response.getBody(), RESPONSE_BODY_MISMATCH);
@@ -183,7 +183,7 @@ class AuditControllerTest {
         return Audit.builder()
             .id(AUDIT_ID)
             .subjectId(COURT_ID)
-            .subjectType(AuditSubjectType.COURT)
+            .subjectType(SubjectType.COURT)
             .actionEntity(Court.class.getSimpleName())
             .actionDataDiff(List.of(
                 new Change("isOpen", Boolean.FALSE, Boolean.TRUE),

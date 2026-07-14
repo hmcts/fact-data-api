@@ -93,7 +93,7 @@ user:
   retention-period: 365
 
 courtLock:
-  timeout-minutes: 60
+  timeout-minutes: ${COURT_LOCK_TIMEOUT_MINUTES:60}
 
 os:
   key: ${OS_KEY}
