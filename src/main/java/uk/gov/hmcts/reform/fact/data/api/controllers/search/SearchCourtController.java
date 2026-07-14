@@ -15,11 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.AllLocationService;
-import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
 
@@ -27,21 +25,18 @@ import java.util.List;
 
 @SecuredFactRestController(
     name = "Search Court",
-    description = "Operations related to the searching of courts"
+    description = "Operations related to searching courts and service centres"
 )
 @RequestMapping("/search/courts")
 public class SearchCourtController {
 
     private static final String SINGLE_LETTER_REGEX = "^[A-Za-z]$";
     private final SearchCourtService searchCourtService;
-    private final CourtService courtService;
     private final AllLocationService allLocationService;
 
     public SearchCourtController(SearchCourtService searchCourtService,
-                                 CourtService courtService,
                                  AllLocationService allLocationService) {
         this.searchCourtService = searchCourtService;
-        this.courtService = courtService;
         this.allLocationService = allLocationService;
     }
 
@@ -105,20 +100,20 @@ public class SearchCourtController {
 
     @GetMapping("/v1/name")
     @Operation(
-        summary = "Search courts by prefix.",
-        description = "Retrieve courts based on a provided prefix."
+        summary = "Search courts and service centres by name or address.",
+        description = "Retrieve open courts and service centres matching a provided name or address query."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved court(s) that match data from query."),
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved locations matching the query."),
         @ApiResponse(responseCode = "400", description = "Query is missing or invalid.")
     })
-    public ResponseEntity<List<Court>> getCourtsByQuery(
-        @Parameter(description = "Query string to used to search for courts")
+    public ResponseEntity<List<AllLocation>> getCourtsByQuery(
+        @Parameter(description = "Query string used to search for courts and service centres")
         @NotBlank(message = "q must not be blank")
         @Size(min = 3, message = "q must be at least 3 characters in length")
         @RequestParam(value = "q")
         final String query
     ) {
-        return ResponseEntity.ok(courtService.searchOpenCourtsByNameOrAddress(query));
+        return ResponseEntity.ok(allLocationService.searchOpenLocationsByNameOrAddress(query));
     }
 }

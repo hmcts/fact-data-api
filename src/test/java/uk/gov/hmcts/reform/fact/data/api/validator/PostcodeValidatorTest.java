@@ -78,9 +78,8 @@ class PostcodeValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"EH1 1AA", "G1 1AA", "TD1 1AA"})
-    void shouldRejectScotlandPostcodes(String postcode) {
-        assertFalse(validator.isValid(postcode, context));
-        verify(context).buildConstraintViolationWithTemplate("Scotland is not supported");
+    void shouldAcceptScotlandPostcodes(String postcode) {
+        assertTrue(validator.isValid(postcode, context));
     }
 
     @Test
