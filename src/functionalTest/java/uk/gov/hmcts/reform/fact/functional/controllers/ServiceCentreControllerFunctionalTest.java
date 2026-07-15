@@ -75,6 +75,7 @@ public final class ServiceCentreControllerFunctionalTest {
             "/testing-support/service-centres",
             Map.of(
                 "serviceCentreName", TestDataHelper.appendRandomSuffixToCourtName(TEST_PREFIX + " Details"),
+                "addWarningNotice", "true",
                 "withContactDetails", "true"
             )
         );
@@ -89,6 +90,8 @@ public final class ServiceCentreControllerFunctionalTest {
         assertThat(detailsResponse.jsonPath().getList("serviceAreaIds")).isNull();
         assertThat(detailsResponse.jsonPath().getList("serviceCentreContactDetails")).isNotEmpty();
         assertThat(detailsResponse.jsonPath().getList("serviceCentreAreasOfLaw")).isNotEmpty();
+        assertThat(detailsResponse.jsonPath().getString("warningNotice")).isNotBlank();
+        assertThat(detailsResponse.jsonPath().getString("warningNoticeCy")).isNotBlank();
         assertThat(detailsResponse.jsonPath().getString(
             "serviceCentreContactDetails[0].serviceCentreContactDescription.id"
         )).isNotBlank();
