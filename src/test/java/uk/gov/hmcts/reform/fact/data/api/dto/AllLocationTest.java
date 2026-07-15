@@ -57,6 +57,7 @@ class AllLocationTest {
             .slug("test-service-centre")
             .open(false)
             .warningNotice("Service centre warning")
+            .warningNoticeCy("Rhybudd canolfan wasanaeth")
             .createdAt(CREATED_AT)
             .lastUpdatedAt(LAST_UPDATED_AT)
             .regionId(REGION_ID)
@@ -69,6 +70,7 @@ class AllLocationTest {
         assertThat(result.getSlug()).isEqualTo("test-service-centre");
         assertThat(result.getOpen()).isFalse();
         assertThat(result.getWarningNotice()).isEqualTo("Service centre warning");
+        assertThat(result.getWarningNoticeCy()).isEqualTo("Rhybudd canolfan wasanaeth");
         assertThat(result.getCreatedAt()).isEqualTo(CREATED_AT);
         assertThat(result.getLastUpdatedAt()).isEqualTo(LAST_UPDATED_AT);
         assertThat(result.getLocationType()).isEqualTo("SERVICE_CENTRE");

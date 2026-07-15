@@ -391,6 +391,12 @@ class TestingSupportServiceTest {
         assertThat(serviceCentreArgumentCaptor.getValue().getServiceAreaIds()).isNotEmpty();
         assertThat(serviceCentreArgumentCaptor.getValue().getRegionId()).isNotNull();
         assertThat(serviceCentreArgumentCaptor.getValue().getCatchmentType()).isEqualTo(CatchmentType.NATIONAL);
+        int warningNoticeIndex = TestingSupportService.WARNING_NOTICE_VALUES.indexOf(
+            serviceCentreArgumentCaptor.getValue().getWarningNotice()
+        );
+        assertThat(warningNoticeIndex).isNotNegative();
+        assertThat(serviceCentreArgumentCaptor.getValue().getWarningNoticeCy())
+            .isEqualTo(TestingSupportService.WARNING_NOTICE_CY_VALUES.get(warningNoticeIndex));
         verify(serviceCentreService).updateServiceCentre(eq(serviceCentreId), any(ServiceCentre.class));
         verify(serviceCentreAreasOfLawService).setServiceCentreAreasOfLaw(
             eq(serviceCentreId),
@@ -429,6 +435,8 @@ class TestingSupportServiceTest {
         ArgumentCaptor<ServiceCentre> captor = ArgumentCaptor.forClass(ServiceCentre.class);
         verify(serviceCentreService).createServiceCentre(captor.capture());
         assertThat(captor.getValue().getRegionId()).isEqualTo(regionId);
+        assertThat(captor.getValue().getWarningNotice()).isNull();
+        assertThat(captor.getValue().getWarningNoticeCy()).isNull();
     }
 
     @Test
