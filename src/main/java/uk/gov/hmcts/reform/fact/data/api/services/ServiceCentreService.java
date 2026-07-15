@@ -111,6 +111,7 @@ public class ServiceCentreService {
 
         existingServiceCentre.setOpen(serviceCentre.getOpen());
         existingServiceCentre.setWarningNotice(serviceCentre.getWarningNotice());
+        existingServiceCentre.setWarningNoticeCy(serviceCentre.getWarningNoticeCy());
         existingServiceCentre.setServiceAreaIds(getValidatedServiceAreaIds(serviceCentre.getServiceAreaIds()));
         existingServiceCentre.setRegionId(getValidatedRegionId(serviceCentre.getRegionId()));
         existingServiceCentre.setCatchmentType(getCatchmentTypeOrDefault(serviceCentre.getCatchmentType()));
