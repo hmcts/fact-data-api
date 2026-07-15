@@ -22,6 +22,7 @@ public class AllLocation {
     private String slug;
     private Boolean open;
     private String warningNotice;
+    private String warningNoticeCy;
     private ZonedDateTime createdAt;
     private ZonedDateTime lastUpdatedAt;
     private String locationType;
@@ -54,6 +55,7 @@ public class AllLocation {
             .slug(serviceCentre.getSlug())
             .open(serviceCentre.getOpen())
             .warningNotice(serviceCentre.getWarningNotice())
+            .warningNoticeCy(serviceCentre.getWarningNoticeCy())
             .createdAt(serviceCentre.getCreatedAt())
             .lastUpdatedAt(serviceCentre.getLastUpdatedAt())
             .locationType("SERVICE_CENTRE")

@@ -131,9 +131,9 @@ public class TestingSupportService {
     );
 
     public static final List<String> WARNING_NOTICE_CY_VALUES = List.of(
-        "ar gau dros dro ar gyfer gwaith cynnal a chadw",
-        "Mynediad cyfyngedig oherwydd gwaith adeiladu parhausHearing",
-        "isgwylir oedi mewn gwrandawiadau oherwydd prinder",
+        "Ar gau dros dro ar gyfer gwaith cynnal a chadw",
+        "Mynediad cyfyngedig oherwydd gwaith adeiladu parhaus",
+        "Disgwylir oedi mewn gwrandawiadau oherwydd prinder staff",
         "Cyfyngiadau parcio ar waith",
         "Protocolau diogelwch COVID-19 ar waith"
     );
@@ -233,10 +233,20 @@ public class TestingSupportService {
         @NonNull String courtName,
         Long seed,
         boolean open,
+        boolean addWarningNotice
+    ) {
+        return createCourt(courtName, null, seed, open, addWarningNotice, addWarningNotice, true, true, false);
+    }
+
+    public String createCourt(
+        @NonNull String courtName,
+        Long seed,
+        boolean open,
         boolean addWarningNotice,
         boolean addWarningNoticeCy
     ) {
-        return createCourt(courtName, null, seed, open, addWarningNotice, addWarningNoticeCy, true, true, false);
+        return createCourt(courtName, null, seed, open, addWarningNotice, addWarningNoticeCy, true, true,
+                           false);
     }
 
     public String createCourt(
@@ -396,14 +406,16 @@ public class TestingSupportService {
         if (serviceAreaIds.isEmpty()) {
             serviceAreaIds = List.of(SERVICE_AREA_IDS.get(random.nextInt(SERVICE_AREA_IDS.size())));
         }
+        Integer warningNoticeIndex = addWarningNotice ? random.nextInt(WARNING_NOTICE_VALUES.size()) : null;
 
         ServiceCentre serviceCentre = ServiceCentre.builder()
             .name(name)
             .open(false)
             .warningNotice(
-                addWarningNotice
-                    ? WARNING_NOTICE_VALUES.get(random.nextInt(WARNING_NOTICE_VALUES.size()))
-                    : null
+                warningNoticeIndex == null ? null : WARNING_NOTICE_VALUES.get(warningNoticeIndex)
+            )
+            .warningNoticeCy(
+                warningNoticeIndex == null ? null : WARNING_NOTICE_CY_VALUES.get(warningNoticeIndex)
             )
             .serviceAreaIds(serviceAreaIds)
             .regionId(Optional.ofNullable(regionId).orElseGet(() -> REGION_IDS.get(random.nextInt(REGION_IDS.size()))))
