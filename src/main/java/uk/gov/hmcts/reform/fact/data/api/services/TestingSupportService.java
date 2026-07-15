@@ -130,6 +130,14 @@ public class TestingSupportService {
         "COVID-19 safety protocols in place"
     );
 
+    public static final List<String> WARNING_NOTICE_CY_VALUES = List.of(
+        "ar gau dros dro ar gyfer gwaith cynnal a chadw",
+        "Mynediad cyfyngedig oherwydd gwaith adeiladu parhausHearing",
+        "isgwylir oedi mewn gwrandawiadau oherwydd prinder",
+        "Cyfyngiadau parcio ar waith",
+        "Protocolau diogelwch COVID-19 ar waith"
+    );
+
     private static final List<String> ADDRESS_LINE_1 = List.of(
         "1 Main Street", "2 High Road", "3 Market Place", "4 Station Avenue", "5 Park Lane",
         "6 Church Street", "7 Victoria Road", "8 King Street", "9 Queen's Parade", "10 Mill Lane"
@@ -225,9 +233,10 @@ public class TestingSupportService {
         @NonNull String courtName,
         Long seed,
         boolean open,
-        boolean addWarningNotice
+        boolean addWarningNotice,
+        boolean addWarningNoticeCy
     ) {
-        return createCourt(courtName, null, seed, open, addWarningNotice, true, true, false);
+        return createCourt(courtName, null, seed, open, addWarningNotice, addWarningNoticeCy, true, true, false);
     }
 
     public String createCourt(
@@ -235,9 +244,10 @@ public class TestingSupportService {
         Long seed,
         boolean open,
         boolean addWarningNotice,
+        boolean addWarningNoticeCy,
         boolean withTranslations
     ) {
-        return createCourt(courtName, null, seed, open, addWarningNotice, withTranslations, true,
+        return createCourt(courtName, null, seed, open, addWarningNotice, addWarningNoticeCy, withTranslations, true,
                            false);
     }
 
@@ -250,11 +260,12 @@ public class TestingSupportService {
         Long seed,
         boolean open,
         boolean addWarningNotice,
+        boolean addWarningNoticeCy,
         boolean withTranslations,
         boolean withEnquiriesContact,
         boolean forceFamilyCourt
     ) {
-        return createCourt(courtName, null, seed, open, addWarningNotice, withTranslations,
+        return createCourt(courtName, null, seed, open, addWarningNotice, addWarningNoticeCy, withTranslations,
                            withEnquiriesContact, forceFamilyCourt);
     }
 
@@ -268,6 +279,7 @@ public class TestingSupportService {
         Long seed,
         boolean open,
         boolean addWarningNotice,
+        boolean addWarningNoticeCy,
         boolean withTranslations,
         boolean withEnquiriesContact,
         boolean forceFamilyCourt
@@ -278,7 +290,7 @@ public class TestingSupportService {
 
             Random random = new Random(Optional.ofNullable(seed).orElse(System.currentTimeMillis()));
 
-            Court court = createCourt(courtName, regionId, addWarningNotice, random);
+            Court court = createCourt(courtName, regionId, addWarningNotice, addWarningNoticeCy, random);
             UUID courtId = court.getId();
             List<AreaOfLawType> areasOfLaw = setAreasOfLaw(courtId, random);
             List<CourtType> courtTypes = COURT_TYPES.stream().filter(l -> random.nextBoolean()).toList();
@@ -312,6 +324,7 @@ public class TestingSupportService {
     private Court createCourt(String name,
                               UUID regionId,
                               boolean addWarningNotice,
+                              boolean addWarningNoticeCy,
                               Random random) {
         Court court = Court.builder()
             .name(name)
@@ -322,6 +335,11 @@ public class TestingSupportService {
             .warningNotice(
                 addWarningNotice
                     ? WARNING_NOTICE_VALUES.get(random.nextInt(WARNING_NOTICE_VALUES.size()))
+                    : null
+            )
+            .warningNoticeCy(
+                addWarningNoticeCy
+                    ? WARNING_NOTICE_CY_VALUES.get(random.nextInt(WARNING_NOTICE_CY_VALUES.size()))
                     : null
             )
             .build();

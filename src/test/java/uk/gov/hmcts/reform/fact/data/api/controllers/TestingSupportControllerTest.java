@@ -7,6 +7,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
+import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
@@ -105,13 +107,14 @@ class TestingSupportControllerTest {
             anyBoolean(),
             anyBoolean(),
             anyBoolean(),
+            anyBoolean(),
             anyBoolean()
         ))
             .thenReturn("test-court");
 
-        testingSupportController.createSampleCourt("Test Court", null, 1L, true, false, false, false, false);
+        testingSupportController.createSampleCourt("Test Court", null, 1L, true, false, false, false, false, false);
 
-        verify(testingSupportService).createCourt("Test Court", null, 1L, true, false, false, false, false);
+        verify(testingSupportService).createCourt("Test Court", null, 1L, true, false, false, false, false, false);
     }
 
     @Test
@@ -125,13 +128,14 @@ class TestingSupportControllerTest {
             anyBoolean(),
             anyBoolean(),
             anyBoolean(),
+            anyBoolean(),
             anyBoolean()
         ))
             .thenReturn("test-court");
 
-        testingSupportController.createSampleCourt("Test Court", regionId, 1L, true, false, false, false, false);
+        testingSupportController.createSampleCourt("Test Court", regionId, 1L, true, false, false, false, false, false);
 
-        verify(testingSupportService).createCourt("Test Court", regionId, 1L, true, false, false, false, false);
+        verify(testingSupportService).createCourt("Test Court", regionId, 1L, true, false, false, false, false, false);
     }
 
     @Test
