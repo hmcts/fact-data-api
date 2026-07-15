@@ -12,6 +12,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +44,7 @@ public class CourtService {
     private final CourtRepository courtRepository;
     private final CourtDetailsRepository courtDetailsRepository;
     private final AuditRepository auditRepository;
+    private final UserRepository userRepository;
     private final RegionService regionService;
     private final CathClient cathClient;
     private final SlackClient slackClient;
@@ -186,6 +188,7 @@ public class CourtService {
             return 0;
         }
 
+        courtsToDelete.forEach(court -> userRepository.removeCourtFromAllFavourites(court.getId()));
         courtRepository.deleteAllInBatch(courtsToDelete);
 
         if  (purgeAudits) {

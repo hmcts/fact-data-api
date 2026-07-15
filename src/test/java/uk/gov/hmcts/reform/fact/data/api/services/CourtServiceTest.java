@@ -23,6 +23,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 
 import feign.FeignException;
 import feign.Request;
@@ -55,6 +56,9 @@ class CourtServiceTest {
 
     @Mock
     private AuditRepository auditRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private CourtDetailsRepository courtDetailsRepository;
@@ -722,7 +726,8 @@ class CourtServiceTest {
 
     @Test
     void deleteCourtsByNamePrefixShouldTrimInputAndDeleteMatches() {
-        Court court = new Court();
+        UUID courtId = UUID.randomUUID();
+        Court court = Court.builder().id(courtId).build();
         List<Court> courts = List.of(court);
         when(courtRepository.findByNameStartingWithIgnoreCase("Example")).thenReturn(courts);
 
@@ -730,6 +735,7 @@ class CourtServiceTest {
 
         assertThat(deleted).isEqualTo(1);
         verify(courtRepository).findByNameStartingWithIgnoreCase("Example");
+        verify(userRepository).removeCourtFromAllFavourites(courtId);
         verify(courtRepository).deleteAllInBatch(courts);
     }
 

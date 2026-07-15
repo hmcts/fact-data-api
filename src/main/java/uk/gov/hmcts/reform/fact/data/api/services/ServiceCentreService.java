@@ -14,6 +14,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class ServiceCentreService {
 
     private final ServiceCentreRepository serviceCentreRepository;
     private final AuditRepository auditRepository;
+    private final UserRepository userRepository;
     private final ServiceCentreDetailsRepository serviceCentreDetailsRepository;
     private final ServiceAreaRepository serviceAreaRepository;
     private final RegionService regionService;
@@ -137,6 +139,9 @@ public class ServiceCentreService {
             auditRepository.deleteBySubjectIdIn(serviceCentresToDelete.stream().map(ServiceCentre::getId).toList());
         }
 
+        serviceCentresToDelete.forEach(
+            serviceCentre -> userRepository.removeServiceCentreFromAllFavourites(serviceCentre.getId())
+        );
         serviceCentreRepository.deleteAllInBatch(serviceCentresToDelete);
         return serviceCentresToDelete.size();
     }
