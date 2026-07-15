@@ -73,9 +73,9 @@ public abstract class AbstractCourtEntity {
     @Schema(description = "Any Welsh warning notices attached to the Court")
     @Size(max = 500, message = "Welsh warning notice must be less than 500 characters")
     @Pattern(
-        regexp = "^[\\p{L}0-9 '\\-()&+]*$",
-        message = "Welsh warning notice contains invalid characters. Allowed: letters (with accents), numbers, spaces, "
-            + "apostrophes, - ( ) & +"
+        regexp = "^[\\p{L}0-9.,!?:;'\"()\\-/&@+\\s]+$",
+        message = "Welsh warning notice may only contain letters, numbers, spaces, and standard punctuation or "
+            + "symbols (@, +)"
     )
     private String warningNoticeCy;
 

@@ -276,6 +276,7 @@ class TestingSupportServiceTest {
         ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
         verify(courtService, times(1)).createCourt(captor.capture());
         assertThat(captor.getValue().getWarningNotice()).isNotNull();
+        assertThat(captor.getValue().getWarningNoticeCy()).isNotNull();
     }
 
     @Test
@@ -288,7 +289,7 @@ class TestingSupportServiceTest {
             return c;
         });
 
-        String result = testingSupportService.createCourt(courtName, null, false, false, true);
+        String result = testingSupportService.createCourt(courtName, null, false, false, false);
 
         assertNotNull(result);
         assertEquals("test-court", result);
@@ -296,6 +297,28 @@ class TestingSupportServiceTest {
         ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
         verify(courtService, times(1)).createCourt(captor.capture());
         assertThat(captor.getValue().getWarningNotice()).isNull();
+        assertThat(captor.getValue().getWarningNoticeCy()).isNull();
+    }
+
+    @Test
+    void createCourtWithoutWarningNoticesSetsBothFieldsToNull() {
+        String courtName = "Test Court";
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court c = Court.class.cast(inv.getArguments()[0]);
+            c.setSlug("test-court");
+            c.setId(UUID.randomUUID());
+            return c;
+        });
+
+        String result = testingSupportService.createCourt(courtName, null, false, false, false);
+
+        assertNotNull(result);
+        assertEquals("test-court", result);
+
+        ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
+        verify(courtService, times(1)).createCourt(captor.capture());
+        assertThat(captor.getValue().getWarningNotice()).isNull();
+        assertThat(captor.getValue().getWarningNoticeCy()).isNull();
     }
 
     @Test
