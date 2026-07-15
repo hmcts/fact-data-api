@@ -54,12 +54,14 @@ public final class ServiceCentreControllerFunctionalTest {
         serviceCentre.setName(TestDataHelper.appendRandomSuffixToCourtName(TEST_PREFIX + " Updated"));
         serviceCentre.setOpen(true);
         serviceCentre.setWarningNotice("Updated warning notice");
+        serviceCentre.setWarningNoticeCy("Rhybudd wedi'i ddiweddaru");
         serviceCentre.setCatchmentType(CatchmentType.NATIONAL);
 
         Response updateResponse = http.doPut("/service-centres/" + serviceCentreId + "/v1", serviceCentre);
         AssertionHelper.assertStatus(updateResponse, OK);
         assertThat(updateResponse.jsonPath().getBoolean("open")).isTrue();
         assertThat(updateResponse.jsonPath().getString("warningNotice")).isEqualTo("Updated warning notice");
+        assertThat(updateResponse.jsonPath().getString("warningNoticeCy")).isEqualTo("Rhybudd wedi'i ddiweddaru");
         assertThat(updateResponse.jsonPath().getString("catchmentType")).isEqualTo(CatchmentType.NATIONAL.name());
 
         Response missingResponse = http.doGet("/service-centres/" + UUID.randomUUID() + "/v1");
@@ -73,6 +75,7 @@ public final class ServiceCentreControllerFunctionalTest {
             "/testing-support/service-centres",
             Map.of(
                 "serviceCentreName", TestDataHelper.appendRandomSuffixToCourtName(TEST_PREFIX + " Details"),
+                "addWarningNotice", "true",
                 "withContactDetails", "true"
             )
         );
@@ -87,6 +90,8 @@ public final class ServiceCentreControllerFunctionalTest {
         assertThat(detailsResponse.jsonPath().getList("serviceAreaIds")).isNull();
         assertThat(detailsResponse.jsonPath().getList("serviceCentreContactDetails")).isNotEmpty();
         assertThat(detailsResponse.jsonPath().getList("serviceCentreAreasOfLaw")).isNotEmpty();
+        assertThat(detailsResponse.jsonPath().getString("warningNotice")).isNotBlank();
+        assertThat(detailsResponse.jsonPath().getString("warningNoticeCy")).isNotBlank();
         assertThat(detailsResponse.jsonPath().getString(
             "serviceCentreContactDetails[0].serviceCentreContactDescription.id"
         )).isNotBlank();

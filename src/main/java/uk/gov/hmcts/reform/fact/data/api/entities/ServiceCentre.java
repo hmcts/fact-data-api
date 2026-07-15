@@ -80,6 +80,16 @@ public class ServiceCentre implements AuditableEntity {
     @Column(name = "warning_notice")
     private String warningNotice;
 
+    @Schema(description = "Any Welsh warning notices attached to the Service Centre")
+    @Size(max = 500, message = "Welsh warning notice must be less than 500 characters")
+    @Pattern(
+        regexp = "^[\\p{L}0-9.,!?:;'\"()\\-/&@+\\s]+$",
+        message = "Welsh warning notice may only contain letters, numbers, spaces, and standard punctuation or "
+            + "symbols (@, +)"
+    )
+    @Column(name = "warning_notice_cy")
+    private String warningNoticeCy;
+
     @Schema(
         description = "The created date/time of the Service Centre record",
         accessMode = Schema.AccessMode.READ_ONLY
