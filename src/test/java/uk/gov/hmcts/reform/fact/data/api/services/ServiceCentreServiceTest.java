@@ -182,6 +182,7 @@ class ServiceCentreServiceTest {
             .name("New Service Centre")
             .open(true)
             .warningNotice("Warning")
+            .warningNoticeCy("Rhybudd")
             .serviceAreaIds(List.of())
             .regionId(regionId)
             .catchmentType(CatchmentType.LOCAL)
@@ -199,6 +200,7 @@ class ServiceCentreServiceTest {
         assertThat(result.getSlug()).isEqualTo("new-service-centre");
         assertThat(result.getOpen()).isTrue();
         assertThat(result.getWarningNotice()).isEqualTo("Warning");
+        assertThat(result.getWarningNoticeCy()).isEqualTo("Rhybudd");
         assertThat(result.getRegionId()).isEqualTo(regionId);
         assertThat(result.getCatchmentType()).isEqualTo(CatchmentType.LOCAL);
     }

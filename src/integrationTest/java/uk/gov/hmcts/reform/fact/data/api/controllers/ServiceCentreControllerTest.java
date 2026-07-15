@@ -72,6 +72,7 @@ class ServiceCentreControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(SERVICE_CENTRE_ID.toString()))
             .andExpect(jsonPath("$.name").value(SERVICE_CENTRE_NAME))
+            .andExpect(jsonPath("$.warningNoticeCy").value("Rhybudd: mae'r ganolfan ym Môn ar gau!"))
             .andExpect(jsonPath("$.serviceAreaIds").doesNotExist())
             .andExpect(jsonPath("$.serviceAreas[0].id").value(SERVICE_AREA_ID.toString()))
             .andExpect(jsonPath("$.serviceAreas[0].name").value("Family"))
@@ -158,6 +159,30 @@ class ServiceCentreControllerTest {
     }
 
     @Test
+    @DisplayName("POST /service-centres/v1 rejects a Welsh warning notice longer than 500 characters")
+    void createServiceCentreRejectsLongWelshWarningNotice() throws Exception {
+        ServiceCentre serviceCentre = buildServiceCentre();
+        serviceCentre.setWarningNoticeCy("a".repeat(501));
+
+        mockMvc.perform(post("/service-centres/v1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(serviceCentre)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /service-centres/v1 rejects invalid characters in a Welsh warning notice")
+    void createServiceCentreRejectsInvalidWelshWarningNoticeCharacters() throws Exception {
+        ServiceCentre serviceCentre = buildServiceCentre();
+        serviceCentre.setWarningNoticeCy("Rhybudd <drafft>");
+
+        mockMvc.perform(post("/service-centres/v1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(serviceCentre)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("PUT /service-centres/{serviceCentreId}/v1 updates service centre")
     void updateServiceCentreReturnsUpdated() throws Exception {
         ServiceCentre serviceCentre = buildServiceCentre();
@@ -178,6 +203,7 @@ class ServiceCentreControllerTest {
             .name(SERVICE_CENTRE_NAME)
             .slug("test-service-centre")
             .open(true)
+            .warningNoticeCy("Rhybudd: mae'r ganolfan ym Môn ar gau!")
             .catchmentType(CatchmentType.REGIONAL)
             .build();
     }
@@ -203,6 +229,7 @@ class ServiceCentreControllerTest {
             .name(SERVICE_CENTRE_NAME)
             .slug("test-service-centre")
             .open(true)
+            .warningNoticeCy("Rhybudd: mae'r ganolfan ym Môn ar gau!")
             .catchmentType(CatchmentType.NATIONAL)
             .serviceAreaIds(List.of(SERVICE_AREA_ID))
             .serviceAreaDetails(List.of(ServiceArea.builder()
