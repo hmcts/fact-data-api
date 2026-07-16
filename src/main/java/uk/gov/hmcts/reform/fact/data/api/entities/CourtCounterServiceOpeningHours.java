@@ -32,6 +32,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.UniqueOpeningDays;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
@@ -108,10 +109,8 @@ public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
 
     @Schema(description = "Appointment arrangement contact details")
     @Size(max = 255, message = "Appointment contact details can be at most {max} characters")
-    @Pattern(
-        regexp = "^[A-Za-z0-9.,!?:;'\"()\\-/&@+\\s]+$",
-        message = "Warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)"
-    )
+    @Size(max = ValidationConstants.EMAIL_MAX_LENGTH, message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE)
+    @Pattern(regexp = ValidationConstants.EMAIL_REGEX, message = ValidationConstants.EMAIL_REGEX_MESSAGE)
     private String appointmentContact;
 
     @Valid

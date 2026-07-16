@@ -114,7 +114,7 @@ class CourtOpeningHoursServiceTest {
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingTimesDetails(openingTimesDetails)
-                .appointmentContact("Test Contact")
+                .appointmentContact("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
@@ -202,18 +202,18 @@ class CourtOpeningHoursServiceTest {
     void getCounterServiceOpeningHoursByCourtIdReturnsOpeningHoursWhenFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId))
-            .thenReturn(Optional.of(counterServiceOpeningHours));
+            .thenReturn(List.of(counterServiceOpeningHours));
 
-        CourtCounterServiceOpeningHours result =
+        List<CourtCounterServiceOpeningHours> result =
             courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(courtId);
 
-        assertThat(result).isEqualTo(counterServiceOpeningHours);
+        assertThat(result).isEqualTo(List.of(counterServiceOpeningHours));
     }
 
     @Test
     void getCounterServiceOpeningHoursByCourtIdThrowsExceptionWhenNotFound() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
+        when(courtCounterServiceOpeningHoursRepository.findByCourtId(courtId)).thenReturn(List.of());
 
         assertThrows(
             CourtResourceNotFoundException.class,
@@ -227,6 +227,40 @@ class CourtOpeningHoursServiceTest {
 
         assertThrows(NotFoundException.class, () ->
             courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(courtId)
+        );
+    }
+
+    @Test
+    void getCounterServiceOpeningHoursByIdReturnsCounterServiceOpeningHoursWhenFound() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtCounterServiceOpeningHoursRepository.findByCourtIdAndId(courtId, counterServiceOpeningHours.getId()))
+            .thenReturn(Optional.of(counterServiceOpeningHours));
+
+        CourtCounterServiceOpeningHours result = courtOpeningHoursService
+            .getCounterServiceOpeningHoursById(courtId, counterServiceOpeningHours.getId());
+
+        assertThat(result).isEqualTo(counterServiceOpeningHours);
+    }
+
+    @Test
+    void getCounterServiceOpeningHoursByIdThrowsExceptionWhenNotFound() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtCounterServiceOpeningHoursRepository.findByCourtIdAndId(courtId, counterServiceOpeningHours.getId()))
+            .thenReturn(Optional.empty());
+
+        final UUID counterServiceId = counterServiceOpeningHours.getId();
+        assertThrows(
+            CourtResourceNotFoundException.class,
+            () -> courtOpeningHoursService.getCounterServiceOpeningHoursById(courtId, counterServiceId));
+    }
+
+    @Test
+    void getCounterServiceOpeningHoursByIdThrowsExceptionWhenCourtDoesNotExist() {
+        when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
+
+        final UUID counterServiceId = counterServiceOpeningHours.getId();
+        assertThrows(NotFoundException.class, () ->
+            courtOpeningHoursService.getCounterServiceOpeningHoursById(courtId, counterServiceId)
         );
     }
 
@@ -368,7 +402,7 @@ class CourtOpeningHoursServiceTest {
                         .closingTime(LocalTime.of(17, 0, 0))
                         .build()
                 ))
-                .appointmentContact("Test Contact")
+                .appointmentContact("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
@@ -387,7 +421,7 @@ class CourtOpeningHoursServiceTest {
                         .closingTime(LocalTime.of(17, 0, 0))
                         .build()
                 ))
-                .appointmentContact("Test Contact")
+                .appointmentContact("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
@@ -473,6 +507,13 @@ class CourtOpeningHoursServiceTest {
         courtOpeningHoursService.deleteCourtOpeningHours(courtId, openingHours.getId());
 
         verify(courtOpeningHoursRepository).deleteById(openingHours.getId());
+    }
+
+    @Test
+    void deleteCounterServiceOpeningHoursSuccessfullyDeletesHours() {
+        courtOpeningHoursService.deleteCourtCounterServiceOpeningHours(courtId, counterServiceOpeningHours.getId());
+
+        verify(courtCounterServiceOpeningHoursRepository).deleteById(counterServiceOpeningHours.getId());
     }
 }
 
