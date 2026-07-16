@@ -106,7 +106,7 @@ class CourtOpeningHoursControllerTest {
                 .id(UUID.randomUUID())
                 .courtId(COURT_ID)
                 .openingTimesDetails(openingTimesDetails)
-                .appointmentContact("Test Contact")
+                .appointmentContact("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
@@ -203,13 +203,13 @@ class CourtOpeningHoursControllerTest {
     @Test
     void getCounterServiceOpeningHoursByCourtIdReturns200() {
         when(courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(COURT_ID))
-            .thenReturn(counterServiceOpeningHours);
+            .thenReturn(List.of(counterServiceOpeningHours));
 
-        ResponseEntity<CourtCounterServiceOpeningHours> response
+        ResponseEntity<List<CourtCounterServiceOpeningHours>> response
             = courtOpeningHoursController.getCounterServiceOpeningHoursByCourtId(COURT_ID.toString());
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(counterServiceOpeningHours);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(List.of(counterServiceOpeningHours));
     }
 
     @Test
@@ -238,7 +238,7 @@ class CourtOpeningHoursControllerTest {
     void getCounterServiceOpeningHoursThrowsIllegalArgumentExceptionForInvalidUUID() {
         assertThrows(
             IllegalArgumentException.class, () ->
-                courtOpeningHoursController.getCounterServiceOpeningHoursByCourtId(INVALID_UUID)
+                courtOpeningHoursController.getCounterServiceOpeningHoursById(INVALID_UUID, INVALID_UUID)
         );
     }
 
@@ -351,7 +351,8 @@ class CourtOpeningHoursControllerTest {
     @Test
     void deleteCourtCounterServiceOpeningHoursReturns200() {
         ResponseEntity<Void> response = courtOpeningHoursController.deleteCounterServiceOpeningHours(
-            COURT_ID.toString()
+            COURT_ID.toString(),
+            counterServiceOpeningHours.getId().toString()
         );
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
     }
@@ -360,12 +361,13 @@ class CourtOpeningHoursControllerTest {
     void deleteCourtCounterServiceOpeningHoursThrowsNotFoundException() {
         doThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE))
             .when(courtOpeningHoursService)
-            .deleteCourtCounterServiceOpeningHours(UNKNOWN_COURT_ID);
+            .deleteCourtCounterServiceOpeningHours(UNKNOWN_COURT_ID, UNKNOWN_ID);
 
         assertThrows(
             NotFoundException.class, () ->
                 courtOpeningHoursController.deleteCounterServiceOpeningHours(
-                    UNKNOWN_COURT_ID.toString()
+                    UNKNOWN_COURT_ID.toString(),
+                    UNKNOWN_ID.toString()
                 )
         );
     }
@@ -375,7 +377,7 @@ class CourtOpeningHoursControllerTest {
         assertThrows(
             IllegalArgumentException.class, () ->
                 courtOpeningHoursController
-                    .deleteCounterServiceOpeningHours(INVALID_UUID)
+                    .deleteCounterServiceOpeningHours(INVALID_UUID, INVALID_UUID)
         );
     }
 }
