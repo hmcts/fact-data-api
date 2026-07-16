@@ -131,19 +131,19 @@ FROM (
         ('Family court enquiries', 'Ymholiadau Llys Teulu'),
         ('Jury service', 'Gwasanaeth rheithgor'),
         ('Pay a fee', 'Talu ffi'),
-        ('Transcripts', 'Trawsgrifiadau')
-        ('Acknowledgement of service','Cydnabyddiad Cyflwyno')
-        ('Application enquiries','Ymholiadau am gais')
-        ('Attachment of earnings applications','Ceisiadau am Orchymyn Atafaelu Enillion')
-        ('Charging orders','Gorchmynion arwystlo')
-        ('Claim responses','Ymatebion i hawliad')
-        ('Directions questionnaires','Holiaduron Cyfarwyddiadau')
-        ('Help with fees','Help i dalu ffioedd')
-        ('Ongoing attachment of earnings order issues','Problemau parhaus gyda gorchymyn atafaelu enillion')
-        ('Request a certificate of satisfaction','Gwneud cais am dystysgrif bodlonrwydd')
-        ('Request for judgment','Cais am ddyfarniad')
-        ('Scottish enquiries','Ymholiadau yn Yr Alban')
-        ('Traffic enforcement centre enquiries','Ymholiadau Canolfan Gorfodi Traffig')
+        ('Transcripts', 'Trawsgrifiadau'),
+        ('Acknowledgement of service','Cydnabyddiad Cyflwyno'),
+        ('Application enquiries','Ymholiadau am gais'),
+        ('Attachment of earnings applications','Ceisiadau am Orchymyn Atafaelu Enillion'),
+        ('Charging orders','Gorchmynion arwystlo'),
+        ('Claim responses','Ymatebion i hawliad'),
+        ('Directions questionnaires','Holiaduron Cyfarwyddiadau'),
+        ('Help with fees','Help i dalu ffioedd'),
+        ('Ongoing attachment of earnings order issues','Problemau parhaus gyda gorchymyn atafaelu enillion'),
+        ('Request a certificate of satisfaction','Gwneud cais am dystysgrif bodlonrwydd'),
+        ('Request for judgment','Cais am ddyfarniad'),
+        ('Scottish enquiries','Ymholiadau yn Yr Alban'),
+        ('Traffic enforcement centre enquiries','Ymholiadau Canolfan Gorfodi Traffig'),
         ('Warrants and writs of control','Gwarantau neu writ rheolaeth')
 ) AS v(name, name_cy)
 WHERE cdt.name = v.name;
