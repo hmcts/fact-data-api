@@ -100,7 +100,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingTimesDetails(openingTimesDetails)
-                .appointmentContact("Test Contact")
+                .appointmentContact("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
@@ -162,10 +162,13 @@ public final class CourtOpeningHoursControllerFunctionalTest {
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/counter-service");
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
 
-        final CourtCounterServiceOpeningHours retrievedHours = mapper.readValue(
+        final List<CourtCounterServiceOpeningHours> retrievedHoursList = mapper.readValue(
             getResponse.asString(),
-            CourtCounterServiceOpeningHours.class
+            mapper.getTypeFactory().constructCollectionType(List.class, CourtCounterServiceOpeningHours.class)
         );
+
+        assertThat((retrievedHoursList)).hasSize(1);
+        final CourtCounterServiceOpeningHours retrievedHours = retrievedHoursList.getFirst();
 
         assertThat(retrievedHours.getOpeningTimesDetails()).hasSize(5);
         assertThat(retrievedHours.getOpeningTimesDetails().getFirst().getOpeningTime())
@@ -353,7 +356,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 LocalTime.of(15, 0)
             )
         ));
-        counterServiceOpeningHours.setAppointmentContact("Email: counter@court.gov.uk");
+        counterServiceOpeningHours.setAppointmentContact("counter@court.gov.uk");
         counterServiceOpeningHours.setAppointmentNeeded(true);
 
         final Response putResponse = http.doPut(
@@ -382,7 +385,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
             .findFirst()
             .orElseThrow();
         assertThat(createdHours.getAppointmentNeeded()).isTrue();
-        assertThat(createdHours.getAppointmentContact()).isEqualTo("Email: counter@court.gov.uk");
+        assertThat(createdHours.getAppointmentContact()).isEqualTo("counter@court.gov.uk");
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/counter-service");
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
