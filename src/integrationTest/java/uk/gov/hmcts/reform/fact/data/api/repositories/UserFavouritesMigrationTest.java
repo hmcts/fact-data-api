@@ -38,7 +38,7 @@ class UserFavouritesMigrationTest {
                 .defaultSchema(schema)
                 .locations("classpath:db/migration")
                 .baselineOnMigrate(true)
-                .baselineVersion("1.42")
+                .baselineVersion("1.43")
                 .load()
                 .migrate();
 
