@@ -120,7 +120,7 @@ class CourtOpeningHoursControllerTest {
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingTimesDetails(openingTimesDetails)
-                .appointmentContact("Test Contact")
+                .appointmentContact("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
@@ -225,12 +225,17 @@ class CourtOpeningHoursControllerTest {
     }
 
     @Test
-    @DisplayName("GET /courts/{courtId}/v1/opening-hours/counter-service returns opening hours successfully")
+    @DisplayName("GET /courts/{courtId}/v1/opening-hours/counter-service/{counterServiceOpeningHoursId}"
+        + "returns counter service opening hours successfully")
     void getCounterServiceOpeningHoursReturnsSuccessfully() throws Exception {
-        when(courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(courtId))
+        when(courtOpeningHoursService.getCounterServiceOpeningHoursById(courtId, counterServiceOpeningHours.getId()))
             .thenReturn(counterServiceOpeningHours);
 
-        mockMvc.perform(get("/courts/{courtId}/v1/opening-hours/counter-service", courtId))
+        mockMvc.perform(
+            get(
+                "/courts/{courtId}/v1/opening-hours/counter-service/{counterServiceOpeningHoursId}",
+                courtId,
+                counterServiceOpeningHours.getId()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.openingTimesDetails[0].dayOfWeek")
                            .value(counterServiceOpeningHours
@@ -415,7 +420,7 @@ class CourtOpeningHoursControllerTest {
             .courtId(courtId)
             .courtTypes(List.of(courtTypeId1, courtTypeId2))
             .openingTimesDetails(openingTimesDetails)
-            .appointmentContact("Test Contact")
+            .appointmentContact("test@test.com")
             .assistWithForms(true)
             .counterService(true)
             .assistWithDocuments(true)
@@ -562,8 +567,9 @@ class CourtOpeningHoursControllerTest {
     @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/counter-service deletes opening hours successfully")
     void deleteCounterServiceOpeningHoursDeletesSuccessfully() throws Exception {
         mockMvc.perform(delete(
-                "/courts/{courtId}/v1/opening-hours/counter-service",
-                courtId
+                "/courts/{courtId}/v1/opening-hours/counter-service/{counterServiceId}",
+                courtId,
+                counterServiceOpeningHours.getId()
             ))
             .andExpect(status().isOk());
     }
@@ -573,11 +579,12 @@ class CourtOpeningHoursControllerTest {
     void deleteCounterServiceOpeningHoursNonExistentCourtReturnsNotFound() throws Exception {
         doThrow(new NotFoundException("Court not found"))
             .when(courtOpeningHoursService)
-            .deleteCourtCounterServiceOpeningHours(nonExistentCourtId);
+            .deleteCourtCounterServiceOpeningHours(nonExistentCourtId, counterServiceOpeningHours.getId());
 
         mockMvc.perform(delete(
-                "/courts/{courtId}/v1/opening-hours/counter-service",
-                nonExistentCourtId
+                "/courts/{courtId}/v1/opening-hours/counter-service/{counterServiceId}",
+                nonExistentCourtId,
+                counterServiceOpeningHours.getId()
             ))
             .andExpect(status().isNotFound());
     }
@@ -586,8 +593,9 @@ class CourtOpeningHoursControllerTest {
     @DisplayName("DELETE /courts/{courtId}/v1/opening-hours/counter-service returns 400 for invalid UUID")
     void deleteCounterServiceOpeningHoursInvalidUUID() throws Exception {
         mockMvc.perform(delete(
-                "/courts/{courtId}/v1/opening-hours/counter-service",
-                "invalid-uuid"
+                "/courts/{courtId}/v1/opening-hours/counter-service/{counterServiceId}",
+                "invalid-uuid",
+                counterServiceOpeningHours.getId()
             ))
             .andExpect(status().isBadRequest());
     }

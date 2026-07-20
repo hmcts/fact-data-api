@@ -130,6 +130,14 @@ public class TestingSupportService {
         "COVID-19 safety protocols in place"
     );
 
+    public static final List<String> WARNING_NOTICE_CY_VALUES = List.of(
+        "Ar gau dros dro ar gyfer gwaith cynnal a chadw",
+        "Mynediad cyfyngedig oherwydd gwaith adeiladu parhaus",
+        "Disgwylir oedi mewn gwrandawiadau oherwydd prinder staff",
+        "Cyfyngiadau parcio ar waith",
+        "Protocolau diogelwch COVID-19 ar waith"
+    );
+
     private static final List<String> ADDRESS_LINE_1 = List.of(
         "1 Main Street", "2 High Road", "3 Market Place", "4 Station Avenue", "5 Park Lane",
         "6 Church Street", "7 Victoria Road", "8 King Street", "9 Queen's Parade", "10 Mill Lane"
@@ -378,14 +386,16 @@ public class TestingSupportService {
         if (serviceAreaIds.isEmpty()) {
             serviceAreaIds = List.of(SERVICE_AREA_IDS.get(random.nextInt(SERVICE_AREA_IDS.size())));
         }
+        Integer warningNoticeIndex = addWarningNotice ? random.nextInt(WARNING_NOTICE_VALUES.size()) : null;
 
         ServiceCentre serviceCentre = ServiceCentre.builder()
             .name(name)
             .open(false)
             .warningNotice(
-                addWarningNotice
-                    ? WARNING_NOTICE_VALUES.get(random.nextInt(WARNING_NOTICE_VALUES.size()))
-                    : null
+                warningNoticeIndex == null ? null : WARNING_NOTICE_VALUES.get(warningNoticeIndex)
+            )
+            .warningNoticeCy(
+                warningNoticeIndex == null ? null : WARNING_NOTICE_CY_VALUES.get(warningNoticeIndex)
             )
             .serviceAreaIds(serviceAreaIds)
             .regionId(Optional.ofNullable(regionId).orElseGet(() -> REGION_IDS.get(random.nextInt(REGION_IDS.size()))))
@@ -586,11 +596,7 @@ public class TestingSupportService {
             .build();
 
         if (openingHours.getAppointmentNeeded().booleanValue()) {
-            if (random.nextBoolean()) {
-                openingHours.setAppointmentContact(rndEmail(random));
-            } else {
-                openingHours.setAppointmentContact(rndPhoneNumber(random));
-            }
+            openingHours.setAppointmentContact(rndEmail(random));
         }
 
         setOpeningTimesDetails(random, openingHours::setOpeningTimesDetails);
