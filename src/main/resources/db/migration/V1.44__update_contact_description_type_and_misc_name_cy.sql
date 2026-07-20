@@ -195,7 +195,7 @@ SET name_cy = v.name_cy
         ('Forced marriage', 'Priodas dan orfod'),
         ('FGM', 'Anffurfio Organau Cenhedlu Benywod (FGM)'),
         ('Pathfinder – for Private Law Proceedings', 'Cynllun Braenaru – ar gyfer Achosion Cyfraith Breifat'),
-        ('Domestic Abuse Protection Order (DAPOs)', 'Gorchmynion Diogelu Rhag Cam-drin Domestig (DAPOs)'),
+        ('Domestic Abuse Protection Order (DAPOs)', 'Gorchymyn Diogelu Rhag Cam-drin Domestig (DAPOs)'),
         ('Benefits', 'Budd-daliadau')
 ) AS v(name, name_cy)
 WHERE aolt.name = v.name;
