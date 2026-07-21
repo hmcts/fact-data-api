@@ -112,12 +112,14 @@ class CourtProfessionalInformationServiceTest {
             .courtId(courtId)
             .dxCode("789")
             .explanation("DX explanation")
+            .explanationCy("Esboniad DX")
             .build());
 
         courtFaxes = List.of(CourtFax.builder()
             .courtId(courtId)
             .faxNumber("01234567890")
             .description("Fax description")
+            .descriptionCy("Disgrifiad ffacs")
             .build());
 
         professionalInformationDto = ProfessionalInformationDto.builder()
@@ -141,11 +143,13 @@ class CourtProfessionalInformationServiceTest {
         courtDxCodeDtos = List.of(CourtDxCodeDto.builder()
             .dxCode(courtDxCodes.get(0).getDxCode())
             .explanation(courtDxCodes.get(0).getExplanation())
+            .explanationCy(courtDxCodes.get(0).getExplanationCy())
             .build());
 
         courtFaxDtos = List.of(CourtFaxDto.builder()
             .faxNumber(courtFaxes.get(0).getFaxNumber())
             .description(courtFaxes.get(0).getDescription())
+            .descriptionCy(courtFaxes.get(0).getDescriptionCy())
             .build());
 
         requestDetails = CourtProfessionalInformationDetailsDto.builder()
@@ -285,10 +289,12 @@ class CourtProfessionalInformationServiceTest {
             .dxCodes(List.of(CourtDxCodeDto.builder()
                 .dxCode(" 120551 Marylebone 9 ")
                 .explanation(" Main DX entry ")
+                .explanationCy(" Esboniad DX ")
                 .build()))
             .faxNumbers(List.of(CourtFaxDto.builder()
                 .faxNumber("0207 000 0000")
                 .description(" Fax description  ")
+                .descriptionCy(" Disgrifiad ffacs  ")
                 .build()))
             .build();
 
@@ -304,14 +310,20 @@ class CourtProfessionalInformationServiceTest {
         assertThat(courtDxCodesCaptor.getValue()).hasSize(1);
         assertThat(courtDxCodesCaptor.getValue().get(0).getDxCode()).isEqualTo("120551 Marylebone 9");
         assertThat(courtDxCodesCaptor.getValue().get(0).getExplanation()).isEqualTo("Main DX entry");
+        assertThat(courtDxCodesCaptor.getValue().get(0).getExplanationCy()).isEqualTo("Esboniad DX");
         assertThat(courtFaxCaptor.getValue()).hasSize(1);
         assertThat(courtFaxCaptor.getValue().get(0).getDescription()).isEqualTo("Fax description");
+        assertThat(courtFaxCaptor.getValue().get(0).getDescriptionCy()).isEqualTo("Disgrifiad ffacs");
 
         assertThat(result.getCodes().getGbs()).isEqualTo("GBS001");
         assertThat(result.getDxCodes()).extracting(CourtDxCodeDto::getDxCode)
             .containsExactly("120551 Marylebone 9");
+        assertThat(result.getDxCodes()).extracting(CourtDxCodeDto::getExplanationCy)
+            .containsExactly("Esboniad DX");
         assertThat(result.getFaxNumbers()).extracting(CourtFaxDto::getDescription)
             .containsExactly("Fax description");
+        assertThat(result.getFaxNumbers()).extracting(CourtFaxDto::getDescriptionCy)
+            .containsExactly("Disgrifiad ffacs");
     }
 
     @Test

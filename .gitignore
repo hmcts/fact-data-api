@@ -25,6 +25,7 @@ applicationinsights-agent-*.jar
 *.log
 
 .env
+.env-test
 AGENTS.md
 
 scripts/
