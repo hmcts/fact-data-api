@@ -153,6 +153,7 @@ public class CourtService {
         existingCourt.setOpen(court.getOpen());
         existingCourt.setRegionId(foundRegion.getId());
         existingCourt.setWarningNotice(court.getWarningNotice());
+        existingCourt.setWarningNoticeCy(court.getWarningNoticeCy());
 
         Court updatedCourt = courtRepository.save(existingCourt);
 
