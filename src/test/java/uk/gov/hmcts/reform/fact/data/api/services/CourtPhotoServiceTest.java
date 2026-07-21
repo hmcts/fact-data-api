@@ -7,10 +7,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.PhotoConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,6 +24,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import javax.imageio.ImageIO;
 
 @ExtendWith(MockitoExtension.class)
 class CourtPhotoServiceTest {
@@ -40,6 +46,9 @@ class CourtPhotoServiceTest {
 
     @Mock
     private AuditUserContext auditUserContext;
+
+    @Mock
+    private PhotoConfigurationProperties  photoConfigurationProperties;
 
     @InjectMocks
     private CourtPhotoService courtPhotoService;
@@ -76,15 +85,17 @@ class CourtPhotoServiceTest {
     }
 
     @Test
-    void setCourtPhotoShouldCreateNewWhenNoneExists() {
+    void setCourtPhotoShouldCreateNewWhenNoneExists() throws IOException {
         UUID courtId = UUID.randomUUID();
-        String uploadedLink = "uploaded-file-link";
+        final String uploadedLink = "uploaded-file-link";
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
         when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.empty());
-        when(azureBlobService.uploadFile(eq(courtId.toString()), eq(multipartFile))).thenReturn(uploadedLink);
+        when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class))).thenReturn(uploadedLink);
         when(auditUserContext.requireUserId()).thenReturn(USER_ID);
         when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(multipartFile.getBytes()).thenReturn(createImageBytes("jpg"));
+        when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
 
         CourtPhoto result = courtPhotoService.setCourtPhoto(courtId, multipartFile);
 
@@ -95,7 +106,7 @@ class CourtPhotoServiceTest {
     }
 
     @Test
-    void setCourtPhotoShouldUpdateExistingPhoto() {
+    void setCourtPhotoShouldUpdateExistingPhoto() throws IOException {
         UUID courtId = UUID.randomUUID();
         CourtPhoto existing = new CourtPhoto();
         existing.setCourtId(courtId);
@@ -103,9 +114,11 @@ class CourtPhotoServiceTest {
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
         when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(existing));
-        when(azureBlobService.uploadFile(eq(courtId.toString()), eq(multipartFile))).thenReturn("new-link");
+        when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class))).thenReturn("new-link");
         when(auditUserContext.requireUserId()).thenReturn(USER_ID);
         when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(multipartFile.getBytes()).thenReturn(createImageBytes("jpg"));
+        when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
 
         CourtPhoto result = courtPhotoService.setCourtPhoto(courtId, multipartFile);
 
@@ -145,5 +158,15 @@ class CourtPhotoServiceTest {
         );
 
         assertThat(exception.getMessage()).isEqualTo("Court photo not found for court ID: " + courtId);
+    }
+
+    private byte[] createImageBytes(String format) throws IOException {
+        BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+        image.setRGB(0, 0, 0xFFFFFF);
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            ImageIO.write(image, format, outputStream);
+            return outputStream.toByteArray();
+        }
     }
 }

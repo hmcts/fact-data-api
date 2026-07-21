@@ -120,3 +120,5 @@ fact:
   data-api:
     audit:
       retention-days: ${AUDIT_RETENTION_DAYS:365}
+    photo:
+      max-width: ${PHOTO_MAX_WIDTH:640}
