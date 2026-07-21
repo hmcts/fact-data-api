@@ -35,6 +35,13 @@ public class CourtPhotoService {
     private final AuditUserContext auditUserContext;
     private final PhotoConfigurationProperties photoConfigurationProperties;
 
+    /**
+     * Get a court photo by court id.
+     *
+     * @param courtId The id of the court.
+     * @return The court photo entity.
+     * @throws NotFoundException if no court found with the given id or no photo found for the court.
+     */
     public CourtPhoto getCourtPhotoByCourtId(UUID courtId) {
         courtService.getCourtById(courtId);
         return courtPhotoRepository.findCourtPhotoByCourtId(courtId).orElseThrow(
@@ -42,6 +49,13 @@ public class CourtPhotoService {
         );
     }
 
+    /**
+     * Set or update a court photo.
+     *
+     * @param courtId The id of the court.
+     * @param file The court photo to save.
+     * @return The saved court photo entity.
+     */
     public CourtPhoto setCourtPhoto(UUID courtId, MultipartFile file) {
         courtService.getCourtById(courtId);
 
@@ -57,6 +71,12 @@ public class CourtPhotoService {
         return courtPhotoRepository.save(courtPhoto);
     }
 
+    /**
+     * Delete a court photo by court id.
+     *
+     * @param courtId The id of the court.
+     * @throws NotFoundException if no court found with the given id or no photo found for the court.
+     */
     public void deleteCourtPhotoByCourtId(UUID courtId) {
         courtService.getCourtById(courtId);
 
