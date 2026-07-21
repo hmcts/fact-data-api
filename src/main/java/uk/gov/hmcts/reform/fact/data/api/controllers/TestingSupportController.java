@@ -111,6 +111,7 @@ public class TestingSupportController {
         @RequestParam(required = false) Long seed,
         @RequestParam(required = false, defaultValue = "true") boolean open,
         @RequestParam(required = false, defaultValue = "false") boolean addWarningNotice,
+        @RequestParam(required = false, defaultValue = "false") boolean addWarningNoticeCy,
         @RequestParam(required = false, defaultValue = "true") boolean withTranslations,
         @RequestParam(required = false, defaultValue = "true") boolean withEnquiriesContact,
         @RequestParam(required = false, defaultValue = "false") boolean forceFamilyCourt) {
@@ -120,6 +121,7 @@ public class TestingSupportController {
             seed,
             open,
             addWarningNotice,
+            addWarningNoticeCy,
             withTranslations,
             withEnquiriesContact,
             forceFamilyCourt
