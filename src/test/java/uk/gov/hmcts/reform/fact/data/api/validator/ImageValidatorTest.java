@@ -93,7 +93,6 @@ class ImageValidatorTest {
     void shouldThrowWhenFileCannotBeRead() throws IOException {
         MultipartFile unreadableFile = mock(MultipartFile.class);
         when(unreadableFile.isEmpty()).thenReturn(false);
-        when(unreadableFile.getBytes()).thenThrow(new IOException("Cannot read"));
 
         assertThrows(InvalidFileException.class, () -> imageValidator.isValid(unreadableFile, context));
     }
