@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
@@ -16,8 +17,10 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,12 +28,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageOutputStream;
 
 @ExtendWith(MockitoExtension.class)
 class CourtPhotoServiceTest {
@@ -216,6 +222,60 @@ class CourtPhotoServiceTest {
         assertThat(captor.getValue().getContentType()).isEqualTo(contentType);
         verify(multipartFile, times(2)).getContentType();
         verify(courtPhotoRepository).save(result);
+    }
+
+
+    @Test
+    void setCourtPhotoShouldThrowIllegalArgumentWhenImageIOFailsToReadFile() throws IOException {
+        UUID courtId = UUID.randomUUID();
+
+        when(courtService.getCourtById(courtId)).thenReturn(null);
+        when(multipartFile.getBytes()).thenReturn("not-an-image".getBytes());
+        when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
+
+        try (MockedStatic<ImageIO> imageIoMock = mockStatic(ImageIO.class)) {
+            imageIoMock.when(() -> ImageIO.read(any(InputStream.class))).thenReturn(null);
+
+            assertThrows(IllegalArgumentException.class, () ->
+                courtPhotoService.setCourtPhoto(courtId, multipartFile)
+            );
+        }
+    }
+
+    @Test
+    void setCourtPhotoShouldThrowIllegalArgumentWhenImageIOFailsToWriteFile() throws IOException {
+        UUID courtId = UUID.randomUUID();
+
+        when(courtService.getCourtById(courtId)).thenReturn(null);
+        when(multipartFile.getBytes()).thenReturn("not-an-image".getBytes());
+        when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
+
+        try (MockedStatic<ImageIO> imageIoMock = mockStatic(ImageIO.class)) {
+            imageIoMock.when(() -> ImageIO.write(
+                any(RenderedImage.class), anyString(), any(ImageOutputStream.class)
+            )).thenReturn(false);
+
+            assertThrows(IllegalArgumentException.class, () ->
+                courtPhotoService.setCourtPhoto(courtId, multipartFile)
+            );
+        }
+    }
+
+    @Test
+    void setCourtPhotoShouldThrowIllegalArgumentWhenIOExceptionOccurs() throws IOException {
+        UUID courtId = UUID.randomUUID();
+
+        when(courtService.getCourtById(courtId)).thenReturn(null);
+        when(multipartFile.getBytes()).thenReturn("not-an-image".getBytes());
+        when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
+
+        try (MockedStatic<ImageIO> imageIoMock = mockStatic(ImageIO.class)) {
+            imageIoMock.when(() -> ImageIO.read(any(InputStream.class))).thenThrow(new IOException());
+
+            assertThrows(IllegalArgumentException.class, () ->
+                courtPhotoService.setCourtPhoto(courtId, multipartFile)
+            );
+        }
     }
 
     @Test
