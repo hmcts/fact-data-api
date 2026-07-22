@@ -4,6 +4,7 @@ import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.config.properties.PhotoConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.models.InMemoryMultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 
 import java.awt.Graphics2D;
@@ -12,13 +13,10 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Locale;
 import java.util.UUID;
 import javax.imageio.ImageIO;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -152,43 +150,5 @@ public class CourtPhotoService {
 
         // Defensive fallback; upstream validation should already ensure png/jpg.
         return "jpg";
-    }
-
-    /**
-     * In-Memory wrapper around multipart file content to allow resizing and
-     * uploading without writing to disk.
-     */
-    @Getter
-    @AllArgsConstructor
-    private static final class InMemoryMultipartFile implements MultipartFile {
-        private final String name;
-        private final String originalFilename;
-        private final String contentType;
-        private final byte[] content;
-
-        @Override
-        public boolean isEmpty() {
-            return content.length == 0;
-        }
-
-        @Override
-        public long getSize() {
-            return content.length;
-        }
-
-        @Override
-        public byte[] getBytes() {
-            return content.clone();
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            return new ByteArrayInputStream(content);
-        }
-
-        @Override
-        public void transferTo(java.io.File dest) throws IOException {
-            java.nio.file.Files.write(dest.toPath(), content);
-        }
     }
 }

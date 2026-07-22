@@ -35,7 +35,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
-import uk.gov.hmcts.reform.fact.data.api.migration.model.InMemoryMultipartFile;
+import uk.gov.hmcts.reform.fact.data.api.models.InMemoryMultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;

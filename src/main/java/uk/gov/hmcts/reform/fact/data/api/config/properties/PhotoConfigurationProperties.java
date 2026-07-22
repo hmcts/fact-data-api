@@ -13,6 +13,6 @@ import org.springframework.stereotype.Component;
 @Setter
 public class PhotoConfigurationProperties {
     @Min(256)
-    @Max(1024)
-    private int maxWidth = 640;
+    @Max(2048)
+    private int maxWidth = 1024;
 }

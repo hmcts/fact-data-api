@@ -1,4 +1,4 @@
-package uk.gov.hmcts.reform.fact.data.api.migration.model;
+package uk.gov.hmcts.reform.fact.data.api.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
