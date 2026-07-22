@@ -38,6 +38,7 @@ public final class HttpClient {
     private static final AtomicReference<String> factAdminBearerToken = new AtomicReference<>();
     private static final AtomicReference<String> factViewerBearerToken = new AtomicReference<>();
     private static final AtomicReference<String> factAdminUserId = new AtomicReference<>();
+    private static final AtomicReference<String> factViewerUserId = new AtomicReference<>();
 
     public HttpClient() {
         this.baseUrl = System.getenv().getOrDefault("TEST_URL", "http://localhost:8989");
@@ -154,6 +155,35 @@ public final class HttpClient {
         }
     }
 
+    public String getFactViewerUserId() {
+        synchronized (factViewerUserId) {
+            if (factViewerUserId.get() == null) {
+                final User user = User.builder()
+                    .email("functional.viewer." + System.currentTimeMillis() + "@justice.gov.uk")
+                    .ssoId(UUID.randomUUID())
+                    .role(UserRole.VIEWER)
+                    .build();
+
+                final Response response = requestWithOptionalAuthorization(getAdminBearerToken(), false)
+                    .contentType(ContentType.JSON)
+                    .body(user)
+                    .when()
+                    .post("/user/v1")
+                    .thenReturn();
+
+                if (response.statusCode() != 201) {
+                    throw new IllegalStateException(
+                        "Failed to create functional viewer user. Status: "
+                            + response.statusCode() + ", body: " + response.asString()
+                    );
+                }
+
+                factViewerUserId.set(response.jsonPath().getString("id"));
+            }
+            return factViewerUserId.get();
+        }
+    }
+
     public Response doGet(final String path) {
         return doGet(path, getAdminBearerToken());
     }
@@ -187,6 +217,14 @@ public final class HttpClient {
             .thenReturn();
     }
 
+    public Response doGetAsUser(final String path, final String bearerToken, final UUID userId) {
+        return requestWithOptionalAuthorization(bearerToken, false)
+            .header(USER_ID_HEADER, userId.toString())
+            .when()
+            .get(path)
+            .thenReturn();
+    }
+
     public Response doPost(final String path, final Object body) {
         return doPost(path, body, getAdminBearerToken());
     }
@@ -200,6 +238,16 @@ public final class HttpClient {
             .when()
             .post(path)
             .thenReturn();
+    }
+
+    public Response doPostAsUser(final String path, final Object body,
+                                 final String bearerToken, final UUID userId) {
+        RequestSpecification request = requestWithOptionalAuthorization(bearerToken, false)
+            .header(USER_ID_HEADER, userId.toString());
+        if (body != null) {
+            request.contentType(ContentType.JSON).body(body);
+        }
+        return request.when().post(path).thenReturn();
     }
 
     public Response doPut(final String path, final Object body) {
@@ -223,6 +271,14 @@ public final class HttpClient {
 
     public Response doDelete(final String path, final String bearerToken) {
         return requestWithOptionalAuthorization(bearerToken)
+            .when()
+            .delete(path)
+            .thenReturn();
+    }
+
+    public Response doDeleteAsUser(final String path, final String bearerToken, final UUID userId) {
+        return requestWithOptionalAuthorization(bearerToken, false)
+            .header(USER_ID_HEADER, userId.toString())
             .when()
             .delete(path)
             .thenReturn();

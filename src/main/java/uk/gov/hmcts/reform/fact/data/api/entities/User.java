@@ -1,9 +1,11 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -62,10 +64,19 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    @Schema(description = "The User's favourite Courts")
+    @JsonIgnore
+    @Schema(hidden = true)
+    @Builder.Default
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(columnDefinition = "uuid[]")
-    private List<UUID> favouriteCourts;
+    @Column(name = "favourite_courts", columnDefinition = "uuid[]", nullable = false)
+    private List<UUID> favouriteCourts = new ArrayList<>();
+
+    @JsonIgnore
+    @Schema(hidden = true)
+    @Builder.Default
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "favourite_service_centres", columnDefinition = "uuid[]", nullable = false)
+    private List<UUID> favouriteServiceCentres = new ArrayList<>();
 
     @Schema(description = "The User's last login date/time")
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)

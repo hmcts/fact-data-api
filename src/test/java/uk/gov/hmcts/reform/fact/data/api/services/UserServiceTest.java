@@ -6,128 +6,54 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatus;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository.FavouriteLocationReference;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
+    private static final UUID USER_ID = UUID.randomUUID();
+    private static final UUID COURT_ID = UUID.randomUUID();
+    private static final UUID SERVICE_CENTRE_ID = UUID.randomUUID();
+
     @Mock
     private UserRepository userRepository;
 
     @Mock
-    private CourtService courtService;
+    private CourtRepository courtRepository;
+
+    @Mock
+    private ServiceCentreRepository serviceCentreRepository;
 
     @InjectMocks
     private UserService userService;
-
-    @Test
-    void getUsersFavouriteCourtsShouldReturnListOfCourts() {
-        UUID userId = UUID.randomUUID();
-        UUID courtId = UUID.randomUUID();
-        User user = new User();
-        user.setFavouriteCourts(List.of(courtId));
-        Court court = new Court();
-        court.setId(courtId);
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(courtService.getAllCourtsByIds(List.of(courtId))).thenReturn(List.of(court));
-
-        List<Court> result = userService.getUsersFavouriteCourts(userId);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getId()).isEqualTo(courtId);
-    }
-
-    @Test
-    void getUsersFavouriteCourtsShouldThrowNotFoundExceptionWhenUserDoesNotExist() {
-        UUID userId = UUID.randomUUID();
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> userService.getUsersFavouriteCourts(userId));
-    }
-
-    @Test
-    void addFavouriteCourtsShouldAddCourtsToUsersFavourites() {
-        UUID userId = UUID.randomUUID();
-        UUID courtId = UUID.randomUUID();
-        User user = new User();
-        user.setFavouriteCourts(new ArrayList<>());
-        Court court = new Court();
-        court.setId(courtId);
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(courtService.getAllCourtsByIds(List.of(courtId))).thenReturn(List.of(court));
-
-        userService.addFavouriteCourts(userId, List.of(courtId));
-
-        assertThat(user.getFavouriteCourts()).contains(courtId);
-    }
-
-    @Test
-    void addFavouriteCourtsShouldThrowNotFoundExceptionWhenUserDoesNotExist() {
-        UUID userId = UUID.randomUUID();
-        UUID courtId = UUID.randomUUID();
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> userService.addFavouriteCourts(userId, List.of(courtId)));
-    }
-
-    @Test
-    void addFavouriteCourtsShouldNotAddWhenCourtDoesNotExist() {
-        UUID userId = UUID.randomUUID();
-        User user = new User();
-        user.setId(userId);
-        user.setFavouriteCourts(new ArrayList<>());
-        UUID courtId = UUID.randomUUID();
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(courtService.getAllCourtsByIds(List.of(courtId))).thenReturn(List.of());
-
-        userService.addFavouriteCourts(userId, List.of(courtId));
-
-        assertThat(user.getFavouriteCourts()).doesNotContain(courtId);
-    }
-
-    @Test
-    void removeFavouriteCourtShouldRemoveCourtFromUsersFavourites() {
-        UUID userId = UUID.randomUUID();
-        UUID courtId = UUID.randomUUID();
-        User user = new User();
-        user.setId(userId);
-        user.setFavouriteCourts(new ArrayList<>(List.of(courtId)));
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-
-        userService.removeFavouriteCourt(userId, courtId);
-
-        assertThat(user.getFavouriteCourts()).doesNotContain(courtId);
-    }
-
-    @Test
-    void removeFavouriteCourtShouldThrowNotFoundExceptionWhenUserDoesNotExist() {
-        UUID userId = UUID.randomUUID();
-        UUID courtId = UUID.randomUUID();
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> userService.removeFavouriteCourt(userId, courtId));
-    }
 
     @Test
     void createOrUpdateUserShouldSaveUserWithCurrentLoginTime() {
@@ -175,7 +101,10 @@ class UserServiceTest {
         existingUser.setEmail("existing@email.com");
         existingUser.setSsoId(existingSsoId);
         existingUser.setRole(UserRole.ADMIN);
-        existingUser.setFavouriteCourts(new ArrayList<>());
+        List<UUID> favouriteCourts = List.of(UUID.randomUUID());
+        List<UUID> favouriteServiceCentres = List.of(UUID.randomUUID());
+        existingUser.setFavouriteCourts(favouriteCourts);
+        existingUser.setFavouriteServiceCentres(favouriteServiceCentres);
 
         User updatedUser = new User();
         updatedUser.setId(userId);
@@ -191,7 +120,8 @@ class UserServiceTest {
             assertThat(savedUser.getEmail()).isEqualTo("existing@email.com");
             assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
             assertThat(savedUser.getRole()).isEqualTo(UserRole.SUPER_ADMIN);
-            assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
+            assertThat(savedUser.getFavouriteCourts()).isEqualTo(favouriteCourts);
+            assertThat(savedUser.getFavouriteServiceCentres()).isEqualTo(favouriteServiceCentres);
             assertThat(savedUser.getLastLogin()).isNotNull();
             return savedUser;
         });
@@ -210,7 +140,6 @@ class UserServiceTest {
         existingUser.setEmail(existingEmail);
         existingUser.setSsoId(existingSsoId);
         existingUser.setRole(UserRole.ADMIN);
-        existingUser.setFavouriteCourts(new ArrayList<>());
 
         User updatedUser = new User();
         updatedUser.setId(userId);
@@ -226,7 +155,6 @@ class UserServiceTest {
             assertThat(savedUser.getEmail()).isEqualTo(existingEmail);
             assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
             assertThat(savedUser.getRole()).isEqualTo(UserRole.SUPER_ADMIN);
-            assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
             assertThat(savedUser.getLastLogin()).isNotNull();
             return savedUser;
         });
@@ -245,7 +173,6 @@ class UserServiceTest {
         existingUser.setEmail(existingEmail);
         existingUser.setSsoId(existingSsoId);
         existingUser.setRole(UserRole.ADMIN);
-        existingUser.setFavouriteCourts(new ArrayList<>());
 
         User updatedUser = new User();
         updatedUser.setEmail(existingEmail);
@@ -260,7 +187,6 @@ class UserServiceTest {
             assertThat(savedUser.getEmail()).isEqualTo(existingEmail);
             assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
             assertThat(savedUser.getRole()).isEqualTo(UserRole.SUPER_ADMIN);
-            assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
             assertThat(savedUser.getLastLogin()).isNotNull();
             return savedUser;
         });
@@ -279,7 +205,6 @@ class UserServiceTest {
         existingUser.setEmail(existingEmail);
         existingUser.setSsoId(existingSsoId);
         existingUser.setRole(UserRole.ADMIN);
-        existingUser.setFavouriteCourts(new ArrayList<>());
 
         User updatedUser = new User();
         updatedUser.setSsoId(existingSsoId);
@@ -294,7 +219,6 @@ class UserServiceTest {
             assertThat(savedUser.getEmail()).isEqualTo(existingEmail);
             assertThat(savedUser.getSsoId()).isEqualTo(existingSsoId);
             assertThat(savedUser.getRole()).isEqualTo(UserRole.SUPER_ADMIN);
-            assertThat(savedUser.getFavouriteCourts()).isEqualTo(existingUser.getFavouriteCourts());
             assertThat(savedUser.getLastLogin()).isNotNull();
             return savedUser;
         });
@@ -378,6 +302,134 @@ class UserServiceTest {
     }
 
     @Test
+    void getFavouritesHydratesMixedLocationsInRepositoryOrder() {
+        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        FavouriteLocationReference serviceCentreReference = reference(
+            SERVICE_CENTRE_ID,
+            SubjectType.SERVICE_CENTRE
+        );
+        FavouriteLocationReference courtReference = reference(COURT_ID, SubjectType.COURT);
+        PageRequest pageable = PageRequest.of(0, 25);
+        when(userRepository.findFavouriteLocationsByUserId(USER_ID, pageable))
+            .thenReturn(new PageImpl<>(List.of(serviceCentreReference, courtReference), pageable, 2));
+        when(courtRepository.findAllById(List.of(COURT_ID))).thenReturn(List.of(Court.builder()
+            .id(COURT_ID)
+            .name("Beta Court")
+            .build()));
+        when(serviceCentreRepository.findAllById(List.of(SERVICE_CENTRE_ID)))
+            .thenReturn(List.of(ServiceCentre.builder()
+                .id(SERVICE_CENTRE_ID)
+                .name("Alpha Service Centre")
+                .build()));
+
+        Page<AllLocation> result = userService.getFavourites(USER_ID, 0, 25);
+
+        assertThat(result.getContent())
+            .extracting(AllLocation::getId)
+            .containsExactly(SERVICE_CENTRE_ID, COURT_ID);
+        assertThat(result.getTotalElements()).isEqualTo(2);
+    }
+
+    @Test
+    void getFavouritesDefensivelyOmitsADeletedLocation() {
+        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        FavouriteLocationReference courtReference = reference(COURT_ID, SubjectType.COURT);
+        PageRequest pageable = PageRequest.of(0, 25);
+        when(userRepository.findFavouriteLocationsByUserId(USER_ID, pageable))
+            .thenReturn(new PageImpl<>(List.of(courtReference), pageable, 1));
+        when(courtRepository.findAllById(List.of(COURT_ID))).thenReturn(List.of());
+        when(serviceCentreRepository.findAllById(List.of())).thenReturn(List.of());
+
+        assertThat(userService.getFavourites(USER_ID, 0, 25).getContent()).isEmpty();
+    }
+
+    @Test
+    void getFavouriteStatusesReturnsInputOrderAndFalseForUnmatchedSubjects() {
+        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        FavouriteReference court = new FavouriteReference(COURT_ID, SubjectType.COURT);
+        FavouriteReference serviceCentre = new FavouriteReference(
+            SERVICE_CENTRE_ID,
+            SubjectType.SERVICE_CENTRE
+        );
+        when(userRepository.findExistingFavouriteReferences(
+            USER_ID,
+            List.of(SERVICE_CENTRE_ID, COURT_ID)
+        )).thenReturn(List.of(reference(COURT_ID, SubjectType.COURT)));
+
+        List<FavouriteStatus> result = userService.getFavouriteStatuses(USER_ID, List.of(serviceCentre, court));
+
+        assertThat(result).containsExactly(
+            new FavouriteStatus(SERVICE_CENTRE_ID, SubjectType.SERVICE_CENTRE, false),
+            new FavouriteStatus(COURT_ID, SubjectType.COURT, true)
+        );
+    }
+
+    @Test
+    void getFavouriteStatusesDoesNotQueryForAnEmptyList() {
+        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        assertThat(userService.getFavouriteStatuses(USER_ID, List.of())).isEmpty();
+        verify(userRepository, never()).findExistingFavouriteReferences(any(), any());
+    }
+
+    @Test
+    void addFavouriteValidatesCourtAndUsesIdempotentInsert() {
+        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        when(courtRepository.existsById(COURT_ID)).thenReturn(true);
+
+        userService.addFavourite(USER_ID, new FavouriteReference(COURT_ID, SubjectType.COURT));
+
+        verify(userRepository).addFavouriteCourtIfAbsent(USER_ID, COURT_ID);
+    }
+
+    @Test
+    void addFavouriteValidatesServiceCentre() {
+        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        when(serviceCentreRepository.existsById(SERVICE_CENTRE_ID)).thenReturn(true);
+
+        userService.addFavourite(
+            USER_ID,
+            new FavouriteReference(SERVICE_CENTRE_ID, SubjectType.SERVICE_CENTRE)
+        );
+
+        verify(userRepository).addFavouriteServiceCentreIfAbsent(USER_ID, SERVICE_CENTRE_ID);
+    }
+
+    @Test
+    void addFavouriteRejectsUnknownSubject() {
+        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        when(courtRepository.existsById(COURT_ID)).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.addFavourite(
+            USER_ID,
+            new FavouriteReference(COURT_ID, SubjectType.COURT)
+        )).isInstanceOf(NotFoundException.class)
+            .hasMessage("Court not found, ID: " + COURT_ID);
+
+        verify(userRepository, never()).addFavouriteCourtIfAbsent(any(), any());
+    }
+
+    @Test
+    void removeFavouriteIsIdempotentAfterValidatingSubject() {
+        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        when(serviceCentreRepository.existsById(SERVICE_CENTRE_ID)).thenReturn(true);
+
+        userService.removeFavourite(USER_ID, SERVICE_CENTRE_ID, SubjectType.SERVICE_CENTRE);
+
+        verify(userRepository).removeFavouriteServiceCentre(USER_ID, SERVICE_CENTRE_ID);
+    }
+
+    @Test
+    void getFavouritesRejectsUnknownUser() {
+        when(userRepository.existsById(USER_ID)).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.getFavourites(USER_ID, 0, 25))
+            .isInstanceOf(NotFoundException.class)
+            .hasMessage("No user found for user id: " + USER_ID);
+
+        verify(userRepository, never()).findFavouriteLocationsByUserId(any(), any());
+    }
+
+    @Test
     void deleteInactiveUsersShouldRemoveUsersNotLoggedInWithinRetentionPeriod() {
         List<User> inactiveUsers = List.of(new User());
 
@@ -395,5 +447,19 @@ class UserServiceTest {
         user.setRole(role);
         user.setLastLogin(lastLogin);
         return user;
+    }
+
+    private FavouriteLocationReference reference(UUID subjectId, SubjectType subjectType) {
+        return new FavouriteLocationReference() {
+            @Override
+            public UUID getSubjectId() {
+                return subjectId;
+            }
+
+            @Override
+            public String getSubjectType() {
+                return subjectType.name();
+            }
+        };
     }
 }

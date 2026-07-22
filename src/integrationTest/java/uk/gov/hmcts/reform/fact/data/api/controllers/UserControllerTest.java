@@ -8,19 +8,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatus;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatusRequest;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.security.AuthService;
 import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -50,9 +57,12 @@ class UserControllerTest {
     @MockitoBean
     private LockService lockService;
 
+    @MockitoBean
+    private AuthService authService;
+
     private final UUID userId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+    private final UUID subjectId = UUID.fromString("223e4567-e89b-12d3-a456-426614174000");
     private final UUID nonExistentUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
-    private final UUID courtId = UUID.fromString("222e4567-e89b-12d3-a456-426614174000");
 
     @Test
     @DisplayName("GET /user/v1 returns filtered and paginated users successfully")
@@ -82,71 +92,122 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("GET /user/v1/{userId}/favourites returns favourite courts successfully")
-    void getUserFavoritesReturnsSuccessfully() throws Exception {
-        List<Court> courts = List.of(new Court());
-        when(userService.getUsersFavouriteCourts(userId)).thenReturn(courts);
+    void getFavouritesReturnsPageMetadataForCurrentUser() throws Exception {
+        AllLocation location = AllLocation.builder()
+            .id(subjectId)
+            .name("Example Court")
+            .locationType(SubjectType.COURT.name())
+            .build();
+        when(userService.getFavourites(userId, 1, 25)).thenReturn(
+            new PageImpl<>(List.of(location), PageRequest.of(1, 25), 30)
+        );
 
-        mockMvc.perform(get("/user/v1/{userId}/favourites", userId))
+        mockMvc.perform(get("/user/v1/favourites")
+                            .header("X-User-Id", userId)
+                            .param("pageNumber", "1")
+                            .param("pageSize", "25"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$").isArray());
+            .andExpect(jsonPath("$.content[0].id").value(subjectId.toString()))
+            .andExpect(jsonPath("$.content[0].locationType").value("COURT"))
+            .andExpect(jsonPath("$.page.number").value(1))
+            .andExpect(jsonPath("$.page.totalElements").value(26));
     }
 
     @Test
-    @DisplayName("GET /user/v1/{userId}/favourites returns 404 if user does not exist")
-    void getUserFavoritesNonExistentReturnsNotFound() throws Exception {
-        when(userService.getUsersFavouriteCourts(nonExistentUserId))
-            .thenThrow(new NotFoundException("User not found"));
+    void addFavouriteReturnsCreated() throws Exception {
+        FavouriteReference request = new FavouriteReference(subjectId, SubjectType.SERVICE_CENTRE);
+        mockMvc.perform(post("/user/v1/favourites")
+                            .header("X-User-Id", userId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/user/v1/{userId}/favourites", nonExistentUserId))
-            .andExpect(status().isNotFound());
+        verify(userService).addFavourite(userId, request);
     }
 
     @Test
-    @DisplayName("GET /user/v1/{userId}/favourites returns 400 for invalid UUID")
-    void getUserFavoritesInvalidUUID() throws Exception {
-        mockMvc.perform(get("/user/v1/{userId}/favourites", "invalid-uuid"))
+    void statusReturnsFavouriteBooleans() throws Exception {
+        FavouriteReference subject = new FavouriteReference(subjectId, SubjectType.COURT);
+        FavouriteStatusRequest request = new FavouriteStatusRequest(List.of(subject));
+        when(userService.getFavouriteStatuses(userId, request.getSubjects())).thenReturn(List.of(
+            new FavouriteStatus(subjectId, SubjectType.COURT, true)
+        ));
+
+        mockMvc.perform(post("/user/v1/favourites/status")
+                            .header("X-User-Id", userId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].subjectId").value(subjectId.toString()))
+            .andExpect(jsonPath("$[0].subjectType").value("COURT"))
+            .andExpect(jsonPath("$[0].favourite").value(true));
+    }
+
+    @Test
+    void statusRejectsEmptySubjects() throws Exception {
+        mockMvc.perform(post("/user/v1/favourites/status")
+                            .header("X-User-Id", userId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"subjects\":[]}"))
             .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("POST /user/v1/{userId}/favourites adds favourite courts successfully")
-    void addUserFavoriteSuccessfully() throws Exception {
-        List<UUID> courtIds = List.of(courtId);
+    void statusRejectsMoreThanOneThousandSubjects() throws Exception {
+        FavouriteReference subject = new FavouriteReference(subjectId, SubjectType.COURT);
+        FavouriteStatusRequest request = new FavouriteStatusRequest(
+            IntStream.rangeClosed(0, 1000).mapToObj(ignored -> subject).toList()
+        );
 
-        mockMvc.perform(post("/user/v1/{userId}/favourites", userId)
+        mockMvc.perform(post("/user/v1/favourites/status")
+                            .header("X-User-Id", userId)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(courtIds)))
-            .andExpect(status().isCreated());
+                            .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("POST /user/v1/{userId}/favourites returns 404 if user does not exist")
-    void addUserFavoriteNonExistentUserReturnsNotFound() throws Exception {
-        List<UUID> courtIds = List.of(courtId);
-        doThrow(new NotFoundException("User not found"))
-            .when(userService).addFavouriteCourts(nonExistentUserId, courtIds);
-
-        mockMvc.perform(post("/user/v1/{userId}/favourites", nonExistentUserId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(courtIds)))
-            .andExpect(status().isNotFound());
+    void getFavouritesRejectsPageSizesAboveOneThousand() throws Exception {
+        mockMvc.perform(get("/user/v1/favourites")
+                            .header("X-User-Id", userId)
+                            .param("pageSize", "1001"))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("DELETE /user/v1/{userId}/favourites/{favouriteId} removes favourite court successfully")
-    void deleteUserFavoriteSuccessfully() throws Exception {
-        mockMvc.perform(delete("/user/v1/{userId}/favourites/{favouriteId}", userId, courtId))
+    void addRejectsUnknownSubjectType() throws Exception {
+        mockMvc.perform(post("/user/v1/favourites")
+                            .header("X-User-Id", userId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"subjectId\":\"" + subjectId + "\",\"subjectType\":\"BUILDING\"}"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void removeFavouriteReturnsNoContent() throws Exception {
+        mockMvc.perform(delete("/user/v1/favourites/COURT/{subjectId}", subjectId)
+                            .header("X-User-Id", userId))
             .andExpect(status().isNoContent());
+
+        verify(userService).removeFavourite(userId, subjectId, SubjectType.COURT);
     }
 
     @Test
-    @DisplayName("DELETE /user/v1/{userId}/favourites/{favouriteId} returns 404 if user not found")
-    void deleteUserFavoriteNonExistentUserReturnsNotFound() throws Exception {
-        doThrow(new NotFoundException("User not found"))
-            .when(userService).removeFavouriteCourt(nonExistentUserId, courtId);
+    void removeRejectsInvalidSubjectId() throws Exception {
+        mockMvc.perform(delete("/user/v1/favourites/COURT/not-a-uuid")
+                            .header("X-User-Id", userId))
+            .andExpect(status().isBadRequest());
+    }
 
-        mockMvc.perform(delete("/user/v1/{userId}/favourites/{favouriteId}", nonExistentUserId, courtId))
+    @Test
+    void missingCurrentUserHeaderIsBadRequest() throws Exception {
+        mockMvc.perform(get("/user/v1/favourites"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void legacyUserIdPathNoLongerExists() throws Exception {
+        mockMvc.perform(get("/user/v1/{userId}/favourites", userId))
             .andExpect(status().isNotFound());
     }
 

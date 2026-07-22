@@ -1,7 +1,11 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatus;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatusRequest;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
@@ -15,6 +19,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -27,6 +32,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -38,10 +44,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 @SuppressWarnings("java:S4684")
 public class UserController {
 
+    private static final String USER_ID_HEADER = "X-User-Id";
+
     private final UserService userService;
     private final LockService lockService;
 
-    public UserController(UserService userService, LockService lockService) {
+    public UserController(
+        UserService userService,
+        LockService lockService
+    ) {
         this.userService = userService;
         this.lockService = lockService;
     }
@@ -72,48 +83,66 @@ public class UserController {
         ));
     }
 
-    @GetMapping("/v1/{userId}/favourites")
-    @Operation(summary = "Get favourite courts by user ID",
-        description = "Fetch favourite courts for a given user."
-            + "Returns empty list if user has no favourite courts.")
+    @GetMapping("/v1/favourites")
+    @Operation(summary = "Get the current user's paginated favourite locations")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved favourite courts"),
-        @ApiResponse(responseCode = "400", description = "Invalid user ID supplied"),
-        @ApiResponse(responseCode = "404", description = "User not found")
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved favourite locations"),
+        @ApiResponse(responseCode = "400", description = "Invalid request"),
+        @ApiResponse(responseCode = "404", description = "Current user not found")
     })
-    public ResponseEntity<List<Court>> getUserFavorites(
-        @Parameter(description = "UUID of the user", required = true) @ValidUUID @PathVariable String userId) {
-        return ResponseEntity.ok(userService.getUsersFavouriteCourts(UUID.fromString(userId)));
+    public ResponseEntity<Page<AllLocation>> getFavourites(
+        @Parameter(hidden = true) @RequestHeader(USER_ID_HEADER) UUID userId,
+        @RequestParam(name = "pageNumber", defaultValue = "0")
+        @PositiveOrZero(message = "pageNumber must be greater than or equal to 0") int pageNumber,
+        @RequestParam(name = "pageSize", defaultValue = "25")
+        @Max(value = 1000, message = "pageSize must be no greater than 1000")
+        @Positive(message = "pageSize must be greater than 0") int pageSize
+    ) {
+        return ResponseEntity.ok(userService.getFavourites(userId, pageNumber, pageSize));
     }
 
-    @PostMapping("/v1/{userId}/favourites")
-    @Operation(summary = "Add a new favourite court for user")
+    @PostMapping("/v1/favourites")
+    @Operation(summary = "Add a favourite location for the current user")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Successfully added favourite courts"),
+        @ApiResponse(responseCode = "201", description = "Favourite added or already present"),
         @ApiResponse(responseCode = "400", description = "Invalid request"),
-        @ApiResponse(responseCode = "404", description = "User or court not found")
+        @ApiResponse(responseCode = "404", description = "Current user or subject not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
-    public ResponseEntity<Void> addUserFavorites(
-        @Parameter(description = "UUID of the user", required = true) @ValidUUID @PathVariable String userId,
-        @Parameter(description = "UUIDs of the courts", required = true) @Valid @RequestBody List<UUID> courtIds) {
-        userService.addFavouriteCourts(UUID.fromString(userId), courtIds);
+    public ResponseEntity<Void> addFavourite(
+        @Parameter(hidden = true) @RequestHeader(USER_ID_HEADER) UUID userId,
+        @Valid @RequestBody FavouriteReference favourite
+    ) {
+        userService.addFavourite(userId, favourite);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @DeleteMapping("/v1/{userId}/favourites/{favouriteId}")
-    @Operation(summary = "Delete a favourite court for user")
+    @PostMapping("/v1/favourites/status")
+    @Operation(summary = "Get favourite status for the current user's supplied locations")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Successfully deleted favourite court"),
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved favourite statuses"),
         @ApiResponse(responseCode = "400", description = "Invalid request"),
-        @ApiResponse(responseCode = "404", description = "User not found")
+        @ApiResponse(responseCode = "404", description = "Current user not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
-    public ResponseEntity<Void> deleteUserFavorite(
-        @Parameter(description = "UUID of the user", required = true) @ValidUUID @PathVariable String userId,
-        @Parameter(description = "UUID of the favourite court", required = true)
-        @ValidUUID @PathVariable String favouriteId) {
-        userService.removeFavouriteCourt(UUID.fromString(userId), UUID.fromString(favouriteId));
+    public ResponseEntity<List<FavouriteStatus>> getStatuses(
+        @Parameter(hidden = true) @RequestHeader(USER_ID_HEADER) UUID userId,
+        @Valid @RequestBody FavouriteStatusRequest request
+    ) {
+        return ResponseEntity.ok(userService.getFavouriteStatuses(userId, request.getSubjects()));
+    }
+
+    @DeleteMapping("/v1/favourites/{subjectType}/{subjectId}")
+    @Operation(summary = "Remove a favourite location for the current user")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Favourite removed or already absent"),
+        @ApiResponse(responseCode = "400", description = "Invalid request"),
+        @ApiResponse(responseCode = "404", description = "Current user or subject not found")
+    })
+    public ResponseEntity<Void> removeFavourite(
+        @Parameter(hidden = true) @RequestHeader(USER_ID_HEADER) UUID userId,
+        @PathVariable SubjectType subjectType,
+        @ValidUUID @PathVariable String subjectId
+    ) {
+        userService.removeFavourite(userId, UUID.fromString(subjectId), subjectType);
         return ResponseEntity.noContent().build();
     }
 
