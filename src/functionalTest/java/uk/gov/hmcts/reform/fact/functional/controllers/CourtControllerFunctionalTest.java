@@ -101,6 +101,39 @@ public final class CourtControllerFunctionalTest {
     }
 
     @Test
+    @DisplayName("POST /courts/v1 rejects a Welsh warning notice longer than 500 characters")
+    void shouldRejectLongWelshWarningNotice() {
+        final Court court = new Court();
+        court.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Long Welsh Warning"));
+        court.setRegionId(UUID.fromString(regionId));
+        court.setWarningNotice("Valid English warning notice");
+        court.setWarningNoticeCy("a".repeat(501));
+
+        final Response response = http.doPost("/courts/v1", court);
+
+        AssertionHelper.assertStatus(response, BAD_REQUEST);
+        assertThat(response.jsonPath().getString("warningNoticeCy")).isNotBlank();
+        assertThat(response.jsonPath().getString("warningNoticeCy"))
+            .contains("Welsh warning notice must be less than 500 characters");
+    }
+
+    @Test
+    @DisplayName("POST /courts/v1 rejects invalid characters in a Welsh warning notice")
+    void shouldRejectInvalidWelshWarningNoticeCharacters() {
+        final Court court = new Court();
+        court.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Invalid Welsh Warning"));
+        court.setRegionId(UUID.fromString(regionId));
+        court.setWarningNoticeCy("Rhybudd <drafft> #1");
+
+        final Response response = http.doPost("/courts/v1", court);
+
+        AssertionHelper.assertStatus(response, BAD_REQUEST);
+        assertThat(response.jsonPath().getString("warningNoticeCy")).isNotBlank();
+        assertThat(response.jsonPath().getString("warningNoticeCy"))
+            .contains("Welsh warning notice may only contain");
+    }
+
+    @Test
     @DisplayName("GET /courts/{courtId}/v1 fails with non-existent court ID")
     void shouldFailToRetrieveNonExistentCourt() {
         final UUID nonExistentCourtId = UUID.randomUUID();
