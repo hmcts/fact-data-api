@@ -63,7 +63,8 @@ class AllLocationControllerTest {
                             .param("partialCourtName", "Test"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value(LOCATION_ID.toString()))
-            .andExpect(jsonPath("$.content[0].locationType").value("COURT"));
+            .andExpect(jsonPath("$.content[0].locationType").value("COURT"))
+            .andExpect(jsonPath("$.content[0].favourite").doesNotExist());
     }
 
     @Test

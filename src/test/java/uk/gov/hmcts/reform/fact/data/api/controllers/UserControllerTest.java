@@ -9,8 +9,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatus;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatusRequest;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.LockService;
 import uk.gov.hmcts.reform.fact.data.api.services.UserService;
@@ -21,6 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,8 +33,6 @@ class UserControllerTest {
 
     private static final UUID USER_ID = UUID.randomUUID();
     private static final UUID UNKNOWN_USER_ID = UUID.randomUUID();
-    private static final UUID COURT_ID = UUID.randomUUID();
-    private static final UUID FAVOURITE_ID = UUID.randomUUID();
     private static final String INVALID_UUID = "abcde";
 
     private static final String RESPONSE_STATUS_MESSAGE = "Response status does not match";
@@ -57,100 +60,43 @@ class UserControllerTest {
     }
 
     @Test
-    void getUserFavoritesReturns200() {
-        List<Court> courts = List.of(new Court());
-        when(userService.getUsersFavouriteCourts(USER_ID)).thenReturn(courts);
+    void getFavouritesUsesCurrentUser() {
+        Page<AllLocation> favourites = new PageImpl<>(List.of(new AllLocation()));
+        when(userService.getFavourites(USER_ID, 0, 25)).thenReturn(favourites);
 
-        ResponseEntity<List<Court>> response = userController.getUserFavorites(USER_ID.toString());
+        ResponseEntity<Page<AllLocation>> response = userController.getFavourites(USER_ID, 0, 25);
 
-        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(courts);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(favourites);
     }
 
     @Test
-    void getUserFavoritesReturnsEmptyList() {
-        when(userService.getUsersFavouriteCourts(USER_ID)).thenReturn(List.of());
-
-        ResponseEntity<List<Court>> response = userController.getUserFavorites(USER_ID.toString());
-
-        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEmpty();
+    void addFavouriteUsesCurrentUser() {
+        FavouriteReference favourite = new FavouriteReference(USER_ID, SubjectType.COURT);
+        assertThat(userController.addFavourite(USER_ID, favourite).getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        verify(userService).addFavourite(USER_ID, favourite);
     }
 
     @Test
-    void getUserFavoritesThrowsNotFoundException() {
-        when(userService.getUsersFavouriteCourts(UNKNOWN_USER_ID))
-            .thenThrow(new NotFoundException("User not found"));
+    void getStatusesUsesCurrentUser() {
+        FavouriteReference favourite = new FavouriteReference(USER_ID, SubjectType.COURT);
+        List<FavouriteStatus> statuses = List.of(new FavouriteStatus(USER_ID, SubjectType.COURT, true));
+        when(userService.getFavouriteStatuses(USER_ID, List.of(favourite))).thenReturn(statuses);
 
-        assertThrows(
-            NotFoundException.class, () ->
-                userController.getUserFavorites(UNKNOWN_USER_ID.toString())
+        ResponseEntity<List<FavouriteStatus>> response = userController.getStatuses(
+            USER_ID,
+            new FavouriteStatusRequest(List.of(favourite))
         );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(statuses);
     }
 
     @Test
-    void getUserFavoritesThrowsIllegalArgumentExceptionForInvalidUUID() {
-        assertThrows(
-            IllegalArgumentException.class, () ->
-                userController.getUserFavorites(INVALID_UUID)
-        );
-    }
-
-    @Test
-    void addUserFavoritesReturns201() {
-        List<UUID> courtIds = List.of(COURT_ID);
-
-        ResponseEntity<Void> response = userController.addUserFavorites(USER_ID.toString(), courtIds);
-
-        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
-    }
-
-    @Test
-    void addUserFavoritesThrowsNotFoundExceptionWhenUserNotFound() {
-        List<UUID> courtIds = List.of(COURT_ID);
-        doThrow(new NotFoundException("User not found"))
-            .when(userService).addFavouriteCourts(UNKNOWN_USER_ID, courtIds);
-
-        assertThrows(
-            NotFoundException.class, () ->
-                userController.addUserFavorites(UNKNOWN_USER_ID.toString(), courtIds)
-        );
-    }
-
-    @Test
-    void addUserFavoritesThrowsIllegalArgumentExceptionForInvalidUUID() {
-        List<UUID> courtIds = List.of(COURT_ID);
-
-        assertThrows(
-            IllegalArgumentException.class, () ->
-                userController.addUserFavorites(INVALID_UUID, courtIds)
-        );
-    }
-
-    @Test
-    void deleteUserFavoriteReturns204() {
-        ResponseEntity<Void> response = userController.deleteUserFavorite(USER_ID.toString(), FAVOURITE_ID.toString());
-
-        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.NO_CONTENT);
-    }
-
-    @Test
-    void deleteUserFavoriteThrowsNotFoundExceptionWhenUserNotFound() {
-        doThrow(new NotFoundException("User not found"))
-            .when(userService).removeFavouriteCourt(UNKNOWN_USER_ID, FAVOURITE_ID);
-
-        assertThrows(
-            NotFoundException.class, () ->
-                userController.deleteUserFavorite(UNKNOWN_USER_ID.toString(), FAVOURITE_ID.toString())
-        );
-    }
-
-    @Test
-    void deleteUserFavoriteThrowsIllegalArgumentExceptionForInvalidUUID() {
-        assertThrows(
-            IllegalArgumentException.class, () ->
-                userController.deleteUserFavorite(INVALID_UUID, FAVOURITE_ID.toString())
-        );
+    void removeFavouriteUsesCurrentUser() {
+        assertThat(userController.removeFavourite(USER_ID, SubjectType.COURT, USER_ID.toString()).getStatusCode())
+            .isEqualTo(HttpStatus.NO_CONTENT);
+        verify(userService).removeFavourite(USER_ID, USER_ID, SubjectType.COURT);
     }
 
     @Test

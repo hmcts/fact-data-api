@@ -1,18 +1,17 @@
 package uk.gov.hmcts.reform.fact.functional.controllers;
 
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.cfg.DateTimeFeature;
-import tools.jackson.databind.json.JsonMapper;
 import io.qameta.allure.Feature;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
@@ -23,7 +22,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -37,7 +35,7 @@ public final class UserControllerFunctionalTest {
         .build();
 
     @Test
-    @DisplayName("POST /user/v1 creates user and returns created user with ID")
+    @DisplayName("POST /user/v1 creates user without the legacy favouriteCourts property")
     void shouldReturnCreatedUserSuccessfully() throws Exception {
         final User user = User.builder()
             .email("test.user." + System.currentTimeMillis() + "@justice.gov.uk")
@@ -69,198 +67,8 @@ public final class UserControllerFunctionalTest {
         assertThat(createdUser.getLastLogin())
             .as("Created user should have lastLogin timestamp set")
             .isNotNull();
-    }
-
-    @Test
-    @DisplayName("POST /user/v1/{userId}/favourites adds two courts as favorites")
-    void shouldReturnCreatedFavouritesSuccessfully() throws Exception {
-        final UUID userId = TestDataHelper.createUser(http, "test.user.add.favourites");
-
-        final UUID court1Id = TestDataHelper
-            .createCourt(http, generateUniqueCourtName("Test Court Favourite One"));
-        final UUID court2Id = TestDataHelper
-            .createCourt(http, generateUniqueCourtName("Test Court Favourite Two"));
-
-        final List<UUID> courtIds = List.of(court1Id, court2Id);
-
-        final Response addFavouritesResponse = http.doPost(
-            "/user/v1/" + userId + "/favourites",
-            courtIds
-        );
-
-        assertThat(addFavouritesResponse.statusCode())
-            .as("Expected 201 CREATED when adding favourite courts for user %s", userId)
-            .isEqualTo(CREATED.value());
-    }
-
-    @Test
-    @DisplayName("GET /user/v1/{userId}/favourites returns full Court objects")
-    void shouldReturnFullCourtObjectsForFavouritesSuccessfully() throws Exception {
-        final UUID userId = TestDataHelper.createUser(http, "test.user.favourites");
-
-        final UUID court1Id = TestDataHelper
-            .createCourt(http, generateUniqueCourtName("Test Court Get Favourites One"));
-        final UUID court2Id = TestDataHelper
-            .createCourt(http, generateUniqueCourtName("Test Court Get Favourites Two"));
-
-        final List<UUID> courtIds = List.of(court1Id, court2Id);
-
-        final Response addFavouritesResponse = http.doPost(
-            "/user/v1/" + userId + "/favourites",
-            courtIds
-        );
-
-        assertThat(addFavouritesResponse.statusCode())
-            .as("Expected 201 CREATED when adding favourite courts")
-            .isEqualTo(CREATED.value());
-
-        final Response getFavouritesResponse = http.doGet("/user/v1/" + userId + "/favourites");
-
-        assertThat(getFavouritesResponse.statusCode())
-            .as("Expected 200 OK when getting favourites for user %s", userId)
-            .isEqualTo(OK.value());
-
-        assertThat(getFavouritesResponse.contentType())
-            .as("Expected JSON content type when getting favourites for user %s", userId)
-            .contains("json");
-
-        final List<Court> favouriteCourts = getFavouritesResponse.jsonPath().getList("", Court.class);
-
-        assertThat(favouriteCourts)
-            .as("Expected 2 favourite courts for user %s", userId)
-            .hasSize(2);
-
-        assertThat(favouriteCourts)
-            .as("Expected favourite courts to contain court IDs %s and %s", court1Id, court2Id)
-            .extracting(Court::getId)
-            .containsExactlyInAnyOrder(court1Id, court2Id);
-
-        assertThat(favouriteCourts)
-            .as("Expected favourite courts to have names populated")
-            .allSatisfy(court -> assertThat(court.getName())
-                .as("Expected favourite court name to be populated")
-                .isNotNull());
-    }
-
-    @Test
-    @DisplayName("GET /user/v1/{userId}/favourites returns 404 for non-existent user")
-    void shouldReturnNotFoundWhenGettingFavouritesForNonExistentUserSuccessfully() {
-        final UUID nonExistentUserId = UUID.randomUUID();
-
-        final Response getFavouritesResponse = http.doGet("/user/v1/" + nonExistentUserId + "/favourites");
-
-        assertThat(getFavouritesResponse.statusCode())
-            .as("Expected 404 NOT FOUND for non-existent user %s", nonExistentUserId)
-            .isEqualTo(NOT_FOUND.value());
-
-        assertThat(getFavouritesResponse.contentType())
-            .as("Expected JSON content type for non-existent user %s", nonExistentUserId)
-            .contains("json");
-
-        assertThat(getFavouritesResponse.jsonPath().getString("message"))
-            .as("Error message should mention user not found")
-            .contains("No user found");
-    }
-
-    @Test
-    @DisplayName("POST /user/v1/{userId}/favourites returns 404 for non-existent user")
-    void shouldReturnNotFoundWhenAddingFavouritesForNonExistentUserSuccessfully() {
-        final UUID nonExistentUserId = UUID.randomUUID();
-        final UUID courtId = TestDataHelper
-            .createCourt(http, generateUniqueCourtName("Test Court Non-Existent User"));
-
-        final List<UUID> courtIds = List.of(courtId);
-
-        final Response addFavouritesResponse = http.doPost(
-            "/user/v1/" + nonExistentUserId + "/favourites",
-            courtIds
-        );
-
-        assertThat(addFavouritesResponse.statusCode())
-            .as("Expected 404 NOT FOUND when adding favourites for non-existent user %s", nonExistentUserId)
-            .isEqualTo(NOT_FOUND.value());
-
-        assertThat(addFavouritesResponse.contentType())
-            .as("Expected JSON content type for non-existent user %s", nonExistentUserId)
-            .contains("json");
-
-        assertThat(addFavouritesResponse.jsonPath().getString("message"))
-            .as("Error message should mention user not found")
-            .contains("No user found");
-    }
-
-    @Test
-    @DisplayName("DELETE /user/v1/{userId}/favourites/{favouriteId} removes favourite successfully")
-    void shouldReturnNoContentWhenRemovingFavouriteSuccessfully() throws Exception {
-        final UUID userId = TestDataHelper.createUser(http, "test.user.remove.favourite");
-
-        final UUID court1Id = TestDataHelper
-            .createCourt(http, generateUniqueCourtName("Test Court Remove Favourite One"));
-        final UUID court2Id = TestDataHelper
-            .createCourt(http, generateUniqueCourtName("Test Court Remove Favourite Two"));
-
-        final List<UUID> courtIds = List.of(court1Id, court2Id);
-
-        final Response addFavouritesResponse = http.doPost(
-            "/user/v1/" + userId + "/favourites",
-            courtIds
-        );
-
-        assertThat(addFavouritesResponse.statusCode())
-            .as("Expected 201 CREATED when adding favourite courts")
-            .isEqualTo(CREATED.value());
-
-        final Response deleteFavouriteResponse = http.doDelete(
-            "/user/v1/" + userId + "/favourites/" + court1Id
-        );
-
-        assertThat(deleteFavouriteResponse.statusCode())
-            .as("Expected 204 NO CONTENT when removing favourite court %s for user %s", court1Id, userId)
-            .isEqualTo(NO_CONTENT.value());
-
-        final Response getFavouritesResponse = http.doGet("/user/v1/" + userId + "/favourites");
-
-        assertThat(getFavouritesResponse.statusCode())
-            .as("Expected 200 OK when getting favourites after removal")
-            .isEqualTo(OK.value());
-
-        assertThat(getFavouritesResponse.contentType())
-            .as("Expected JSON content type when getting favourites after removal")
-            .contains("json");
-
-        final List<Court> remainingFavourites = getFavouritesResponse.jsonPath().getList("", Court.class);
-
-        assertThat(remainingFavourites)
-            .as("Expected 1 favourite court remaining after removal")
-            .hasSize(1);
-
-        assertThat(remainingFavourites)
-            .as("Expected only court %s to remain in favourites", court2Id)
-            .extracting(Court::getId)
-            .containsOnly(court2Id);
-    }
-
-    @Test
-    @DisplayName("DELETE /user/v1/{userId}/favourites/{favouriteId} returns 404 for non-existent user")
-    void shouldReturnNotFoundWhenRemovingFavouriteForNonExistentUserSuccessfully() {
-        final UUID nonExistentUserId = UUID.randomUUID();
-        final UUID courtId = UUID.randomUUID();
-
-        final Response deleteFavouriteResponse = http.doDelete(
-            "/user/v1/" + nonExistentUserId + "/favourites/" + courtId
-        );
-
-        assertThat(deleteFavouriteResponse.statusCode())
-            .as("Expected 404 NOT FOUND when removing favourite for non-existent user %s", nonExistentUserId)
-            .isEqualTo(NOT_FOUND.value());
-
-        assertThat(deleteFavouriteResponse.contentType())
-            .as("Expected JSON content type for non-existent user %s", nonExistentUserId)
-            .contains("json");
-
-        assertThat(deleteFavouriteResponse.jsonPath().getString("message"))
-            .as("Error message should mention user not found")
-            .contains("No user found");
+        assertThat(createResponse.jsonPath().getMap("$"))
+            .doesNotContainKeys("favouriteCourts", "favouriteServiceCentres");
     }
 
     @Test
@@ -309,7 +117,7 @@ public final class UserControllerFunctionalTest {
 
         final Response clearLocksResponse2 = http.doDelete("/user/v1/" + userId2 + "/locks");
 
-        assertThat(clearLocksResponse.statusCode())
+        assertThat(clearLocksResponse2.statusCode())
             .as("Expected 204 NO CONTENT when clearing locks for user %s", userId2)
             .isEqualTo(NO_CONTENT.value());
 
@@ -335,84 +143,6 @@ public final class UserControllerFunctionalTest {
             .isEqualTo(NO_CONTENT.value());
     }
 
-    @Test
-    @DisplayName("End-to-end: Create user, add favourites, get favourites, remove one, verify remaining")
-    void shouldReturnEndToEndFavouriteWorkflowSuccessfully() throws Exception {
-        // Setup: Create test user and courts
-        final UUID userId = TestDataHelper.createUser(http, "test.user.endtoend");
-
-        final UUID court1Id = TestDataHelper.createCourt(http, generateUniqueCourtName("Test Court One"));
-        final UUID court2Id = TestDataHelper.createCourt(http, generateUniqueCourtName("Test Court Two"));
-        final UUID court3Id = TestDataHelper.createCourt(http, generateUniqueCourtName("Test Court Three"));
-
-        final List<UUID> courtIds = List.of(court1Id, court2Id, court3Id);
-
-        // Add 3 courts as favourites
-        final Response addFavouritesResponse = http.doPost(
-            "/user/v1/" + userId + "/favourites",
-            courtIds
-        );
-
-        assertThat(addFavouritesResponse.statusCode())
-            .as("Expected 201 CREATED when adding 3 favourite courts")
-            .isEqualTo(CREATED.value());
-
-        // Verify all 3 favourites exist
-        final Response getFavouritesResponse1 = http.doGet("/user/v1/" + userId + "/favourites");
-
-        assertThat(getFavouritesResponse1.statusCode())
-            .as("Expected 200 OK when getting favourites")
-            .isEqualTo(OK.value());
-
-        assertThat(getFavouritesResponse1.contentType())
-            .as("Expected JSON content type when getting favourites")
-            .contains("json");
-
-        final List<Court> initialFavourites = getFavouritesResponse1.jsonPath().getList("", Court.class);
-
-        assertThat(initialFavourites)
-            .as("Expected 3 favourite courts after adding")
-            .hasSize(3);
-
-        // Remove one favourite
-        final Response deleteFavouriteResponse = http.doDelete(
-            "/user/v1/" + userId + "/favourites/" + court2Id
-        );
-
-        assertThat(deleteFavouriteResponse.statusCode())
-            .as("Expected 204 NO CONTENT when removing favourite")
-            .isEqualTo(NO_CONTENT.value());
-
-        // Verify only 2 favourites remain
-        final Response getFavouritesResponse2 = http.doGet("/user/v1/" + userId + "/favourites");
-
-        assertThat(getFavouritesResponse2.statusCode())
-            .as("Expected 200 OK when getting favourites after removal")
-            .isEqualTo(OK.value());
-
-        assertThat(getFavouritesResponse2.contentType())
-            .as("Expected JSON content type when getting favourites after removal")
-            .contains("json");
-
-        final List<Court> remainingFavourites = getFavouritesResponse2.jsonPath().getList("", Court.class);
-
-        assertThat(remainingFavourites)
-            .as("Expected 2 favourite courts after removing one")
-            .hasSize(2);
-
-        assertThat(remainingFavourites)
-            .as("Expected courts %s and %s to remain, %s to be removed", court1Id, court3Id, court2Id)
-            .extracting(Court::getId)
-            .containsExactlyInAnyOrder(court1Id, court3Id);
-    }
-
-    /**
-     * Generates a unique court name for test courts.
-     * Court names can only contain letters, spaces, apostrophes, hyphens, ampersands, and parentheses.
-     *
-     * @param baseName the base court name
-     * @return unique court name with letter-only suffix
-     */
     private static String generateUniqueCourtName(final String baseName) {
         final String alphabet = "abcdefghijklmnopqrstuvwxyz";
         final StringBuilder suffix = new StringBuilder(4);

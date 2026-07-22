@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtProfessionalInformationDetailsDto;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
 import uk.gov.hmcts.reform.fact.data.api.dto.ProfessionalInformationDto;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOptions;
@@ -727,20 +728,38 @@ public class AuthFunctionalTest {
     }
 
     @Test
-    @DisplayName("User endpoints enforce admin-only writes and viewer-readable favourites")
+    @DisplayName("User endpoints allow user-scoped favourite writes while retaining other viewer restrictions")
     void userControllerAuth() {
         final UUID userId = createUserAsAdmin("test.user.auth.main");
+        final UUID viewerUserId = UUID.fromString(http.getFactViewerUserId());
         final UUID courtId = createCourtAsAdmin("Test Court Auth User Favs");
-        final List<UUID> favourites = List.of(courtId);
+        final FavouriteReference favourite = new FavouriteReference(courtId, SubjectType.COURT);
 
-        Response addFavAdmin = http.doPost("/user/v1/" + userId + "/favourites", favourites, adminToken);
-        assertThat(addFavAdmin.statusCode()).isIn(200, 201, 204);
+        Response addFavAdmin = http.doPostAsUser("/user/v1/favourites", favourite, adminToken, userId);
+        assertThat(addFavAdmin.statusCode()).isEqualTo(CREATED.value());
 
         assertViewerAllowed(
-            http.doGet("/user/v1/" + userId + "/favourites", adminToken),
-            http.doGet("/user/v1/" + userId + "/favourites", viewerToken),
-            "/user/v1/{userId}/favourites [GET]"
+            http.doGetAsUser("/user/v1/favourites", adminToken, userId),
+            http.doGetAsUser("/user/v1/favourites", viewerToken, viewerUserId),
+            "/user/v1/favourites [GET]"
         );
+
+        assertThat(http.doPostAsUser("/user/v1/favourites", favourite, viewerToken, viewerUserId).statusCode())
+            .as("Viewer should be allowed to add their own favourite")
+            .isEqualTo(CREATED.value());
+        assertThat(http.doDeleteAsUser(
+            "/user/v1/favourites/COURT/" + courtId,
+            viewerToken,
+            viewerUserId
+        ).statusCode())
+            .as("Viewer should be allowed to remove their own favourite")
+            .isEqualTo(NO_CONTENT.value());
+        assertThat(http.doDeleteAsUser(
+            "/user/v1/favourites/COURT/" + courtId,
+            adminToken,
+            userId
+        ).statusCode())
+            .isEqualTo(NO_CONTENT.value());
 
         final User postBody = User.builder()
             .email("test.user.auth.write." + System.currentTimeMillis() + "@justice.gov.uk")
@@ -748,14 +767,6 @@ public class AuthFunctionalTest {
             .role(UserRole.ADMIN)
             .build();
 
-        assertViewerForbidden(
-            http.doPost("/user/v1/" + userId + "/favourites", favourites, viewerToken),
-            "/user/v1/{userId}/favourites [POST]"
-        );
-        assertViewerForbidden(
-            http.doDelete("/user/v1/" + userId + "/favourites/" + courtId, viewerToken),
-            "/user/v1/{userId}/favourites/{favouriteId} [DELETE]"
-        );
         assertViewerForbidden(
             http.doDelete("/user/v1/" + userId + "/locks", viewerToken),
             "/user/v1/{userId}/locks [DELETE]"

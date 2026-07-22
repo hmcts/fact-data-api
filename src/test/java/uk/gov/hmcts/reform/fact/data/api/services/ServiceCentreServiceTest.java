@@ -16,6 +16,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreDetailsRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,6 +37,9 @@ class ServiceCentreServiceTest {
 
     @Mock
     private AuditRepository auditRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private ServiceCentreDetailsRepository serviceCentreDetailsRepository;
@@ -216,6 +220,8 @@ class ServiceCentreServiceTest {
         long deleted = serviceCentreService.deleteServiceCentresByNamePrefix("SC Delete", true);
 
         assertThat(deleted).isEqualTo(2);
+        verify(userRepository).removeServiceCentreFromAllFavourites(first.getId());
+        verify(userRepository).removeServiceCentreFromAllFavourites(second.getId());
         verify(serviceCentreRepository).deleteAllInBatch(serviceCentres);
     }
 

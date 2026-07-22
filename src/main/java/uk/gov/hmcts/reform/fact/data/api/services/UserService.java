@@ -1,28 +1,41 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
+import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatus;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository.FavouriteLocationReference;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private static final String SORT_BY_LAST_LOGIN = "lastlogin";
@@ -33,12 +46,8 @@ public class UserService {
     private long retentionPeriod;
 
     private final UserRepository userRepository;
-    private final CourtService courtService;
-
-    public UserService(UserRepository userRepository, CourtService courtService) {
-        this.userRepository = userRepository;
-        this.courtService = courtService;
-    }
+    private final CourtRepository courtRepository;
+    private final ServiceCentreRepository serviceCentreRepository;
 
     /**
      * Get a user by their unique identifier.
@@ -52,6 +61,70 @@ public class UserService {
             .orElseThrow(() -> new NotFoundException("No user found for user id: " + userId));
     }
 
+    public Page<AllLocation> getFavourites(UUID userId, int pageNumber, int pageSize) {
+        validateUserExists(userId);
+        Page<FavouriteLocationReference> referencePage = userRepository.findFavouriteLocationsByUserId(
+            userId,
+            PageRequest.of(pageNumber, pageSize)
+        );
+
+        Map<UUID, Court> courts = courtRepository.findAllById(idsFor(referencePage, SubjectType.COURT)).stream()
+            .collect(Collectors.toMap(Court::getId, Function.identity()));
+        Map<UUID, ServiceCentre> serviceCentres = serviceCentreRepository
+            .findAllById(idsFor(referencePage, SubjectType.SERVICE_CENTRE)).stream()
+            .collect(Collectors.toMap(ServiceCentre::getId, Function.identity()));
+
+        List<AllLocation> locations = referencePage.stream()
+            .map(reference -> toLocation(reference, courts, serviceCentres))
+            .filter(java.util.Objects::nonNull)
+            .toList();
+
+        return new PageImpl<>(locations, referencePage.getPageable(), referencePage.getTotalElements());
+    }
+
+    public List<FavouriteStatus> getFavouriteStatuses(UUID userId, List<FavouriteReference> subjects) {
+        validateUserExists(userId);
+        if (subjects.isEmpty()) {
+            return List.of();
+        }
+
+        List<UUID> subjectIds = subjects.stream().map(FavouriteReference::getSubjectId).distinct().toList();
+        Set<FavouriteReference> favourites = userRepository.findExistingFavouriteReferences(userId, subjectIds).stream()
+            .map(reference -> new FavouriteReference(
+                reference.getSubjectId(),
+                SubjectType.valueOf(reference.getSubjectType())
+            ))
+            .collect(Collectors.toSet());
+
+        return subjects.stream()
+            .map(subject -> new FavouriteStatus(
+                subject.getSubjectId(),
+                subject.getSubjectType(),
+                favourites.contains(subject)
+            ))
+            .toList();
+    }
+
+    @Transactional
+    public void addFavourite(UUID userId, FavouriteReference favourite) {
+        validateUserExists(userId);
+        validateSubjectExists(favourite.getSubjectId(), favourite.getSubjectType());
+        switch (favourite.getSubjectType()) {
+            case COURT -> userRepository.addFavouriteCourtIfAbsent(userId, favourite.getSubjectId());
+            case SERVICE_CENTRE -> userRepository.addFavouriteServiceCentreIfAbsent(userId, favourite.getSubjectId());
+        }
+    }
+
+    @Transactional
+    public void removeFavourite(UUID userId, UUID subjectId, SubjectType subjectType) {
+        validateUserExists(userId);
+        validateSubjectExists(subjectId, subjectType);
+        switch (subjectType) {
+            case COURT -> userRepository.removeFavouriteCourt(userId, subjectId);
+            case SERVICE_CENTRE -> userRepository.removeFavouriteServiceCentre(userId, subjectId);
+        }
+    }
+
     public Page<User> getFilteredAndPaginatedUsers(int pageNumber, int pageSize, String search,
                                                    String sortBy, String sortOrder) {
         String searchFilter = StringUtils.defaultString(search).toLowerCase(Locale.ROOT);
@@ -59,59 +132,6 @@ public class UserService {
             .filter(user -> matchesSearch(user, searchFilter));
 
         return page(sortIfRequested(users, sortBy, sortOrder), pageNumber, pageSize);
-    }
-
-    /**
-     * Get user favourite courts by user id.
-     *
-     * @param userId The user id to find the favourite courts for.
-     * @return A list of favourite courts or an empty list if none exist for the user.
-     * @throws NotFoundException if no user record exists for the court.
-     */
-    public List<Court> getUsersFavouriteCourts(UUID userId) {
-        return courtService.getAllCourtsByIds(
-            Optional.ofNullable(this.getUserById(userId).getFavouriteCourts()).orElse(List.of()));
-    }
-
-    /**
-     * Adds multiple courts to a user's favourite courts list.
-     *
-     * @param userId   The user id to add favourite courts for
-     * @param courtIds List of court IDs to add as favourites
-     * @throws NotFoundException if no user or court record exists
-     */
-    public void addFavouriteCourts(UUID userId, List<UUID> courtIds) {
-        User user = this.getUserById(userId);
-
-        List<UUID> validCourtIds = courtService.getAllCourtsByIds(courtIds).stream()
-            .map(Court::getId)
-            .toList();
-
-        List<UUID> favouriteCourtIds = new ArrayList<>(
-            Optional.ofNullable(user.getFavouriteCourts()).orElse(List.of())
-        );
-
-        // Add only court Ids that don't already exist in the user's favourites
-        validCourtIds.stream()
-            .filter(courtId -> !favouriteCourtIds.contains(courtId))
-            .forEach(favouriteCourtIds::add);
-
-        user.setFavouriteCourts(favouriteCourtIds);
-        userRepository.save(user);
-    }
-
-    /**
-     * Removes a court from a user's favourite courts list.
-     *
-     * @param userId The user id to remove the favourite court from
-     * @param favouriteCourtId The court id to remove from favourites
-     * @throws NotFoundException if no user record exists
-     */
-    public void removeFavouriteCourt(UUID userId, UUID favouriteCourtId) {
-        User user = this.getUserById(userId);
-
-        user.getFavouriteCourts().remove(favouriteCourtId);
-        userRepository.save(user);
     }
 
     /**
@@ -132,6 +152,7 @@ public class UserService {
                     user.setEmail(existing.getEmail());
                     user.setSsoId(existing.getSsoId());
                     user.setFavouriteCourts(existing.getFavouriteCourts());
+                    user.setFavouriteServiceCentres(existing.getFavouriteServiceCentres());
                     user.setRole(Optional.ofNullable(user.getRole()).orElse(existing.getRole()));
                 }
         );
@@ -155,6 +176,49 @@ public class UserService {
         return StringUtils.isBlank(searchFilter)
             || matchesValue(user.getEmail(), searchFilter)
             || matchesValue(user.getSsoId() == null ? null : user.getSsoId().toString(), searchFilter);
+    }
+
+    private List<UUID> idsFor(Page<FavouriteLocationReference> references, SubjectType subjectType) {
+        return references.stream()
+            .filter(reference -> subjectType.name().equals(reference.getSubjectType()))
+            .map(FavouriteLocationReference::getSubjectId)
+            .toList();
+    }
+
+    private AllLocation toLocation(
+        FavouriteLocationReference reference,
+        Map<UUID, Court> courts,
+        Map<UUID, ServiceCentre> serviceCentres
+    ) {
+        return switch (SubjectType.valueOf(reference.getSubjectType())) {
+            case COURT -> {
+                Court court = courts.get(reference.getSubjectId());
+                yield court == null ? null : AllLocation.fromCourt(court);
+            }
+            case SERVICE_CENTRE -> {
+                ServiceCentre serviceCentre = serviceCentres.get(reference.getSubjectId());
+                yield serviceCentre == null ? null : AllLocation.fromServiceCentre(serviceCentre);
+            }
+        };
+    }
+
+    private void validateSubjectExists(UUID subjectId, SubjectType subjectType) {
+        boolean exists = switch (subjectType) {
+            case COURT -> courtRepository.existsById(subjectId);
+            case SERVICE_CENTRE -> serviceCentreRepository.existsById(subjectId);
+        };
+
+        if (!exists) {
+            throw new NotFoundException(subjectType == SubjectType.COURT
+                ? "Court not found, ID: " + subjectId
+                : "Service centre not found, ID: " + subjectId);
+        }
+    }
+
+    private void validateUserExists(UUID userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("No user found for user id: " + userId);
+        }
     }
 
     private boolean matchesValue(String value, String searchFilter) {
