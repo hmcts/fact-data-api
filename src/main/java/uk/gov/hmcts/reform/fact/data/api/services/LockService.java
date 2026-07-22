@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.UUID;
  * Service class responsible for managing court lock operations.
  * Provides functionality to handle court locking mechanisms and user-specific locks.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LockService {
@@ -85,41 +87,8 @@ public class LockService {
     public Lock createOrUpdateLock(SubjectType subjectType, UUID subjectId, Page page, UUID userId) {
         UUID id = verifySubject(subjectType, subjectId);
 
-        User user = userService.getUserById(userId);
-        ZonedDateTime lockAcquired = ZonedDateTime.now(ZoneOffset.UTC);
-
-        UUID lockId = lockRepository.upsertLockAndDeleteOtherUserLocks(
-            UUID.randomUUID(),
-            subjectType.name(),
-            id,
-            page.name(),
-            user.getId(),
-            lockAcquired
-        );
-
-        return Lock.builder()
-            .id(lockId)
-            .subjectId(id)
-            .subjectType(subjectType)
-            .userId(user.getId())
-            .user(user)
-            .page(page)
-            .lockAcquired(lockAcquired)
-            .build();
-    }
-
-    /**
-     * Updates an existing subject lock.
-     *
-     * @param subjectType the subject type to get locks for
-     * @param subjectId   the id of the subject
-     * @param page        The page to update
-     * @param userId      The user's unique identifier
-     * @return The updated court lock
-     */
-    @Transactional
-    public Lock createOrUpdateLockCheck(SubjectType subjectType, UUID subjectId, Page page, UUID userId) {
-        UUID id = verifySubject(subjectType, subjectId);
+        log.info("Attempting to acquire lock for subjectType: {}, subjectId: {}, page: {}, userId: {}",
+            subjectType, subjectId, page, userId);
 
         User user = userService.getUserById(userId);
         ZonedDateTime lockAcquired = ZonedDateTime.now(ZoneOffset.UTC);
@@ -135,6 +104,9 @@ public class LockService {
             expiryThreshold
         ).orElseThrow(() -> new ResponseStatusException(
             HttpStatus.CONFLICT, "Page locked by another user"));
+
+        log.info("Lock acquired for subjectType: {}, subjectId: {}, page: {}, userId: {}, lockId: {}",
+            subjectType, subjectId, page, userId, lockId);
 
         return Lock.builder()
             .id(lockId)

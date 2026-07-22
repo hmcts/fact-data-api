@@ -138,18 +138,28 @@ class LockServiceTest {
         UUID lockId = UUID.randomUUID();
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(lockRepository.upsertLockAndDeleteOtherUserLocks(
-            any(), eq(SubjectType.COURT.name()), eq(courtId),
-            eq(Page.GENERAL.name()), eq(userId), any(ZonedDateTime.class)
-        )).thenReturn(lockId);
+        when(lockRepository.tryAcquireLock(
+            any(),
+            eq(SubjectType.COURT.name()),
+            eq(courtId),
+            eq(Page.GENERAL.name()),
+            eq(userId),
+            any(ZonedDateTime.class),
+            any(ZonedDateTime.class)
+        )).thenReturn(Optional.of(lockId));
 
         Lock result = lockService.createOrUpdateLock(SubjectType.COURT, courtId, Page.GENERAL, userId);
 
         assertNotNull(result);
         assertEquals(lockId, result.getId());
-        verify(lockRepository).upsertLockAndDeleteOtherUserLocks(
-            any(),  eq(SubjectType.COURT.name()), eq(courtId),
-            eq(Page.GENERAL.name()), eq(userId), any(ZonedDateTime.class)
+        verify(lockRepository).tryAcquireLock(
+            any(),
+            eq(SubjectType.COURT.name()),
+            eq(courtId),
+            eq(Page.GENERAL.name()),
+            eq(userId),
+            any(ZonedDateTime.class),
+            any(ZonedDateTime.class)
         );
     }
 
@@ -159,17 +169,29 @@ class LockServiceTest {
         UUID lockId = UUID.randomUUID();
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(lockRepository.upsertLockAndDeleteOtherUserLocks(
-             any(), eq(SubjectType.COURT.name()), eq(courtId), eq(page.name()), eq(userId), any(ZonedDateTime.class)
-        )).thenReturn(lockId);
+        when(lockRepository.tryAcquireLock(
+             any(),
+             eq(SubjectType.COURT.name()),
+             eq(courtId),
+             eq(page.name()),
+             eq(userId),
+             any(ZonedDateTime.class),
+             any(ZonedDateTime.class)
+        )).thenReturn(Optional.of(lockId));
 
         Lock result = lockService.createOrUpdateLock(SubjectType.COURT, courtId, page, userId);
 
         assertNotNull(result);
         assertEquals(lockId, result.getId());
         verify(courtService).getCourtById(courtId);
-        verify(lockRepository).upsertLockAndDeleteOtherUserLocks(
-             any(), eq(SubjectType.COURT.name()), eq(courtId), eq(page.name()), eq(userId), any(ZonedDateTime.class)
+        verify(lockRepository).tryAcquireLock(
+             any(),
+             eq(SubjectType.COURT.name()),
+             eq(courtId),
+             eq(page.name()),
+             eq(userId),
+             any(ZonedDateTime.class),
+             any(ZonedDateTime.class)
         );
     }
 
@@ -214,18 +236,28 @@ class LockServiceTest {
         UUID lockId = UUID.randomUUID();
         when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(lockRepository.upsertLockAndDeleteOtherUserLocks(
-            any(), eq(SubjectType.SERVICE_CENTRE.name()), eq(serviceCentreId), eq(Page.GENERAL.name()), eq(userId),
+        when(lockRepository.tryAcquireLock(
+            any(),
+            eq(SubjectType.SERVICE_CENTRE.name()),
+            eq(serviceCentreId),
+            eq(Page.GENERAL.name()),
+            eq(userId),
+            any(ZonedDateTime.class),
             any(ZonedDateTime.class)
-        )).thenReturn(lockId);
+        )).thenReturn(Optional.of(lockId));
 
         Lock result = lockService.createOrUpdateLock(SubjectType.SERVICE_CENTRE, serviceCentreId, Page.GENERAL, userId);
 
         assertNotNull(result);
         assertEquals(lockId, result.getId());
         verify(serviceCentreService).getServiceCentreById(serviceCentreId);
-        verify(lockRepository).upsertLockAndDeleteOtherUserLocks(
-            any(), eq(SubjectType.SERVICE_CENTRE.name()), eq(serviceCentreId), eq(Page.GENERAL.name()), eq(userId),
+        verify(lockRepository).tryAcquireLock(
+            any(),
+            eq(SubjectType.SERVICE_CENTRE.name()),
+            eq(serviceCentreId),
+            eq(Page.GENERAL.name()),
+            eq(userId),
+            any(ZonedDateTime.class),
             any(ZonedDateTime.class)
         );
     }
