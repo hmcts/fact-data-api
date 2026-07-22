@@ -9,7 +9,7 @@ import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationAudit;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationStatus;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationAlreadyAppliedException;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtPhotoDto;
-import uk.gov.hmcts.reform.fact.data.api.migration.model.InMemoryMultipartFile;
+import uk.gov.hmcts.reform.fact.data.api.models.InMemoryMultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LegacyExportResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.PhotoMigrationResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;

@@ -151,7 +151,7 @@ public final class CourtPhotoControllerFunctionalTest {
         courtsWithPhotos.add(courtId);
 
         final File oversizedFile = new File(
-            "src/functionalTest/resources/test-images/test invalid jpg 3.2 MB.jpg");
+            "src/functionalTest/resources/test-images/test invalid jpg 5.3 MB.jpg");
         final Response uploadResponse = http.doMultipartPost(
             "/courts/" + courtId + "/v1/photo",
             "file",
