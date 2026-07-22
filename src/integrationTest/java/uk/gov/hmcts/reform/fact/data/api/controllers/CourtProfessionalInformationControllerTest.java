@@ -64,11 +64,13 @@ class CourtProfessionalInformationControllerTest {
         CourtDxCodeDto dxCode = CourtDxCodeDto.builder()
             .dxCode("444")
             .explanation("Main DX")
+            .explanationCy("Prif DX")
             .build();
 
         CourtFaxDto fax = CourtFaxDto.builder()
             .faxNumber("01234567890")
             .description("Primary fax")
+            .descriptionCy("Prif ffacs")
             .build();
 
         return CourtProfessionalInformationDetailsDto.builder()
@@ -90,11 +92,13 @@ class CourtProfessionalInformationControllerTest {
         CourtDxCodeDto dxCode = CourtDxCodeDto.builder()
             .dxCode("444")
             .explanation("Main DX")
+            .explanationCy("Prif DX")
             .build();
 
         CourtFaxDto fax = CourtFaxDto.builder()
             .faxNumber("01234567890")
             .description("Primary fax")
+            .descriptionCy("Prif ffacs")
             .build();
 
         return buildDetails(professionalInformation, codes, List.of(dxCode), List.of(fax));
@@ -291,10 +295,12 @@ class CourtProfessionalInformationControllerTest {
             List.of(CourtDxCodeDto.builder()
                 .dxCode("120551 Marylebone 9$")
                 .explanation("Valid explanation")
+                .explanationCy("Esboniad dilys")
                 .build()),
             List.of(CourtFaxDto.builder()
                 .faxNumber("0207 111 1111")
                 .description("Fax")
+                .descriptionCy("Ffacs")
                 .build())
         );
 
@@ -322,10 +328,12 @@ class CourtProfessionalInformationControllerTest {
             List.of(CourtDxCodeDto.builder()
                 .dxCode(longCode)
                 .explanation("Valid explanation")
+                .explanationCy("Esboniad dilys")
                 .build()),
             List.of(CourtFaxDto.builder()
                 .faxNumber("0207 111 1111")
                 .description("Fax")
+                .descriptionCy("Ffacs")
                 .build())
         );
 
@@ -353,10 +361,12 @@ class CourtProfessionalInformationControllerTest {
             List.of(CourtDxCodeDto.builder()
                 .dxCode("120551 Marylebone 9")
                 .explanation(longExplanation)
+                .explanationCy("Esboniad hir")
                 .build()),
             List.of(CourtFaxDto.builder()
                 .faxNumber("0207 111 1111")
                 .description("Fax")
+                .descriptionCy("Ffacs")
                 .build())
         );
 
@@ -386,10 +396,12 @@ class CourtProfessionalInformationControllerTest {
             List.of(CourtDxCodeDto.builder()
                 .dxCode("120551 Marylebone 9")
                 .explanation("Valid explanation")
+                .explanationCy("Esboniad dilys")
                 .build()),
             List.of(CourtFaxDto.builder()
                 .faxNumber("0207 111 1111")
                 .description("Fax")
+                .descriptionCy("Ffacs")
                 .build())
         );
 
@@ -416,10 +428,12 @@ class CourtProfessionalInformationControllerTest {
             List.of(CourtDxCodeDto.builder()
                 .dxCode("120551 Marylebone 9")
                 .explanation("Valid explanation")
+                .explanationCy("Esboniad dilys")
                 .build()),
             List.of(CourtFaxDto.builder()
                 .faxNumber("0207 111 1111")
                 .description("Invalid 😊")
+                .descriptionCy("Ffacs")
                 .build())
         );
 
@@ -446,10 +460,12 @@ class CourtProfessionalInformationControllerTest {
             List.of(CourtDxCodeDto.builder()
                 .dxCode("120551 Marylebone 9")
                 .explanation("Valid explanation")
+                .explanationCy("Esboniad dilys")
                 .build()),
             List.of(CourtFaxDto.builder()
                 .faxNumber("012")
                 .description("Fax")
+                .descriptionCy("Ffacs")
                 .build())
         );
 
@@ -477,6 +493,7 @@ class CourtProfessionalInformationControllerTest {
             List.of(CourtFaxDto.builder()
                 .faxNumber("0207 111 1111")
                 .description("Fax")
+                .descriptionCy("Ffacs")
                 .build())
         );
 
@@ -503,6 +520,7 @@ class CourtProfessionalInformationControllerTest {
             List.of(CourtDxCodeDto.builder()
                 .dxCode("120551 Marylebone 9")
                 .explanation("Valid explanation")
+                .explanationCy("Esboniad dilys")
                 .build()),
             Arrays.asList((CourtFaxDto) null)
         );
@@ -512,6 +530,130 @@ class CourtProfessionalInformationControllerTest {
                             .content(objectMapper.writeValueAsString(invalid)))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$['faxNumbers[0]']").value("must not be null"));
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 when DX explanationCy is missing")
+    void postProfessionalInformationMissingDxExplanationCyReturnsBadRequest() throws Exception {
+        CourtProfessionalInformationDetailsDto invalid = buildDetails(
+            ProfessionalInformationDto.builder()
+                .interviewRooms(true)
+                .interviewRoomCount(2)
+                .interviewPhoneNumber("0207 123 4567")
+                .videoHearings(true)
+                .commonPlatform(false)
+                .accessScheme(true)
+                .build(),
+            CourtCodesDto.builder().gbs("123").build(),
+            List.of(CourtDxCodeDto.builder()
+                .dxCode("120551 Marylebone 9")
+                .explanation("Valid explanation")
+                .build()),
+            List.of(CourtFaxDto.builder()
+                .faxNumber("0207 111 1111")
+                .description("Fax")
+                .descriptionCy("Ffacs")
+                .build())
+        );
+
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalid)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$['dxCodes[0].explanationCyPresentWhenExplanationProvided']").exists());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 when fax descriptionCy is missing")
+    void postProfessionalInformationMissingFaxDescriptionCyReturnsBadRequest() throws Exception {
+        CourtProfessionalInformationDetailsDto invalid = buildDetails(
+            ProfessionalInformationDto.builder()
+                .interviewRooms(true)
+                .interviewRoomCount(2)
+                .interviewPhoneNumber("0207 123 4567")
+                .videoHearings(true)
+                .commonPlatform(false)
+                .accessScheme(true)
+                .build(),
+            CourtCodesDto.builder().gbs("123").build(),
+            List.of(CourtDxCodeDto.builder()
+                .dxCode("120551 Marylebone 9")
+                .explanation("Valid explanation")
+                .explanationCy("Esboniad dilys")
+                .build()),
+            List.of(CourtFaxDto.builder()
+                .faxNumber("0207 111 1111")
+                .description("Fax")
+                .build())
+        );
+
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalid)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$['faxNumbers[0].descriptionCyPresentWhenDescriptionProvided']").exists());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 when DX explanation is missing")
+    void postProfessionalInformationMissingDxExplanationReturnsBadRequest() throws Exception {
+        CourtProfessionalInformationDetailsDto invalid = buildDetails(
+            ProfessionalInformationDto.builder()
+                .interviewRooms(true)
+                .interviewRoomCount(2)
+                .interviewPhoneNumber("0207 123 4567")
+                .videoHearings(true)
+                .commonPlatform(false)
+                .accessScheme(true)
+                .build(),
+            CourtCodesDto.builder().gbs("123").build(),
+            List.of(CourtDxCodeDto.builder()
+                .dxCode("120551 Marylebone 9")
+                .explanationCy("Esboniad dilys")
+                .build()),
+            List.of(CourtFaxDto.builder()
+                .faxNumber("0207 111 1111")
+                .description("Fax")
+                .descriptionCy("Ffacs")
+                .build())
+        );
+
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalid)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$['dxCodes[0].explanationCyPresentWhenExplanationProvided']").exists());
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 when fax description is missing")
+    void postProfessionalInformationMissingFaxDescriptionReturnsBadRequest() throws Exception {
+        CourtProfessionalInformationDetailsDto invalid = buildDetails(
+            ProfessionalInformationDto.builder()
+                .interviewRooms(true)
+                .interviewRoomCount(2)
+                .interviewPhoneNumber("0207 123 4567")
+                .videoHearings(true)
+                .commonPlatform(false)
+                .accessScheme(true)
+                .build(),
+            CourtCodesDto.builder().gbs("123").build(),
+            List.of(CourtDxCodeDto.builder()
+                .dxCode("120551 Marylebone 9")
+                .explanation("Valid explanation")
+                .explanationCy("Esboniad dilys")
+                .build()),
+            List.of(CourtFaxDto.builder()
+                .faxNumber("0207 111 1111")
+                .descriptionCy("Ffacs")
+                .build())
+        );
+
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalid)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$['faxNumbers[0].descriptionCyPresentWhenDescriptionProvided']").exists());
     }
 
     @Test

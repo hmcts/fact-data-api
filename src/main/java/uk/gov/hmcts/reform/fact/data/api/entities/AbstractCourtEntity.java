@@ -70,6 +70,15 @@ public abstract class AbstractCourtEntity {
     )
     private String warningNotice;
 
+    @Schema(description = "Any Welsh warning notices attached to the Court")
+    @Size(max = 500, message = "Welsh warning notice must be less than 500 characters")
+    @Pattern(
+        regexp = "^[\\p{L}0-9.,!?:;'\"()\\-/&@+\\s]+$",
+        message = "Welsh warning notice may only contain letters, numbers, spaces, and standard punctuation or "
+            + "symbols (@, +)"
+    )
+    private String warningNoticeCy;
+
     @Schema(description = "The created date/time of the Court record", accessMode = Schema.AccessMode.READ_ONLY)
     @TimeZoneStorage(TimeZoneStorageType.NORMALIZE_UTC)
     @CreationTimestamp
