@@ -164,6 +164,10 @@ class CourtPhotoServiceTest {
         assertThat(captor.getValue()).isNotNull();
         // Ensure the resized image is smaller than the original
         assertThat(captor.getValue().getSize()).isLessThan(imgBytes.length);
+        // Ensure that other multipart methods are set
+        assertThat(captor.getValue().getBytes()).isNotEmpty();
+        assertThat(captor.getValue().getInputStream()).isNotNull();
+        assertThat(captor.getValue().isEmpty()).isFalse();
         verify(courtPhotoRepository).save(result);
     }
 
