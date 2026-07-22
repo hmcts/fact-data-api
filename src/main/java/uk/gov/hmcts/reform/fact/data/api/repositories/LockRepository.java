@@ -110,17 +110,17 @@ public interface LockRepository extends JpaRepository<Lock, UUID> {
     );
 
     @Query(value = """
-        INSERT INTO "lock" (id, subject_id, subject_type, user_id, page, lock_acquired)
+        INSERT INTO "lock" AS l (id, subject_id, subject_type, user_id, page, lock_acquired)
         VALUES (:newLockId, :subjectId, :subjectType, :userId, :page, :lockAcquired)
         ON CONFLICT (subject_type, subject_id, page)
         DO UPDATE SET
             user_id = userId,
             lock_acquired = :lockAcquired,
             id = :newLockId
-        WHERE user_id = :userId OR lock_acquired < :expiryThreshold
+        WHERE l.user_id = :userId OR l.lock_acquired < :expiryThreshold
         RETURNING id
         """, nativeQuery = true)
-    Optional<UUID> tryAquirLock(
+    Optional<UUID> tryAcquireLock(
         @Param("newLockId") UUID newLockId,
         @Param("subjectType") String subjectType,
         @Param("subjectId") UUID subjectId,

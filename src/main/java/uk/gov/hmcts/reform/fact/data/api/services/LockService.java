@@ -2,9 +2,11 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LockRepository;
@@ -94,6 +96,45 @@ public class LockService {
             user.getId(),
             lockAcquired
         );
+
+        return Lock.builder()
+            .id(lockId)
+            .subjectId(id)
+            .subjectType(subjectType)
+            .userId(user.getId())
+            .user(user)
+            .page(page)
+            .lockAcquired(lockAcquired)
+            .build();
+    }
+
+    /**
+     * Updates an existing subject lock.
+     *
+     * @param subjectType the subject type to get locks for
+     * @param subjectId   the id of the subject
+     * @param page        The page to update
+     * @param userId      The user's unique identifier
+     * @return The updated court lock
+     */
+    @Transactional
+    public Lock createOrUpdateLockCheck(SubjectType subjectType, UUID subjectId, Page page, UUID userId) {
+        UUID id = verifySubject(subjectType, subjectId);
+
+        User user = userService.getUserById(userId);
+        ZonedDateTime lockAcquired = ZonedDateTime.now(ZoneOffset.UTC);
+        ZonedDateTime expiryThreshold = lockAcquired.minusMinutes(lockTimeoutMinutes);
+
+        UUID lockId = lockRepository.tryAcquireLock(
+            UUID.randomUUID(),
+            subjectType.name(),
+            id,
+            page.name(),
+            user.getId(),
+            lockAcquired,
+            expiryThreshold
+        ).orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.CONFLICT, "Page locked by another user"));
 
         return Lock.builder()
             .id(lockId)
