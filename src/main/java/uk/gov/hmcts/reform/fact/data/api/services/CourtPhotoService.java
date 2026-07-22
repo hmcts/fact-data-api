@@ -10,7 +10,6 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Locale;
@@ -26,6 +25,10 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 public class CourtPhotoService {
+
+    private static final String PNG = "png";
+    private static final String JPG = "jpg";
+    private static final String JPEG = "jpeg";
 
     private final CourtPhotoRepository courtPhotoRepository;
     private final CourtService courtService;
@@ -90,7 +93,7 @@ public class CourtPhotoService {
         int maxWidth = photoConfigurationProperties.getMaxWidth();
 
         try {
-            BufferedImage sourceImage = ImageIO.read(new ByteArrayInputStream(file.getBytes()));
+            BufferedImage sourceImage = ImageIO.read(file.getInputStream());
             if (sourceImage == null) {
                 throw new IllegalArgumentException("Unable to read image content");
             }
@@ -101,7 +104,7 @@ public class CourtPhotoService {
 
             int newHeight = (int) Math.round((double) sourceImage.getHeight() * maxWidth / sourceImage.getWidth());
 
-            int imageType = "png".equals(format) ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
+            int imageType = PNG.equals(format) ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
             BufferedImage resizedImage = new BufferedImage(maxWidth, newHeight, imageType);
 
             Graphics2D graphics = resizedImage.createGraphics();
@@ -130,25 +133,25 @@ public class CourtPhotoService {
     private String detectImageFormat(String originalFilename, String contentType) {
         if (contentType != null) {
             String lower = contentType.toLowerCase(Locale.ROOT);
-            if (lower.contains("png")) {
-                return "png";
+            if (lower.contains(PNG)) {
+                return PNG;
             }
-            if (lower.contains("jpeg") || lower.contains("jpg")) {
-                return "jpg";
+            if (lower.contains(JPEG) || lower.contains(JPG)) {
+                return JPG;
             }
         }
 
         if (originalFilename != null) {
             String lower = originalFilename.toLowerCase(Locale.ROOT);
-            if (lower.endsWith(".png")) {
-                return "png";
+            if (lower.endsWith("." + PNG)) {
+                return PNG;
             }
-            if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
-                return "jpg";
+            if (lower.endsWith("." + JPG) || lower.endsWith("." + JPEG)) {
+                return JPG;
             }
         }
 
-        // Defensive fallback; upstream validation should already ensure png/jpg.
-        return "jpg";
+        // Defensive fallback as upstream validation should already ensure png/jpg.
+        return JPG;
     }
 }

@@ -18,6 +18,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -105,7 +106,8 @@ class CourtPhotoServiceTest {
         when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class))).thenReturn(uploadedLink);
         when(auditUserContext.requireUserId()).thenReturn(USER_ID);
         when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(multipartFile.getBytes()).thenReturn(createImageBytes("jpg",1,1));
+        when(multipartFile.getInputStream())
+            .thenReturn(new ByteArrayInputStream(createImageBytes("jpg",1,1)));
         when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
 
         CourtPhoto result = courtPhotoService.setCourtPhoto(courtId, multipartFile);
@@ -128,7 +130,8 @@ class CourtPhotoServiceTest {
         when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class))).thenReturn("new-link");
         when(auditUserContext.requireUserId()).thenReturn(USER_ID);
         when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(multipartFile.getBytes()).thenReturn(createImageBytes("jpg",1,1));
+        when(multipartFile.getInputStream())
+            .thenReturn(new ByteArrayInputStream(createImageBytes("jpg",1,1)));
         when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
 
         CourtPhoto result = courtPhotoService.setCourtPhoto(courtId, multipartFile);
@@ -151,7 +154,7 @@ class CourtPhotoServiceTest {
         when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class))).thenReturn(uploadedLink);
         when(auditUserContext.requireUserId()).thenReturn(USER_ID);
         when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(multipartFile.getBytes()).thenReturn(imgBytes);
+        when(multipartFile.getInputStream()).thenReturn(new ByteArrayInputStream(imgBytes));
         when(photoConfigurationProperties.getMaxWidth()).thenReturn(400);
 
         CourtPhoto result = courtPhotoService.setCourtPhoto(courtId, multipartFile);
@@ -183,7 +186,8 @@ class CourtPhotoServiceTest {
         when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class))).thenReturn(uploadedLink);
         when(auditUserContext.requireUserId()).thenReturn(USER_ID);
         when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(multipartFile.getBytes()).thenReturn(createImageBytes("png",1,1));
+        when(multipartFile.getInputStream())
+            .thenReturn(new ByteArrayInputStream(createImageBytes("png",1,1)));
         when(multipartFile.getOriginalFilename()).thenReturn(filename);
         when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
 
@@ -211,7 +215,8 @@ class CourtPhotoServiceTest {
         when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class))).thenReturn(uploadedLink);
         when(auditUserContext.requireUserId()).thenReturn(USER_ID);
         when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(multipartFile.getBytes()).thenReturn(createImageBytes("png",1,1));
+        when(multipartFile.getInputStream())
+            .thenReturn(new ByteArrayInputStream(createImageBytes("png", 1, 1)));
         when(multipartFile.getContentType()).thenReturn(contentType);
         when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
 
@@ -234,7 +239,7 @@ class CourtPhotoServiceTest {
         UUID courtId = UUID.randomUUID();
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
-        when(multipartFile.getBytes()).thenReturn("not-an-image".getBytes());
+        when(multipartFile.getInputStream()).thenReturn(new ByteArrayInputStream("not-an-image".getBytes()));
         when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
 
         try (MockedStatic<ImageIO> imageIoMock = mockStatic(ImageIO.class)) {
@@ -251,7 +256,7 @@ class CourtPhotoServiceTest {
         UUID courtId = UUID.randomUUID();
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
-        when(multipartFile.getBytes()).thenReturn("not-an-image".getBytes());
+        when(multipartFile.getInputStream()).thenReturn(new ByteArrayInputStream("not-an-image".getBytes()));
         when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
 
         try (MockedStatic<ImageIO> imageIoMock = mockStatic(ImageIO.class)) {
@@ -270,7 +275,7 @@ class CourtPhotoServiceTest {
         UUID courtId = UUID.randomUUID();
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
-        when(multipartFile.getBytes()).thenReturn("not-an-image".getBytes());
+        when(multipartFile.getInputStream()).thenReturn(new ByteArrayInputStream("not-an-image".getBytes()));
         when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
 
         try (MockedStatic<ImageIO> imageIoMock = mockStatic(ImageIO.class)) {
