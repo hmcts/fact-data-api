@@ -6,8 +6,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
@@ -138,18 +140,28 @@ class LockServiceTest {
         UUID lockId = UUID.randomUUID();
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(lockRepository.upsertLockAndDeleteOtherUserLocks(
-            any(), eq(SubjectType.COURT.name()), eq(courtId),
-            eq(Page.GENERAL.name()), eq(userId), any(ZonedDateTime.class)
-        )).thenReturn(lockId);
+        when(lockRepository.tryAcquireLock(
+            any(),
+            eq(SubjectType.COURT.name()),
+            eq(courtId),
+            eq(Page.GENERAL.name()),
+            eq(userId),
+            any(ZonedDateTime.class),
+            any(ZonedDateTime.class)
+        )).thenReturn(Optional.of(lockId));
 
         Lock result = lockService.createOrUpdateLock(SubjectType.COURT, courtId, Page.GENERAL, userId);
 
         assertNotNull(result);
         assertEquals(lockId, result.getId());
-        verify(lockRepository).upsertLockAndDeleteOtherUserLocks(
-            any(),  eq(SubjectType.COURT.name()), eq(courtId),
-            eq(Page.GENERAL.name()), eq(userId), any(ZonedDateTime.class)
+        verify(lockRepository).tryAcquireLock(
+            any(),
+            eq(SubjectType.COURT.name()),
+            eq(courtId),
+            eq(Page.GENERAL.name()),
+            eq(userId),
+            any(ZonedDateTime.class),
+            any(ZonedDateTime.class)
         );
     }
 
@@ -159,18 +171,57 @@ class LockServiceTest {
         UUID lockId = UUID.randomUUID();
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(lockRepository.upsertLockAndDeleteOtherUserLocks(
-             any(), eq(SubjectType.COURT.name()), eq(courtId), eq(page.name()), eq(userId), any(ZonedDateTime.class)
-        )).thenReturn(lockId);
+        when(lockRepository.tryAcquireLock(
+             any(),
+             eq(SubjectType.COURT.name()),
+             eq(courtId),
+             eq(page.name()),
+             eq(userId),
+             any(ZonedDateTime.class),
+             any(ZonedDateTime.class)
+        )).thenReturn(Optional.of(lockId));
 
         Lock result = lockService.createOrUpdateLock(SubjectType.COURT, courtId, page, userId);
 
         assertNotNull(result);
         assertEquals(lockId, result.getId());
         verify(courtService).getCourtById(courtId);
-        verify(lockRepository).upsertLockAndDeleteOtherUserLocks(
-             any(), eq(SubjectType.COURT.name()), eq(courtId), eq(page.name()), eq(userId), any(ZonedDateTime.class)
+        verify(lockRepository).tryAcquireLock(
+             any(),
+             eq(SubjectType.COURT.name()),
+             eq(courtId), eq(page.name()),
+             eq(userId),
+             any(ZonedDateTime.class),
+             any(ZonedDateTime.class)
         );
+    }
+
+    @Test
+    void createOrUpdateLockShouldThrowConflictWhenLockHeldByAnotherUser() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(userService.getUserById(userId)).thenReturn(user);
+        when(lockRepository.tryAcquireLock(
+            any(),
+            eq(SubjectType.COURT.name()),
+            eq(courtId),
+            eq(Page.GENERAL.name()),
+            eq(userId),
+            any(ZonedDateTime.class),
+            any(ZonedDateTime.class)
+        )).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
+            lockService.createOrUpdateLock(SubjectType.COURT, courtId, Page.GENERAL, userId));
+
+        assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+    }
+
+    @Test
+    void createOrUpdateLockShouldThrowNotFoundWhenCourtDoesNotExist() {
+        when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException("Court not found"));
+
+        assertThrows(NotFoundException.class, () ->
+            lockService.createOrUpdateLock(SubjectType.COURT, courtId, Page.GENERAL, userId));
     }
 
     @Test
@@ -214,18 +265,28 @@ class LockServiceTest {
         UUID lockId = UUID.randomUUID();
         when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
         when(userService.getUserById(userId)).thenReturn(user);
-        when(lockRepository.upsertLockAndDeleteOtherUserLocks(
-            any(), eq(SubjectType.SERVICE_CENTRE.name()), eq(serviceCentreId), eq(Page.GENERAL.name()), eq(userId),
+        when(lockRepository.tryAcquireLock(
+            any(),
+            eq(SubjectType.SERVICE_CENTRE.name()),
+            eq(serviceCentreId),
+            eq(Page.GENERAL.name()),
+            eq(userId),
+            any(ZonedDateTime.class),
             any(ZonedDateTime.class)
-        )).thenReturn(lockId);
+        )).thenReturn(Optional.of(lockId));
 
         Lock result = lockService.createOrUpdateLock(SubjectType.SERVICE_CENTRE, serviceCentreId, Page.GENERAL, userId);
 
         assertNotNull(result);
         assertEquals(lockId, result.getId());
         verify(serviceCentreService).getServiceCentreById(serviceCentreId);
-        verify(lockRepository).upsertLockAndDeleteOtherUserLocks(
-            any(), eq(SubjectType.SERVICE_CENTRE.name()), eq(serviceCentreId), eq(Page.GENERAL.name()), eq(userId),
+        verify(lockRepository).tryAcquireLock(
+            any(),
+            eq(SubjectType.SERVICE_CENTRE.name()),
+            eq(serviceCentreId),
+            eq(Page.GENERAL.name()),
+            eq(userId),
+            any(ZonedDateTime.class),
             any(ZonedDateTime.class)
         );
     }

@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.reform.fact.data.api.aspect.annotations.LockCleanupCheck;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+@Slf4j
 @SecuredFactRestController(
     name = "Lock",
     description = "Operations related to lock services"
@@ -73,7 +75,7 @@ public class LockController {
             .orElse(ResponseEntity.noContent().build());
     }
 
-    @LockTimeoutCheck
+    @LockCleanupCheck
     @PostMapping("/{subjectType}/{subjectId}/v1/{page}")
     @Operation(summary = "Create or update subject lock for a specific page")
     @ApiResponses(value = {
@@ -88,6 +90,8 @@ public class LockController {
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to lock", required = true) @PathVariable Page page,
         @Parameter(description = "User ID creating the lock", required = true) @Valid @RequestBody UUID userId) {
+        log.info("Creating or updating lock for subjectType: {}, subjectId: {}, page: {}, userId: {}",
+                 subjectType, subjectId, page, userId);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(lockService.createOrUpdateLock(subjectType, UUID.fromString(subjectId), page, userId));
     }
