@@ -7,7 +7,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.LockService;
-import uk.gov.hmcts.reform.fact.data.api.aspect.annotations.LockTimeoutCheck;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
@@ -90,8 +89,6 @@ public class LockController {
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to lock", required = true) @PathVariable Page page,
         @Parameter(description = "User ID creating the lock", required = true) @Valid @RequestBody UUID userId) {
-        log.info("Creating or updating lock for subjectType: {}, subjectId: {}, page: {}, userId: {}",
-                 subjectType, subjectId, page, userId);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(lockService.createOrUpdateLock(subjectType, UUID.fromString(subjectId), page, userId));
     }

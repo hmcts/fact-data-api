@@ -87,9 +87,6 @@ public class LockService {
     public Lock createOrUpdateLock(SubjectType subjectType, UUID subjectId, Page page, UUID userId) {
         UUID id = verifySubject(subjectType, subjectId);
 
-        log.info("Attempting to acquire lock for subjectType: {}, subjectId: {}, page: {}, userId: {}",
-                 subjectType, subjectId, page, userId);
-
         User user = userService.getUserById(userId);
         ZonedDateTime lockAcquired = ZonedDateTime.now(ZoneOffset.UTC);
         ZonedDateTime expiryThreshold = lockAcquired.minusMinutes(lockTimeoutMinutes);
@@ -104,9 +101,6 @@ public class LockService {
             expiryThreshold
         ).orElseThrow(() -> new ResponseStatusException(
             HttpStatus.CONFLICT, "Page locked by another user"));
-        
-        log.info("Lock acquired for subjectType: {}, subjectId: {}, page: {}, userId: {}, lockId: {}",
-                 subjectType, subjectId, page, userId, lockId);
 
         return Lock.builder()
             .id(lockId)
