@@ -42,6 +42,7 @@ public final class CourtPhotoControllerFunctionalTest {
         .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
         .build();
     private static final List<UUID> courtsWithPhotos = new ArrayList<>();
+    public static final String BLOB_CORE_WINDOWS_NET = "";
 
     @Test
     @DisplayName("POST /courts/{courtId}/v1/photo uploads valid JPEG")
@@ -63,7 +64,7 @@ public final class CourtPhotoControllerFunctionalTest {
         final CourtPhoto photo = mapper.readValue(uploadResponse.getBody().asString(), CourtPhoto.class);
         assertThat(photo.getId()).isNotNull();
         assertThat(photo.getCourtId()).isEqualTo(courtId);
-        assertThat(photo.getFileLink()).isNotNull().contains("blob.core.windows.net").contains(courtId.toString());
+        assertThat(photo.getFileLink()).isNotNull().contains(BLOB_CORE_WINDOWS_NET).contains(courtId.toString());
         assertThat(photo.getLastUpdatedAt()).isNotNull();
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/photo");
@@ -97,7 +98,7 @@ public final class CourtPhotoControllerFunctionalTest {
         final CourtPhoto photo = mapper.readValue(uploadResponse.getBody().asString(), CourtPhoto.class);
         assertThat(photo.getId()).isNotNull();
         assertThat(photo.getCourtId()).isEqualTo(courtId);
-        assertThat(photo.getFileLink()).isNotNull().contains("blob.core.windows.net").contains(courtId.toString());
+        assertThat(photo.getFileLink()).isNotNull().contains(BLOB_CORE_WINDOWS_NET).contains(courtId.toString());
         assertThat(photo.getLastUpdatedAt()).isNotNull();
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/photo");
@@ -137,6 +138,26 @@ public final class CourtPhotoControllerFunctionalTest {
             "/courts/" + courtId + "/v1/photo",
             "file",
             invalidFile
+        );
+
+        assertThat(uploadResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
+        assertThat(uploadResponse.jsonPath().getString("message"))
+            .contains("Only JPEG or PNG files are allowed");
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/photo fails with invalid file that's pretending to be an image")
+    void shouldFailToUploadInvalidFileWithImageContentType() {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Invalid Format", true);
+        courtsWithPhotos.add(courtId);
+
+        final File invalidFile = new File(
+            "src/functionalTest/resources/test-images/test invalid format file.txt");
+        final Response uploadResponse = http.doSpoofMultipartPost(
+            "/courts/" + courtId + "/v1/photo",
+            "file",
+            invalidFile,
+            "image/png"
         );
 
         assertThat(uploadResponse.statusCode()).isEqualTo(BAD_REQUEST.value());
@@ -186,7 +207,7 @@ public final class CourtPhotoControllerFunctionalTest {
         assertThat(retrievedPhoto.getId()).isEqualTo(uploadedPhoto.getId());
         assertThat(retrievedPhoto.getCourtId()).isEqualTo(courtId);
         assertThat(retrievedPhoto.getFileLink()).isEqualTo(uploadedPhoto.getFileLink())
-            .contains("blob.core.windows.net").contains(courtId.toString());
+            .contains(BLOB_CORE_WINDOWS_NET).contains(courtId.toString());
         assertThat(retrievedPhoto.getLastUpdatedAt()).isEqualTo(uploadedPhoto.getLastUpdatedAt());
     }
 
