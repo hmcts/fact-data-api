@@ -284,15 +284,31 @@ public final class HttpClient {
             .thenReturn();
     }
 
+    public Response doSpoofMultipartPost(final String path, final String fileParamName, final File file,
+                                    final String contentType) {
+        return doMultipartPost(path, fileParamName, file, contentType, getAdminBearerToken());
+    }
+
     public Response doMultipartPost(final String path, final String fileParamName, final File file) {
         return doMultipartPost(path, fileParamName, file, getAdminBearerToken());
     }
+
 
     public Response doMultipartPost(final String path, final String fileParamName,
                                     final File file, final String bearerToken) {
         return requestWithOptionalAuthorization(bearerToken)
             .contentType(ContentType.MULTIPART)
             .multiPart(fileParamName, file)
+            .when()
+            .post(path)
+            .thenReturn();
+    }
+
+    public Response doMultipartPost(final String path, final String fileParamName, final File file,
+                                    final String contentType, final String bearerToken) {
+        return requestWithOptionalAuthorization(bearerToken)
+            .contentType(ContentType.MULTIPART)
+            .multiPart(fileParamName, file, contentType)
             .when()
             .post(path)
             .thenReturn();
