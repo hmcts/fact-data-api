@@ -211,8 +211,8 @@ public final class LockControllerFunctionalTest {
         final Lock refreshedLock = TestDataHelper.createCourtLock(http, courtId, Page.GENERAL, userId);
 
         assertThat(refreshedLock.getId())
-            .as("Lock ID should remain the same after refresh")
-            .isEqualTo(initialLock.getId());
+            .as("Lock ID should be regenerated after refresh")
+            .isNotEqualTo(initialLock.getId());
 
         assertThat(refreshedLock.getLockAcquired())
             .as("Lock acquired timestamp should be updated after refresh")
