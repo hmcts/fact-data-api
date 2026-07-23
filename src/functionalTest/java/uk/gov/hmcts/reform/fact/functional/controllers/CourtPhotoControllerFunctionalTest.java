@@ -42,7 +42,7 @@ public final class CourtPhotoControllerFunctionalTest {
         .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
         .build();
     private static final List<UUID> courtsWithPhotos = new ArrayList<>();
-    public static final String BLOB_CORE_WINDOWS_NET = "";
+    public static final String BLOB_CORE_WINDOWS_NET = "blob.core.windows.net";
 
     @Test
     @DisplayName("POST /courts/{courtId}/v1/photo uploads valid JPEG")
