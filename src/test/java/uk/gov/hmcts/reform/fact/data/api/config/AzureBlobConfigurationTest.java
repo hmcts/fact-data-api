@@ -30,8 +30,19 @@ class AzureBlobConfigurationTest {
     }
 
     @Test
-    void testBlobContainerClientBean() {
-        BlobContainerClient client = azureBlobConfiguration.blobContainerClient(
+    void testPhotoBlobContainerClientBean() {
+        BlobContainerClient client = azureBlobConfiguration.photoBlobContainerClient(
+            mockBlobServiceClient, containerName
+        );
+
+        assertEquals(mockBlobContainerClient, client);
+        verify(mockBlobServiceClient, times(1))
+            .getBlobContainerClient(containerName);
+    }
+
+    @Test
+    void testCsvBlobContainerClientBean() {
+        BlobContainerClient client = azureBlobConfiguration.csvBlobContainerClient(
             mockBlobServiceClient, containerName
         );
 

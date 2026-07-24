@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import uk.gov.hmcts.reform.fact.data.api.services.AzureBlobService;
+
 @Configuration
 @Profile("test")
 public class AzureBlobConfigurationTestConfiguration {
@@ -17,7 +19,10 @@ public class AzureBlobConfigurationTestConfiguration {
     private BlobServiceClient blobServiceClient;
 
     @Mock
-    private BlobContainerClient containerClient;
+    private BlobContainerClient photoContainerClient;
+
+    @Mock
+    private BlobContainerClient csvContainerClient;
 
     @Mock
     private BlobClient blobClient;
@@ -27,8 +32,13 @@ public class AzureBlobConfigurationTestConfiguration {
     }
 
     @Bean
-    public BlobContainerClient blobContainerClient() {
-        return containerClient;
+    public BlobContainerClient photoBlobContainerClient() {
+        return photoContainerClient;
+    }
+
+    @Bean
+    public BlobContainerClient csvBlobContainerClient() {
+        return csvContainerClient;
     }
 
     @Bean
@@ -39,5 +49,15 @@ public class AzureBlobConfigurationTestConfiguration {
     @Bean
     public BlobServiceClient blobServiceClient() {
         return blobServiceClient;
+    }
+
+    @Bean
+    public AzureBlobService photoAzureBlobService() {
+        return new AzureBlobService(photoContainerClient);
+    }
+
+    @Bean
+    public AzureBlobService csvAzureBlobService() {
+        return new AzureBlobService(csvContainerClient);
     }
 }
