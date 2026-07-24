@@ -66,46 +66,22 @@ public interface LockRepository extends JpaRepository<Lock, UUID> {
     );
 
     @Query(value = """
-        WITH updated AS (
-            UPDATE "lock"
-            SET user_id = :userId,
-                lock_acquired = :lockAcquired
-            WHERE subject_type = :subjectType
-              AND subject_id = :subjectId
-              AND page = :page
-            RETURNING id
-        ),
-        inserted AS (
-            INSERT INTO "lock" (id, subject_id, subject_type, user_id, page, lock_acquired)
-            SELECT :newLockId, :subjectId, :subjectType, :userId, :page, :lockAcquired
-            WHERE NOT EXISTS (SELECT 1 FROM updated)
-            RETURNING id
-        ),
-        kept AS (
-            SELECT id FROM updated
-            UNION ALL
-            SELECT id FROM inserted
-        ),
-        remove_duplicate_page_locks AS (
-            DELETE FROM "lock"
-            WHERE subject_type = :subjectType
-              AND subject_id = :subjectId
-              AND page = :page
-              AND id NOT IN (SELECT id FROM kept)
-        ),
-        remove_other_user_locks AS (
-            DELETE FROM "lock"
-            WHERE user_id = :userId
-              AND id NOT IN (SELECT id FROM kept)
-        )
-        SELECT id FROM kept LIMIT 1
+        INSERT INTO "lock" AS l (id, subject_id, subject_type, user_id, page, lock_acquired)
+        VALUES (:newLockId, :subjectId, :subjectType, :userId, :page, :lockAcquired)
+        ON CONFLICT (subject_type, subject_id, page)
+        DO UPDATE SET
+            user_id = :userId,
+            lock_acquired = :lockAcquired
+        WHERE l.user_id = :userId OR l.lock_acquired < :expiryThreshold
+        RETURNING id
         """, nativeQuery = true)
-    UUID upsertLockAndDeleteOtherUserLocks(
+    Optional<UUID> tryAcquireLock(
         @Param("newLockId") UUID newLockId,
         @Param("subjectType") String subjectType,
         @Param("subjectId") UUID subjectId,
         @Param("page") String page,
         @Param("userId") UUID userId,
-        @Param("lockAcquired") ZonedDateTime lockAcquired
+        @Param("lockAcquired") ZonedDateTime lockAcquired,
+        @Param("expiryThreshold") ZonedDateTime expiryThreshold
     );
 }

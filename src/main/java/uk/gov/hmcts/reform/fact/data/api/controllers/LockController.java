@@ -6,7 +6,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.LockService;
-import uk.gov.hmcts.reform.fact.data.api.aspect.annotations.LockTimeoutCheck;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
@@ -26,6 +25,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+
 
 @SecuredFactRestController(
     name = "Lock",
@@ -73,7 +73,7 @@ public class LockController {
             .orElse(ResponseEntity.noContent().build());
     }
 
-    @LockTimeoutCheck
+    @LockCleanupCheck
     @PostMapping("/{subjectType}/{subjectId}/v1/{page}")
     @Operation(summary = "Create or update subject lock for a specific page")
     @ApiResponses(value = {
