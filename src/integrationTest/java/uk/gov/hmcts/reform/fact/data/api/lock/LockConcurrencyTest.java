@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.lock;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,22 +60,35 @@ class LockConcurrencyTest {
     @Autowired
     AuditUserContext auditUserContext;
 
-
     private Court testCourt;
 
     @BeforeEach
     void setUp() {
+        auditUserContext.clear();
         lockRepository.deleteAll();
 
         // Audited entities in this test require an active user id in thread-local context.
         auditUserContext.setUserId(UUID.randomUUID());
 
-        Region region = regionRepository.findAll().getFirst();
+        Region region = regionRepository.save(
+            Region.builder()
+                  .name("Test Region " + UUID.randomUUID())
+                  .build()
+        );
         testCourt = courtRepository.save(Court.builder()
                                               .name(TEST_COURT_NAME)
                                               .open(Boolean.FALSE)
                                               .regionId(region.getId())
                                               .build());
+    }
+
+    @AfterEach
+    void tearDown() {
+        lockRepository.deleteAll();
+        courtRepository.deleteAll();
+        userRepository.deleteAll();
+        regionRepository.deleteAll();
+        auditUserContext.clear();
     }
 
     @Test

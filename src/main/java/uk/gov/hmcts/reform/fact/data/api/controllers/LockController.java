@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
-import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.reform.fact.data.api.aspect.annotations.LockCleanupCheck;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
@@ -27,7 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@Slf4j
+
 @SecuredFactRestController(
     name = "Lock",
     description = "Operations related to lock services"

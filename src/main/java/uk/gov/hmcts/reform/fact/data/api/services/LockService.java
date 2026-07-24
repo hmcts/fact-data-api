@@ -1,7 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,7 +23,6 @@ import java.util.UUID;
  * Service class responsible for managing court lock operations.
  * Provides functionality to handle court locking mechanisms and user-specific locks.
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LockService {
