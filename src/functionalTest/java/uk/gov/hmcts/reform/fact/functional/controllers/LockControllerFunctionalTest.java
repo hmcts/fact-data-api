@@ -150,8 +150,8 @@ public final class LockControllerFunctionalTest {
         final List<Lock> locks = getAllLocksResponse.jsonPath().getList("", Lock.class);
 
         assertThat(locks)
-            .as("Expected 1 locks for court %s", courtId)
-            .hasSize(1);
+            .as("Expected 2 locks for court %s", courtId)
+            .hasSize(2);
 
         assertThat(locks)
             .as("All locks should belong to court %s", courtId)
@@ -160,9 +160,9 @@ public final class LockControllerFunctionalTest {
                 .isEqualTo(courtId));
 
         assertThat(locks)
-            .as("Expected locks for pages COURT and COURT_ACCESSIBILITY")
+            .as("Expected locks for pages GENERAL and ACCESSIBILITY")
             .extracting(Lock::getPage)
-            .containsExactlyInAnyOrder(Page.ACCESSIBILITY);
+            .containsExactlyInAnyOrder(Page.GENERAL, Page.ACCESSIBILITY);
     }
 
     @Test
@@ -211,8 +211,8 @@ public final class LockControllerFunctionalTest {
         final Lock refreshedLock = TestDataHelper.createCourtLock(http, courtId, Page.GENERAL, userId);
 
         assertThat(refreshedLock.getId())
-            .as("Lock ID should be regenerated after refresh")
-            .isNotEqualTo(initialLock.getId());
+            .as("Lock ID should remain the same after refresh")
+            .isEqualTo(initialLock.getId());
 
         assertThat(refreshedLock.getLockAcquired())
             .as("Lock acquired timestamp should be updated after refresh")

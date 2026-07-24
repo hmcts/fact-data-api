@@ -71,8 +71,7 @@ public interface LockRepository extends JpaRepository<Lock, UUID> {
         ON CONFLICT (subject_type, subject_id, page)
         DO UPDATE SET
             user_id = :userId,
-            lock_acquired = :lockAcquired,
-            id = :newLockId
+            lock_acquired = :lockAcquired
         WHERE l.user_id = :userId OR l.lock_acquired < :expiryThreshold
         RETURNING id
         """, nativeQuery = true)
