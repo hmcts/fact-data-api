@@ -77,6 +77,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -253,10 +254,26 @@ class MigrationServiceTest {
     }
 
     @Test
+    void shouldMarkMigrationFailedWhenLinkageErrorOccurs() {
+        when(legacyFactClient.fetchExport()).thenReturn(new LegacyExportResponse());
+        doThrow(new NoSuchMethodError("stale runtime class")).when(transactionTemplate).execute(any());
+
+        assertThrows(NoSuchMethodError.class, () -> migrationService.migrate());
+
+        ArgumentCaptor<MigrationAudit> auditCaptor = ArgumentCaptor.forClass(MigrationAudit.class);
+        verify(migrationAuditRepository, atLeastOnce()).save(auditCaptor.capture());
+        assertThat(auditCaptor.getAllValues().get(0).getStatus()).isEqualTo(MigrationStatus.IN_PROGRESS);
+        assertThat(auditCaptor.getAllValues().get(auditCaptor.getAllValues().size() - 1).getStatus())
+            .isEqualTo(MigrationStatus.FAILED);
+    }
+
+    @Test
     void shouldPersistLegacyDataAndReturnSummary() {
+        CourtDto court = courtDto();
+        court.setWarningNotice("Temporary warning");
 
         LegacyExportResponse response = new LegacyExportResponse(
-            List.of(courtDto()),
+            List.of(court),
             List.of(new LocalAuthorityTypeDto(1, "Local Authority")),
             List.of(serviceAreaDto()),
             List.of(serviceDto()),
@@ -287,6 +304,7 @@ class MigrationServiceTest {
         assertThat(result.getCourtDxCodesMigrated()).isEqualTo(1);
         assertThat(result.getCourtFaxMigrated()).isEqualTo(1);
         assertThat(result.getServiceCentreAreasOfLawMigrated()).isZero();
+        assertThat(result.getWarningNoticesMigrated()).isEqualTo(1);
 
         verify(legacyServiceRepository).save(any(LegacyService.class));
         verify(courtAreasOfLawRepository).save(any());
@@ -334,6 +352,8 @@ class MigrationServiceTest {
             "Service Centre Court",
             "service-centre-court",
             true,
+            "Service centre warning",
+            "Rhybudd canolfan wasanaeth",
             null,
             List.of(new CourtServiceAreaDto(1, CatchmentType.NATIONAL.name(), List.of(1))),
             List.of(new CourtLocalAuthorityDto(1, 1, List.of(1))),
@@ -368,6 +388,7 @@ class MigrationServiceTest {
         assertThat(summary.getResult().getCourtsMigrated()).isZero();
         assertThat(summary.getResult().getServiceCentresMigrated()).isEqualTo(1);
         assertThat(summary.getResult().getServiceCentreAreasOfLawMigrated()).isEqualTo(1);
+        assertThat(summary.getResult().getWarningNoticesMigrated()).isEqualTo(1);
         verify(courtService, never()).createCourt(any(Court.class));
         verify(serviceCentreRepository).save(any(ServiceCentre.class));
         verify(serviceCentreAreasOfLawRepository).save(any());
@@ -379,6 +400,8 @@ class MigrationServiceTest {
             "Example Court",
             "example-court",
             true,
+            null,
+            null,
             1,
             List.of(new CourtServiceAreaDto(1, CatchmentType.LOCAL.name(), List.of(1))),
             List.of(new CourtLocalAuthorityDto(1, 1, List.of(1))),
@@ -428,6 +451,8 @@ class MigrationServiceTest {
             "Example Court",
             "example-court",
             true,
+            null,
+            null,
             1,
             List.of(new CourtServiceAreaDto(1, CatchmentType.LOCAL.name(), List.of(1))),
             List.of(new CourtLocalAuthorityDto(1, 1, List.of(1))),
