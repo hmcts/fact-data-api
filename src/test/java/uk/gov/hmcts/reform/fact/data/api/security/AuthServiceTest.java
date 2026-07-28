@@ -177,6 +177,11 @@ class AuthServiceTest {
     }
 
     @Test
+    void isAdminSuppressesAuditForRemoveExpiredAuditsEndpoint() {
+        assertAuditSuppressedFor("DELETE", "/audits/v1");
+    }
+
+    @Test
     void isAdminSuppressesAuditForCathCourtDeletionEndpoint() {
         assertAuditSuppressedFor("PUT", "/courts/v1/link/MRD123");
     }
