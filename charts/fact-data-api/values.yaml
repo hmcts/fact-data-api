@@ -17,8 +17,6 @@ java:
       averageUtilization: 70
     memory:
       enabled: false
-  pdb:
-    minAvailable: 1
   keyVaults:
     fact-kv:
       secrets:
