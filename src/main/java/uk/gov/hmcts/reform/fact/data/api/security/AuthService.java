@@ -30,8 +30,12 @@ public class AuthService {
     private static final String COURT_LINK_PATH = "/courts/v1/link";
     private static final String USER_PATH = "/user/v1";
     private static final String USER_RETENTION_PATH = "/user/v1/retention";
+    private static final String AUDIT_RETENTION_PATH = "/audits/v1";
     private static final Set<String> POST_ENDPOINTS_WITHOUT_USER_HEADER = Set.of(COURT_LINK_PATH, USER_PATH);
-    private static final Set<String> DELETE_ENDPOINTS_WITHOUT_USER_HEADER = Set.of(USER_RETENTION_PATH);
+    private static final Set<String> DELETE_ENDPOINTS_WITHOUT_USER_HEADER = Set.of(
+        USER_RETENTION_PATH,
+        AUDIT_RETENTION_PATH
+    );
 
     private final ObjectProvider<AuditUserContext> auditUserContextProvider;
     private final ObjectProvider<UserRepository> userRepositoryProvider;
