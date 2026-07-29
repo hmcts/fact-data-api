@@ -109,7 +109,7 @@ public class MigrationService {
             MigrationSummary summary = transactionTemplate.execute(status -> persistExport(exportResponse));
             markMigrationStatus(MigrationStatus.SUCCESS);
             return summary;
-        } catch (RuntimeException ex) {
+        } catch (RuntimeException | LinkageError ex) {
             markMigrationStatus(MigrationStatus.FAILED);
             throw ex;
         }
@@ -122,18 +122,18 @@ public class MigrationService {
         int serviceCentresMigrated =
             serviceCentreMigrationHelper.migrateServiceCentres(exportResponse.getCourts(), context);
 
-        MigrationResult result = new MigrationResult(
-            courtsMigrated,
-            serviceCentresMigrated,
-            context.getCourtAreasOfLawMigrated(),
-            context.getCourtLocalAuthoritiesMigrated(),
-            context.getCourtSinglePointsOfEntryMigrated(),
-            context.getCourtProfessionalInformationMigrated(),
-            context.getCourtCodesMigrated(),
-            context.getCourtDxCodesMigrated(),
-            context.getCourtFaxMigrated(),
-            context.getServiceCentreAreasOfLawMigrated()
-        );
+        MigrationResult result = new MigrationResult();
+        result.setCourtsMigrated(courtsMigrated);
+        result.setServiceCentresMigrated(serviceCentresMigrated);
+        result.setCourtAreasOfLawMigrated(context.getCourtAreasOfLawMigrated());
+        result.setCourtLocalAuthoritiesMigrated(context.getCourtLocalAuthoritiesMigrated());
+        result.setCourtSinglePointsOfEntryMigrated(context.getCourtSinglePointsOfEntryMigrated());
+        result.setCourtProfessionalInformationMigrated(context.getCourtProfessionalInformationMigrated());
+        result.setCourtCodesMigrated(context.getCourtCodesMigrated());
+        result.setCourtDxCodesMigrated(context.getCourtDxCodesMigrated());
+        result.setCourtFaxMigrated(context.getCourtFaxMigrated());
+        result.setServiceCentreAreasOfLawMigrated(context.getServiceCentreAreasOfLawMigrated());
+        result.setWarningNoticesMigrated(context.getWarningNoticesMigrated());
 
         return new MigrationSummary(result);
     }
