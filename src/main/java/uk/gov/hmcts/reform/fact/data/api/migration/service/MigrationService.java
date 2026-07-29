@@ -1,17 +1,34 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.service;
 
 import feign.FeignException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.HexFormat;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.migration.client.LegacyFactClient;
+import uk.gov.hmcts.reform.fact.data.api.migration.config.MigrationProperties;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationAudit;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationStatus;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationAlreadyAppliedException;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
+import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationReconciliationException;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LegacyExportResponse;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationFindingSeverity;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationFindingType;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationReport;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationResult;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationSection;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationSource;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationSummary;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyServiceRepository;
@@ -24,6 +41,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
@@ -41,6 +59,8 @@ public class MigrationService {
     private final LegacyFactClient legacyFactClient;
     private final MigrationAuditRepository migrationAuditRepository;
     private final TransactionTemplate transactionTemplate;
+    private final MigrationProperties migrationProperties;
+    private final ObjectMapper objectMapper;
     private final ReferenceDataImporter referenceDataImporter;
     private final CourtMigrationHelper courtMigrationHelper;
     private final ServiceCentreMigrationHelper serviceCentreMigrationHelper;
@@ -66,11 +86,16 @@ public class MigrationService {
         ServiceCentreAreasOfLawRepository serviceCentreAreasOfLawRepository,
         MigrationAuditRepository migrationAuditRepository,
         TransactionTemplate transactionTemplate,
-        CourtService courtService
+        CourtService courtService,
+        CourtRepository courtRepository,
+        MigrationProperties migrationProperties,
+        ObjectMapper objectMapper
     ) {
         this.legacyFactClient = legacyFactClient;
         this.migrationAuditRepository = migrationAuditRepository;
         this.transactionTemplate = transactionTemplate;
+        this.migrationProperties = migrationProperties;
+        this.objectMapper = objectMapper;
         this.referenceDataImporter = new ReferenceDataImporter(
             regionRepository,
             areaOfLawTypeRepository,
@@ -90,7 +115,8 @@ public class MigrationService {
             courtFaxRepository,
             areaOfLawTypeRepository,
             legacyCourtMappingRepository,
-            courtService
+            courtService,
+            courtRepository
         );
         this.serviceCentreMigrationHelper = new ServiceCentreMigrationHelper(
             serviceCentreRepository,
@@ -101,28 +127,73 @@ public class MigrationService {
     public MigrationSummary migrate() {
         guardAgainstDuplicateExecution();
 
-        markMigrationStatus(MigrationStatus.IN_PROGRESS);
+        MigrationAudit audit = startMigration();
+        MigrationSource source = null;
         try {
-            final LegacyExportResponse exportResponse = Optional.ofNullable(fetchLegacyExport())
+            LegacyExportResponse exportResponse = Optional.ofNullable(fetchLegacyExport())
                 .orElseThrow(() -> new MigrationClientException("Legacy export response was empty"));
-
-            MigrationSummary summary = transactionTemplate.execute(status -> persistExport(exportResponse));
-            markMigrationStatus(MigrationStatus.SUCCESS);
-            return summary;
+            source = createSource(exportResponse);
+            MigrationSource migrationSource = source;
+            return transactionTemplate.execute(status -> persistExport(exportResponse, audit, migrationSource));
+        } catch (MigrationReconciliationException ex) {
+            persistFailedReport(audit, ex.getReport());
+            throw ex;
         } catch (RuntimeException | LinkageError ex) {
-            markMigrationStatus(MigrationStatus.FAILED);
+            persistFailedReport(audit, buildUnexpectedFailureReport(audit, source));
             throw ex;
         }
     }
 
-    MigrationSummary persistExport(LegacyExportResponse exportResponse) {
-        final MigrationContext context = new MigrationContext();
+    public MigrationReport getReport(UUID reportId) {
+        return migrationAuditRepository.findById(reportId)
+            .map(MigrationAudit::getReport)
+            .filter(report -> report != null)
+            .orElseThrow(() -> new NotFoundException("Migration report '%s' was not found".formatted(reportId)));
+    }
+
+    MigrationSummary persistExport(
+        LegacyExportResponse exportResponse,
+        MigrationAudit audit,
+        MigrationSource source
+    ) {
+        MigrationContext context = new MigrationContext();
+        context.initialiseSourceCounts(exportResponse);
         referenceDataImporter.importReferenceData(exportResponse, context);
         int courtsMigrated = courtMigrationHelper.migrateCourts(exportResponse.getCourts(), context);
         int serviceCentresMigrated =
             serviceCentreMigrationHelper.migrateServiceCentres(exportResponse.getCourts(), context);
 
+        MigrationResult result = buildResult(audit.getId(), courtsMigrated, serviceCentresMigrated, context);
+        MigrationReport report = buildReport(
+            audit,
+            MigrationStatus.SUCCESS,
+            source,
+            result,
+            context,
+            Instant.now()
+        );
+        if (result.getFindingCounts().getErrors() > 0) {
+            report.setStatus(MigrationStatus.FAILED);
+            result.setReconciliationPassed(false);
+            throw new MigrationReconciliationException(report);
+        }
+
+        audit.setStatus(MigrationStatus.SUCCESS);
+        audit.setCompletedAt(report.getCompletedAt());
+        audit.setUpdatedAt(report.getCompletedAt());
+        audit.setReport(report);
+        migrationAuditRepository.save(audit);
+        return new MigrationSummary(result);
+    }
+
+    private MigrationResult buildResult(
+        UUID reportId,
+        int courtsMigrated,
+        int serviceCentresMigrated,
+        MigrationContext context
+    ) {
         MigrationResult result = new MigrationResult();
+        result.setReportId(reportId);
         result.setCourtsMigrated(courtsMigrated);
         result.setServiceCentresMigrated(serviceCentresMigrated);
         result.setCourtAreasOfLawMigrated(context.getCourtAreasOfLawMigrated());
@@ -134,8 +205,79 @@ public class MigrationService {
         result.setCourtFaxMigrated(context.getCourtFaxMigrated());
         result.setServiceCentreAreasOfLawMigrated(context.getServiceCentreAreasOfLawMigrated());
         result.setWarningNoticesMigrated(context.getWarningNoticesMigrated());
+        result.setCourtSlugsPreserved(context.getCourtSlugsPreserved());
+        result.setServicesMigrated(context.getServicesMigrated());
+        result.setServiceAreaLinksMigrated(context.getServiceAreaLinksMigrated());
+        result.setFindingCounts(context.findingCounts());
+        result.setSectionCounts(context.copySectionCounts());
+        result.setReconciliationPassed(result.getFindingCounts().getErrors() == 0);
+        result.setReviewRequired(result.getFindingCounts().getReview() > 0);
+        return result;
+    }
 
-        return new MigrationSummary(result);
+    private MigrationAudit startMigration() {
+        Instant now = Instant.now();
+        MigrationAudit audit = migrationAuditRepository.findByMigrationName(DATA_MIGRATION_NAME)
+            .orElseGet(() -> MigrationAudit.builder()
+                .migrationName(DATA_MIGRATION_NAME)
+                .build());
+        audit.setStatus(MigrationStatus.IN_PROGRESS);
+        audit.setStartedAt(now);
+        audit.setCompletedAt(null);
+        audit.setReport(null);
+        audit.setUpdatedAt(now);
+        return migrationAuditRepository.save(audit);
+    }
+
+    private void persistFailedReport(MigrationAudit audit, MigrationReport report) {
+        Instant completedAt = Instant.now();
+        report.setStatus(MigrationStatus.FAILED);
+        report.setCompletedAt(completedAt);
+        audit.setStatus(MigrationStatus.FAILED);
+        audit.setCompletedAt(completedAt);
+        audit.setUpdatedAt(completedAt);
+        audit.setReport(report);
+        migrationAuditRepository.save(audit);
+    }
+
+    private MigrationReport buildUnexpectedFailureReport(MigrationAudit audit, MigrationSource source) {
+        MigrationContext context = new MigrationContext();
+        context.finding(
+            MigrationFindingSeverity.ERROR,
+            MigrationFindingType.REJECTED,
+            MigrationSection.COURTS,
+            "MIGRATION_EXECUTION_FAILED",
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            1,
+            0
+        );
+        MigrationResult result = buildResult(audit.getId(), 0, 0, context);
+        result.setReconciliationPassed(false);
+        return buildReport(audit, MigrationStatus.FAILED, source, result, context, Instant.now());
+    }
+
+    private MigrationReport buildReport(
+        MigrationAudit audit,
+        MigrationStatus status,
+        MigrationSource source,
+        MigrationResult result,
+        MigrationContext context,
+        Instant completedAt
+    ) {
+        return MigrationReport.builder()
+            .id(audit.getId())
+            .migrationName(DATA_MIGRATION_NAME)
+            .status(status)
+            .startedAt(audit.getStartedAt())
+            .completedAt(completedAt)
+            .source(source)
+            .result(result)
+            .findings(List.copyOf(context.getFindings()))
+            .build();
     }
 
     private void guardAgainstDuplicateExecution() {
@@ -157,14 +299,35 @@ public class MigrationService {
         }
     }
 
-    private void markMigrationStatus(MigrationStatus status) {
-        MigrationAudit audit = migrationAuditRepository.findByMigrationName(DATA_MIGRATION_NAME)
-            .orElseGet(() -> MigrationAudit.builder()
-                .migrationName(DATA_MIGRATION_NAME)
-                .build());
-        audit.setStatus(status);
-        audit.setUpdatedAt(Instant.now());
-        migrationAuditRepository.save(audit);
+    private MigrationSource createSource(LegacyExportResponse exportResponse) {
+        try {
+            byte[] payload = objectMapper.writeValueAsBytes(exportResponse);
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(payload);
+            return new MigrationSource(
+                sanitiseSourceBaseUrl(migrationProperties.getSourceBaseUrl()),
+                Instant.now(),
+                HexFormat.of().formatHex(digest)
+            );
+        } catch (JacksonException | NoSuchAlgorithmException ex) {
+            throw new MigrationClientException("Unable to fingerprint the legacy migration export", ex);
+        }
+    }
+
+    private static String sanitiseSourceBaseUrl(String sourceBaseUrl) {
+        try {
+            URI source = new URI(sourceBaseUrl);
+            return new URI(
+                source.getScheme(),
+                null,
+                source.getHost(),
+                source.getPort(),
+                source.getPath(),
+                null,
+                null
+            ).toString();
+        } catch (URISyntaxException ex) {
+            throw new MigrationClientException("Migration source base URL is invalid", ex);
+        }
     }
 
     private LegacyExportResponse fetchLegacyExport() {

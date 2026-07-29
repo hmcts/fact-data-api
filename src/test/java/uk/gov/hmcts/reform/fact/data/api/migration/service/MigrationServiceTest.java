@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -24,12 +25,15 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAre
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentMethod;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.migration.client.LegacyFactClient;
+import uk.gov.hmcts.reform.fact.data.api.migration.config.MigrationProperties;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyService;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationAudit;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.MigrationStatus;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationAlreadyAppliedException;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
+import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationReconciliationException;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.ContactDescriptionTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtAreasOfLawDto;
@@ -45,6 +49,7 @@ import uk.gov.hmcts.reform.fact.data.api.migration.model.CourtTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LegacyExportResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LocalAuthorityTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationResult;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationReport;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationSummary;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.OpeningHourTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.RegionDto;
@@ -71,6 +76,8 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreAreasOfLawRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -140,6 +147,10 @@ class MigrationServiceTest {
     private CourtService courtService;
     @Mock
     private MigrationAuditRepository migrationAuditRepository;
+    @Mock
+    private MigrationProperties migrationProperties;
+    @Spy
+    private ObjectMapper objectMapper = JsonMapper.builder().build();
 
     @InjectMocks
     private MigrationService migrationService;
@@ -183,7 +194,17 @@ class MigrationServiceTest {
             serviceArea.setId(SERVICE_AREA_ID);
             return Optional.of(serviceArea);
         });
-        lenient().when(legacyServiceRepository.findByName(anyString())).thenReturn(Optional.empty());
+        lenient().when(legacyServiceRepository.findAllByNameIgnoreCase(anyString())).thenAnswer(invocation ->
+            List.of(LegacyService.builder()
+                .id(UUID.randomUUID())
+                .name(invocation.getArgument(0))
+                .nameCy("Seeded Welsh name")
+                .description("Seeded description")
+                .descriptionCy("Seeded Welsh description")
+                .serviceAreas(List.of(SERVICE_AREA_ID))
+                .build())
+        );
+        lenient().when(migrationProperties.getSourceBaseUrl()).thenReturn("http://localhost:8080");
         lenient().when(contactDescriptionTypeRepository.findAll()).thenReturn(List.of(
             ContactDescriptionType.builder()
                 .id(UUID.randomUUID())
@@ -222,8 +243,13 @@ class MigrationServiceTest {
         });
 
         lenient().when(migrationAuditRepository.findByMigrationName(anyString())).thenReturn(Optional.empty());
-        lenient().when(migrationAuditRepository.save(any(MigrationAudit.class)))
-            .thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(migrationAuditRepository.save(any(MigrationAudit.class))).thenAnswer(invocation -> {
+            MigrationAudit audit = invocation.getArgument(0);
+            if (audit.getId() == null) {
+                audit.setId(UUID.randomUUID());
+            }
+            return audit;
+        });
     }
 
     @Test
@@ -241,6 +267,28 @@ class MigrationServiceTest {
     }
 
     @Test
+    void shouldRetrievePersistedMigrationReport() {
+        UUID reportId = UUID.randomUUID();
+        MigrationReport report = MigrationReport.builder()
+            .id(reportId)
+            .status(MigrationStatus.SUCCESS)
+            .build();
+        when(migrationAuditRepository.findById(reportId)).thenReturn(Optional.of(
+            MigrationAudit.builder().id(reportId).report(report).build()
+        ));
+
+        assertThat(migrationService.getReport(reportId)).isEqualTo(report);
+    }
+
+    @Test
+    void shouldRejectUnknownMigrationReport() {
+        UUID reportId = UUID.randomUUID();
+        when(migrationAuditRepository.findById(reportId)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> migrationService.getReport(reportId));
+    }
+
+    @Test
     void shouldThrowWhenExportResponseEmpty() {
         when(legacyFactClient.fetchExport()).thenReturn(null);
 
@@ -248,9 +296,10 @@ class MigrationServiceTest {
 
         ArgumentCaptor<MigrationAudit> auditCaptor = ArgumentCaptor.forClass(MigrationAudit.class);
         verify(migrationAuditRepository, atLeastOnce()).save(auditCaptor.capture());
-        assertThat(auditCaptor.getAllValues().get(0).getStatus()).isEqualTo(MigrationStatus.IN_PROGRESS);
         assertThat(auditCaptor.getAllValues().get(auditCaptor.getAllValues().size() - 1).getStatus())
             .isEqualTo(MigrationStatus.FAILED);
+        assertThat(auditCaptor.getAllValues().get(auditCaptor.getAllValues().size() - 1).getReport())
+            .isNotNull();
     }
 
     @Test
@@ -262,9 +311,45 @@ class MigrationServiceTest {
 
         ArgumentCaptor<MigrationAudit> auditCaptor = ArgumentCaptor.forClass(MigrationAudit.class);
         verify(migrationAuditRepository, atLeastOnce()).save(auditCaptor.capture());
-        assertThat(auditCaptor.getAllValues().get(0).getStatus()).isEqualTo(MigrationStatus.IN_PROGRESS);
         assertThat(auditCaptor.getAllValues().get(auditCaptor.getAllValues().size() - 1).getStatus())
             .isEqualTo(MigrationStatus.FAILED);
+    }
+
+    @Test
+    void shouldFailReconciliationAndPersistReportWhenCourtRegionIsUnmapped() {
+        LegacyExportResponse response = new LegacyExportResponse(
+            List.of(courtDto()),
+            List.of(new LocalAuthorityTypeDto(1, "Local Authority")),
+            List.of(serviceAreaDto()),
+            List.of(serviceDto()),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(new AreaOfLawTypeDto(1, "Housing", "Tai"))
+        );
+        when(legacyFactClient.fetchExport()).thenReturn(response);
+
+        MigrationReconciliationException exception = assertThrows(
+            MigrationReconciliationException.class,
+            () -> migrationService.migrate()
+        );
+
+        assertThat(exception.getReport().getStatus()).isEqualTo(MigrationStatus.FAILED);
+        assertThat(exception.getReport().getResult().isReconciliationPassed()).isFalse();
+        assertThat(exception.getReport().getFindings())
+            .anySatisfy(finding ->
+                assertThat(finding.getReasonCode())
+                    .isEqualTo("ORDINARY_COURT_REGION_MISSING_OR_UNMAPPED")
+            );
+        verify(courtService, never()).createCourt(any());
+
+        ArgumentCaptor<MigrationAudit> auditCaptor = ArgumentCaptor.forClass(MigrationAudit.class);
+        verify(migrationAuditRepository, atLeastOnce()).save(auditCaptor.capture());
+        MigrationAudit failedAudit =
+            auditCaptor.getAllValues().get(auditCaptor.getAllValues().size() - 1);
+        assertThat(failedAudit.getStatus()).isEqualTo(MigrationStatus.FAILED);
+        assertThat(failedAudit.getReport()).isEqualTo(exception.getReport());
     }
 
     @Test
@@ -305,6 +390,14 @@ class MigrationServiceTest {
         assertThat(result.getCourtFaxMigrated()).isEqualTo(1);
         assertThat(result.getServiceCentreAreasOfLawMigrated()).isZero();
         assertThat(result.getWarningNoticesMigrated()).isEqualTo(1);
+        assertThat(result.getCourtSlugsPreserved()).isZero();
+        assertThat(result.getServicesMigrated()).isEqualTo(1);
+        assertThat(result.getServiceAreaLinksMigrated()).isEqualTo(1);
+        assertThat(result.isReconciliationPassed()).isTrue();
+        assertThat(result.getReportId()).isNotNull();
+        assertThat(result.getSectionCounts().get(
+            uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationSection.COURTS
+        ).getSourceRecords()).isEqualTo(1);
 
         verify(legacyServiceRepository).save(any(LegacyService.class));
         verify(courtAreasOfLawRepository).save(any());
@@ -318,9 +411,20 @@ class MigrationServiceTest {
 
         ArgumentCaptor<MigrationAudit> auditCaptor = ArgumentCaptor.forClass(MigrationAudit.class);
         verify(migrationAuditRepository, atLeastOnce()).save(auditCaptor.capture());
-        assertThat(auditCaptor.getAllValues().get(0).getStatus()).isEqualTo(MigrationStatus.IN_PROGRESS);
         assertThat(auditCaptor.getAllValues().get(auditCaptor.getAllValues().size() - 1).getStatus())
             .isEqualTo(MigrationStatus.SUCCESS);
+        assertThat(auditCaptor.getAllValues().get(auditCaptor.getAllValues().size() - 1).getReport())
+            .isNotNull();
+        MigrationReport persistedReport =
+            auditCaptor.getAllValues().get(auditCaptor.getAllValues().size() - 1).getReport();
+        assertThat(persistedReport.getSource().getBaseUrl()).isEqualTo("http://localhost:8080");
+        assertThat(persistedReport.getSource().getPayloadSha256()).hasSize(64);
+        String reportJson = objectMapper.writeValueAsString(persistedReport);
+        assertThat(reportJson)
+            .doesNotContain("Temporary warning")
+            .doesNotContain("01632960000")
+            .doesNotContain("dx explanation")
+            .doesNotContain("disgrifiad");
     }
 
     @Test
