@@ -137,7 +137,8 @@ class ServiceCentreServiceTest {
     void getServiceCentreByNameReturnsServiceCentre() {
         ServiceCentre serviceCentre = ServiceCentre.builder().name("Bulk Scan Centre").build();
 
-        when(serviceCentreRepository.findFirstByNameIgnoreCase("Bulk Scan Centre")).thenReturn(Optional.of(serviceCentre));
+        when(serviceCentreRepository.findFirstByNameIgnoreCase("Bulk Scan Centre"))
+            .thenReturn(Optional.of(serviceCentre));
 
         assertThat(serviceCentreService.getServiceCentreByName("Bulk Scan Centre")).isEqualTo(serviceCentre);
         verify(serviceCentreRepository).findFirstByNameIgnoreCase("Bulk Scan Centre");
