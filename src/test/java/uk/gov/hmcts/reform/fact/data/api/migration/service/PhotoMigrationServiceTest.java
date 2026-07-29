@@ -141,6 +141,8 @@ class PhotoMigrationServiceTest {
             null,
             null,
             null,
+            null,
+            null,
             new CourtPhotoDto(photoPath),
             null
         );
