@@ -16,6 +16,10 @@ public class CourtDto {
     private String name;
     private String slug;
     private Boolean open;
+    @JsonProperty("warning_notice")
+    private String warningNotice;
+    @JsonProperty("warning_notice_cy")
+    private String warningNoticeCy;
     @JsonProperty("region_id")
     private Integer regionId;
     @JsonProperty("court_service_areas")
