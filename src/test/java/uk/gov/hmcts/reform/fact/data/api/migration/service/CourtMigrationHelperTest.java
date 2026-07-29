@@ -114,6 +114,7 @@ class CourtMigrationHelperTest {
         assertThat(context.getCourtAreasOfLawMigrated()).isEqualTo(1);
         assertThat(context.getCourtLocalAuthoritiesMigrated()).isEqualTo(1);
         assertThat(context.getCourtSinglePointsOfEntryMigrated()).isEqualTo(1);
+        assertThat(context.getWarningNoticesMigrated()).isZero();
     }
 
     @Test
@@ -181,6 +182,34 @@ class CourtMigrationHelperTest {
         verify(courtService).createCourt(captor.capture());
         assertThat(captor.getValue().getName())
             .isEqualTo("Enforcement (Crime) Contact Centre - Wales South West & London");
+    }
+
+    @Test
+    void shouldSanitiseAndPersistWarningNotices() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(UUID.randomUUID());
+            return court;
+        });
+
+        CourtDto dto = new CourtDto();
+        dto.setId(706L);
+        dto.setName("Warning Notice Court");
+        dto.setSlug("warning-notice-court");
+        dto.setOpen(true);
+        dto.setWarningNotice("<strong>Urgent &amp; important</strong>");
+        dto.setWarningNoticeCy("<strong>Rhybudd:</strong> mae’r llys ar gau.");
+        dto.setRegionId(1);
+        dto.setIsServiceCentre(false);
+
+        helper.migrateCourts(List.of(dto), context);
+
+        ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
+        verify(courtService).createCourt(captor.capture());
+        assertThat(captor.getValue().getWarningNotice()).isEqualTo("Urgent & important");
+        assertThat(captor.getValue().getWarningNoticeCy()).isEqualTo("Rhybudd: mae'r llys ar gau.");
+        assertThat(context.getWarningNoticesMigrated()).isEqualTo(1);
     }
 
     @Test

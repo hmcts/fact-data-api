@@ -134,6 +134,16 @@ class CourtMigrationHelper {
                 .name(courtName)
                 .slug(dto.getSlug())
                 .open(dto.getOpen())
+                .warningNotice(WarningNoticeSanitiser.sanitise(
+                    dto.getWarningNotice(),
+                    dto.getSlug(),
+                    "English"
+                ))
+                .warningNoticeCy(WarningNoticeSanitiser.sanitise(
+                    dto.getWarningNoticeCy(),
+                    dto.getSlug(),
+                    "Welsh"
+                ))
                 .regionId(regionId.get())
                 .build();
 
@@ -143,6 +153,10 @@ class CourtMigrationHelper {
             } catch (ConstraintViolationException ex) {
                 LOG.error("Validation failed while migrating court '{}': {}", dto.getName(), ex.getMessage());
                 throw ex;
+            }
+            if (StringUtils.isNotBlank(savedCourt.getWarningNotice())
+                || StringUtils.isNotBlank(savedCourt.getWarningNoticeCy())) {
+                context.warningNoticesMigrated++;
             }
             UUID courtId = savedCourt.getId();
             persistCourtAreasOfLaw(dto.getCourtAreasOfLaw(), courtId, context);

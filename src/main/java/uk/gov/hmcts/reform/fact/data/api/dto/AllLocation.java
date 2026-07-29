@@ -38,6 +38,7 @@ public class AllLocation {
             .slug(court.getSlug())
             .open(court.getOpen())
             .warningNotice(court.getWarningNotice())
+            .warningNoticeCy(court.getWarningNoticeCy())
             .createdAt(court.getCreatedAt())
             .lastUpdatedAt(court.getLastUpdatedAt())
             .locationType("COURT")
