@@ -71,6 +71,16 @@ class ServiceCentreMigrationHelper {
                 .name(serviceCentreName)
                 .slug(dto.getSlug())
                 .open(Boolean.FALSE)
+                .warningNotice(WarningNoticeSanitiser.sanitise(
+                    dto.getWarningNotice(),
+                    dto.getSlug(),
+                    "English"
+                ))
+                .warningNoticeCy(WarningNoticeSanitiser.sanitise(
+                    dto.getWarningNoticeCy(),
+                    dto.getSlug(),
+                    "Welsh"
+                ))
                 .serviceAreaIds(serviceAreaSelection.serviceAreaIds())
                 .regionId(mapRegionId(dto, context))
                 .catchmentType(serviceAreaSelection.catchmentType().orElse(null))
@@ -82,6 +92,10 @@ class ServiceCentreMigrationHelper {
             } catch (ConstraintViolationException ex) {
                 LOG.error("Validation failed while migrating service centre '{}': {}", dto.getName(), ex.getMessage());
                 throw ex;
+            }
+            if (StringUtils.isNotBlank(savedServiceCentre.getWarningNotice())
+                || StringUtils.isNotBlank(savedServiceCentre.getWarningNoticeCy())) {
+                context.warningNoticesMigrated++;
             }
 
             UUID serviceCentreId = savedServiceCentre.getId();

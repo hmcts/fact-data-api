@@ -26,6 +26,7 @@ class AllLocationTest {
             .slug("test-court")
             .open(true)
             .warningNotice("Court warning")
+            .warningNoticeCy("Rhybudd llys")
             .createdAt(CREATED_AT)
             .lastUpdatedAt(LAST_UPDATED_AT)
             .regionId(REGION_ID)
@@ -40,6 +41,7 @@ class AllLocationTest {
         assertThat(result.getSlug()).isEqualTo("test-court");
         assertThat(result.getOpen()).isTrue();
         assertThat(result.getWarningNotice()).isEqualTo("Court warning");
+        assertThat(result.getWarningNoticeCy()).isEqualTo("Rhybudd llys");
         assertThat(result.getCreatedAt()).isEqualTo(CREATED_AT);
         assertThat(result.getLastUpdatedAt()).isEqualTo(LAST_UPDATED_AT);
         assertThat(result.getLocationType()).isEqualTo("COURT");

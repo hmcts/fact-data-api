@@ -76,6 +76,11 @@ class ServiceCentreMigrationHelperTest {
         assertThat(serviceCentreCaptor.getValue().getName()).isEqualTo("Legacy Service Centre");
         assertThat(serviceCentreCaptor.getValue().getSlug()).isEqualTo("legacy-service-centre");
         assertThat(serviceCentreCaptor.getValue().getOpen()).isFalse();
+        assertThat(serviceCentreCaptor.getValue().getWarningNotice())
+            .isEqualTo("Urgent & important");
+        assertThat(serviceCentreCaptor.getValue().getWarningNoticeCy())
+            .isEqualTo("Rhybudd: mae'r ganolfan ar gau.");
+        assertThat(context.getWarningNoticesMigrated()).isEqualTo(1);
         assertThat(serviceCentreCaptor.getValue().getServiceAreaIds()).containsExactly(nationalServiceAreaId);
         assertThat(serviceCentreCaptor.getValue().getRegionId()).isEqualTo(regionId);
         assertThat(serviceCentreCaptor.getValue().getCatchmentType()).isEqualTo(CatchmentType.NATIONAL);
@@ -407,6 +412,8 @@ class ServiceCentreMigrationHelperTest {
         serviceCentreDto.setName("Legacy Service Centre");
         serviceCentreDto.setSlug("legacy-service-centre");
         serviceCentreDto.setOpen(true);
+        serviceCentreDto.setWarningNotice("<strong>Urgent &amp; important</strong>");
+        serviceCentreDto.setWarningNoticeCy("<strong>Rhybudd:</strong> mae’r ganolfan ar gau.");
         serviceCentreDto.setIsServiceCentre(true);
         serviceCentreDto.setRegionId(5);
         serviceCentreDto.setCourtServiceAreas(List.of(
