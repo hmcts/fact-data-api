@@ -15,6 +15,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationReport;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -37,4 +40,14 @@ public class MigrationAudit {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "started_at")
+    private Instant startedAt;
+
+    @Column(name = "completed_at")
+    private Instant completedAt;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private MigrationReport report;
 }

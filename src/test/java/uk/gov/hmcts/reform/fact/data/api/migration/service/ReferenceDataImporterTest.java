@@ -1,8 +1,10 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import java.util.List;
@@ -18,10 +20,12 @@ import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
-import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
+import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyService;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LegacyExportResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LocalAuthorityTypeDto;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationFindingSeverity;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationSection;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.RegionDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.ServiceAreaDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.ServiceDto;
@@ -133,15 +137,84 @@ class ReferenceDataImporterTest {
     }
 
     @Test
-    void shouldThrowWhenRegionMissing() {
+    void shouldReportWhenRegionMissing() {
         LegacyExportResponse failingResponse = new LegacyExportResponse(
             Collections.emptyList(),
             null, null, null, null, null, null,
             List.of(new RegionDto(5, "Missing", "England")),
             null
         );
-        assertThatThrownBy(() -> importer.importReferenceData(failingResponse, context))
-            .isInstanceOf(MigrationClientException.class);
+        importer.importReferenceData(failingResponse, context);
+
+        assertThat(context.getFindings())
+            .anySatisfy(finding -> {
+                assertThat(finding.getSeverity()).isEqualTo(MigrationFindingSeverity.REVIEW);
+                assertThat(finding.getReasonCode()).isEqualTo("REGION_REFERENCE_NOT_FOUND");
+                assertThat(finding.getSourceRecordId()).isEqualTo(5);
+            });
+    }
+
+    @Test
+    void shouldUpdateExactlyOneSeededServiceAndEveryServiceAreaLink() {
+        UUID serviceAreaId = UUID.randomUUID();
+        ServiceArea serviceArea = new ServiceArea();
+        serviceArea.setId(serviceAreaId);
+        when(serviceAreaRepository.findByNameIgnoreCase("Money claims")).thenReturn(Optional.of(serviceArea));
+        LegacyService seeded = LegacyService.builder()
+            .id(UUID.randomUUID())
+            .name("Service")
+            .nameCy("Old Welsh")
+            .description("Old description")
+            .descriptionCy("Old Welsh description")
+            .serviceAreas(List.of())
+            .build();
+        when(legacyServiceRepository.findAllByNameIgnoreCase("Service")).thenReturn(List.of(seeded));
+
+        LegacyExportResponse response = new LegacyExportResponse(
+            List.of(),
+            List.of(),
+            List.of(serviceAreaDto()),
+            List.of(new ServiceDto(1, "Service", "Gwasanaeth", "desc", "desc cy", List.of(1))),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of()
+        );
+
+        importer.importReferenceData(response, context);
+
+        verify(legacyServiceRepository).save(seeded);
+        assertThat(seeded.getServiceAreas()).containsExactly(serviceAreaId);
+        assertThat(context.getServicesMigrated()).isEqualTo(1);
+        assertThat(context.getServiceAreaLinksMigrated()).isEqualTo(1);
+        assertThat(context.getSectionCounts().get(MigrationSection.SERVICES).getPersistedRecords())
+            .isEqualTo(1);
+    }
+
+    @Test
+    void shouldRejectNullServiceDescriptionWithoutOverwritingSeededData() {
+        LegacyExportResponse response = new LegacyExportResponse(
+            List.of(),
+            List.of(),
+            List.of(serviceAreaDto()),
+            List.of(new ServiceDto(1, "Service", "Gwasanaeth", null, "desc cy", List.of(1))),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of()
+        );
+
+        importer.importReferenceData(response, context);
+
+        verify(legacyServiceRepository, never()).save(any());
+        assertThat(context.getFindings())
+            .anySatisfy(finding -> {
+                assertThat(finding.getSeverity()).isEqualTo(MigrationFindingSeverity.ERROR);
+                assertThat(finding.getReasonCode()).isEqualTo("SERVICE_REQUIRED_FIELDS_MISSING");
+                assertThat(finding.getFields()).contains("description");
+            });
     }
 
     private ServiceAreaDto serviceAreaDto() {
