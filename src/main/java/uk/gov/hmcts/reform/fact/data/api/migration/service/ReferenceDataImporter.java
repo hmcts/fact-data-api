@@ -20,10 +20,12 @@ import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.migration.entities.LegacyService;
-import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.ContactDescriptionTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LegacyExportResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.LocalAuthorityTypeDto;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationFindingSeverity;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationFindingType;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationSection;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.OpeningHourTypeDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.RegionDto;
 import uk.gov.hmcts.reform.fact.data.api.migration.model.ServiceAreaDto;
@@ -101,11 +103,11 @@ class ReferenceDataImporter {
      * @param context migration context used to store identifier mappings.
      */
     void importReferenceData(LegacyExportResponse response, MigrationContext context) {
-        mapExistingRegions(response.getRegions(), context.getRegionIds());
-        mapExistingAreasOfLaw(response.getAreaOfLawTypes(), context.getAreaOfLawIds());
-        mapExistingLocalAuthorityTypes(response.getLocalAuthorityTypes(), context.getLocalAuthorityTypeIds());
-        mapExistingContactDescriptions(response.getContactDescriptionTypes());
-        mapExistingOpeningHours(response.getOpeningHourTypes());
+        mapExistingRegions(response.getRegions(), context);
+        mapExistingAreasOfLaw(response.getAreaOfLawTypes(), context);
+        mapExistingLocalAuthorityTypes(response.getLocalAuthorityTypes(), context);
+        mapExistingContactDescriptions(response.getContactDescriptionTypes(), context);
+        mapExistingOpeningHours(response.getOpeningHourTypes(), context);
         persistServiceAreas(response.getServiceAreas(), context);
         persistServices(response.getServices(), context);
     }
@@ -114,21 +116,35 @@ class ReferenceDataImporter {
      * Maps region identifiers from the legacy export onto the pre-seeded regions in the new schema.
      *
      * @param regions regions supplied by the legacy export.
-     * @param regionIds map storing the legacy-to-new identifier mapping.
+     * @param context migration context receiving the legacy-to-new identifier mapping.
      */
-    private void mapExistingRegions(List<RegionDto> regions, Map<Integer, UUID> regionIds) {
+    private void mapExistingRegions(List<RegionDto> regions, MigrationContext context) {
         if (isEmpty(regions)) {
             return;
         }
 
         for (RegionDto regionDto : regions) {
-            Region region = regionRepository.findByNameAndCountry(regionDto.getName(), regionDto.getCountry())
-                .orElseThrow(() -> new MigrationClientException(
-                    "Region '%s' (%s) was not found in the target database".formatted(
-                        regionDto.getName(), regionDto.getCountry()
-                    )
-                ));
-            regionIds.put(regionDto.getId(), region.getId());
+            Optional<Region> region =
+                regionRepository.findByNameAndCountry(regionDto.getName(), regionDto.getCountry());
+            if (region.isEmpty()) {
+                context.unmapped(MigrationSection.REGIONS, 1);
+                context.finding(
+                    MigrationFindingSeverity.REVIEW,
+                    MigrationFindingType.UNMAPPED,
+                    MigrationSection.REGIONS,
+                    "REGION_REFERENCE_NOT_FOUND",
+                    null,
+                    null,
+                    regionDto.getId(),
+                    List.of(),
+                    List.of(),
+                    1,
+                    0
+                );
+                continue;
+            }
+            context.getRegionIds().put(regionDto.getId(), region.get().getId());
+            context.persisted(MigrationSection.REGIONS, 1, 0);
         }
     }
 
@@ -136,11 +152,11 @@ class ReferenceDataImporter {
      * Maps area-of-law identifiers from the legacy export onto the pre-seeded records.
      *
      * @param areaOfLawTypes legacy area-of-law records.
-     * @param ids destination map storing legacy-to-new mappings.
+     * @param context migration context receiving legacy-to-new mappings.
      */
     private void mapExistingAreasOfLaw(
         List<uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto> areaOfLawTypes,
-        Map<Integer, UUID> ids
+        MigrationContext context
     ) {
         if (isEmpty(areaOfLawTypes)) {
             return;
@@ -150,9 +166,24 @@ class ReferenceDataImporter {
             Optional<AreaOfLawType> entity = areaOfLawTypeRepository.findByNameIgnoreCase(dto.getName());
             if (entity.isEmpty()) {
                 LOG.warn("Area of law '{}' was not found in the target database", dto.getName());
+                context.unmapped(MigrationSection.AREAS_OF_LAW, 1);
+                context.finding(
+                    MigrationFindingSeverity.REVIEW,
+                    MigrationFindingType.UNMAPPED,
+                    MigrationSection.AREAS_OF_LAW,
+                    "AREA_OF_LAW_REFERENCE_NOT_FOUND",
+                    null,
+                    null,
+                    dto.getId(),
+                    List.of(),
+                    List.of(),
+                    1,
+                    0
+                );
                 continue;
             }
-            ids.put(dto.getId(), entity.get().getId());
+            context.getAreaOfLawIds().put(dto.getId(), entity.get().getId());
+            context.persisted(MigrationSection.AREAS_OF_LAW, 1, 0);
         }
     }
 
@@ -171,9 +202,24 @@ class ReferenceDataImporter {
             Optional<ServiceArea> existing = serviceAreaRepository.findByNameIgnoreCase(dto.getName());
             if (existing.isEmpty()) {
                 LOG.warn("Service area '{}' was not found in the target database", dto.getName());
+                context.unmapped(MigrationSection.SERVICE_AREAS, 1);
+                context.finding(
+                    MigrationFindingSeverity.REVIEW,
+                    MigrationFindingType.UNMAPPED,
+                    MigrationSection.SERVICE_AREAS,
+                    "SERVICE_AREA_REFERENCE_NOT_FOUND",
+                    null,
+                    null,
+                    dto.getId(),
+                    List.of(),
+                    List.of(),
+                    1,
+                    0
+                );
                 continue;
             }
             context.getServiceAreaIds().put(dto.getId(), existing.get().getId());
+            context.persisted(MigrationSection.SERVICE_AREAS, 1, 0);
         }
     }
 
@@ -186,24 +232,162 @@ class ReferenceDataImporter {
      */
     private void persistServices(List<ServiceDto> services, MigrationContext context) {
         if (isEmpty(services)) {
+            context.finding(
+                MigrationFindingSeverity.ERROR,
+                MigrationFindingType.REJECTED,
+                MigrationSection.SERVICES,
+                "SERVICE_SOURCE_COLLECTION_MISSING",
+                null,
+                null,
+                null,
+                List.of(),
+                List.of(),
+                1,
+                0
+            );
             return;
         }
 
         for (ServiceDto dto : services) {
-            LegacyService entity = legacyServiceRepository.findByName(dto.getName())
-                .orElseGet(LegacyService::new);
+            List<String> invalidFields = invalidServiceFields(dto);
+            if (!invalidFields.isEmpty()) {
+                context.skipped(MigrationSection.SERVICES, 1);
+                context.finding(
+                    MigrationFindingSeverity.ERROR,
+                    MigrationFindingType.REJECTED,
+                    MigrationSection.SERVICES,
+                    "SERVICE_REQUIRED_FIELDS_MISSING",
+                    null,
+                    null,
+                    dto.getId(),
+                    dto.getServiceAreaIds(),
+                    invalidFields,
+                    1,
+                    size(dto.getServiceAreaIds())
+                );
+                continue;
+            }
+
+            List<LegacyService> matches = legacyServiceRepository.findAllByNameIgnoreCase(dto.getName());
+            if (matches.size() != 1) {
+                context.skipped(MigrationSection.SERVICES, 1);
+                context.finding(
+                    MigrationFindingSeverity.ERROR,
+                    MigrationFindingType.REJECTED,
+                    MigrationSection.SERVICES,
+                    matches.isEmpty() ? "SEEDED_SERVICE_NOT_FOUND" : "SEEDED_SERVICE_AMBIGUOUS",
+                    null,
+                    null,
+                    dto.getId(),
+                    dto.getServiceAreaIds(),
+                    List.of("name"),
+                    1,
+                    size(dto.getServiceAreaIds())
+                );
+                continue;
+            }
+
+            List<Integer> unmappedIds = dto.getServiceAreaIds().stream()
+                .filter(id -> !context.getServiceAreaIds().containsKey(id))
+                .toList();
+            if (!unmappedIds.isEmpty()) {
+                context.unmapped(MigrationSection.SERVICE_AREA_LINKS, unmappedIds.size());
+                context.skipped(MigrationSection.SERVICES, 1);
+                context.finding(
+                    MigrationFindingSeverity.ERROR,
+                    MigrationFindingType.UNMAPPED,
+                    MigrationSection.SERVICE_AREA_LINKS,
+                    "SERVICE_AREA_LINK_UNMAPPED",
+                    null,
+                    null,
+                    dto.getId(),
+                    unmappedIds,
+                    List.of("serviceAreaIds"),
+                    1,
+                    unmappedIds.size()
+                );
+                continue;
+            }
+
+            LegacyService entity = matches.get(0);
+            final List<String> changedFields = changedServiceFields(entity, dto, context);
             entity.setName(dto.getName());
             entity.setNameCy(dto.getNameCy());
             entity.setDescription(dto.getDescription());
             entity.setDescriptionCy(dto.getDescriptionCy());
-            entity.setServiceAreas(mapIds(dto.getServiceAreaIds(), context.getServiceAreaIds(), "service area"));
+            entity.setServiceAreas(dto.getServiceAreaIds().stream()
+                .map(context.getServiceAreaIds()::get)
+                .toList());
             legacyServiceRepository.save(entity);
+            context.servicesMigrated++;
+            context.serviceAreaLinksMigrated += dto.getServiceAreaIds().size();
+            context.persisted(MigrationSection.SERVICES, 1, 0);
+            context.persisted(MigrationSection.SERVICE_AREA_LINKS, 0, dto.getServiceAreaIds().size());
+            if (!changedFields.isEmpty()) {
+                context.transformed(MigrationSection.SERVICES, 1);
+                context.finding(
+                    MigrationFindingSeverity.INFO,
+                    MigrationFindingType.TRANSFORMED,
+                    MigrationSection.SERVICES,
+                    "SERVICE_FIELDS_UPDATED",
+                    null,
+                    null,
+                    dto.getId(),
+                    List.of(),
+                    changedFields,
+                    1,
+                    0
+                );
+            }
+        }
+    }
+
+    private static List<String> invalidServiceFields(ServiceDto dto) {
+        List<String> invalid = new java.util.ArrayList<>();
+        if (StringUtils.isBlank(dto.getName())) {
+            invalid.add("name");
+        }
+        if (StringUtils.isBlank(dto.getNameCy())) {
+            invalid.add("nameCy");
+        }
+        if (dto.getDescription() == null) {
+            invalid.add("description");
+        }
+        if (dto.getDescriptionCy() == null) {
+            invalid.add("descriptionCy");
+        }
+        if (isEmpty(dto.getServiceAreaIds())) {
+            invalid.add("serviceAreaIds");
+        }
+        return invalid;
+    }
+
+    private static List<String> changedServiceFields(
+        LegacyService entity,
+        ServiceDto dto,
+        MigrationContext context
+    ) {
+        List<String> changed = new java.util.ArrayList<>();
+        addChanged(changed, "name", entity.getName(), dto.getName());
+        addChanged(changed, "nameCy", entity.getNameCy(), dto.getNameCy());
+        addChanged(changed, "description", entity.getDescription(), dto.getDescription());
+        addChanged(changed, "descriptionCy", entity.getDescriptionCy(), dto.getDescriptionCy());
+        List<UUID> mappedServiceAreas = dto.getServiceAreaIds().stream()
+            .map(context.getServiceAreaIds()::get)
+            .toList();
+        addChanged(changed, "serviceAreaIds", entity.getServiceAreas(), mappedServiceAreas);
+        return changed;
+    }
+
+    private static void addChanged(List<String> fields, String field, Object current, Object proposed) {
+        if (!Objects.equals(current, proposed)) {
+            fields.add(field);
         }
     }
 
     private void mapExistingLocalAuthorityTypes(
         List<LocalAuthorityTypeDto> localAuthorityTypes,
-        Map<Integer, List<UUID>> ids
+        MigrationContext context
     ) {
         if (isEmpty(localAuthorityTypes)) {
             return;
@@ -222,6 +406,7 @@ class ReferenceDataImporter {
         for (LocalAuthorityTypeDto dto : localAuthorityTypes) {
             if (StringUtils.isBlank(dto.getName())) {
                 LOG.warn("Skipping local authority type with id {} because name is blank", dto.getId());
+                recordLocalAuthorityReferenceFinding(context, dto, "LOCAL_AUTHORITY_NAME_BLANK");
                 continue;
             }
 
@@ -232,17 +417,40 @@ class ReferenceDataImporter {
             );
             if (existingMatches.isEmpty()) {
                 LOG.warn("No matching local authority type found for name '{}'", dto.getName());
+                recordLocalAuthorityReferenceFinding(context, dto, "LOCAL_AUTHORITY_REFERENCE_NOT_FOUND");
                 continue;
             }
 
-            ids.put(
+            context.getLocalAuthorityTypeIds().put(
                 dto.getId(),
                 existingMatches.stream().map(LocalAuthorityType::getId).distinct().toList()
             );
+            context.persisted(MigrationSection.LOCAL_AUTHORITY_TYPES, 1, 0);
         }
     }
 
-    private void mapExistingContactDescriptions(List<ContactDescriptionTypeDto> dtos) {
+    private static void recordLocalAuthorityReferenceFinding(
+        MigrationContext context,
+        LocalAuthorityTypeDto dto,
+        String reasonCode
+    ) {
+        context.unmapped(MigrationSection.LOCAL_AUTHORITY_TYPES, 1);
+        context.finding(
+            MigrationFindingSeverity.REVIEW,
+            MigrationFindingType.UNMAPPED,
+            MigrationSection.LOCAL_AUTHORITY_TYPES,
+            reasonCode,
+            null,
+            null,
+            dto.getId(),
+            List.of(),
+            List.of(),
+            1,
+            0
+        );
+    }
+
+    private void mapExistingContactDescriptions(List<ContactDescriptionTypeDto> dtos, MigrationContext context) {
         if (isEmpty(dtos)) {
             return;
         }
@@ -251,14 +459,21 @@ class ReferenceDataImporter {
             contactDescriptionTypeRepository.findAll(),
             ContactDescriptionType::getName
         );
-        logMissingReferenceData(
+        int missing = logMissingReferenceData(
             "contact descriptions",
             dtos.stream().map(ContactDescriptionTypeDto::getName).toList(),
             existingByNormalisedName
         );
+        context.persisted(MigrationSection.CONTACT_DESCRIPTION_TYPES, dtos.size() - missing, 0);
+        recordDiagnosticReferenceFinding(
+            context,
+            MigrationSection.CONTACT_DESCRIPTION_TYPES,
+            "CONTACT_DESCRIPTION_DEFERRED_TO_FORMS",
+            missing
+        );
     }
 
-    private void mapExistingOpeningHours(List<OpeningHourTypeDto> dtos) {
+    private void mapExistingOpeningHours(List<OpeningHourTypeDto> dtos, MigrationContext context) {
         if (isEmpty(dtos)) {
             return;
         }
@@ -267,10 +482,17 @@ class ReferenceDataImporter {
             openingHourTypeRepository.findAll(),
             OpeningHourType::getName
         );
-        logMissingReferenceData(
+        int missing = logMissingReferenceData(
             "opening hour types",
             dtos.stream().map(OpeningHourTypeDto::getName).toList(),
             existingByNormalisedName
+        );
+        context.persisted(MigrationSection.OPENING_HOUR_TYPES, dtos.size() - missing, 0);
+        recordDiagnosticReferenceFinding(
+            context,
+            MigrationSection.OPENING_HOUR_TYPES,
+            "OPENING_HOUR_TYPE_DEFERRED_TO_FORMS",
+            missing
         );
     }
 
@@ -298,7 +520,7 @@ class ReferenceDataImporter {
         return results.isEmpty() ? List.of() : results;
     }
 
-    private void logMissingReferenceData(
+    private int logMissingReferenceData(
         String category,
         List<String> names,
         Map<String, ?> existingByNormalisedName
@@ -309,7 +531,7 @@ class ReferenceDataImporter {
             .toList();
 
         if (unmatchedNames.isEmpty()) {
-            return;
+            return 0;
         }
 
         String examples = unmatchedNames.stream().limit(10).collect(Collectors.joining(", "));
@@ -319,6 +541,36 @@ class ReferenceDataImporter {
             category,
             examples
         );
+        return unmatchedNames.size();
+    }
+
+    private static void recordDiagnosticReferenceFinding(
+        MigrationContext context,
+        MigrationSection section,
+        String reasonCode,
+        int missing
+    ) {
+        if (missing == 0) {
+            return;
+        }
+        context.unmapped(section, missing);
+        context.finding(
+            MigrationFindingSeverity.REVIEW,
+            MigrationFindingType.DEFERRED,
+            section,
+            reasonCode,
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(),
+            missing,
+            0
+        );
+    }
+
+    private static int size(Collection<?> values) {
+        return values == null ? 0 : values.size();
     }
 
     private static <T> Map<String, T> buildNormalisedLookupMap(
