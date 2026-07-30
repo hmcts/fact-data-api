@@ -1,8 +1,10 @@
 package uk.gov.hmcts.reform.fact.data.api.migration.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,6 +37,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFaxRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtProfessionalInformationRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.CourtRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
 import uk.gov.hmcts.reform.fact.data.api.migration.repository.LegacyCourtMappingRepository;
@@ -52,6 +55,7 @@ class CourtMigrationHelperTest {
     @Mock private AreaOfLawTypeRepository areaOfLawTypeRepository;
     @Mock private LegacyCourtMappingRepository legacyCourtMappingRepository;
     @Mock private CourtService courtService;
+    @Mock private CourtRepository courtRepository;
 
     private CourtMigrationHelper helper;
     private MigrationContext context;
@@ -68,7 +72,8 @@ class CourtMigrationHelperTest {
             courtFaxRepository,
             areaOfLawTypeRepository,
             legacyCourtMappingRepository,
-            courtService
+            courtService,
+            courtRepository
         );
         context = new MigrationContext();
     }
@@ -115,6 +120,7 @@ class CourtMigrationHelperTest {
         assertThat(context.getCourtLocalAuthoritiesMigrated()).isEqualTo(1);
         assertThat(context.getCourtSinglePointsOfEntryMigrated()).isEqualTo(1);
         assertThat(context.getWarningNoticesMigrated()).isZero();
+        assertThat(context.getCourtSlugsPreserved()).isZero();
     }
 
     @Test
@@ -182,6 +188,127 @@ class CourtMigrationHelperTest {
         verify(courtService).createCourt(captor.capture());
         assertThat(captor.getValue().getName())
             .isEqualTo("Enforcement (Crime) Contact Centre - Wales South West & London");
+    }
+
+    @Test
+    void shouldPreserveReviewedLegacySlugsForFiveCourts() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(UUID.randomUUID());
+            court.setSlug("generated-" + UUID.randomUUID());
+            return court;
+        });
+        when(courtRepository.save(any(Court.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<CourtDto> courts = List.of(
+            courtDto(
+                1479759L,
+                "Chelmsford Justice Centre",
+                "chelmsford-county-and-family-court"
+            ),
+            courtDto(
+                1479760L,
+                "Newcastle upon Tyne Crown Court and Magistrates' Court",
+                "newcastle-upon-tyne-combined-court-centre"
+            ),
+            courtDto(
+                1479894L,
+                "Bournemouth Combined Court",
+                "bournemouth-and-poole-county-court-and-family-court"
+            ),
+            courtDto(
+                1479947L,
+                "Truro Combined Court",
+                "truro-county-court-and-family-court"
+            ),
+            courtDto(
+                1479981L,
+                "Bodmin Law Courts",
+                "bodmin-county-court-and-family-court"
+            )
+        );
+
+        assertThat(helper.migrateCourts(courts, context)).isEqualTo(5);
+        assertThat(context.getCourtSlugsPreserved()).isEqualTo(5);
+
+        ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
+        verify(courtRepository, times(5)).save(captor.capture());
+        assertThat(captor.getAllValues())
+            .extracting(Court::getSlug)
+            .containsExactly(
+                "chelmsford-county-and-family-court",
+                "newcastle-upon-tyne-combined-court-centre",
+                "bournemouth-and-poole-county-court-and-family-court",
+                "truro-county-court-and-family-court",
+                "bodmin-county-court-and-family-court"
+            );
+    }
+
+    @Test
+    void shouldFailWhenReviewedSlugOverrideIdentityChanges() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        CourtDto dto = courtDto(
+            1479759L,
+            "Chelmsford Justice Centre",
+            "unexpected-chelmsford-slug"
+        );
+
+        assertThatThrownBy(() -> helper.migrateCourts(List.of(dto), context))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Reviewed slug override identity mismatch for legacy court 1479759");
+
+        verify(courtService, never()).createCourt(any(Court.class));
+        verify(courtRepository, never()).save(any(Court.class));
+    }
+
+    @Test
+    void shouldFailWhenReviewedLegacySlugAlreadyExists() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(UUID.randomUUID());
+            court.setSlug("chelmsford-justice-centre");
+            return court;
+        });
+        when(courtRepository.existsBySlug("chelmsford-county-and-family-court")).thenReturn(true);
+
+        CourtDto dto = courtDto(
+            1479759L,
+            "Chelmsford Justice Centre",
+            "chelmsford-county-and-family-court"
+        );
+
+        assertThatThrownBy(() -> helper.migrateCourts(List.of(dto), context))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("because it already exists");
+
+        verify(courtRepository, never()).save(any(Court.class));
+    }
+
+    @Test
+    void shouldKeepGeneratedSlugForTorquay() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(UUID.randomUUID());
+            court.setSlug("torquay-and-newton-abbot-county-and-family-court");
+            return court;
+        });
+
+        CourtDto dto = courtDto(
+            1479903L,
+            "Torquay and Newton Abbot County and Family Court",
+            "torquay-and-newton-abbot-county-court-and-family-court"
+        );
+
+        assertThat(helper.migrateCourts(List.of(dto), context)).isEqualTo(1);
+
+        verify(courtRepository, never()).save(any(Court.class));
+        ArgumentCaptor<Court> captor = ArgumentCaptor.forClass(Court.class);
+        verify(courtService).createCourt(captor.capture());
+        assertThat(captor.getValue().getSlug())
+            .isEqualTo("torquay-and-newton-abbot-county-and-family-court");
     }
 
     @Test
@@ -330,5 +457,16 @@ class CourtMigrationHelperTest {
         verify(courtLocalAuthoritiesRepository).save(captor.capture());
         assertThat(captor.getValue().getLocalAuthorityIds())
             .containsExactly(northNorthamptonshireId, westNorthamptonshireId);
+    }
+
+    private CourtDto courtDto(long id, String name, String slug) {
+        CourtDto dto = new CourtDto();
+        dto.setId(id);
+        dto.setName(name);
+        dto.setSlug(slug);
+        dto.setOpen(true);
+        dto.setRegionId(1);
+        dto.setIsServiceCentre(false);
+        return dto;
     }
 }

@@ -10,6 +10,8 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.ExceptionResponse;
 import uk.gov.hmcts.reform.fact.data.api.migration.controller.MigrationController;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationAlreadyAppliedException;
 import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationClientException;
+import uk.gov.hmcts.reform.fact.data.api.migration.exception.MigrationReconciliationException;
+import uk.gov.hmcts.reform.fact.data.api.migration.model.MigrationReconciliationErrorResponse;
 
 @Slf4j
 @RestControllerAdvice(assignableTypes = MigrationController.class)
@@ -41,6 +43,23 @@ public class MigrationExceptionHandler {
     public ExceptionResponse handle(MigrationClientException ex) {
         log.error("400, migration client error: {}", ex.getMessage(), ex);
         return generateExceptionResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(MigrationReconciliationException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_CONTENT)
+    public MigrationReconciliationErrorResponse handle(MigrationReconciliationException ex) {
+        int errorCount = ex.getReport().getResult().getFindingCounts().getErrors();
+        log.error(
+            "422, migration reconciliation failed. Report: {}, errors: {}",
+            ex.getReport().getId(),
+            errorCount
+        );
+        return new MigrationReconciliationErrorResponse(
+            ex.getMessage(),
+            LocalDateTime.now(),
+            ex.getReport().getId(),
+            errorCount
+        );
     }
 
     /**
