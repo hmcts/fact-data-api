@@ -38,11 +38,13 @@ public class CourtPhotoService {
     public CourtPhotoService(CourtPhotoRepository courtPhotoRepository,
                              CourtService courtService,
                              @Qualifier("photoAzureBlobService") AzureBlobService azureBlobService,
-                             AuditUserContext auditUserContext) {
+                             AuditUserContext auditUserContext,
+                             PhotoConfigurationProperties photoConfigurationProperties) {
         this.courtPhotoRepository = courtPhotoRepository;
         this.courtService = courtService;
         this.azureBlobService = azureBlobService;
         this.auditUserContext = auditUserContext;
+        this.photoConfigurationProperties = photoConfigurationProperties;
     }
 
     /**
