@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -30,17 +31,23 @@ public class CsvService {
 
     private final CourtService courtService;
     private final CourtDetailsViewService courtDetailsViewService;
+    private final ServiceCentreService serviceCentreService;
+    private final ServiceCentreDetailsViewService serviceCentreDetailsViewService;
     private final AzureBlobService azureBlobService;
     private final ObjectMapper objectMapper;
     private final SlackClient slackClient;
 
     public CsvService(CourtService courtService,
                       CourtDetailsViewService courtDetailsViewService,
+                      ServiceCentreService serviceCentreService,
+                      ServiceCentreDetailsViewService serviceCentreDetailsViewService,
                       @Qualifier("csvAzureBlobService") AzureBlobService azureBlobService,
                       ObjectMapper objectMapper,
                       SlackClient slackClient) {
         this.courtService = courtService;
         this.courtDetailsViewService = courtDetailsViewService;
+        this.serviceCentreService = serviceCentreService;
+        this.serviceCentreDetailsViewService = serviceCentreDetailsViewService;
         this.azureBlobService = azureBlobService;
         this.objectMapper = objectMapper;
         this.slackClient = slackClient;
@@ -69,16 +76,19 @@ public class CsvService {
 
     public StringMultipartFile createCsvFile(List<String> actions) {
         try {
+            List<Object> allLocationDetails = Stream.concat(
+                courtService.getAllCourtDetails().stream().map(courtDetailsViewService::prepareDetailsView),
+                serviceCentreService.getAllServiceCentreDetails().stream()
+                    .map(serviceCentreDetailsViewService::prepareDetailsView)
+            ).toList();
+
             return new StringMultipartFile(
                 CSV_FILE_NAME,
                 CSV_FILE_NAME,
                 CSV_CONTENT_TYPE,
                 new CsvUtil()
                     .convertJsonToCsv(
-                        objectMapper.valueToTree(
-                            courtService.getAllCourtDetails().stream().map(
-                                courtDetailsViewService::prepareDetailsView)
-                                .toList()))
+                        objectMapper.valueToTree(allLocationDetails))
             );
         } catch (Exception e) {
             log.error("Error while creating CSV file", e);

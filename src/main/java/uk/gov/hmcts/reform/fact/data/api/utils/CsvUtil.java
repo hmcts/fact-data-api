@@ -1,8 +1,10 @@
 package uk.gov.hmcts.reform.fact.data.api.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.node.JsonNodeType;
 import tools.jackson.dataformat.csv.CsvMapper;
 import tools.jackson.dataformat.csv.CsvSchema;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.JsonConvertException;
@@ -28,6 +30,7 @@ import java.util.Map;
  * <p>Intended for use in services or tools that need to export structured court data from JSON APIs into a
  * human-readable and spreadsheet-friendly CSV format</p>.
  */
+@Slf4j
 public class CsvUtil {
     private static final String NAME = "name";
     private static final String LAT = "lat";
@@ -40,7 +43,9 @@ public class CsvUtil {
     private static final String AREAS_OF_LAW_PATH = "areasOfLaw";
     private static final String ADDRESSES = "addresses";
     private static final String COURT_ADDRESSES = "courtAddresses";
+    private static final String SERVICE_CENTRE_ADDRESSES = "serviceCentreAddresses";
     private static final String COURT_TYPES = "courtTypes";
+    private static final String SERVICE_CENTRE_AREAS_OF_LAW = "serviceCentreAreasOfLaw";
     private static final String DX_NUMBER = "dx_number";
     private static final String NOT_AVAILABLE = "N/A";
     private static final String PIPE_SEPARATOR = " | ";
@@ -96,23 +101,34 @@ public class CsvUtil {
 
     public Map<String, Object> flattenCourtNode(JsonNode node) {
         Map<String, Object> flatMap = new LinkedHashMap<>();
-        JsonNode courtCode = getFirstArrayItem(node, "courtCodes");
         JsonNode primaryAddress = getFirstArrayItem(node, COURT_ADDRESSES);
+        if (primaryAddress == null) {
+            primaryAddress = getFirstArrayItem(node, SERVICE_CENTRE_ADDRESSES);
+        }
 
-        flatMap.put(NAME, node.path(NAME).asText());
+        flatMap.put(NAME, asNodeText(node.path(NAME), ""));
         flatMap.put(LAT, readDecimal(node, primaryAddress, LAT));
         flatMap.put(LON, readDecimal(node, primaryAddress, LON));
+        JsonNode courtCode = getFirstArrayItem(node, "courtCodes");
         flatMap.put("number", readInteger(courtCode, "crownCourtCode", "crown_court_code"));
         flatMap.put(CCI_CODE, readInteger(courtCode, "countyCourtCode", "county_court_code", CCI_CODE));
         flatMap.put(MAGISTRATE_CODE, readInteger(
             courtCode, "magistrateCourtCode", "magistrate_court_code", MAGISTRATE_CODE));
-        flatMap.put(SLUG, node.path(SLUG).asText());
+        flatMap.put(SLUG, asNodeText(node.path(SLUG), ""));
         flatMap.put(TYPES, flattenTypes(node));
         flatMap.put("open", readBoolean(node, "open", "displayed", "openOnCath"));
         flatMap.put(DX_NUMBER, flattenDxCodes(node));
 
-        flatMap.put(AREAS_OF_LAW, flattenAreasOfLaw(node.path("courtAreasOfLaw"), node.path(AREAS_OF_LAW)));
-        flatMap.put(ADDRESSES, flattenAddresses(node.path(COURT_ADDRESSES), node.path(ADDRESSES)));
+        flatMap.put(AREAS_OF_LAW, flattenAreasOfLaw(
+            node.path("courtAreasOfLaw"),
+            node.path(SERVICE_CENTRE_AREAS_OF_LAW),
+            node.path(AREAS_OF_LAW)
+        ));
+        flatMap.put(ADDRESSES, flattenAddresses(
+            node.path(COURT_ADDRESSES),
+            node.path(SERVICE_CENTRE_ADDRESSES),
+            node.path(ADDRESSES)
+        ));
 
         return flatMap;
     }
@@ -192,7 +208,7 @@ public class CsvUtil {
         }
 
         List<String> lineList = new ArrayList<>();
-        lines.forEach(line -> lineList.add(line.asText()));
+        lines.forEach(line -> lineList.add(asNodeText(line, "")));
         return String.join(", ", lineList);
     }
 
@@ -227,7 +243,7 @@ public class CsvUtil {
         }
         if (areas.isArray() && !areas.isEmpty()) {
             List<String> names = new ArrayList<>();
-            areas.forEach(a -> names.add(a.isTextual() ? a.asText() : safeText(a, NAME)));
+            areas.forEach(a -> names.add(isStringNode(a) ? asNodeText(a, "") : safeText(a, NAME)));
             parts.add(AREAS_OF_LAW_LABEL + ": " + String.join(PIPE_SEPARATOR, names));
         }
     }
@@ -239,7 +255,7 @@ public class CsvUtil {
         }
         if (courts.isArray() && !courts.isEmpty()) {
             List<String> names = new ArrayList<>();
-            courts.forEach(c -> names.add(c.isTextual() ? c.asText() : safeText(c, NAME)));
+            courts.forEach(c -> names.add(isStringNode(c) ? asNodeText(c, "") : safeText(c, NAME)));
             parts.add(COURTS_LABEL + ": " + String.join(PIPE_SEPARATOR, names));
         }
     }
@@ -258,12 +274,17 @@ public class CsvUtil {
                 return String.join(PIPE_SEPARATOR, values);
             }
         }
-        return node.path(DX_NUMBER).asText();
+        return asNodeText(node.path(DX_NUMBER), "");
     }
 
     private String flattenTypes(JsonNode node) {
         if (node.path(TYPES).isArray()) {
             return stringifyArray(node.path(TYPES));
+        }
+
+        JsonNode serviceAreas = node.path("serviceAreas");
+        if (serviceAreas.isArray() && !serviceAreas.isEmpty()) {
+            return stringifyNamedArray(serviceAreas);
         }
 
         List<String> types = new ArrayList<>();
@@ -303,7 +324,7 @@ public class CsvUtil {
     }
 
     private void addTypeNameToList(JsonNode courtType, List<String> types) {
-        String name = courtType.isTextual() ? courtType.asText() : safeText(courtType, NAME);
+        String name = isStringNode(courtType) ? asNodeText(courtType, "") : safeText(courtType, NAME);
         if (!NOT_AVAILABLE.equals(name) && !types.contains(name)) {
             types.add(name);
         }
@@ -377,7 +398,25 @@ public class CsvUtil {
             return "";
         }
         List<String> items = new ArrayList<>();
-        arrayNode.forEach(n -> items.add(n.asText()));
+        arrayNode.forEach(n -> items.add(asNodeText(n, "")));
+        return String.join(PIPE_SEPARATOR, items);
+    }
+
+    private String stringifyNamedArray(JsonNode arrayNode) {
+        if (arrayNode == null || !arrayNode.isArray()) {
+            return "";
+        }
+        List<String> items = new ArrayList<>();
+        arrayNode.forEach(item -> {
+            if (item.getNodeType() == JsonNodeType.STRING) {
+                items.add(asNodeText(item, ""));
+            } else {
+                String name = safeText(item, NAME);
+                if (!NOT_AVAILABLE.equals(name)) {
+                    items.add(name);
+                }
+            }
+        });
         return String.join(PIPE_SEPARATOR, items);
     }
 
@@ -388,7 +427,7 @@ public class CsvUtil {
         for (String fieldName : fieldNames) {
             JsonNode field = node.path(fieldName);
             if (!field.isMissingNode() && !field.isNull()) {
-                return field.asText();
+                return asNodeText(field, NOT_AVAILABLE);
             }
         }
         return NOT_AVAILABLE;
@@ -404,8 +443,8 @@ public class CsvUtil {
         if (arrayNode.isArray() && !arrayNode.isEmpty()) {
             List<String> names = new ArrayList<>();
             arrayNode.forEach(item -> {
-                if (item.isTextual()) {
-                    names.add(item.asText());
+                if (isStringNode(item)) {
+                    names.add(asNodeText(item, ""));
                 } else {
                     String name = safeText(item, NAME);
                     if (!NOT_AVAILABLE.equals(name)) {
@@ -417,5 +456,21 @@ public class CsvUtil {
                 parts.add(label + ": " + String.join(PIPE_SEPARATOR, names));
             }
         }
+    }
+
+    private boolean isStringNode(JsonNode node) {
+        return node != null && node.getNodeType() == JsonNodeType.STRING;
+    }
+
+    private String asNodeText(JsonNode node, String defaultValue) {
+        if (node == null || node.isNull() || node.isMissingNode()) {
+            return defaultValue;
+        }
+        return switch (node.getNodeType()) {
+            case STRING -> node.textValue();
+            case NUMBER -> node.numberValue().toString();
+            case BOOLEAN -> String.valueOf(node.booleanValue());
+            default -> defaultValue;
+        };
     }
 }

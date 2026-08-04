@@ -36,6 +36,12 @@ class CsvServiceTest {
     private CourtDetailsViewService courtDetailsViewService;
 
     @Mock
+    private ServiceCentreService serviceCentreService;
+
+    @Mock
+    private ServiceCentreDetailsViewService serviceCentreDetailsViewService;
+
+    @Mock
     private AzureBlobService azureBlobService;
 
     @Mock
@@ -77,6 +83,7 @@ class CsvServiceTest {
     void createAndUploadCsvShouldCreateAndUploadWithoutSlackMessageOnSuccess() {
         CsvService csvService = buildService();
         when(courtService.getAllCourtDetails()).thenReturn(Collections.emptyList());
+        when(serviceCentreService.getAllServiceCentreDetails()).thenReturn(Collections.emptyList());
 
         csvService.createAndUploadCsv();
 
@@ -100,6 +107,7 @@ class CsvServiceTest {
     void createAndUploadCsvShouldSendSlackMessageAndThrowWhenUploadFails() {
         CsvService csvService = buildService();
         when(courtService.getAllCourtDetails()).thenReturn(Collections.emptyList());
+        when(serviceCentreService.getAllServiceCentreDetails()).thenReturn(Collections.emptyList());
         doThrow(new RuntimeException("azure failure"))
             .when(azureBlobService)
             .uploadFile(org.mockito.ArgumentMatchers.eq(CSV_FILE_NAME), any(StringMultipartFile.class));
@@ -113,6 +121,13 @@ class CsvServiceTest {
 
     private CsvService buildService() {
         return new CsvService(
-            courtService, courtDetailsViewService, azureBlobService, objectMapper, slackClient);
+            courtService,
+            courtDetailsViewService,
+            serviceCentreService,
+            serviceCentreDetailsViewService,
+            azureBlobService,
+            objectMapper,
+            slackClient
+        );
     }
 }
