@@ -9,6 +9,7 @@ import tools.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.JsonConvertException;
 
+import java.lang.reflect.Method;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,6 +87,31 @@ class CsvUtilTest {
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
 
         assertThat(result.get("types")).hasToString("Magistrates' Court");
+    }
+
+    @Test
+    void shouldFlattenTypesFromDirectTypesArray() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode types = root.putArray("types");
+        types.add("Civil");
+        types.add(42);
+        types.add(true);
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+
+        assertThat(result.get("types")).hasToString("Civil | 42 | true");
+    }
+
+    @Test
+    void shouldFlattenTypesFromServiceAreasWhenTypesMissing() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode serviceAreas = root.putArray("serviceAreas");
+        serviceAreas.addObject().put("name", "Family Services");
+        serviceAreas.add("Employment Services");
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+
+        assertThat(result.get("types")).hasToString("Family Services | Employment Services");
     }
 
     @Test
@@ -168,6 +194,26 @@ class CsvUtilTest {
         assertThat(addressesStr)
             .contains("Areas of Law: Family")
             .contains("Courts: High Court");
+    }
+
+    @Test
+    void shouldFallbackToSnakeCaseFieldsInFieldsOfLaw() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode addresses = root.putArray("courtAddresses");
+        ObjectNode address = addresses.addObject();
+        ObjectNode fieldsOfLaw = address.putObject("fields_of_law");
+
+        ArrayNode areas = fieldsOfLaw.putArray("areas_of_law");
+        areas.add("Family");
+
+        ArrayNode courts = fieldsOfLaw.putArray("courtTypes");
+        courts.add("Tribunal");
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+        String addressesStr = result.get("addresses").toString();
+        assertThat(addressesStr)
+            .contains("Areas of Law: Family")
+            .contains("Courts: Tribunal");
     }
 
     @Test
@@ -261,6 +307,49 @@ class CsvUtilTest {
     }
 
     @Test
+    void shouldFallbackToDxNumberWhenDxCodesHaveNoUsableValue() {
+        ObjectNode root = mapper.createObjectNode();
+        root.put("dx_number", "DX 123");
+        ArrayNode dxCodes = root.putArray("courtDxCodes");
+        dxCodes.addObject();
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+
+        assertThat(result).containsEntry("dx_number", "DX 123");
+    }
+
+    @Test
+    void shouldUseServiceCentreAddressesWhenCourtAddressesMissing() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode addresses = root.putArray("serviceCentreAddresses");
+        ObjectNode address = addresses.addObject();
+        address.put("addressLine1", "2 Service Road");
+        address.put("townCity", "Leeds");
+        address.put("postcode", "LS1 2AB");
+        address.put("lat", 53.8);
+        address.put("lon", -1.55);
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+
+        assertThat(result).containsEntry("lat", 53.8);
+        assertThat(result).containsEntry("lon", -1.55);
+        assertThat(result.get("addresses").toString())
+            .contains("Address: 2 Service Road")
+            .contains("Town: Leeds");
+    }
+
+    @Test
+    void shouldReturnNoAreasOfLawWhenAreasNodeIsNotArray() {
+        ObjectNode root = mapper.createObjectNode();
+        ArrayNode courtAreasOfLaw = root.putArray("courtAreasOfLaw");
+        courtAreasOfLaw.addObject().putObject("areasOfLaw");
+
+        Map<String, Object> result = csvUtil.flattenCourtNode(root);
+
+        assertThat(result.get("areas_of_law")).hasToString("No areas of law available");
+    }
+
+    @Test
     void shouldReadNumbersAndBooleansCorrectly() {
         ObjectNode root = mapper.createObjectNode();
         root.put("open", true);
@@ -310,5 +399,102 @@ class CsvUtilTest {
         assertThatThrownBy(() -> utilWithMock.convertJsonToCsv(root))
             .isInstanceOf(JsonConvertException.class)
             .hasMessageContaining("Failed to convert JSON to CSV: Mock failure");
+    }
+
+    @Test
+    void shouldCoverPrivateFallbackBranchesAndNullSafety() throws Exception {
+        Object flattenedFieldsOfLaw = invokePrivate(
+            "flattenFieldsOfLaw",
+            new Class<?>[]{tools.jackson.databind.JsonNode[].class},
+            (Object) new tools.jackson.databind.JsonNode[]{mapper.createArrayNode()}
+        );
+        assertThat(flattenedFieldsOfLaw).isEqualTo("N/A");
+
+        Object result = invokePrivate(
+            "flattenFieldsOfLawFromAddress",
+            new Class<?>[]{tools.jackson.databind.JsonNode[].class},
+            (Object) new tools.jackson.databind.JsonNode[]{}
+        );
+        assertThat(result).isEqualTo("N/A");
+
+        ObjectNode addressNode = mapper.createObjectNode();
+        ArrayNode addressAreas = addressNode.putArray("areasOfLaw");
+        addressAreas.add("Crime");
+        addressAreas.addObject().put("name", "Family");
+        ArrayNode courtTypes = addressNode.putArray("courtTypes");
+        courtTypes.add("Crown Court");
+        courtTypes.addObject().put("name", "High Court");
+
+        Object fromAddress = invokePrivate(
+            "flattenFieldsOfLawFromAddress",
+            new Class<?>[]{tools.jackson.databind.JsonNode[].class},
+            (Object) new tools.jackson.databind.JsonNode[]{addressNode}
+        );
+        assertThat(fromAddress)
+            .isEqualTo("Areas of Law: Crime | Family, Courts: Crown Court | High Court");
+
+        Object objectCandidate = invokePrivate(
+            "getFirstObjectCandidate",
+            new Class<?>[]{tools.jackson.databind.JsonNode[].class},
+            (Object) new tools.jackson.databind.JsonNode[]{mapper.createArrayNode()}
+        );
+        assertThat(objectCandidate).isNull();
+
+        Object decimal = invokePrivate(
+            "readDecimal",
+            new Class<?>[]{tools.jackson.databind.JsonNode.class, tools.jackson.databind.JsonNode.class, String.class},
+            mapper.createObjectNode().put("lat", 1.23),
+            null,
+            "lat"
+        );
+        assertThat(decimal).isEqualTo(1.23d);
+
+        assertThat(invokePrivate(
+            "stringifyArray",
+            new Class<?>[]{tools.jackson.databind.JsonNode.class},
+            new Object[]{null}
+        )).isEqualTo("");
+
+        assertThat(invokePrivate(
+            "stringifyNamedArray",
+            new Class<?>[]{tools.jackson.databind.JsonNode.class},
+            new Object[]{null}
+        )).isEqualTo("");
+
+        assertThat(invokePrivate(
+            "safeText",
+            new Class<?>[]{tools.jackson.databind.JsonNode.class, String[].class},
+            null,
+            new String[]{"name"}
+        )).isEqualTo("N/A");
+
+        assertThat(invokePrivate(
+            "asNodeText",
+            new Class<?>[]{tools.jackson.databind.JsonNode.class, String.class},
+            mapper.createObjectNode(),
+            "default"
+        )).isEqualTo("default");
+
+        Object integer = invokePrivate(
+            "readInteger",
+            new Class<?>[]{tools.jackson.databind.JsonNode.class, String[].class},
+            mapper.createObjectNode().put("second", 9),
+            new String[]{"first", "second"}
+        );
+        assertThat(integer).isEqualTo(9);
+
+        Object missingInteger = invokePrivate(
+            "readInteger",
+            new Class<?>[]{tools.jackson.databind.JsonNode.class, String[].class},
+            mapper.createObjectNode().put("text", "x"),
+            new String[]{"first", "second"}
+        );
+        assertThat(missingInteger).isNull();
+    }
+
+    private Object invokePrivate(String methodName, Class<?>[] parameterTypes, Object... args) throws Exception {
+        Method method = CsvUtil.class.getDeclaredMethod(methodName, parameterTypes);
+        method.setAccessible(true);
+        return method.invoke(csvUtil, args);
     }
 }
