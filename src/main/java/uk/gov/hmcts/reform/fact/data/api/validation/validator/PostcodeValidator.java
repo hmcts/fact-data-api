@@ -35,6 +35,10 @@ public class PostcodeValidator implements ConstraintValidator<ValidPostcode, Str
      */
     @Override
     public boolean isValid(String rawPostcode, ConstraintValidatorContext context) {
+        if (rawPostcode == null) {
+            return true;
+        }
+
         String postcode = normalize(rawPostcode);
 
         if (!UK_POSTCODE_REGEX.matcher(postcode).matches()) {
