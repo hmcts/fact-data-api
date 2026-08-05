@@ -10,6 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
 import uk.gov.hmcts.reform.fact.data.api.services.AzureBlobService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtDetailsViewService;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtService;
@@ -63,7 +64,8 @@ class CsvControllerTest {
     @DisplayName("POST /csv/ returns 502 when Azure upload fails (e.g. container missing)")
     void createAndUploadCsvReturns502OnAzureUploadException() throws Exception {
         when(courtService.getAllCourtDetails()).thenReturn(Collections.emptyList());
-        when(azureBlobService.uploadFile(anyString(), any())).thenThrow(new RuntimeException("Container not found"));
+        when(azureBlobService.uploadFile(anyString(), any())).thenThrow(
+            new AzureUploadException("Container not found"));
 
         mvc.perform(post("/csv/"))
             .andExpect(status().isBadGateway())
