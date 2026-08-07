@@ -435,8 +435,9 @@ class UserServiceTest {
 
         when(userRepository.findAllByLastLoginBefore(any())).thenReturn(inactiveUsers);
 
-        userService.deleteInactiveUsers();
+        final int deletedUsers = userService.deleteInactiveUsers();
 
+        assertThat(deletedUsers).isEqualTo(1);
         verify(userRepository).deleteAll(inactiveUsers);
     }
 
