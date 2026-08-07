@@ -3,7 +3,7 @@ ALTER TABLE court_photo
   DROP CONSTRAINT IF EXISTS fk_court_photo_user;
 
 ALTER TABLE court_photo
-DROP CONSTRAINT IF EXISTS ck_court_photo_updated_by_user_id_not_null;
+  DROP CONSTRAINT IF EXISTS ck_court_photo_updated_by_user_id_not_null;
 
 ALTER TABLE court_photo
   ADD CONSTRAINT fk_court_photo_user
