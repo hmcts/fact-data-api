@@ -93,6 +93,9 @@ class UserServiceRetentionIntegrationTest {
             .updatedByUserId(inactiveUser.getId())
             .build());
 
+        entityManager.flush();
+        entityManager.clear();
+
         final int deletedUsers = userService.deleteInactiveUsers();
 
         entityManager.flush();
