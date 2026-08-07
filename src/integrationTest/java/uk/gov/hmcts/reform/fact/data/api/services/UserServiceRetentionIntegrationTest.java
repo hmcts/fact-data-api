@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
@@ -48,6 +49,9 @@ class UserServiceRetentionIntegrationTest {
 
     @Autowired
     private AuditUserContext auditUserContext;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @BeforeEach
     void setUp() {
@@ -90,6 +94,9 @@ class UserServiceRetentionIntegrationTest {
             .build());
 
         final int deletedUsers = userService.deleteInactiveUsers();
+
+        entityManager.flush();
+        entityManager.clear();
 
         assertThat(deletedUsers).isEqualTo(1);
         assertThat(userRepository.findById(inactiveUser.getId())).isEmpty();
