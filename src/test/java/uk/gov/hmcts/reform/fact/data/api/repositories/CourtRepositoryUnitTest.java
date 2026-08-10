@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.repositories;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -34,6 +35,30 @@ class CourtRepositoryUnitTest {
         when(repo.findNameAndSlugById(id)).thenReturn(Optional.empty());
 
         Optional<CourtRepository.NameAndSlug> result = repo.findNameAndSlugById(id);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("findFirstByNameIgnoreCase returns court when present")
+    void findFirstByNameIgnoreCaseReturnsCourtWhenPresent() {
+        CourtRepository repo = mock(CourtRepository.class);
+        Court expectedCourt = new Court();
+        expectedCourt.setName("Liverpool Civil and Family Court");
+        when(repo.findFirstByNameIgnoreCase("liverpool civil and family court"))
+            .thenReturn(Optional.of(expectedCourt));
+
+        Optional<Court> result = repo.findFirstByNameIgnoreCase("liverpool civil and family court");
+        assertThat(result).isPresent();
+        assertThat(result.get().getName()).isEqualTo("Liverpool Civil and Family Court");
+    }
+
+    @Test
+    @DisplayName("findFirstByNameIgnoreCase returns empty when not present")
+    void findFirstByNameIgnoreCaseReturnsEmptyWhenNotPresent() {
+        CourtRepository repo = mock(CourtRepository.class);
+        when(repo.findFirstByNameIgnoreCase("missing court")).thenReturn(Optional.empty());
+
+        Optional<Court> result = repo.findFirstByNameIgnoreCase("missing court");
         assertThat(result).isEmpty();
     }
 }
