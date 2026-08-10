@@ -39,6 +39,7 @@ class UserFavouritesMigrationTest {
                 .locations("classpath:db/migration")
                 .baselineOnMigrate(true)
                 .baselineVersion("1.45")
+                .target("1.46")
                 .load()
                 .migrate();
 

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Feature("User Repository")
 @DisplayName("User Repository")
@@ -150,6 +152,30 @@ class UserRepositoryTest {
             otherUser.getId(),
             List.of(court.getId(), serviceCentre.getId())
         )).isEmpty();
+    }
+
+    @Test
+    void rejectsDuplicateEmail() {
+        User duplicate = User.builder()
+            .email(user.getEmail())
+            .ssoId(UUID.randomUUID())
+            .role(UserRole.ADMIN)
+            .build();
+
+        assertThatThrownBy(() -> userRepository.saveAndFlush(duplicate))
+            .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void rejectsDuplicateSsoId() {
+        User duplicate = User.builder()
+            .email("duplicate." + UUID.randomUUID() + "@justice.gov.uk")
+            .ssoId(user.getSsoId())
+            .role(UserRole.ADMIN)
+            .build();
+
+        assertThatThrownBy(() -> userRepository.saveAndFlush(duplicate))
+            .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     private void add(UUID userId, UUID subjectId, SubjectType subjectType) {
