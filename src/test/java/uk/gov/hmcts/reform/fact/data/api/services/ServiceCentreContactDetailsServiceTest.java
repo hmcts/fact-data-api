@@ -71,6 +71,7 @@ class ServiceCentreContactDetailsServiceTest {
         assertThat(result.getServiceCentreId()).isEqualTo(serviceCentreId);
         assertThat(result.getServiceCentre()).isEqualTo(serviceCentre);
         assertThat(result.getServiceCentreContactDescription()).isNull();
+        verify(serviceCentreService).touchLastUpdatedAt(serviceCentreId);
     }
 
     @Test
@@ -122,6 +123,7 @@ class ServiceCentreContactDetailsServiceTest {
         assertThat(result.getServiceCentreContactDescriptionId()).isEqualTo(contactDescriptionId);
         assertThat(result.getServiceCentreContactDescription()).isEqualTo(contactDescriptionType);
         assertThat(result.getEmail()).isEqualTo("updated@example.com");
+        verify(serviceCentreService).touchLastUpdatedAt(serviceCentreId);
     }
 
     @Test
@@ -153,5 +155,6 @@ class ServiceCentreContactDetailsServiceTest {
         serviceCentreContactDetailsService.deleteContactDetail(serviceCentreId, contactId);
 
         verify(serviceCentreContactDetailsRepository).deleteByIdAndServiceCentreId(contactId, serviceCentreId);
+        verify(serviceCentreService).touchLastUpdatedAt(serviceCentreId);
     }
 }

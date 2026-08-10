@@ -73,7 +73,9 @@ public class ServiceCentreContactDetailsService {
         request.setServiceCentreContactDescription(description.orElse(null));
 
         log.info("Creating contact detail for service centre {}", serviceCentreId);
-        return serviceCentreContactDetailsRepository.save(request);
+        final ServiceCentreContactDetails createdContactDetail = serviceCentreContactDetailsRepository.save(request);
+        serviceCentreService.touchLastUpdatedAt(serviceCentreId);
+        return createdContactDetail;
     }
 
     /**
@@ -101,7 +103,9 @@ public class ServiceCentreContactDetailsService {
         existing.setPhoneNumber(request.getPhoneNumber());
 
         log.info("Updating contact detail {} for service centre {}", contactId, serviceCentreId);
-        return serviceCentreContactDetailsRepository.save(existing);
+        final ServiceCentreContactDetails updatedContactDetail = serviceCentreContactDetailsRepository.save(existing);
+        serviceCentreService.touchLastUpdatedAt(serviceCentreId);
+        return updatedContactDetail;
     }
 
     /**
@@ -123,6 +127,7 @@ public class ServiceCentreContactDetailsService {
 
         log.info("Deleting contact detail {} for service centre {}", contactId, serviceCentreId);
         serviceCentreContactDetailsRepository.deleteByIdAndServiceCentreId(contactId, serviceCentreId);
+        serviceCentreService.touchLastUpdatedAt(serviceCentreId);
     }
 
     private Optional<ContactDescriptionType> getValidatedContactDescription(UUID contactDescriptionId) {
