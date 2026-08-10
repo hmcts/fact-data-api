@@ -122,6 +122,18 @@ public class ServiceCentreService {
     }
 
     /**
+     * Touch lastUpdtedAt for a service centre when related child data changes.
+     *
+     * @param serviceCentreId The id of the service centre to touch.
+     */
+    @Transactional
+    public void touchLastUpdatedAt(UUID serviceCentreId) {
+        getServiceCentreById(serviceCentreId);
+        serviceCentreRepository.touchLastUpdatedAt(serviceCentreId);
+
+    }
+
+    /**
      * Delete service centres matching the provided name prefix.
      *
      * @param serviceCentreNamePrefix The name prefix to match.

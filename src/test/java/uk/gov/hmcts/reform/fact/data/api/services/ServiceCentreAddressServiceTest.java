@@ -106,6 +106,7 @@ class ServiceCentreAddressServiceTest {
         assertThat(result.getServiceCentre()).isEqualTo(serviceCentre);
         assertThat(result.getLat()).isEqualByComparingTo(BigDecimal.valueOf(51.5));
         assertThat(result.getLon()).isEqualByComparingTo(BigDecimal.valueOf(-0.1));
+        verify(serviceCentreService).touchLastUpdatedAt(serviceCentreId);
     }
 
     @Test
@@ -128,6 +129,7 @@ class ServiceCentreAddressServiceTest {
 
         assertThat(result.getAddressLine1()).isEqualTo("Updated Street");
         assertThat(result.getAddressType()).isEqualTo(AddressType.VISIT_OR_CONTACT_US);
+        verify(serviceCentreService).touchLastUpdatedAt(serviceCentreId);
     }
 
     @Test
@@ -139,5 +141,6 @@ class ServiceCentreAddressServiceTest {
         serviceCentreAddressService.deleteAddress(serviceCentreId, addressId);
 
         verify(serviceCentreAddressRepository).deleteByIdAndServiceCentreId(addressId, serviceCentreId);
+        verify(serviceCentreService).touchLastUpdatedAt(serviceCentreId);
     }
 }
