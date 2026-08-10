@@ -32,6 +32,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -96,10 +97,11 @@ class LockConcurrencyTest {
     }
 
     @Test
-    @DisplayName("Only one thread should successfully acquire the lock under concurrent access")
-    void onlyOneThreadShouldSuccessfullyAcquireLockUnderConcurrentAccess() throws InterruptedException {
+    @DisplayName("Only one different user should acquire the same page lock under concurrent access")
+    void onlyOneDifferentUserShouldSuccessfullyAcquireLockUnderConcurrentAccess() throws InterruptedException {
         final CyclicBarrier barrier = new CyclicBarrier(THREAD_COUNT);
-        final List<Boolean> results = new CopyOnWriteArrayList<>();
+        final AtomicInteger successCount = new AtomicInteger();
+        final AtomicInteger conflictCount = new AtomicInteger();
         final List<Throwable> unexpectedErrors = new CopyOnWriteArrayList<>();
         Thread[] threads = new Thread[THREAD_COUNT];
 
@@ -124,10 +126,10 @@ class LockConcurrencyTest {
                 }
                 try {
                     lockService.createOrUpdateLock(SubjectType.COURT, testCourt.getId(), Page.GENERAL, user.getId());
-                    results.add(true);
+                    successCount.incrementAndGet();
                 } catch (ResponseStatusException ex) {
                     if (ex.getStatusCode() == HttpStatus.CONFLICT) {
-                        results.add(false);
+                        conflictCount.incrementAndGet();
                     } else {
                         unexpectedErrors.add(ex);
                     }
@@ -147,11 +149,8 @@ class LockConcurrencyTest {
             thread.join(Duration.ofSeconds(10));
         }
 
-        long successCount = results.stream().filter(Boolean::booleanValue).count();
-        long conflictCount = results.stream().filter(result -> !result).count();
-
         assertTrue(unexpectedErrors.isEmpty(), "Unexpected errors in worker threads: " + unexpectedErrors);
-        assertEquals(1, successCount);
-        assertEquals(THREAD_COUNT - 1, conflictCount);
+        assertEquals(1, successCount.get());
+        assertEquals(THREAD_COUNT - 1, conflictCount.get());
     }
 }

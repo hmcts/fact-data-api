@@ -163,6 +163,7 @@ class LockServiceTest {
             any(ZonedDateTime.class),
             any(ZonedDateTime.class)
         );
+        verify(lockRepository).deleteAllByUserIdAndIdNotIn(userId, lockId);
     }
 
     @Test
@@ -289,6 +290,7 @@ class LockServiceTest {
             any(ZonedDateTime.class),
             any(ZonedDateTime.class)
         );
+        verify(lockRepository).deleteAllByUserIdAndIdNotIn(userId, lockId);
     }
 
     @Test

@@ -84,4 +84,18 @@ public interface LockRepository extends JpaRepository<Lock, UUID> {
         @Param("lockAcquired") ZonedDateTime lockAcquired,
         @Param("expiryThreshold") ZonedDateTime expiryThreshold
     );
+
+    @Modifying
+    @Query(value = """
+        DELETE FROM
+            "lock"
+        WHERE
+            user_id = :userId
+        AND
+            id <> :lockId
+        """, nativeQuery = true)
+    void deleteAllByUserIdAndIdNotIn(
+        @Param("userId") UUID userId,
+        @Param("lockId") UUID lockId
+    );
 }

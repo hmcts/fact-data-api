@@ -100,6 +100,11 @@ public class LockService {
         ).orElseThrow(() -> new ResponseStatusException(
             HttpStatus.CONFLICT, "Page locked by another user"));
 
+        lockRepository.deleteAllByUserIdAndIdNotIn(
+            userId,
+            lockId
+        );
+
         return Lock.builder()
             .id(lockId)
             .subjectId(id)
