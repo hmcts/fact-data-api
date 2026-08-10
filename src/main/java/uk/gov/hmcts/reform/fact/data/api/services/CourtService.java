@@ -70,7 +70,7 @@ public class CourtService {
      * @throws NotFoundException if the court is not found.
      */
     public Court getCourtByName(String courtName) {
-        return courtRepository.findByName(courtName)
+        return courtRepository.findFirstByNameIgnoreCase(courtName)
             .orElseThrow(() -> new NotFoundException("Court not found, name: " + courtName));
     }
 
