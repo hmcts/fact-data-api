@@ -53,10 +53,12 @@ public class User {
     @Size(max = ValidationConstants.EMAIL_MAX_LENGTH, message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.JUSTICE_EMAIL_REGEX,
         message = ValidationConstants.JUSTICE_EMAIL_REGEX_MESSAGE)
+    @Column(unique = true)
     private String email;
 
     @Schema(description = "The User's SSO ID", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
+    @Column(unique = true)
     private UUID ssoId;
 
     @Schema(description = "The User's role", requiredMode = Schema.RequiredMode.REQUIRED)
