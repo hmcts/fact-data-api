@@ -16,7 +16,7 @@ import java.util.UUID;
 @Repository
 public interface ServiceCentreRepository extends JpaRepository<ServiceCentre, UUID> {
 
-    Optional<ServiceCentre> findByName(String name);
+    Optional<ServiceCentre> findFirstByNameIgnoreCase(String name);
 
     boolean existsBySlug(String slug);
 
