@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,6 +55,11 @@ class PostcodeValidatorTest {
     @Test
     void shouldAcceptPostcodeWithLowercaseAndExtraWhitespace() {
         assertTrue(validator.isValid("  sw1a  1aa  ", context));
+    }
+
+    @Test
+    void shouldAcceptPostcodeWithTabsAndNewLines() {
+        assertTrue(validator.isValid("\tSW1A   1AA\n", context));
     }
 
     @Test
@@ -101,5 +107,17 @@ class PostcodeValidatorTest {
         verify(context).buildConstraintViolationWithTemplate(
             "Postcode must contain a space between inward and outward codes for OS lookup"
         );
+    }
+
+    @Test
+    void shouldRejectPostcodesWithOnlyWhitespace() {
+        assertFalse(validator.isValid("   ", context));
+        verify(context).buildConstraintViolationWithTemplate("Provided postcode is not valid");
+    }
+
+    @Test
+    void shouldTreatNullPostcodeAsValid() {
+        assertTrue(validator.isValid(null, context));
+        verify(context, never()).buildConstraintViolationWithTemplate(anyString());
     }
 }
