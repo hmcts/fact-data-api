@@ -25,12 +25,12 @@ public interface ServiceCentreRepository extends JpaRepository<ServiceCentre, UU
 
     List<ServiceCentre> findByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(String namePrefix, boolean open);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(
-        value = "UPDATE service_centre SET last_updated_at = CURRENT_TIMESTAMP WHERE id = :serviceCentreId",
+        value = "UPDATE service_centre SET last_updated_at = clock_timestamp() WHERE id = :serviceCentreId",
         nativeQuery = true
     )
-    void touchLastUpdatedAt(@Param("serviceCentreId") UUID serviceCentreId);
+    int touchLastUpdatedAt(@Param("serviceCentreId") UUID serviceCentreId);
 
     @Query(
         value = "SELECT * FROM service_centre sc WHERE CAST(:serviceAreaId AS uuid) = ANY(sc.service_area_ids)",

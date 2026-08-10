@@ -67,7 +67,7 @@ public class ServiceCentreAddressService {
         serviceCentreAddress.setServiceCentreId(serviceCentreId);
         serviceCentreAddress.setServiceCentre(serviceCentre);
         setLatLonFromPostcode(serviceCentreAddress);
-        ServiceCentreAddress createdAddress = serviceCentreAddressRepository.save(serviceCentreAddress);
+        final ServiceCentreAddress createdAddress = serviceCentreAddressRepository.save(serviceCentreAddress);
         serviceCentreService.touchLastUpdatedAt(serviceCentreId);
         return createdAddress;
     }

@@ -122,15 +122,20 @@ public class ServiceCentreService {
     }
 
     /**
-     * Touch lastUpdtedAt for a service centre when related child data changes.
+     * Touch lastUpdatedAt for a service centre when related child data changes.
      *
      * @param serviceCentreId The id of the service centre to touch.
      */
     @Transactional
-    public void touchLastUpdatedAt(UUID serviceCentreId) {
-        getServiceCentreById(serviceCentreId);
-        serviceCentreRepository.touchLastUpdatedAt(serviceCentreId);
+    public void touchLastUpdatedAt(final UUID serviceCentreId) {
+        if (!serviceCentreRepository.existsById(serviceCentreId)) {
+            throw new NotFoundException("Service centre not found, ID: " + serviceCentreId);
+        }
 
+        final int rowsUpdated = serviceCentreRepository.touchLastUpdatedAt(serviceCentreId);
+        if (rowsUpdated == 0) {
+            throw new NotFoundException("Service centre not found, ID: " + serviceCentreId);
+        }
     }
 
     /**
