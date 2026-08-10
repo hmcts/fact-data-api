@@ -135,12 +135,18 @@ public final class UserControllerFunctionalTest {
 
     @Test
     @DisplayName("DELETE /user/v1/retention deletes inactive users successfully")
-    void shouldReturnNoContentWhenDeletingInactiveUsersSuccessfully() {
+    void shouldReturnDeleteSummaryWhenDeletingInactiveUsersSuccessfully() {
         final Response deleteInactiveUsersResponse = http.doDelete("/user/v1/retention");
 
         assertThat(deleteInactiveUsersResponse.statusCode())
-            .as("Expected 204 NO CONTENT when deleting inactive users")
-            .isEqualTo(NO_CONTENT.value());
+            .as("Expected 200 OK when deleting inactive users")
+            .isEqualTo(OK.value());
+        assertThat(deleteInactiveUsersResponse.jsonPath().getInt("deletedUsers"))
+            .as("Expected deleted user count in response")
+            .isGreaterThanOrEqualTo(0);
+        assertThat(deleteInactiveUsersResponse.jsonPath().getString("message"))
+            .as("Expected summary message in response")
+            .isNotBlank();
     }
 
     private static String generateUniqueCourtName(final String baseName) {
