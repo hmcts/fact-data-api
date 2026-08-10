@@ -61,7 +61,7 @@ public interface CourtRepository extends JpaRepository<Court, UUID> {
      * @param name the exact court name
      * @return the matching court if found
      */
-    Optional<Court> findByName(String name);
+    Optional<Court> findFirstByNameIgnoreCase(String name);
 
     /**
      * Checks whether a court slug already exists.
