@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
+import uk.gov.hmcts.reform.fact.data.api.dto.DeleteInactiveUsersResponse;
 import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
 import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatus;
 import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatusRequest;
@@ -174,11 +175,18 @@ public class UserController {
     @DeleteMapping("/v1/retention")
     @Operation(summary = "Delete inactive users")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Successfully processed inactive users")
+        @ApiResponse(responseCode = "200", description = "Successfully processed inactive users")
     })
     @PreAuthorize("@authService.isAdmin()")
-    public ResponseEntity<Void> deleteInactiveUsers() {
-        userService.deleteInactiveUsers();
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<DeleteInactiveUsersResponse> deleteInactiveUsers() {
+        final int deletedUsers = userService.deleteInactiveUsers();
+        final String message = deletedUsers == 0
+            ? "No inactive users found for deletion"
+            : String.format("Deleted %d inactive user%s", deletedUsers, deletedUsers == 1 ? "" : "s");
+
+        return ResponseEntity.ok(DeleteInactiveUsersResponse.builder()
+            .deletedUsers(deletedUsers)
+            .message(message)
+            .build());
     }
 }

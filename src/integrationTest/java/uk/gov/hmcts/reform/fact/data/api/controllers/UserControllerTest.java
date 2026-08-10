@@ -247,7 +247,11 @@ class UserControllerTest {
     @Test
     @DisplayName("DELETE /user/v1/retention deletes inactive users successfully")
     void deleteInactiveUsersSuccessfully() throws Exception {
+        when(userService.deleteInactiveUsers()).thenReturn(2);
+
         mockMvc.perform(delete("/user/v1/retention"))
-            .andExpect(status().isNoContent());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.deletedUsers").value(2))
+            .andExpect(jsonPath("$.message").value("Deleted 2 inactive users"));
     }
 }
