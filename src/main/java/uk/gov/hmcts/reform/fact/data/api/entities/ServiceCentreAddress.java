@@ -15,6 +15,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -88,6 +89,7 @@ public class ServiceCentreAddress implements AuditableEntity {
     private String county;
 
     @Schema(description = "The postcode")
+    @NotBlank(message = "The postcode must be specified")
     @ValidPostcode
     private String postcode;
 
