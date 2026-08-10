@@ -433,12 +433,12 @@ class UserServiceTest {
     void deleteInactiveUsersShouldRemoveUsersNotLoggedInWithinRetentionPeriod() {
         List<User> inactiveUsers = List.of(new User());
 
-        when(userRepository.findAllByLastLoginBefore(any())).thenReturn(inactiveUsers);
+        when(userRepository.deleteAllByLastLoginBefore(any())).thenReturn(inactiveUsers);
 
         final int deletedUsers = userService.deleteInactiveUsers();
 
         assertThat(deletedUsers).isEqualTo(1);
-        verify(userRepository).deleteAll(inactiveUsers);
+        verify(userRepository).deleteAllByLastLoginBefore(any());
     }
 
     private User createUser(String email, UUID ssoId, UserRole role, ZonedDateTime lastLogin) {

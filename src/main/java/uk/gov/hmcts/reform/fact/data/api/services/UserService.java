@@ -170,9 +170,8 @@ public class UserService {
     @Transactional
     public int deleteInactiveUsers() {
         final ZonedDateTime cutoffDate = ZonedDateTime.now().minusDays(retentionPeriod);
-        List<User> inactiveUsers = userRepository.findAllByLastLoginBefore(cutoffDate);
-        log.info("Deleting {} inactive users who haven't logged in since {}", inactiveUsers.size(), cutoffDate);
-        userRepository.deleteAll(inactiveUsers);
+        List<User> inactiveUsers = userRepository.deleteAllByLastLoginBefore(cutoffDate);
+        log.info("Deleted {} inactive users who haven't logged in since {}", inactiveUsers.size(), cutoffDate);
         return inactiveUsers.size();
     }
 
