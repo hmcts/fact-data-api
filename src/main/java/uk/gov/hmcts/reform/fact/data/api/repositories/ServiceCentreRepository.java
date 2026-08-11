@@ -30,7 +30,7 @@ public interface ServiceCentreRepository extends JpaRepository<ServiceCentre, UU
         value = "UPDATE service_centre SET last_updated_at = clock_timestamp() WHERE id = :serviceCentreId",
         nativeQuery = true
     )
-    int touchLastUpdatedAt(@Param("serviceCentreId") UUID serviceCentreId);
+    int refreshLastUpdatedAt(@Param("serviceCentreId") UUID serviceCentreId);
 
     @Query(
         value = "SELECT * FROM service_centre sc WHERE CAST(:serviceAreaId AS uuid) = ANY(sc.service_area_ids)",

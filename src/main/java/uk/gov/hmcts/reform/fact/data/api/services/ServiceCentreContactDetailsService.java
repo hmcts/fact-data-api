@@ -74,7 +74,7 @@ public class ServiceCentreContactDetailsService {
 
         log.info("Creating contact detail for service centre {}", serviceCentreId);
         final ServiceCentreContactDetails createdContactDetail = serviceCentreContactDetailsRepository.save(request);
-        serviceCentreService.touchLastUpdatedAt(serviceCentreId);
+        serviceCentreService.refreshLastUpdatedAt(serviceCentreId);
         return createdContactDetail;
     }
 
@@ -104,7 +104,7 @@ public class ServiceCentreContactDetailsService {
 
         log.info("Updating contact detail {} for service centre {}", contactId, serviceCentreId);
         final ServiceCentreContactDetails updatedContactDetail = serviceCentreContactDetailsRepository.save(existing);
-        serviceCentreService.touchLastUpdatedAt(serviceCentreId);
+        serviceCentreService.refreshLastUpdatedAt(serviceCentreId);
         return updatedContactDetail;
     }
 
@@ -127,7 +127,7 @@ public class ServiceCentreContactDetailsService {
 
         log.info("Deleting contact detail {} for service centre {}", contactId, serviceCentreId);
         serviceCentreContactDetailsRepository.deleteByIdAndServiceCentreId(contactId, serviceCentreId);
-        serviceCentreService.touchLastUpdatedAt(serviceCentreId);
+        serviceCentreService.refreshLastUpdatedAt(serviceCentreId);
     }
 
     private Optional<ContactDescriptionType> getValidatedContactDescription(UUID contactDescriptionId) {

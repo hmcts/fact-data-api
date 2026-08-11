@@ -127,12 +127,12 @@ public class ServiceCentreService {
      * @param serviceCentreId The id of the service centre to touch.
      */
     @Transactional
-    public void touchLastUpdatedAt(final UUID serviceCentreId) {
+    public void refreshLastUpdatedAt(final UUID serviceCentreId) {
         if (!serviceCentreRepository.existsById(serviceCentreId)) {
             throw new NotFoundException("Service centre not found, ID: " + serviceCentreId);
         }
 
-        final int rowsUpdated = serviceCentreRepository.touchLastUpdatedAt(serviceCentreId);
+        final int rowsUpdated = serviceCentreRepository.refreshLastUpdatedAt(serviceCentreId);
         if (rowsUpdated == 0) {
             throw new NotFoundException("Service centre not found, ID: " + serviceCentreId);
         }
