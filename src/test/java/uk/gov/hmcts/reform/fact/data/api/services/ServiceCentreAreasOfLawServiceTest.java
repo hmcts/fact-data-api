@@ -89,6 +89,5 @@ class ServiceCentreAreasOfLawServiceTest {
         assertThat(result.getServiceCentre()).isEqualTo(serviceCentre);
         assertThat(result.getAreasOfLaw()).containsExactly(validAreaId);
         verify(serviceCentreAreasOfLawRepository).save(request);
-        verify(serviceCentreService).refreshLastUpdatedAt(serviceCentreId);
     }
 }

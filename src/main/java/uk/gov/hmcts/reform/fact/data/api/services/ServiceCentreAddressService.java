@@ -67,9 +67,8 @@ public class ServiceCentreAddressService {
         serviceCentreAddress.setServiceCentreId(serviceCentreId);
         serviceCentreAddress.setServiceCentre(serviceCentre);
         setLatLonFromPostcode(serviceCentreAddress);
-        final ServiceCentreAddress createdAddress = serviceCentreAddressRepository.save(serviceCentreAddress);
-        serviceCentreService.refreshLastUpdatedAt(serviceCentreId);
-        return createdAddress;
+
+        return serviceCentreAddressRepository.save(serviceCentreAddress);
     }
 
     /**
@@ -87,9 +86,8 @@ public class ServiceCentreAddressService {
                                               ServiceCentreAddress serviceCentreAddress) {
         ServiceCentreAddress existing = getAddress(serviceCentreId, addressId);
         setNewAddressFieldsOnExistingAddress(existing, serviceCentreAddress);
-        final ServiceCentreAddress updatedAddress = serviceCentreAddressRepository.save(existing);
-        serviceCentreService.refreshLastUpdatedAt(serviceCentreId);
-        return updatedAddress;
+
+        return serviceCentreAddressRepository.save(existing);
     }
 
     /**
@@ -105,7 +103,6 @@ public class ServiceCentreAddressService {
             getAddress(serviceCentreId, addressId).getId(),
             serviceCentreId
         );
-        serviceCentreService.refreshLastUpdatedAt(serviceCentreId);
     }
 
     private void setLatLonFromPostcode(ServiceCentreAddress address) {

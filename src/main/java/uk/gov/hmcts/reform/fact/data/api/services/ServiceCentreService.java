@@ -122,23 +122,6 @@ public class ServiceCentreService {
     }
 
     /**
-     * Touch lastUpdatedAt for a service centre when related child data changes.
-     *
-     * @param serviceCentreId The id of the service centre to touch.
-     */
-    @Transactional
-    public void refreshLastUpdatedAt(final UUID serviceCentreId) {
-        if (!serviceCentreRepository.existsById(serviceCentreId)) {
-            throw new NotFoundException("Service centre not found, ID: " + serviceCentreId);
-        }
-
-        final int rowsUpdated = serviceCentreRepository.refreshLastUpdatedAt(serviceCentreId);
-        if (rowsUpdated == 0) {
-            throw new NotFoundException("Service centre not found, ID: " + serviceCentreId);
-        }
-    }
-
-    /**
      * Delete service centres matching the provided name prefix.
      *
      * @param serviceCentreNamePrefix The name prefix to match.

@@ -68,9 +68,6 @@ public class ServiceCentreAreasOfLawService {
             .map(ServiceCentreAreasOfLaw::getId)
             .ifPresent(serviceCentreAreasOfLaw::setId);
 
-        final ServiceCentreAreasOfLaw savedServiceCentreAreasOfLaw =
-            serviceCentreAreasOfLawRepository.save(serviceCentreAreasOfLaw);
-        serviceCentreService.refreshLastUpdatedAt(serviceCentreId);
-        return savedServiceCentreAreasOfLaw;
+        return serviceCentreAreasOfLawRepository.save(serviceCentreAreasOfLaw);
     }
 }

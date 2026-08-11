@@ -1,7 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.repositories;
 
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -24,13 +23,6 @@ public interface ServiceCentreRepository extends JpaRepository<ServiceCentre, UU
     List<ServiceCentre> findByNameStartingWithIgnoreCase(String namePrefix);
 
     List<ServiceCentre> findByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc(String namePrefix, boolean open);
-
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query(
-        value = "UPDATE service_centre SET last_updated_at = clock_timestamp() WHERE id = :serviceCentreId",
-        nativeQuery = true
-    )
-    int refreshLastUpdatedAt(@Param("serviceCentreId") UUID serviceCentreId);
 
     @Query(
         value = "SELECT * FROM service_centre sc WHERE CAST(:serviceAreaId AS uuid) = ANY(sc.service_area_ids)",
