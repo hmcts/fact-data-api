@@ -75,19 +75,22 @@ public class PhotoMigrationService {
 
         List<PhotoMigrationResponse.Failure> failedMigrations = new ArrayList<>();
 
-        legacyData.getCourts().stream().filter(c -> c.getCourtPhoto() != null).forEach(court -> {
-            UUID newCourtId = courtIdMap.get(court.getId());
-            CourtPhotoDto courtPhotoDto = court.getCourtPhoto();
+        legacyData.getCourts().stream()
+            .filter(court -> !Boolean.TRUE.equals(court.getIsServiceCentre()))
+            .filter(court -> court.getCourtPhoto() != null)
+            .forEach(court -> {
+                UUID newCourtId = courtIdMap.get(court.getId());
+                CourtPhotoDto courtPhotoDto = court.getCourtPhoto();
 
-            try {
-                MultipartFile currentPhoto = getCurrentPhoto(courtPhotoDto.getImagePath());
-                courtPhotoService.setCourtPhoto(newCourtId, currentPhoto);
-            } catch (Exception ex) {
-                failedMigrations.add(
-                    new PhotoMigrationResponse.Failure(court.getName(), newCourtId, ex.getMessage())
-                );
-            }
-        });
+                try {
+                    MultipartFile currentPhoto = getCurrentPhoto(courtPhotoDto.getImagePath());
+                    courtPhotoService.setCourtPhoto(newCourtId, currentPhoto);
+                } catch (Exception ex) {
+                    failedMigrations.add(
+                        new PhotoMigrationResponse.Failure(court.getName(), newCourtId, ex.getMessage())
+                    );
+                }
+            });
 
         log.info("Photo migration process completed. Check API response for details.");
         migrationAuditRepository.save(MigrationAudit

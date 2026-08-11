@@ -138,6 +138,29 @@ class CourtMigrationHelperTest {
     }
 
     @Test
+    void shouldMigrateLegacyClosedCourtAsOpen() {
+        context.getRegionIds().put(1, UUID.randomUUID());
+        when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {
+            Court court = invocation.getArgument(0);
+            court.setId(UUID.randomUUID());
+            return court;
+        });
+        CourtDto courtDto = new CourtDto();
+        courtDto.setId(601L);
+        courtDto.setName("Open By Default Court");
+        courtDto.setSlug("open-by-default-court");
+        courtDto.setOpen(false);
+        courtDto.setRegionId(1);
+        courtDto.setIsServiceCentre(false);
+
+        assertThat(helper.migrateCourts(List.of(courtDto), context)).isEqualTo(1);
+
+        ArgumentCaptor<Court> courtCaptor = ArgumentCaptor.forClass(Court.class);
+        verify(courtService).createCourt(courtCaptor.capture());
+        assertThat(courtCaptor.getValue().getOpen()).isTrue();
+    }
+
+    @Test
     void shouldAllowNullInterviewRoomCount() {
         context.getRegionIds().put(1, UUID.randomUUID());
         when(courtService.createCourt(any(Court.class))).thenAnswer(invocation -> {

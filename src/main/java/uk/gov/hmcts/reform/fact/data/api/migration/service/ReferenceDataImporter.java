@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.migration.service;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -66,6 +67,9 @@ class ReferenceDataImporter {
         List.of("Cumberland Council", "Westmorland and Furness Council"),
         "northamptonshire county council",
         List.of("North Northamptonshire Council", "West Northamptonshire Council")
+    );
+    private static final Map<String, String> LEGACY_AREA_OF_LAW_NAME_ALIASES = Map.of(
+        "domestic violence", "Domestic abuse"
     );
 
     private final RegionRepository regionRepository;
@@ -163,7 +167,8 @@ class ReferenceDataImporter {
         }
 
         for (uk.gov.hmcts.reform.fact.data.api.migration.model.AreaOfLawTypeDto dto : areaOfLawTypes) {
-            Optional<AreaOfLawType> entity = areaOfLawTypeRepository.findByNameIgnoreCase(dto.getName());
+            String lookupName = areaOfLawLookupName(dto.getName());
+            Optional<AreaOfLawType> entity = areaOfLawTypeRepository.findByNameIgnoreCase(lookupName);
             if (entity.isEmpty()) {
                 LOG.warn("Area of law '{}' was not found in the target database", dto.getName());
                 context.unmapped(MigrationSection.AREAS_OF_LAW, 1);
@@ -185,6 +190,16 @@ class ReferenceDataImporter {
             context.getAreaOfLawIds().put(dto.getId(), entity.get().getId());
             context.persisted(MigrationSection.AREAS_OF_LAW, 1, 0);
         }
+    }
+
+    private static String areaOfLawLookupName(String legacyName) {
+        if (legacyName == null) {
+            return null;
+        }
+        return LEGACY_AREA_OF_LAW_NAME_ALIASES.getOrDefault(
+            legacyName.toLowerCase(Locale.ROOT),
+            legacyName
+        );
     }
 
     /**
