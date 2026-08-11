@@ -43,8 +43,7 @@ public class OpenAPIConfiguration {
     public OpenApiCustomizer openApiCustomizer() {
         return openApi ->
             openApi.getPaths().entrySet().stream()
-                .filter(entry -> !entry.getKey().startsWith("/testing-support/")
-                    && !entry.getKey().startsWith("/migration/"))
+                .filter(entry -> !entry.getKey().startsWith("/testing-support/"))
                 .map(Map.Entry::getValue)
                 .flatMap(pathItem -> pathItem.readOperations().stream())
                 .forEach(
