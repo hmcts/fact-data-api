@@ -12,20 +12,28 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
+import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
+import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreAddressRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.OsService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreAddressService;
+import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreAreasOfLawService;
+import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreContactDetailsService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreService;
+import uk.gov.hmcts.reform.fact.data.api.services.TypesService;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -41,6 +49,15 @@ class ServiceCentreLastUpdatedTimeTest {
 
     @Autowired
     private ServiceCentreAddressService serviceCentreAddressService;
+
+    @Autowired
+    private ServiceCentreContactDetailsService serviceCentreContactDetailsService;
+
+    @Autowired
+    private ServiceCentreAreasOfLawService serviceCentreAreasOfLawService;
+
+    @Autowired
+    private TypesService typesService;
 
     @Autowired
     private ServiceCentreRepository serviceCentreRepository;
@@ -107,6 +124,103 @@ class ServiceCentreLastUpdatedTimeTest {
 
         assertThat(refreshedMonitored.getLastUpdatedAt()).isAfter(monitoredBeforeUpdate);
         assertThat(refreshedControl.getLastUpdatedAt()).isEqualTo(controlBeforeUpdate);
+    }
+
+    @Test
+    @DisplayName("Ensure service centre last_updated_at is updated on contact detail update")
+    void updatingContactDetailUpdatesServiceCentreLastUpdatedTimestamp() throws InterruptedException {
+        ServiceCentreContactDetails contactDetails = ServiceCentreContactDetails.builder()
+            .email("first@example.com")
+            .phoneNumber("02079460000")
+            .build();
+
+        ServiceCentreContactDetails createdContactDetails = serviceCentreContactDetailsService
+            .createContactDetail(monitoredServiceCentre.getId(), contactDetails);
+
+        ServiceCentre refreshedMonitored = findServiceCentre(monitoredServiceCentre.getId());
+        ServiceCentre refreshedControl = findServiceCentre(controlServiceCentre.getId());
+        final ZonedDateTime monitoredBeforeUpdate = refreshedMonitored.getLastUpdatedAt();
+        final ZonedDateTime controlBeforeUpdate = refreshedControl.getLastUpdatedAt();
+
+        Thread.sleep(1);
+
+        createdContactDetails.setEmail("updated@example.com");
+        createdContactDetails.setPhoneNumber("02079460001");
+        serviceCentreContactDetailsService.updateContactDetail(
+            monitoredServiceCentre.getId(),
+            createdContactDetails.getId(),
+            createdContactDetails
+        );
+
+        refreshedMonitored = findServiceCentre(monitoredServiceCentre.getId());
+        refreshedControl = findServiceCentre(controlServiceCentre.getId());
+
+        assertThat(refreshedMonitored.getLastUpdatedAt()).isAfter(monitoredBeforeUpdate);
+        assertThat(refreshedControl.getLastUpdatedAt()).isEqualTo(controlBeforeUpdate);
+    }
+
+    @Test
+    @DisplayName("Ensure service centre last_updated_at is updated on areas of law update")
+    void updatingAreasOfLawUpdatesServiceCentreLastUpdatedTimestamp() throws InterruptedException {
+        List<AreaOfLawType> areaOfLawTypes = typesService.getAreaOfLawTypes();
+        assertThat(areaOfLawTypes).isNotEmpty();
+
+        final UUID firstAreaId = areaOfLawTypes.getFirst().getId();
+        final UUID secondAreaId = areaOfLawTypes.size() > 1 ? areaOfLawTypes.get(1).getId() : firstAreaId;
+
+        final ServiceCentreAreasOfLaw initialAreas = ServiceCentreAreasOfLaw.builder()
+            .areasOfLaw(List.of(firstAreaId))
+            .build();
+        serviceCentreAreasOfLawService.setServiceCentreAreasOfLaw(monitoredServiceCentre.getId(), initialAreas);
+
+        ServiceCentre refreshedMonitored = findServiceCentre(monitoredServiceCentre.getId());
+        ServiceCentre refreshedControl = findServiceCentre(controlServiceCentre.getId());
+        final ZonedDateTime monitoredBeforeUpdate = refreshedMonitored.getLastUpdatedAt();
+        final ZonedDateTime controlBeforeUpdate = refreshedControl.getLastUpdatedAt();
+
+        Thread.sleep(1);
+
+        ServiceCentreAreasOfLaw updatedAreas = ServiceCentreAreasOfLaw.builder()
+            .areasOfLaw(List.of(secondAreaId))
+            .build();
+        serviceCentreAreasOfLawService.setServiceCentreAreasOfLaw(monitoredServiceCentre.getId(), updatedAreas);
+
+        refreshedMonitored = findServiceCentre(monitoredServiceCentre.getId());
+        refreshedControl = findServiceCentre(controlServiceCentre.getId());
+
+        assertThat(refreshedMonitored.getLastUpdatedAt()).isAfter(monitoredBeforeUpdate);
+        assertThat(refreshedControl.getLastUpdatedAt()).isEqualTo(controlBeforeUpdate);
+    }
+
+    @Test
+    @DisplayName("Ensure failed child update does not change service centre last_updated_at")
+    void failedContactDetailUpdateDoesNotChangeServiceCentreLastUpdatedTimestamp() {
+        ServiceCentreContactDetails contactDetails = ServiceCentreContactDetails.builder()
+            .email("first@example.com")
+            .phoneNumber("02079460000")
+            .build();
+
+        ServiceCentreContactDetails createdContactDetails = serviceCentreContactDetailsService
+            .createContactDetail(monitoredServiceCentre.getId(), contactDetails);
+
+        ServiceCentre refreshedMonitored = findServiceCentre(monitoredServiceCentre.getId());
+        ServiceCentre refreshedControl = findServiceCentre(controlServiceCentre.getId());
+        final ZonedDateTime monitoredBeforeFailure = refreshedMonitored.getLastUpdatedAt();
+        final ZonedDateTime controlBeforeFailure = refreshedControl.getLastUpdatedAt();
+
+        createdContactDetails.setServiceCentreContactDescriptionId(UUID.randomUUID());
+
+        assertThatThrownBy(() -> serviceCentreContactDetailsService.updateContactDetail(
+            monitoredServiceCentre.getId(),
+            createdContactDetails.getId(),
+            createdContactDetails
+        )).isInstanceOf(NotFoundException.class);
+
+        refreshedMonitored = findServiceCentre(monitoredServiceCentre.getId());
+        refreshedControl = findServiceCentre(controlServiceCentre.getId());
+
+        assertThat(refreshedMonitored.getLastUpdatedAt()).isEqualTo(monitoredBeforeFailure);
+        assertThat(refreshedControl.getLastUpdatedAt()).isEqualTo(controlBeforeFailure);
     }
 
     private ServiceCentre createServiceCentre(final String namePrefix) {
