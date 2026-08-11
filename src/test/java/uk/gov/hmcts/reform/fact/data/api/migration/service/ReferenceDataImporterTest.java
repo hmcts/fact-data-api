@@ -81,6 +81,30 @@ class ReferenceDataImporterTest {
     }
 
     @Test
+    void shouldMapRenamedLegacyAreaOfLaw() {
+        UUID areaOfLawId = UUID.randomUUID();
+        when(areaOfLawTypeRepository.findByNameIgnoreCase("Domestic abuse"))
+            .thenReturn(Optional.of(AreaOfLawType.builder().id(areaOfLawId).build()));
+        LegacyExportResponse response = new LegacyExportResponse(
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(new AreaOfLawTypeDto(34251, "Domestic violence", "Cam-drin domestig"))
+        );
+
+        importer.importReferenceData(response, context);
+
+        assertThat(context.getAreaOfLawIds()).containsEntry(34251, areaOfLawId);
+        assertThat(context.getFindings())
+            .noneMatch(finding -> "AREA_OF_LAW_REFERENCE_NOT_FOUND".equals(finding.getReasonCode()));
+    }
+
+    @Test
     void shouldMapLocalAuthorityTypeUsingNormalisedName() {
         UUID mappedId = UUID.randomUUID();
         when(localAuthorityTypeRepository.findAll()).thenReturn(List.of(
