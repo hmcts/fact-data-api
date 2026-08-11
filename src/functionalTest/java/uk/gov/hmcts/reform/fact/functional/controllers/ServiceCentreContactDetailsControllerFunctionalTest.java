@@ -10,6 +10,7 @@ import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +29,8 @@ public final class ServiceCentreContactDetailsControllerFunctionalTest {
     @DisplayName("Service centre contact details endpoints support CRUD")
     void shouldCreateReadUpdateAndDeleteServiceCentreContactDetails() {
         UUID serviceCentreId = TestDataHelper.createServiceCentre(http, TEST_PREFIX);
+        ZonedDateTime timestampBeforeCreate = AssertionHelper.getServiceCentreLastUpdatedAt(http, serviceCentreId);
+
         UUID contactDescriptionId = UUID.fromString(
             http.doGet("/types/v1/contact-description-types").jsonPath().getString("[0].id")
         );
@@ -46,6 +49,12 @@ public final class ServiceCentreContactDetailsControllerFunctionalTest {
         AssertionHelper.assertStatus(createResponse, CREATED);
         UUID contactId = UUID.fromString(createResponse.jsonPath().getString("id"));
 
+        ZonedDateTime timestampAfterCreate = AssertionHelper.getServiceCentreLastUpdatedAt(http, serviceCentreId);
+        assertThat(timestampAfterCreate)
+            .as("Service centre lastUpdatedAt should move forward after contact detail creation for service centre %s",
+                serviceCentreId)
+            .isAfter(timestampBeforeCreate);
+
         AssertionHelper.assertStatus(http.doGet("/service-centres/" + serviceCentreId + "/v1/contact-details"), OK);
 
         Response getResponse = http.doGet(
@@ -62,10 +71,22 @@ public final class ServiceCentreContactDetailsControllerFunctionalTest {
         AssertionHelper.assertStatus(updateResponse, OK);
         assertThat(updateResponse.jsonPath().getString("email")).isEqualTo("updated-servicecentre@example.com");
 
+        ZonedDateTime timestampAfterUpdate = AssertionHelper.getServiceCentreLastUpdatedAt(http, serviceCentreId);
+        assertThat(timestampAfterUpdate)
+            .as("Service centre lastUpdatedAt should move forward after contact detail update for service centre %s",
+                serviceCentreId)
+            .isAfter(timestampAfterCreate);
+
         AssertionHelper.assertStatus(
             http.doDelete("/service-centres/" + serviceCentreId + "/v1/contact-details/" + contactId),
             NO_CONTENT
         );
+
+        ZonedDateTime timestampAfterDelete = AssertionHelper.getServiceCentreLastUpdatedAt(http, serviceCentreId);
+        assertThat(timestampAfterDelete)
+            .as("Service centre lastUpdatedAt should move forward after contact detail deletion for service centre %s",
+                serviceCentreId)
+            .isAfter(timestampAfterUpdate);
     }
 
     @AfterAll

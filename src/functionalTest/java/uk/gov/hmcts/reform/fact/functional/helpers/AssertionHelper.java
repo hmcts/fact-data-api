@@ -80,4 +80,19 @@ public final class AssertionHelper {
             .isEqualTo(HttpStatus.OK.value());
         return ZonedDateTime.parse(response.jsonPath().getString("lastUpdatedAt"));
     }
+
+    /**
+     * Fetches the lastUpdatedAt timestamp for a service centre.
+     *
+     * @param http the HTTP client
+     * @param serviceCentreId the service centre ID
+     * @return the service centre's lastUpdatedAt timestamp
+     */
+    public static ZonedDateTime getServiceCentreLastUpdatedAt(final HttpClient http, final UUID serviceCentreId) {
+        final Response response = http.doGet("/service-centres/" + serviceCentreId + "/v1");
+        assertThat(response.statusCode())
+            .as("Expected 200 OK when fetching service centre %s for timestamp", serviceCentreId)
+            .isEqualTo(HttpStatus.OK.value());
+        return ZonedDateTime.parse(response.jsonPath().getString("lastUpdatedAt"));
+    }
 }
