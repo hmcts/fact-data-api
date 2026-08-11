@@ -294,6 +294,41 @@ class AuditControllerTest {
     }
 
     @Test
+    @DisplayName("GET /audits/v1 matches email filters without regard to case")
+    void getFilteredAndPaginatedAuditsMatchesMixedCaseEmail() throws Exception {
+        User mixedCaseUser = userRepository.save(User.builder()
+            .email("Audit.MixedCase." + UUID.randomUUID() + "@justice.gov.uk")
+            .ssoId(UUID.randomUUID())
+            .role(UserRole.ADMIN)
+            .build());
+        auditUserContext.setUserId(mixedCaseUser.getId());
+
+        Court firstCourt = createTestCourts(1).getFirst();
+        createTestCourts(1);
+
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "10")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("email", "mixedcase"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(2))
+            .andExpect(jsonPath("$.page.totalElements").value(2));
+
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "10")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("toDate", LocalDate.now().plusDays(1).toString())
+                        .param("email", "MIXEDCASE")
+                        .param("courtId", firstCourt.getId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].subjectId").value(firstCourt.getId().toString()))
+            .andExpect(jsonPath("$.page.totalElements").value(1));
+    }
+
+    @Test
     @DisplayName("GET /audits/v1 returns returns 400 when courtId is invalid")
     void getFilteredAndPaginatedAuditsReturnsBadRequestForInvalidCourtId() throws Exception {
         mvc.perform(get("/audits/v1")
