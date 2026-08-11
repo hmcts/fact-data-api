@@ -188,7 +188,7 @@ class CourtMigrationHelper {
             Court court = Court.builder()
                 .name(courtName)
                 .slug(dto.getSlug())
-                .open(dto.getOpen())
+                .open(Boolean.TRUE)
                 .warningNotice(warningNotice)
                 .warningNoticeCy(warningNoticeCy)
                 .regionId(regionId.get())
