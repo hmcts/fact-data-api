@@ -74,7 +74,7 @@ public class ServiceCentreService {
      * @throws NotFoundException if the service centre is not found.
      */
     public ServiceCentre getServiceCentreByName(String serviceCentreName) {
-        return serviceCentreRepository.findByName(serviceCentreName)
+        return serviceCentreRepository.findFirstByNameIgnoreCase(serviceCentreName)
             .orElseThrow(() -> new NotFoundException("Service centre not found, name: " + serviceCentreName));
     }
 

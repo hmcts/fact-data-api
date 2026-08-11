@@ -17,7 +17,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
-    List<User> findAllByLastLoginBefore(ZonedDateTime zonedDateTime);
+    List<User> deleteAllByLastLoginBefore(ZonedDateTime lastLoginBefore);
 
     Optional<User> findByEmail(String email);
 

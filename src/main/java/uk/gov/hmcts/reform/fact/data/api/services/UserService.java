@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -166,10 +168,11 @@ public class UserService {
      * Users are considered inactive if their last login was more than retentionPeriod days ago.
      */
     @Transactional
-    public void deleteInactiveUsers() {
-        ZonedDateTime cutoffDate = ZonedDateTime.now().minusDays(retentionPeriod);
-        List<User> inactiveUsers = userRepository.findAllByLastLoginBefore(cutoffDate);
-        userRepository.deleteAll(inactiveUsers);
+    public int deleteInactiveUsers() {
+        final ZonedDateTime cutoffDate = ZonedDateTime.now().minusDays(retentionPeriod);
+        List<User> inactiveUsers = userRepository.deleteAllByLastLoginBefore(cutoffDate);
+        log.info("Deleted {} inactive users who haven't logged in since {}", inactiveUsers.size(), cutoffDate);
+        return inactiveUsers.size();
     }
 
     private boolean matchesSearch(User user, String searchFilter) {

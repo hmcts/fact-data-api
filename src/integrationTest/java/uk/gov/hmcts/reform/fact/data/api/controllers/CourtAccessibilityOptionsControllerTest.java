@@ -126,6 +126,33 @@ class CourtAccessibilityOptionsControllerTest {
     }
 
     @Test
+    @DisplayName("POST /courts/{courtId}/v1/accessibility-options serializes NONE hearing equipment")
+    void postAccessibilityOptionsSerializesNoneHearingEquipment() throws Exception {
+        CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()
+            .id(courtId)
+            .courtId(courtId)
+            .court(null)
+            .accessibleEntrance(true)
+            .accessibleParking(false)
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.NONE)
+            .lift(true)
+            .liftDoorWidth(90)
+            .liftDoorLimit(10)
+            .quietRoom(true)
+            .build();
+
+        when(courtAccessibilityOptionsService
+                 .setAccessibilityOptions(any(UUID.class), any(CourtAccessibilityOptions.class)))
+            .thenReturn(accessibilityOptions);
+
+        mockMvc.perform(post("/courts/{courtId}/v1/accessibility-options", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(accessibilityOptions)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.hearingEnhancementEquipment").value("NONE"));
+    }
+
+    @Test
     @DisplayName("POST /courts/{courtId}/v1/accessibility-options returns 404 if court does not exist")
     void postAccessibilityOptionsNonExistentCourtReturnsNotFound() throws Exception {
         CourtAccessibilityOptions accessibilityOptions = CourtAccessibilityOptions.builder()

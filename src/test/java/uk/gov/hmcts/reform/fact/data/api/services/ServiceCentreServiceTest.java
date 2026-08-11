@@ -137,9 +137,25 @@ class ServiceCentreServiceTest {
     void getServiceCentreByNameReturnsServiceCentre() {
         ServiceCentre serviceCentre = ServiceCentre.builder().name("Bulk Scan Centre").build();
 
-        when(serviceCentreRepository.findByName("Bulk Scan Centre")).thenReturn(Optional.of(serviceCentre));
+        when(serviceCentreRepository.findFirstByNameIgnoreCase("Bulk Scan Centre"))
+            .thenReturn(Optional.of(serviceCentre));
 
         assertThat(serviceCentreService.getServiceCentreByName("Bulk Scan Centre")).isEqualTo(serviceCentre);
+        verify(serviceCentreRepository).findFirstByNameIgnoreCase("Bulk Scan Centre");
+    }
+
+    @Test
+    void getServiceCentreByNameThrowsNotFoundWhenMissing() {
+        when(serviceCentreRepository.findFirstByNameIgnoreCase("Unknown Service Centre"))
+            .thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(
+            NotFoundException.class,
+            () -> serviceCentreService.getServiceCentreByName("Unknown Service Centre")
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Service centre not found, name: Unknown Service Centre");
+        verify(serviceCentreRepository).findFirstByNameIgnoreCase("Unknown Service Centre");
     }
 
     @Test

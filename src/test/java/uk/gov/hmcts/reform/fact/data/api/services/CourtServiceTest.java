@@ -111,19 +111,34 @@ class CourtServiceTest {
         Court court = new Court();
         court.setName(courtName);
 
-        when(courtRepository.findByName(courtName)).thenReturn(Optional.of(court));
+        when(courtRepository.findFirstByNameIgnoreCase(courtName)).thenReturn(Optional.of(court));
 
         Court result = courtService.getCourtByName(courtName);
 
         assertThat(result).isNotNull();
         assertThat(result.getName()).isEqualTo(courtName);
+        verify(courtRepository).findFirstByNameIgnoreCase(courtName);
+    }
+
+    @Test
+    void getCourtByNameUsesCaseInsensitiveRepositoryLookup() {
+        String lookupName = "kInG's lYnN cRoWn cOuRt";
+        Court court = new Court();
+        court.setName("King's Lynn Crown Court");
+
+        when(courtRepository.findFirstByNameIgnoreCase(lookupName)).thenReturn(Optional.of(court));
+
+        Court result = courtService.getCourtByName(lookupName);
+
+        assertThat(result.getName()).isEqualTo("King's Lynn Crown Court");
+        verify(courtRepository).findFirstByNameIgnoreCase(lookupName);
     }
 
     @Test
     void getCourtByNameThrowsNotFoundExceptionWhenCourtDoesNotExist() {
         String courtName = "Missing Court";
 
-        when(courtRepository.findByName(courtName)).thenReturn(Optional.empty());
+        when(courtRepository.findFirstByNameIgnoreCase(courtName)).thenReturn(Optional.empty());
 
         NotFoundException exception = assertThrows(
             NotFoundException.class, () ->
@@ -131,6 +146,7 @@ class CourtServiceTest {
         );
 
         assertThat(exception.getMessage()).isEqualTo("Court not found, name: " + courtName);
+        verify(courtRepository).findFirstByNameIgnoreCase(courtName);
     }
 
     @Test
