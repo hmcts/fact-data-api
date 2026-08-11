@@ -37,6 +37,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -117,6 +118,20 @@ class PhotoMigrationServiceTest {
         assertThat(failure.name()).isEqualTo("Problem court");
         assertThat(failure.id()).isEqualTo(courtId);
         assertThat(failure.error()).contains("storage unavailable");
+    }
+
+    @Test
+    void shouldExcludeServiceCentrePhotos() {
+        when(migrationAuditRepository.findByMigrationName(MIGRATION_NAME)).thenReturn(Optional.empty());
+        when(legacyCourtMappingRepository.findAll()).thenReturn(List.of());
+        CourtDto serviceCentre = buildCourt(20L, "Civil National Business Centre", "invalid-photo-url");
+        serviceCentre.setIsServiceCentre(true);
+        when(legacyFactClient.fetchExport()).thenReturn(buildLegacyExportResponse(List.of(serviceCentre)));
+
+        PhotoMigrationResponse response = photoMigrationService.migratePhotos();
+
+        assertThat(response.failedFiles()).isEmpty();
+        verifyNoInteractions(courtPhotoService);
     }
 
     private LegacyCourtMapping buildMapping(Long legacyId, UUID courtId) {

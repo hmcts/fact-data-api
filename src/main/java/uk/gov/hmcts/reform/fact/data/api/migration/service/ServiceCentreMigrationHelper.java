@@ -92,7 +92,7 @@ class ServiceCentreMigrationHelper {
             ServiceCentre serviceCentre = ServiceCentre.builder()
                 .name(serviceCentreName)
                 .slug(dto.getSlug())
-                .open(Boolean.FALSE)
+                .open(Boolean.TRUE)
                 .warningNotice(warningNotice)
                 .warningNoticeCy(warningNoticeCy)
                 .serviceAreaIds(serviceAreaSelection.serviceAreaIds())
