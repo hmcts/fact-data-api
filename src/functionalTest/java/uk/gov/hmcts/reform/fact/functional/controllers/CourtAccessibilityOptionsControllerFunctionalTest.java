@@ -128,7 +128,7 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
             .accessibleParkingPhoneNumber("+44 161 496 0123")
             .accessibleEntrance(false)
             .accessibleEntrancePhoneNumber("0117 496 0456")
-            .hearingEnhancementEquipment(HearingEnhancementEquipment.INFRARED_SYSTEMS_AND_HEARING_LOOP_SYSTEMS)
+            .hearingEnhancementEquipment(HearingEnhancementEquipment.NONE)
             .lift(true)
             .liftDoorWidth(100)
             .liftDoorLimit(800)
@@ -159,7 +159,7 @@ public final class CourtAccessibilityOptionsControllerFunctionalTest {
             .isEqualTo("+44 161 496 0123");
         assertThat(fetchedOptions.getHearingEnhancementEquipment())
             .as("Hearing enhancement equipment should be updated")
-            .isEqualTo(HearingEnhancementEquipment.INFRARED_SYSTEMS_AND_HEARING_LOOP_SYSTEMS);
+            .isEqualTo(HearingEnhancementEquipment.NONE);
         assertThat(fetchedOptions.getLiftDoorWidth())
             .as("Lift door width should be updated")
             .isEqualTo(100);
