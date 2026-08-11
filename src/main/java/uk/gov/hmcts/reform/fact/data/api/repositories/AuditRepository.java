@@ -73,13 +73,13 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
     String WHERE_EMAIL_LIKE_AND_CREATED_AT_AFTER = """
         where
             a.createdAt > :createdAtAfter
-            and u.email like %:email%
+            and lower(u.email) like concat('%', lower(:email), '%')
         """;
 
     String WHERE_EMAIL_LIKE_AND_CREATED_AT_BETWEEN = """
         where
             a.createdAt between :createdAtAfter and :createdAtBefore
-            and u.email like %:email%
+            and lower(u.email) like concat('%', lower(:email), '%')
         """;
 
     String AND_SUBJECT_EQUALS = " and a.subjectId = :subjectId and a.subjectType = :subjectType";
