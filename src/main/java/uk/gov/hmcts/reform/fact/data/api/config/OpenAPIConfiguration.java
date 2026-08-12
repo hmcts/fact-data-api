@@ -5,6 +5,7 @@ import java.util.Map;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.parameters.HeaderParameter;
@@ -43,10 +44,11 @@ public class OpenAPIConfiguration {
     public OpenApiCustomizer openApiCustomizer() {
         return openApi ->
             openApi.getPaths().entrySet().stream()
-                .filter(entry -> !entry.getKey().startsWith("/testing-support/")
-                    && !entry.getKey().startsWith("/migration/"))
-                .map(Map.Entry::getValue)
-                .flatMap(pathItem -> pathItem.readOperations().stream())
+                .filter(entry -> !entry.getKey().startsWith("/testing-support/"))
+                .flatMap(pathEntry -> pathEntry.getValue().readOperationsMap().entrySet().stream()
+                    .filter(operationEntry -> !(pathEntry.getKey().startsWith("/migration/")
+                        && operationEntry.getKey() == PathItem.HttpMethod.GET))
+                    .map(Map.Entry::getValue))
                 .forEach(
                     operation -> operation.addParametersItem(
                         new HeaderParameter()
