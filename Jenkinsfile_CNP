@@ -30,8 +30,6 @@ static LinkedHashMap<String, Object> secret(String secretName, String envVar) {
 }
 
 withPipeline(type, product, component) {
-  env.FACT_MIGRATION_SOURCE_BASE_URL = 'http://fact-api-aat.service.core-compute-aat.internal'
-
   enableDbMigration('fact-kv')
 
   loadVaultSecrets(secrets)
