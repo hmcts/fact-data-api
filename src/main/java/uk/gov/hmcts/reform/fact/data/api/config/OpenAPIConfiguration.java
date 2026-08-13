@@ -1,7 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.config;
 
-import java.util.Map;
-
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -44,8 +42,7 @@ public class OpenAPIConfiguration {
         return openApi ->
             openApi.getPaths().entrySet().stream()
                 .filter(entry -> !entry.getKey().startsWith("/testing-support/"))
-                .map(Map.Entry::getValue)
-                .flatMap(pathItem -> pathItem.readOperations().stream())
+                .flatMap(pathEntry -> pathEntry.getValue().readOperationsMap().values().stream())
                 .forEach(
                     operation -> operation.addParametersItem(
                         new HeaderParameter()
