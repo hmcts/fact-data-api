@@ -20,7 +20,6 @@ management:
 springdoc:
   packagesToScan:
     - uk.gov.hmcts.reform.fact.data.api.controllers
-    - uk.gov.hmcts.reform.fact.data.api.migration.controller
   writer-with-order-by-keys: true
 
 spring:
@@ -100,9 +99,6 @@ os:
   url: https://api.os.uk
   endpoint:
     postcode-search: /search/places/v1/postcode
-
-migration:
-  source-base-url: ${FACT_MIGRATION_SOURCE_BASE_URL:}
 
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}
