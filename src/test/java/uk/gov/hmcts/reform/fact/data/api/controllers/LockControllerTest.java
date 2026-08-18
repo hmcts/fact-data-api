@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
@@ -94,6 +95,19 @@ class LockControllerTest {
 
         assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(lock);
+    }
+
+    @Test
+    void createOrUpdateCourtLockPropagatesConflictWhenLockHeldByAnotherUser() {
+        when(lockService.createOrUpdateLock(SubjectType.COURT, COURT_ID, TEST_PAGE, USER_ID))
+            .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Page locked by another user"));
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class, () ->
+                lockController.createOrUpdateSubjectLock(SubjectType.COURT, COURT_ID.toString(), TEST_PAGE, USER_ID)
+        );
+
+        assertThat(exception.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CONFLICT);
     }
 
     @Test
