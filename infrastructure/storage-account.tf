@@ -1,5 +1,6 @@
 module "storage_account" {
-  source                          = "git@github.com:hmcts/cnp-module-storage-account?ref=4.x"
+  # renovate: datasource=git-refs packageName=https://github.com/hmcts/cnp-module-storage-account currentValue=4.x
+  source                          = "git@github.com:hmcts/cnp-module-storage-account?ref=5c8df0abf1318357ccf49632d8f6378dd0decf5f"
   env                             = var.env
   storage_account_name            = "${var.product}sa${var.env}"
   resource_group_name             = data.azurerm_resource_group.fact_rg.name
