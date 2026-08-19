@@ -10,6 +10,7 @@ import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +29,8 @@ public final class ServiceCentreAreasOfLawControllerFunctionalTest {
     @DisplayName("Service centre areas of law endpoints support get and update")
     void shouldSetAndGetServiceCentreAreasOfLaw() {
         UUID serviceCentreId = TestDataHelper.createServiceCentre(http, TEST_PREFIX);
+        ZonedDateTime timestampBeforeUpdate = AssertionHelper.getServiceCentreLastUpdatedAt(http, serviceCentreId);
+
         UUID areaOfLawId = UUID.fromString(http.doGet("/types/v1/areas-of-law").jsonPath().getString("[0].id"));
         ServiceCentreAreasOfLaw areasOfLaw = ServiceCentreAreasOfLaw.builder()
             .serviceCentreId(serviceCentreId)
@@ -39,6 +42,12 @@ public final class ServiceCentreAreasOfLawControllerFunctionalTest {
             areasOfLaw
         );
         AssertionHelper.assertStatus(updateResponse, CREATED);
+
+        ZonedDateTime timestampAfterUpdate = AssertionHelper.getServiceCentreLastUpdatedAt(http, serviceCentreId);
+        assertThat(timestampAfterUpdate)
+            .as("Service centre lastUpdatedAt should move forward after areas of law update for service centre %s",
+                serviceCentreId)
+            .isAfter(timestampBeforeUpdate);
 
         Response getResponse = http.doGet("/service-centres/" + serviceCentreId + "/v1/areas-of-law");
         AssertionHelper.assertStatus(getResponse, OK);
