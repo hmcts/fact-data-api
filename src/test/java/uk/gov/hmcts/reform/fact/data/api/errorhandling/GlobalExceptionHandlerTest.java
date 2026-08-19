@@ -15,14 +15,15 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.JsonConvertException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
-
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfLawException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.lang.annotation.Annotation;
@@ -324,6 +325,18 @@ class GlobalExceptionHandlerTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getMessage()).contains("Invalid area of Law: Probate");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleJsonConvertExceptionException() {
+        JsonConvertException ex =
+            new JsonConvertException("Json Convert Exception Message");
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage()).contains("Json Convert Exception Message");
         assertThat(response.getTimestamp()).isNotNull();
     }
 
