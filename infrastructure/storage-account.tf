@@ -16,6 +16,10 @@ module "storage_account" {
     {
       name        = "photos",
       access_type = "container"
+    },
+    {
+      name        = "csv",
+      access_type = "container"
     }
   ]
 

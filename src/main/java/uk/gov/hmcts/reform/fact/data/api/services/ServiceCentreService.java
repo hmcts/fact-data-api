@@ -157,6 +157,15 @@ public class ServiceCentreService {
     }
 
     /**
+     * Get all service centre details.
+     *
+     * @return a {@link List} of all service centre details.
+     */
+    public List<ServiceCentreDetails> getAllServiceCentreDetails() {
+        return serviceCentreDetailsRepository.findAll();
+    }
+
+    /**
      * Convert a service centre name into slug format.
      *
      * @param name The service centre name.
