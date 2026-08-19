@@ -26,8 +26,7 @@ module "postgresql" {
     azurerm.postgres_network = azurerm.postgres_network
   }
 
-  # renovate: datasource=git-refs packageName=https://github.com/hmcts/terraform-module-postgresql-flexible currentValue=DTSPO-30107-additional-postgres-admins
-  source    = "git@github.com:hmcts/terraform-module-postgresql-flexible?ref=ab04670660e548c70fd7705547ec80992f73586c"
+  source    = "git@github.com:hmcts/terraform-module-postgresql-flexible?ref=DTSPO-30107-additional-postgres-admins"
   product   = var.product
   component = var.component
   name      = "${var.product}-${var.component}-pg17"
