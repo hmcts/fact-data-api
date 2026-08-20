@@ -38,6 +38,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
@@ -240,7 +241,10 @@ class TestingSupportServiceTest {
         verify(courtService, times(1)).createCourt(any());
         verify(courtAccessibilityOptionsService, times(1)).setAccessibilityOptions(any(), any());
         verify(courtAreasOfLawService, times(1)).setCourtAreasOfLaw(any(), any());
-        verify(courtContactDetailsService, times(1)).createContactDetail(any(), any());
+        ArgumentCaptor<CourtContactDetails> contactDetailsCaptor = ArgumentCaptor.forClass(CourtContactDetails.class);
+        verify(courtContactDetailsService, times(1)).createContactDetail(any(), contactDetailsCaptor.capture());
+        assertThat(contactDetailsCaptor.getValue().getExplanation()).isNotBlank();
+        assertThat(contactDetailsCaptor.getValue().getExplanationCy()).isNotBlank();
         verify(courtOpeningHoursService, times(1)).setCounterServiceOpeningHours(any(), any());
         verify(courtFacilitiesService, times(1)).setFacilities(any(), any());
         verify(courtProfessionalInformationService, times(1)).setProfessionalInformation(any(), any());
@@ -248,7 +252,12 @@ class TestingSupportServiceTest {
 
         // things that are called at least once
         verify(courtOpeningHoursService, atLeast(1)).setOpeningHours(any(), any());
-        verify(courtAddressService, atLeast(1)).createAddress(any(), any());
+        ArgumentCaptor<CourtAddress> addressCaptor = ArgumentCaptor.forClass(CourtAddress.class);
+        verify(courtAddressService, atLeast(1)).createAddress(any(), addressCaptor.capture());
+        assertThat(addressCaptor.getAllValues()).hasSizeBetween(1, 3);
+        assertThat(addressCaptor.getAllValues().stream()
+                       .filter(address -> address.getAddressType() == AddressType.VISIT_US))
+            .hasSizeLessThanOrEqualTo(1);
 
         // things that are optional, but have a ceiling
         verify(courtLocalAuthoritiesService, atMost(1)).setCourtLocalAuthorities(any(), any());
@@ -435,10 +444,14 @@ class TestingSupportServiceTest {
             any(ServiceCentreAreasOfLaw.class)
         );
         verify(serviceCentreAddressService).createAddress(eq(serviceCentreId), any(ServiceCentreAddress.class));
+        ArgumentCaptor<ServiceCentreContactDetails> contactDetailsCaptor =
+            ArgumentCaptor.forClass(ServiceCentreContactDetails.class);
         verify(serviceCentreContactDetailsService).createContactDetail(
             eq(serviceCentreId),
-            any(ServiceCentreContactDetails.class)
+            contactDetailsCaptor.capture()
         );
+        assertThat(contactDetailsCaptor.getValue().getExplanation()).isNotBlank();
+        assertThat(contactDetailsCaptor.getValue().getExplanationCy()).isNotBlank();
     }
 
     @Test
@@ -525,6 +538,8 @@ class TestingSupportServiceTest {
             ArgumentCaptor.forClass(CourtContactDetails.class);
         verify(courtContactDetailsService, times(1))
             .createContactDetail(eq(courtId), courtContactDetailsArgumentCaptor.capture());
+        assertThat(courtContactDetailsArgumentCaptor.getValue().getExplanation()).isNotBlank();
+        assertThat(courtContactDetailsArgumentCaptor.getValue().getExplanationCy()).isNotBlank();
         ArgumentCaptor<CourtCounterServiceOpeningHours> courtCounterServiceOpeningHoursArgumentCaptor =
             ArgumentCaptor.forClass(CourtCounterServiceOpeningHours.class);
         verify(courtOpeningHoursService, times(1))
@@ -543,6 +558,10 @@ class TestingSupportServiceTest {
         // things that are called at least once
         ArgumentCaptor<CourtAddress> courtAddressArgumentCaptor = ArgumentCaptor.forClass(CourtAddress.class);
         verify(courtAddressService, atLeast(1)).createAddress(eq(courtId), courtAddressArgumentCaptor.capture());
+        assertThat(courtAddressArgumentCaptor.getAllValues()).hasSizeBetween(1, 3);
+        assertThat(courtAddressArgumentCaptor.getAllValues().stream()
+                       .filter(address -> address.getAddressType() == AddressType.VISIT_US))
+            .hasSizeLessThanOrEqualTo(1);
         ArgumentCaptor<CourtOpeningHours> courtOpeningHoursArgumentCaptor =
             ArgumentCaptor.forClass(CourtOpeningHours.class);
         verify(courtOpeningHoursService, atLeast(1))
