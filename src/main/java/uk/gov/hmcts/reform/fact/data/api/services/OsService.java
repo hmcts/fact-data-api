@@ -27,6 +27,8 @@ public class OsService {
             "^([A-Z]{1,2}\\d[\\dA-Z]?)(?:\\s+(\\d[A-Z]{0,2}))?$",
             Pattern.CASE_INSENSITIVE
         );
+    private static final Pattern OS_API_KEY_QUERY_PARAMETER_PATTERN =
+        Pattern.compile("([?&]key=)[^&\\]\\s]+", Pattern.CASE_INSENSITIVE);
 
     public OsService(OsFeignClient osFeignClient,
                      LocalAuthorityTypeRepository localAuthorityTypeRepository) {
@@ -130,16 +132,25 @@ public class OsService {
 
             return osData;
         } catch (FeignException e) {
+            String safeExceptionDetails = sanitiseOsException(e);
             if (e.status() >= 400 && e.status() < 500) {
                 throw new InvalidPostcodeException(
-                    "OS rejected postcode %s with status %s, %s".formatted(postcode, e.status(), e)
+                    "OS rejected postcode %s with status %s, %s"
+                        .formatted(postcode, e.status(), safeExceptionDetails)
                 );
             }
 
             throw new OsProcessException(
-                "Error calling Ordnance Survey for postcode %s, %s".formatted(postcode, e)
+                "Error calling Ordnance Survey for postcode %s, %s"
+                    .formatted(postcode, safeExceptionDetails)
             );
         }
+    }
+
+    private String sanitiseOsException(FeignException exception) {
+        return OS_API_KEY_QUERY_PARAMETER_PATTERN
+            .matcher(exception.toString())
+            .replaceAll("$1[REDACTED]");
     }
 
     /**

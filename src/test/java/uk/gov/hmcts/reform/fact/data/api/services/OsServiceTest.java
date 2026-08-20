@@ -36,6 +36,7 @@ import static org.mockito.Mockito.when;
 class OsServiceTest {
 
     private static final String AUTHORITY_NAME = "Authority Name";
+    private static final String OS_API_KEY = "ab1CdEFIJKLmI0PQ23TuvwxyzABc4dEf";
 
     @Mock
     private OsFeignClient osFeignClient;
@@ -159,7 +160,10 @@ class OsServiceTest {
 
         assertThatThrownBy(() -> osService.getOsAddressByFullPostcode("SW1A 1AA"))
             .isInstanceOf(InvalidPostcodeException.class)
-            .hasMessageContaining("OS rejected postcode SW1A 1AA with status 400");
+            .hasMessageContaining("OS rejected postcode SW1A 1AA with status 400")
+            .hasMessageContaining("api.os.uk")
+            .hasMessageContaining("key=[REDACTED]")
+            .hasMessageNotContaining(OS_API_KEY);
     }
 
     @Test
@@ -169,7 +173,10 @@ class OsServiceTest {
 
         assertThatThrownBy(() -> osService.getOsAddressByFullPostcode("SW1A 1AA"))
             .isInstanceOf(OsProcessException.class)
-            .hasMessageContaining("Error calling Ordnance Survey");
+            .hasMessageContaining("Error calling Ordnance Survey")
+            .hasMessageContaining("api.os.uk")
+            .hasMessageContaining("key=[REDACTED]")
+            .hasMessageNotContaining(OS_API_KEY);
     }
 
     @Test
@@ -223,7 +230,7 @@ class OsServiceTest {
     private FeignException createFeignException(int status) {
         Request request = Request.create(
             Request.HttpMethod.GET,
-            "http://localhost",
+            "https://api.os.uk/search/places/v1/postcode?postcode=SW1A%201AA&key=" + OS_API_KEY,
             Map.of(),
             null,
             new RequestTemplate()
