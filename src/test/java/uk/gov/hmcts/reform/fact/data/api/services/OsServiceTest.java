@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
 class OsServiceTest {
 
     private static final String AUTHORITY_NAME = "Authority Name";
-    private static final String OS_API_KEY = "ab1CdEFIJKLmI0PQ23TuvwxyzABc4dEf";
+    private static final String OS_API_KEY = "not-a-real-os-api-key";
 
     @Mock
     private OsFeignClient osFeignClient;
