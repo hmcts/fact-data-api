@@ -84,8 +84,10 @@ public class LockService {
     @Transactional
     public Lock createOrUpdateLock(SubjectType subjectType, UUID subjectId, Page page, UUID userId) {
         UUID id = verifySubject(subjectType, subjectId);
-
         User user = userService.getUserById(userId);
+
+        lockRepository.acquireMutationGuard();
+
         ZonedDateTime lockAcquired = ZonedDateTime.now(ZoneOffset.UTC);
         ZonedDateTime expiryThreshold = lockAcquired.minusMinutes(lockTimeoutMinutes);
 

@@ -1,5 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.repositories;
 
+import static uk.gov.hmcts.reform.fact.data.api.repositories.RepositoryConstants.FACT_DATA_API_LOCK_NAMESPACE;
+import static uk.gov.hmcts.reform.fact.data.api.repositories.RepositoryConstants.LOCK_TABLE_MUTATION;
+
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 
 import java.time.ZonedDateTime;
@@ -98,4 +101,10 @@ public interface LockRepository extends JpaRepository<Lock, UUID> {
         @Param("userId") UUID userId,
         @Param("lockId") UUID lockId
     );
+
+    @Query(
+        value = "SELECT pg_advisory_xact_lock(" + FACT_DATA_API_LOCK_NAMESPACE + ", " + LOCK_TABLE_MUTATION + ")",
+        nativeQuery = true
+    )
+    void acquireMutationGuard();
 }
