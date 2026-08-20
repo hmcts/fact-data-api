@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -50,6 +51,7 @@ public class ServiceCentreAreasOfLawService {
      * @return The created or updated areas of law entity.
      * @throws NotFoundException if the service centre or supplied areas of law do not exist.
      */
+    @Transactional
     public ServiceCentreAreasOfLaw setServiceCentreAreasOfLaw(UUID serviceCentreId,
                                                               ServiceCentreAreasOfLaw serviceCentreAreasOfLaw) {
         serviceCentreAreasOfLaw.setServiceCentre(serviceCentreService.getServiceCentreById(serviceCentreId));
