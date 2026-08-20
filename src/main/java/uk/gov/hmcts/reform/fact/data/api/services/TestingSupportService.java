@@ -122,6 +122,14 @@ public class TestingSupportService {
         "Feedback and complaints handling"
     );
 
+    private static final List<String> CONTACT_DESCRIPTION_VALUES_CY = List.of(
+        "Ymholiadau cyffredinol a gwybodaeth",
+        "Cymorth a chefnogaeth achosion brys",
+        "Cymorth technegol ar gyfer gwasanaethau ar-lein",
+        "Gwybodaeth am hygyrchedd a chyfleusterau",
+        "Ymdrin ag adborth a chwynion"
+    );
+
     public static final List<String> WARNING_NOTICE_VALUES = List.of(
         "Court temporarily closed for maintenance",
         "Limited access due to ongoing construction",
@@ -506,8 +514,11 @@ public class TestingSupportService {
     }
 
     private void setAddresses(final UUID courtId, List<AreaOfLawType> areasOfLaw, final Random random) {
-
-        if (random.nextBoolean()) {
+        // make a note of whether we have added a visit_us address so that
+        // de don't accidentally add another in the randomised additional
+        // address block
+        boolean hasVisitUsAddress = random.nextBoolean();
+        if (hasVisitUsAddress) {
             // do a pair visit us and write to us addresses
             CourtAddress visitUsAddress = rndAddress(courtId, AddressType.VISIT_US, areasOfLaw, random);
             courtAddressService.createAddress(courtId, visitUsAddress);
@@ -521,7 +532,10 @@ public class TestingSupportService {
 
         if (random.nextBoolean()) {
             // bonus address!
-            AddressType addressType = AddressType.values()[random.nextInt(AddressType.values().length)];
+            List<AddressType> availableAddressTypes = Arrays.stream(AddressType.values())
+                .filter(addressType -> !hasVisitUsAddress || addressType != AddressType.VISIT_US)
+                .toList();
+            AddressType addressType = availableAddressTypes.get(random.nextInt(availableAddressTypes.size()));
             List<AreaOfLawType> aol = areasOfLaw.stream().filter(l -> random.nextBoolean()).toList();
             CourtAddress bonusAddress = rndAddress(courtId, addressType, aol, random);
             courtAddressService.createAddress(courtId, bonusAddress);
@@ -575,10 +589,12 @@ public class TestingSupportService {
             return;
         }
 
+        int explanationIndex = random.nextInt(CONTACT_DESCRIPTION_VALUES.size());
         CourtContactDetails courtContactDetails = CourtContactDetails.builder()
             .courtId(courtId)
             .courtContactDescriptionId(CONTACT_DESCRIPTION_IDS.get(random.nextInt(CONTACT_DESCRIPTION_IDS.size())))
-            .explanation(CONTACT_DESCRIPTION_VALUES.get(random.nextInt(CONTACT_DESCRIPTION_VALUES.size())))
+            .explanation(CONTACT_DESCRIPTION_VALUES.get(explanationIndex))
+            .explanationCy(CONTACT_DESCRIPTION_VALUES_CY.get(explanationIndex))
             .phoneNumber(rndPhoneNumber(random))
             .email(rndEmail(random))
             .build();
@@ -593,12 +609,14 @@ public class TestingSupportService {
     }
 
     private void setServiceCentreContactDetails(final UUID serviceCentreId, final Random random) {
+        int explanationIndex = random.nextInt(CONTACT_DESCRIPTION_VALUES.size());
         ServiceCentreContactDetails serviceCentreContactDetails = ServiceCentreContactDetails.builder()
             .serviceCentreId(serviceCentreId)
             .serviceCentreContactDescriptionId(
                 CONTACT_DESCRIPTION_IDS.get(random.nextInt(CONTACT_DESCRIPTION_IDS.size()))
             )
-            .explanation(CONTACT_DESCRIPTION_VALUES.get(random.nextInt(CONTACT_DESCRIPTION_VALUES.size())))
+            .explanation(CONTACT_DESCRIPTION_VALUES.get(explanationIndex))
+            .explanationCy(CONTACT_DESCRIPTION_VALUES_CY.get(explanationIndex))
             .phoneNumber(rndPhoneNumber(random))
             .email(rndEmail(random))
             .build();
@@ -637,9 +655,14 @@ public class TestingSupportService {
             .quietRoom(random.nextBoolean())
             .drinkVendingMachines(random.nextBoolean())
             .snackVendingMachines(random.nextBoolean())
-            .waitingAreaChildren(random.nextBoolean())
             .waitingArea(random.nextBoolean())
             .build();
+
+        // only set waitingAreaChildren if waitingArea is true as the frontend will only
+        // expect waitingAreaChildren to be set if waitingArea is true
+        if (facilities.getWaitingArea()) {
+            facilities.setWaitingAreaChildren(random.nextBoolean());
+        }
 
         courtFacilitiesService.setFacilities(courtId, facilities);
     }
