@@ -655,9 +655,14 @@ public class TestingSupportService {
             .quietRoom(random.nextBoolean())
             .drinkVendingMachines(random.nextBoolean())
             .snackVendingMachines(random.nextBoolean())
-            .waitingAreaChildren(random.nextBoolean())
             .waitingArea(random.nextBoolean())
             .build();
+
+        // only set waitingAreaChildren if waitingArea is true as the frontend will only
+        // expect waitingAreaChildren to be set if waitingArea is true
+        if (facilities.getWaitingArea()) {
+            facilities.setWaitingAreaChildren(random.nextBoolean());
+        }
 
         courtFacilitiesService.setFacilities(courtId, facilities);
     }
