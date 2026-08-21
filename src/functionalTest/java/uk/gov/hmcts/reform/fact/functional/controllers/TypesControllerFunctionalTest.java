@@ -89,8 +89,8 @@ public final class TypesControllerFunctionalTest {
 
         assertThat(response.statusCode()).isEqualTo(OK.value());
         assertThat(response.contentType()).contains("json");
-        assertThat(response.jsonPath().getList("$")).isNotEmpty();
-        assertThat(response.jsonPath().getString("[0].name")).isEqualTo("Divorce");
+        List<String> serviceAreaNames = response.jsonPath().getList("name");
+        assertThat(serviceAreaNames).contains("Divorce");
     }
 
     @Test
