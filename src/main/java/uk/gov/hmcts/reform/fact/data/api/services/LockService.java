@@ -42,6 +42,9 @@ public class LockService {
      */
     @Transactional
     public void clearUserLocks(UUID userId) {
+        // acquire the mutation guard to prevent concurrent modifications to the lock table
+        lockRepository.acquireMutationGuard();
+
         lockRepository.deleteAllByUserId(userService.getUserById(userId).getId());
     }
 
@@ -86,6 +89,7 @@ public class LockService {
         UUID id = verifySubject(subjectType, subjectId);
         User user = userService.getUserById(userId);
 
+        // acquire the mutation guard to prevent concurrent modifications to the lock table
         lockRepository.acquireMutationGuard();
 
         ZonedDateTime lockAcquired = ZonedDateTime.now(ZoneOffset.UTC);
@@ -129,6 +133,9 @@ public class LockService {
     public void deleteLock(SubjectType subjectType, UUID subjectId, Page page) {
         UUID id = verifySubject(subjectType, subjectId);
 
+        // acquire the mutation guard to prevent concurrent modifications to the lock table
+        lockRepository.acquireMutationGuard();
+
         lockRepository.deleteBySubjectTypeAndSubjectIdAndPage(subjectType.name(), id, page.name());
     }
 
@@ -137,6 +144,8 @@ public class LockService {
      */
     @Transactional
     public void deleteExpiredLocks() {
+        // acquire the mutation guard to prevent concurrent modifications to the lock table
+        lockRepository.acquireMutationGuard();
         lockRepository.deleteByLockAcquiredBefore(ZonedDateTime.now(ZoneOffset.UTC).minusMinutes(lockTimeoutMinutes));
     }
 
