@@ -1,6 +1,6 @@
  # renovate: datasource=github-releases depName=microsoft/ApplicationInsights-Java
 ARG APP_INSIGHTS_AGENT_VERSION=3.7.9
-FROM hmctsprod.azurecr.io/base/java:21-distroless@sha256:477522a26ab135e421e66596741fdf18ee013694173e60cb4430d34741b7a834
+FROM hmctsprod.azurecr.io/base/java:25-distroless@sha256:7d37bc56d6d9b23c1d58a1c6014b9dc9b044ee2d5acf7167f2ce8b2079111fa1
 
 COPY lib/applicationinsights.json /opt/app/
 COPY build/libs/fact-data-api.jar /opt/app/
