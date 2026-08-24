@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,13 +30,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
     description = "Operations related to opening hours for courts"
 )
 @RequestMapping("/courts/{courtId}/")
+@RequiredArgsConstructor
 public class CourtOpeningHoursController {
 
     private final CourtOpeningHoursService courtOpeningHoursService;
-
-    public CourtOpeningHoursController(CourtOpeningHoursService courtOpeningHoursService) {
-        this.courtOpeningHoursService = courtOpeningHoursService;
-    }
 
     @GetMapping("/v1/opening-hours")
     @Operation(

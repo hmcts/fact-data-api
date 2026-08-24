@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
@@ -8,13 +9,10 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class OpeningHoursTypeService {
 
     private final OpeningHoursTypeRepository openingHoursTypeRepository;
-
-    public OpeningHoursTypeService(OpeningHoursTypeRepository openingHoursTypeRepository) {
-        this.openingHoursTypeRepository = openingHoursTypeRepository;
-    }
 
     /**
      * Get an opening hour type by id.

@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
@@ -9,13 +10,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class CourtSinglePointOfEntryService {
 
     private final CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository;
-
-    public CourtSinglePointOfEntryService(CourtSinglePointsOfEntryRepository courtSinglePointsOfEntryRepository) {
-        this.courtSinglePointsOfEntryRepository = courtSinglePointsOfEntryRepository;
-    }
 
     /**
      * Finds the nearest SPOE court that lies within the given local authority for childcare arrangements.

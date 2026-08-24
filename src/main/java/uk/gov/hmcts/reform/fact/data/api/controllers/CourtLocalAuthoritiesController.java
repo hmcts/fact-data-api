@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,13 +29,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 )
 @RequestMapping("/courts/{courtId}")
 @SuppressWarnings("java:S4684")
+@RequiredArgsConstructor
 public class CourtLocalAuthoritiesController {
 
     private final CourtLocalAuthoritiesService courtLocalAuthoritiesService;
-
-    public CourtLocalAuthoritiesController(CourtLocalAuthoritiesService courtLocalAuthoritiesService) {
-        this.courtLocalAuthoritiesService = courtLocalAuthoritiesService;
-    }
 
     @GetMapping(value = "/v1/local-authorities", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(

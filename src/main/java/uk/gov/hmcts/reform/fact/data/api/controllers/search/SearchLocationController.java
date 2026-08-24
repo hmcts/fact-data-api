@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,13 +25,10 @@ import java.util.List;
     description = "Operations related to searching courts and service centres"
 )
 @RequestMapping("/search/locations")
+@RequiredArgsConstructor
 public class SearchLocationController {
 
     private final SearchLocationService searchLocationService;
-
-    public SearchLocationController(SearchLocationService searchLocationService) {
-        this.searchLocationService = searchLocationService;
-    }
 
     @GetMapping("/v1/postcode")
     @Operation(

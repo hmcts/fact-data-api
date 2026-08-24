@@ -3,20 +3,20 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
 
 import java.io.IOException;
 
 @Slf4j
+@Service
+@RequiredArgsConstructor
 public class AzureBlobService {
 
     private final BlobContainerClient blobContainerClient;
-
-    public AzureBlobService(BlobContainerClient blobContainerClient) {
-        this.blobContainerClient = blobContainerClient;
-    }
 
     /**
      * Uploads a file to an Azure blob container.

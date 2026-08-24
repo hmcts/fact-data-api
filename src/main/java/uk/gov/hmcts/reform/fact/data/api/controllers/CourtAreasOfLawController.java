@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,13 +30,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 )
 @RequestMapping("/courts/{courtId}")
 @SuppressWarnings("java:S4684")
+@RequiredArgsConstructor
 public class CourtAreasOfLawController {
 
     private final CourtAreasOfLawService courtAreasOfLawService;
-
-    public CourtAreasOfLawController(CourtAreasOfLawService courtAreasOfLawService) {
-        this.courtAreasOfLawService = courtAreasOfLawService;
-    }
 
     @GetMapping("/v1/areas-of-law")
     @Operation(

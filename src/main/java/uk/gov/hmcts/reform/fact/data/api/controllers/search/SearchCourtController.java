@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,17 +29,12 @@ import java.util.List;
     description = "Operations related to searching courts and service centres"
 )
 @RequestMapping("/search/courts")
+@RequiredArgsConstructor
 public class SearchCourtController {
 
     private static final String SINGLE_LETTER_REGEX = "^[A-Za-z]$";
     private final SearchCourtService searchCourtService;
     private final AllLocationService allLocationService;
-
-    public SearchCourtController(SearchCourtService searchCourtService,
-                                 AllLocationService allLocationService) {
-        this.searchCourtService = searchCourtService;
-        this.allLocationService = allLocationService;
-    }
 
     @GetMapping("/v1/postcode")
     @Operation(

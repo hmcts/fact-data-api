@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CourtOpeningHoursService {
 
     private final CourtOpeningHoursRepository courtOpeningHoursRepository;
@@ -27,18 +29,6 @@ public class CourtOpeningHoursService {
     private final OpeningHoursTypeService openingHoursTypeService;
     private final TypesService typesService;
 
-    public CourtOpeningHoursService(
-        CourtOpeningHoursRepository courtOpeningHoursRepository,
-        CourtCounterServiceOpeningHoursRepository courtCounterServiceOpeningHoursRepository,
-        CourtService courtService,
-        OpeningHoursTypeService openingHoursTypeService,
-        TypesService typesService) {
-        this.courtOpeningHoursRepository = courtOpeningHoursRepository;
-        this.courtCounterServiceOpeningHoursRepository = courtCounterServiceOpeningHoursRepository;
-        this.courtService = courtService;
-        this.openingHoursTypeService = openingHoursTypeService;
-        this.typesService = typesService;
-    }
 
     /**
      * Get a list of opening hours by court ID.
