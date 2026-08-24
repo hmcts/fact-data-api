@@ -5,14 +5,12 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
 
 import java.io.IOException;
 
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class AzureBlobService {
 
