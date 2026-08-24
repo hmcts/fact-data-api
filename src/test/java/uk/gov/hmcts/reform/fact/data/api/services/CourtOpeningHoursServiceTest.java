@@ -278,6 +278,16 @@ class CourtOpeningHoursServiceTest {
     }
 
     @Test
+    void setOpeningHoursThrowsExceptionWhenOpeningHoursIsNull() {
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> courtOpeningHoursService.setOpeningHours(courtId, null)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Court opening hours cannot be null");
+    }
+
+    @Test
     void setOpeningHoursRemovesOtherDaysWhenEverydayPresent() {
 
         CourtOpeningHours hours =
@@ -382,6 +392,16 @@ class CourtOpeningHoursServiceTest {
 
         assertThat(result).isEqualTo(counterServiceOpeningHours);
         verify(courtCounterServiceOpeningHoursRepository).save(counterServiceOpeningHours);
+    }
+
+    @Test
+    void setCounterServiceOpeningHoursThrowsExceptionWhenHoursIsNull() {
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> courtOpeningHoursService.setCounterServiceOpeningHours(courtId, null)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("Court counter service opening hours cannot be null");
     }
 
     @Test

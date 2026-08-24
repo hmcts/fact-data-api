@@ -105,7 +105,11 @@ public class CourtOpeningHoursService {
     @Transactional
     public CourtOpeningHours setOpeningHours(UUID courtId, CourtOpeningHours courtOpeningHours) {
 
-        if (courtOpeningHours != null && courtOpeningHours.getId() != null) {
+        if (courtOpeningHours == null) {
+            throw new IllegalArgumentException("Court opening hours cannot be null");
+        }
+
+        if (courtOpeningHours.getId() != null) {
             getOpeningHoursById(courtId, courtOpeningHours.getId());
         }
 
@@ -137,7 +141,11 @@ public class CourtOpeningHoursService {
     public CourtCounterServiceOpeningHours setCounterServiceOpeningHours(
         UUID courtId, CourtCounterServiceOpeningHours courtCounterServiceOpeningHours) {
 
-        if (courtCounterServiceOpeningHours != null && courtCounterServiceOpeningHours.getId() != null) {
+        if (courtCounterServiceOpeningHours == null) {
+            throw new IllegalArgumentException("Court counter service opening hours cannot be null");
+        }
+
+        if (courtCounterServiceOpeningHours.getId() != null) {
             courtCounterServiceOpeningHoursRepository
                 .findById(courtCounterServiceOpeningHours.getId()).orElseThrow(
                     () -> new NotFoundException(
