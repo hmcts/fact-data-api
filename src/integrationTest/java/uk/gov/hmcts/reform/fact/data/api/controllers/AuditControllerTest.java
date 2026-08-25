@@ -491,9 +491,11 @@ class AuditControllerTest {
     }
 
     private ServiceCentre createTestServiceCentre() {
+        Collections.shuffle(regions);
         return serviceCentreRepository.save(ServiceCentre.builder()
             .name("Service Centre " + RandomStringUtils.insecure().next(10, true, false))
             .open(Boolean.FALSE)
+            .regionId(regions.getFirst().getId())
             .build());
     }
 

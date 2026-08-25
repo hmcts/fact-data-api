@@ -130,10 +130,12 @@ class AuditingTest {
     @Test
     @DisplayName("Creating and updating a ServiceCentre should create Audit records")
     void creatingAndUpdatingAServiceCentreShouldCreateAuditRecords() {
+        Region region = regionRepository.findAll().getFirst();
         ServiceCentre serviceCentre = ServiceCentre.builder()
             .name("Test Service Centre")
             .slug("test-service-centre")
             .open(Boolean.FALSE)
+            .regionId(region.getId())
             .build();
         serviceCentreRepository.save(serviceCentre);
 

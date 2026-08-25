@@ -93,7 +93,7 @@ public abstract class AbstractCourtEntity {
 
     @Schema(description = "The ID of the associated Region")
     @NotNull
-    @Column(name = "region_id")
+    @Column(name = "region_id", nullable = false)
     private UUID regionId;
 
     @Schema(description = "Indicates that this Court is declared open in the Court and Tribunal Hearing service")
