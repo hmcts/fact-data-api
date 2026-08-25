@@ -15,6 +15,7 @@ import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,13 +26,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 )
 @RequestMapping("/types")
 @SuppressWarnings("java:S4684")
+@RequiredArgsConstructor
 public class TypesController {
 
     private final TypesService typesService;
-
-    public TypesController(TypesService typesService) {
-        this.typesService = typesService;
-    }
 
     @GetMapping("/v1/areas-of-law")
     @Operation(

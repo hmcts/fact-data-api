@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -9,13 +10,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class RegionService {
 
     private final RegionRepository regionRepository;
-
-    public RegionService(RegionRepository regionRepository) {
-        this.regionRepository = regionRepository;
-    }
 
     /**
      * Get all regions.

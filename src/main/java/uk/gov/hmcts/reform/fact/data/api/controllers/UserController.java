@@ -24,6 +24,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +44,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 )
 @RequestMapping("/user")
 @SuppressWarnings("java:S4684")
+@RequiredArgsConstructor
 public class UserController {
 
     private static final String USER_ID_HEADER = "X-User-Id";
@@ -50,13 +52,6 @@ public class UserController {
     private final UserService userService;
     private final LockService lockService;
 
-    public UserController(
-        UserService userService,
-        LockService lockService
-    ) {
-        this.userService = userService;
-        this.lockService = lockService;
-    }
 
     @GetMapping("/v1")
     @Operation(summary = "Get filtered and paginated users")

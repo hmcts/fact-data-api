@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,13 +29,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 )
 @RequestMapping("/courts/{courtId}")
 @SuppressWarnings("java:S4684")
+@RequiredArgsConstructor
 public class CourtTranslationController {
 
     private final CourtTranslationService courtTranslationService;
-
-    public CourtTranslationController(CourtTranslationService courtTranslationService) {
-        this.courtTranslationService = courtTranslationService;
-    }
 
     @GetMapping("/v1/translation-services")
     @Operation(
