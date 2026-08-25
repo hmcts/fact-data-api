@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services.search;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
@@ -31,6 +32,7 @@ import static uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy.FA
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class SearchCourtService {
 
     private final OsService osService;
@@ -42,22 +44,6 @@ public class SearchCourtService {
     private final ServiceCentreRepository serviceCentreRepository;
     private static final String CHILDCARE_SERVICE_AREA = "Childcare arrangements if you separate from your partner";
     private static final String CHILDCARE_AOL = "Children";
-
-    public SearchCourtService(OsService osService,
-                              ServiceAreaService serviceAreaService,
-                              CourtSinglePointOfEntryService courtSinglePointOfEntryService,
-                              CourtAddressService courtAddressService,
-                              SearchExecuter searchExecuter,
-                              LocalAuthorityTypeRepository localAuthorityTypeRepository,
-                              ServiceCentreRepository serviceCentreRepository) {
-        this.osService = osService;
-        this.serviceAreaService = serviceAreaService;
-        this.courtSinglePointOfEntryService = courtSinglePointOfEntryService;
-        this.courtAddressService = courtAddressService;
-        this.searchExecuter = searchExecuter;
-        this.localAuthorityTypeRepository = localAuthorityTypeRepository;
-        this.serviceCentreRepository = serviceCentreRepository;
-    }
 
     /**
      * Determine whether we do a search by postcode itself

@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import feign.FeignException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
+@RequiredArgsConstructor
 public class OsService {
 
     private final OsFeignClient osFeignClient;
@@ -29,12 +31,6 @@ public class OsService {
         );
     private static final Pattern OS_API_KEY_QUERY_PARAMETER_PATTERN =
         Pattern.compile("([?&]key=)[^&\\]\\s]+", Pattern.CASE_INSENSITIVE);
-
-    public OsService(OsFeignClient osFeignClient,
-                     LocalAuthorityTypeRepository localAuthorityTypeRepository) {
-        this.osFeignClient = osFeignClient;
-        this.localAuthorityTypeRepository = localAuthorityTypeRepository;
-    }
 
     /**
      * For the frontend logic. Take in the full postcode and provide a search

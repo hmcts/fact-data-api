@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAccessibilityOptions;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
@@ -9,16 +10,11 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAccessibilityOptionsR
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class CourtAccessibilityOptionsService {
 
     private final CourtAccessibilityOptionsRepository courtAccessibilityOptionsRepository;
     private final CourtService courtService;
-
-    public CourtAccessibilityOptionsService(
-        CourtAccessibilityOptionsRepository courtAccessibilityOptionsRepository, CourtService courtService) {
-        this.courtAccessibilityOptionsRepository = courtAccessibilityOptionsRepository;
-        this.courtService = courtService;
-    }
 
     /**
      * Get Accessibility Options by court id. A court will only ever have zero or one Accessibility Options records.

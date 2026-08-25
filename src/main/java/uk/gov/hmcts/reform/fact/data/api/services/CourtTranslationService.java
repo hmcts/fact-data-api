@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -11,15 +12,11 @@ import java.util.UUID;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CourtTranslationService {
 
     private final CourtTranslationRepository courtTranslationRepository;
     private final CourtService courtService;
-
-    public CourtTranslationService(CourtTranslationRepository courtTranslationRepository, CourtService courtService) {
-        this.courtTranslationRepository = courtTranslationRepository;
-        this.courtService = courtService;
-    }
 
     /**
      * Get translation by court id. A court will only ever have zero or one translation records.

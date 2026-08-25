@@ -16,6 +16,7 @@ import java.util.Locale;
 import java.util.UUID;
 import javax.imageio.ImageIO;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class CourtPhotoService {
 
     private static final String PNG = "png";
@@ -31,21 +33,10 @@ public class CourtPhotoService {
 
     private final CourtPhotoRepository courtPhotoRepository;
     private final CourtService courtService;
+    @Qualifier("photoAzureBlobService")
     private final AzureBlobService azureBlobService;
     private final AuditUserContext auditUserContext;
     private final PhotoConfigurationProperties photoConfigurationProperties;
-
-    public CourtPhotoService(CourtPhotoRepository courtPhotoRepository,
-                             CourtService courtService,
-                             @Qualifier("photoAzureBlobService") AzureBlobService azureBlobService,
-                             AuditUserContext auditUserContext,
-                             PhotoConfigurationProperties photoConfigurationProperties) {
-        this.courtPhotoRepository = courtPhotoRepository;
-        this.courtService = courtService;
-        this.azureBlobService = azureBlobService;
-        this.auditUserContext = auditUserContext;
-        this.photoConfigurationProperties = photoConfigurationProperties;
-    }
 
     /**
      * Get a court photo by court id.

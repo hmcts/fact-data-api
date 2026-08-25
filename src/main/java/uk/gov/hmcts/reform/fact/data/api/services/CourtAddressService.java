@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CourtAddressService {
 
     private final CourtAddressRepository courtAddressRepository;
@@ -26,15 +28,6 @@ public class CourtAddressService {
     private final TypesService typesService;
     private final OsService osService;
 
-    public CourtAddressService(CourtAddressRepository courtAddressRepository,
-                               CourtService courtService,
-                               TypesService typesService,
-                               OsService osService) {
-        this.courtAddressRepository = courtAddressRepository;
-        this.courtService = courtService;
-        this.typesService = typesService;
-        this.osService = osService;
-    }
 
     /**
      * Find Court Distances through the OS Data provided.
