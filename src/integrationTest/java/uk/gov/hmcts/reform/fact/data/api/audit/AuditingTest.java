@@ -107,7 +107,7 @@ class AuditingTest {
     @DisplayName("Creating and updating a Court should create Audit records")
     void creatingAndUpdatingACourtShouldCreateAuditRecords() {
         // INSERT
-        Region region = regionRepository.findAll().getFirst();
+        Region region = getOrCreateRegion();
         Court court = createCourt(region.getId(), TEST_COURT_NAME);
         courtRepository.save(court);
 
@@ -130,7 +130,7 @@ class AuditingTest {
     @Test
     @DisplayName("Creating and updating a ServiceCentre should create Audit records")
     void creatingAndUpdatingAServiceCentreShouldCreateAuditRecords() {
-        Region region = regionRepository.findAll().getFirst();
+        Region region = getOrCreateRegion();
         ServiceCentre serviceCentre = ServiceCentre.builder()
             .name("Test Service Centre")
             .slug("test-service-centre")
@@ -164,7 +164,7 @@ class AuditingTest {
     void creatingAndUpdatingACourtTranslationShouldCreateAuditRecords() {
 
         // SETUP
-        Region region = regionRepository.findAll().getFirst();
+        Region region = getOrCreateRegion();
         Court court = createCourt(region.getId(), TEST_COURT_NAME);
         courtRepository.save(court);
 
@@ -188,7 +188,7 @@ class AuditingTest {
     void creatingUpdatingAndDeletingACourtPhotoShouldCreateAuditRecords() {
 
         // SETUP
-        Region region = regionRepository.findAll().getFirst();
+        Region region = getOrCreateRegion();
         Court court = createCourt(region.getId(), TEST_COURT_NAME);
         courtRepository.save(court);
 
@@ -218,7 +218,7 @@ class AuditingTest {
         final int updateCount = 100;
 
         // SETUP
-        Region region = regionRepository.findAll().getFirst();
+        Region region = getOrCreateRegion();
         final Court court = createCourt(region.getId(), TEST_COURT_NAME);
         courtRepository.save(court);
 
@@ -398,6 +398,15 @@ class AuditingTest {
     }
 
     // entity creation methods
+
+    private Region getOrCreateRegion() {
+        return regionRepository.findAll().stream()
+            .findFirst()
+            .orElseGet(() -> regionRepository.save(Region.builder()
+                .name("Auditing Test Region")
+                .country("England")
+                .build()));
+    }
 
     private Court createCourt(UUID regionId, String name) {
         return Court.builder()
