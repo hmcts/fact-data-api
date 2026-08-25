@@ -9,6 +9,7 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtProfessionalInformationDetailsDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
 import uk.gov.hmcts.reform.fact.data.api.dto.ProfessionalInformationDto;
@@ -804,6 +805,7 @@ public class AuthFunctionalTest {
 
     @Test
     @DisplayName("Testing support endpoints don't require auth")
+    @EnabledIfEnvironmentVariable(named = "TESTING_SUPPORT_ENABLE_API", matches = "(?i)true")
     void testingSupportEndpointAuth() {
         String endpoint = "/testing-support/courts?courtName=Auth Test Cleanup";
         Response noToken = http.doGet(endpoint);

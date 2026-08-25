@@ -184,6 +184,10 @@ public final class UserFavouritesFunctionalTest {
 
     @AfterAll
     static void cleanUpTestData() {
+        if (!"true".equalsIgnoreCase(System.getenv("TESTING_SUPPORT_ENABLE_API"))) {
+            return;
+        }
+
         final Map<String, String> cleanupPaths = Map.of(
             COURT_PREFIX, "/testing-support/courts/name-prefix/",
             SERVICE_CENTRE_PREFIX, "/testing-support/service-centres/name-prefix/"
