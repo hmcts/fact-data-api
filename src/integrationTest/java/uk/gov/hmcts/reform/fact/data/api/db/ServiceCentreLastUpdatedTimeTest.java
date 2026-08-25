@@ -13,6 +13,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
+import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
@@ -84,7 +85,13 @@ class ServiceCentreLastUpdatedTimeTest {
         auditUserContext.clear();
         auditUserContext.setUserId(UUID.randomUUID());
         when(osService.getOsAddressByFullPostcode(anyString())).thenReturn(null);
-        regionId = regionRepository.findAll().getFirst().getId();
+        regionId = regionRepository.findAll().stream()
+            .findFirst()
+            .map(Region::getId)
+            .orElseGet(() -> regionRepository.save(Region.builder()
+                .name("Service Centre Last Updated Region")
+                .country("England")
+                .build()).getId());
 
         monitoredServiceCentre = createServiceCentre("Monitored Service Centre ");
         controlServiceCentre = createServiceCentre("Control Service Centre ");
