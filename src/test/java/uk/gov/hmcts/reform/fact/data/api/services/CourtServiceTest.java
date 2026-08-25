@@ -379,6 +379,30 @@ class CourtServiceTest {
     }
 
     @Test
+    void createCourtShouldIgnoreIncomingIdToPreventOverwrite() {
+        UUID suppliedId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
+        Region region = new Region();
+        region.setId(regionId);
+
+        Court input = new Court();
+        input.setId(suppliedId);
+        input.setName("Court With Supplied Id");
+        input.setRegionId(regionId);
+
+        when(regionService.getRegionById(regionId)).thenReturn(region);
+        when(courtRepository.existsBySlug(anyString())).thenReturn(false);
+        when(courtRepository.save(any(Court.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Court saved = courtService.createCourt(input);
+
+        ArgumentCaptor<Court> savedCourtCaptor = ArgumentCaptor.forClass(Court.class);
+        verify(courtRepository).save(savedCourtCaptor.capture());
+        assertThat(savedCourtCaptor.getValue().getId()).isNull();
+        assertThat(saved.getId()).isNull();
+    }
+
+    @Test
     void createCourtShouldGenerateUniqueSlugWhenDuplicateExists() {
         UUID regionId = UUID.randomUUID();
         Region region = new Region();
