@@ -76,13 +76,14 @@ class AuditControllerTest {
     @BeforeEach
     void setUp() {
         auditUserContext.suppressAudit();
-        // we're going to need these
-        regions = regionRepository.findAll();
         // and clear these down
         courtRepository.deleteAll();
         serviceCentreRepository.deleteAll();
         auditRepository.deleteAll();
         auditUserContext.clear();
+
+        // we're going to need at least one region for court/service-centre fixture data
+        regions = getOrCreateRegions();
 
         User user = userRepository.save(User.builder()
             .email("audit-controller-test-" + UUID.randomUUID() + "@justice.gov.uk")
@@ -491,9 +492,11 @@ class AuditControllerTest {
     }
 
     private ServiceCentre createTestServiceCentre() {
+        Collections.shuffle(regions);
         return serviceCentreRepository.save(ServiceCentre.builder()
             .name("Service Centre " + RandomStringUtils.insecure().next(10, true, false))
             .open(Boolean.FALSE)
+            .regionId(regions.getFirst().getId())
             .build());
     }
 
@@ -503,6 +506,19 @@ class AuditControllerTest {
             .open(Boolean.FALSE)
             .regionId(regionId)
             .build();
+    }
+
+    private List<Region> getOrCreateRegions() {
+        List<Region> loadedRegions = regionRepository.findAll();
+        if (!loadedRegions.isEmpty()) {
+            return new ArrayList<>(loadedRegions);
+        }
+
+        Region createdRegion = regionRepository.save(Region.builder()
+            .name("Audit Controller Test Region")
+            .country("England")
+            .build());
+        return new ArrayList<>(List.of(createdRegion));
     }
 
 
