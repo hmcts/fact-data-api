@@ -123,6 +123,8 @@ public class CourtService {
      * @throws NotFoundException if the region is not found.
      */
     public Court createCourt(Court court) {
+        // Ignore any client-provided ID so create cannot overwrite an existing row.
+        court.setId(null);
         Region foundRegion = regionService.getRegionById(court.getRegionId());
         court.setRegionId(foundRegion.getId());
         court.setSlug(toUniqueSlug(court.getName()));
