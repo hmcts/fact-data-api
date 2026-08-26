@@ -864,6 +864,7 @@ public final class SearchCourtControllerFunctionalTest {
         serviceCentre.setName(TestDataHelper.appendRandomSuffixToCourtName(serviceCentreName));
         serviceCentre.setOpen(true);
         serviceCentre.setServiceAreaIds(List.of(serviceArea.getId()));
+        serviceCentre.setRegionId(UUID.fromString(regionId));
         serviceCentre.setCatchmentType(CatchmentType.REGIONAL);
 
         final Response createResponse = http.doPost("/service-centres/v1", serviceCentre);

@@ -13,6 +13,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
+import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
@@ -20,6 +21,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreAddressRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.OsService;
 import uk.gov.hmcts.reform.fact.data.api.services.ServiceCentreAddressService;
@@ -66,6 +68,9 @@ class ServiceCentreLastUpdatedTimeTest {
     private ServiceCentreAddressRepository serviceCentreAddressRepository;
 
     @Autowired
+    private RegionRepository regionRepository;
+
+    @Autowired
     private AuditUserContext auditUserContext;
 
     @MockitoBean
@@ -73,12 +78,20 @@ class ServiceCentreLastUpdatedTimeTest {
 
     private ServiceCentre monitoredServiceCentre;
     private ServiceCentre controlServiceCentre;
+    private UUID regionId;
 
     @BeforeEach
     void setUp() {
         auditUserContext.clear();
         auditUserContext.setUserId(UUID.randomUUID());
         when(osService.getOsAddressByFullPostcode(anyString())).thenReturn(null);
+        regionId = regionRepository.findAll().stream()
+            .findFirst()
+            .map(Region::getId)
+            .orElseGet(() -> regionRepository.save(Region.builder()
+                .name("Service Centre Last Updated Region")
+                .country("England")
+                .build()).getId());
 
         monitoredServiceCentre = createServiceCentre("Monitored Service Centre ");
         controlServiceCentre = createServiceCentre("Control Service Centre ");
@@ -227,6 +240,7 @@ class ServiceCentreLastUpdatedTimeTest {
         ServiceCentre request = ServiceCentre.builder()
             .name(namePrefix)
             .serviceAreaIds(List.of())
+            .regionId(regionId)
             .build();
 
         return serviceCentreService.createServiceCentre(request);

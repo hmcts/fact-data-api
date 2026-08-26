@@ -135,7 +135,8 @@ public class ServiceCentreController {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Successfully created service centre"),
-        @ApiResponse(responseCode = "400", description = "Invalid service centre data supplied")
+        @ApiResponse(responseCode = "400", description = "Invalid service centre data supplied"),
+        @ApiResponse(responseCode = "404", description = "Associated region not found")
     })
     @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<ServiceCentre> createServiceCentre(@Valid @RequestBody ServiceCentre serviceCentre) {
@@ -152,7 +153,7 @@ public class ServiceCentreController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully updated service centre"),
         @ApiResponse(responseCode = "400", description = "Invalid service centre data supplied"),
-        @ApiResponse(responseCode = "404", description = "Service centre not found")
+        @ApiResponse(responseCode = "404", description = "Service centre or associated region not found")
     })
     @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<ServiceCentre> updateServiceCentre(
