@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -25,7 +24,8 @@ import java.util.UUID;
 
 @SecuredFactRestController(
     name = "Service Centre Areas Of Law",
-    description = "Operations related to Service Centre Areas Of Law"
+    description = "Operations related to Service Centre Areas Of Law",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/service-centres/{serviceCentreId}")
 @RequiredArgsConstructor
@@ -61,7 +61,6 @@ public class ServiceCentreAreasOfLawController {
         @ApiResponse(responseCode = "400", description = "Invalid service centre ID supplied or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Service centre not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<ServiceCentreAreasOfLaw> setAreasOfLawServices(
         @Parameter(description = "UUID of the service centre", required = true)
         @ValidUUID @PathVariable String serviceCentreId,

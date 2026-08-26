@@ -86,6 +86,7 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "Invalid request"),
         @ApiResponse(responseCode = "404", description = "Current user not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Page<AllLocation>> getFavourites(
         @Parameter(hidden = true) @RequestHeader(USER_ID_HEADER) UUID userId,
         @RequestParam(name = "pageNumber", defaultValue = "0")
@@ -104,6 +105,7 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "Invalid request"),
         @ApiResponse(responseCode = "404", description = "Current user or subject not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> addFavourite(
         @Parameter(hidden = true) @RequestHeader(USER_ID_HEADER) UUID userId,
         @Valid @RequestBody FavouriteReference favourite
@@ -119,6 +121,7 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "Invalid request"),
         @ApiResponse(responseCode = "404", description = "Current user not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<List<FavouriteStatus>> getStatuses(
         @Parameter(hidden = true) @RequestHeader(USER_ID_HEADER) UUID userId,
         @Valid @RequestBody FavouriteStatusRequest request

@@ -18,7 +18,8 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
 
 @SecuredFactRestController(
     name = "Search Address",
-    description = "Operations related to the searching of addresses"
+    description = "Operations related to the searching of addresses",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/search/address")
 @RequiredArgsConstructor
