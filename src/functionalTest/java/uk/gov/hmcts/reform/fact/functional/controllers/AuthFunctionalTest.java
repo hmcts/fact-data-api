@@ -41,7 +41,6 @@ import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 import java.io.File;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -783,21 +782,37 @@ public class AuthFunctionalTest {
     }
 
     @Test
-    @DisplayName("Search endpoints require auth but allow admin and viewer")
+    @DisplayName("Search endpoints require auth with mixed admin/viewer access")
     void searchEndpointsAuth() {
-        Map<String, String> endpoints = Map.of(
-            "/search/address/v1/postcode/SW1A1AA", "address",
-            "/search/courts/v1/postcode?postcode=SW1A1AA&limit=5", "courts by postcode",
-            "/search/courts/v1/prefix?prefix=A", "locations by prefix",
-            "/search/courts/v1/name?q=court", "courts by name",
-            "/search/services/v1", "services",
-            "/search/services/v1/divorce/service-areas", "service areas by service"
-        );
+        String[] adminOnlyEndpoints = new String[]{
+            "/search/address/v1/postcode/SW1A1AA"
+        };
 
-        for (String endpoint : endpoints.keySet()) {
+        String[] viewerAllowedEndpoints = new String[]{
+            "/search/courts/v1/postcode?postcode=SW1A1AA&limit=5",
+            "/search/courts/v1/prefix?prefix=A",
+            "/search/courts/v1/name?q=court",
+            "/search/services/v1",
+            "/search/services/v1/divorce/service-areas"
+        };
+
+        for (String endpoint : adminOnlyEndpoints) {
             Response admin = http.doGet(endpoint, adminToken);
             Response viewer = http.doGet(endpoint, viewerToken);
             Response noToken = http.doGet(endpoint, "");
+
+            assertThat(admin.statusCode())
+                .as("Admin status should not be 401 for %s", endpoint)
+                .isNotEqualTo(UNAUTHORIZED.value());
+            assertViewerForbidden(viewer, endpoint);
+            assertUnauthenticated(noToken, endpoint);
+        }
+
+        for (String endpoint : viewerAllowedEndpoints) {
+            Response admin = http.doGet(endpoint, adminToken);
+            Response viewer = http.doGet(endpoint, viewerToken);
+            Response noToken = http.doGet(endpoint, "");
+
             assertViewerAllowed(admin, viewer, endpoint);
             assertUnauthenticated(noToken, endpoint);
         }
