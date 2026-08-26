@@ -195,6 +195,7 @@ public class TestDataHelper {
         serviceCentre.setServiceAreaIds(List.of(UUID.fromString(
             http.doGet("/types/v1/service-areas", bearerToken).jsonPath().getString("[0].id")
         )));
+        serviceCentre.setRegionId(UUID.fromString(fetchFirstRegionId(http)));
         serviceCentre.setCatchmentType(CatchmentType.NATIONAL);
         return serviceCentre;
     }
