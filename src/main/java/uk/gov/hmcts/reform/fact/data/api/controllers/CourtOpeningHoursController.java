@@ -16,7 +16,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,7 +26,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @SuppressWarnings("java:S4684")
 @SecuredFactRestController(
     name = "Court Opening Hours",
-    description = "Operations related to opening hours for courts"
+    description = "Operations related to opening hours for courts",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/courts/{courtId}/")
 @RequiredArgsConstructor
@@ -124,7 +124,6 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID, or request body"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtOpeningHours> setOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Valid @RequestBody CourtOpeningHours courtOpeningHours) {
@@ -145,7 +144,6 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID or request body"),
         @ApiResponse(responseCode = "404", description = "Court or court type not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtCounterServiceOpeningHours> setCounterServiceOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Valid @RequestBody CourtCounterServiceOpeningHours courtCounterServiceOpeningHours) {
@@ -165,7 +163,6 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID or opening hours ID"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the opening hours", required = true)
@@ -184,7 +181,6 @@ public class CourtOpeningHoursController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteCounterServiceOpeningHours(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the counter service", required = true)

@@ -40,7 +40,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @SecuredFactRestController(
     name = "User",
-    description = "Operations related to Users"
+    description = "Operations related to Users",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/user")
 @SuppressWarnings("java:S4684")
@@ -59,7 +60,6 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved users"),
         @ApiResponse(responseCode = "400", description = "Invalid request parameters supplied")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Page<User>> getFilteredAndPaginatedUsers(
         @RequestParam(name = "pageNumber", defaultValue = "0")
         @PositiveOrZero(message = "pageNumber must be greater than or equal to 0") int pageNumber,
@@ -133,6 +133,7 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "Invalid request"),
         @ApiResponse(responseCode = "404", description = "Current user or subject not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> removeFavourite(
         @Parameter(hidden = true) @RequestHeader(USER_ID_HEADER) UUID userId,
         @PathVariable SubjectType subjectType,
@@ -149,7 +150,6 @@ public class UserController {
         @ApiResponse(responseCode = "400", description = "Invalid user ID supplied"),
         @ApiResponse(responseCode = "404", description = "User not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> clearUserLocks(
         @Parameter(description = "UUID of the user", required = true) @ValidUUID @PathVariable String userId) {
         lockService.clearUserLocks(UUID.fromString(userId));
@@ -162,7 +162,6 @@ public class UserController {
         @ApiResponse(responseCode = "201", description = "Successfully created/updated user"),
         @ApiResponse(responseCode = "400", description = "Invalid request")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<User> createOrUpdateLastLoginUser(@Valid @RequestBody User user) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createOrUpdateLastLoginUser(user));
     }
@@ -172,7 +171,6 @@ public class UserController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully processed inactive users")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<DeleteInactiveUsersResponse> deleteInactiveUsers() {
         final int deletedUsers = userService.deleteInactiveUsers();
         final String message = deletedUsers == 0
