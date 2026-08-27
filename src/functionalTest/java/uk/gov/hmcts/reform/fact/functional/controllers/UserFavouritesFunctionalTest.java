@@ -20,6 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -75,22 +76,32 @@ public final class UserFavouritesFunctionalTest {
     }
 
     @Test
-    void viewerCanMutateOnlyTheirOwnFavourites() {
+    void viewerCannotAddOrListFavouritesButCanRemoveOwnFavourite() {
         final UUID viewerId = UUID.fromString(http.getFactViewerUserId());
         final UUID courtId = TestDataHelper.createCourt(http, COURT_PREFIX + " Viewer");
         final FavouriteReference court = new FavouriteReference(courtId, SubjectType.COURT);
+
+        // Seed data as admin so viewer can exercise delete on their own favourite.
+        assertThat(http.doPostAsUser(
+            "/user/v1/favourites",
+            court,
+            HttpClient.getAdminBearerToken(),
+            viewerId
+        ).statusCode()).isEqualTo(CREATED.value());
 
         assertThat(http.doPostAsUser(
             "/user/v1/favourites",
             court,
             HttpClient.getViewerBearerToken(),
             viewerId
-        ).statusCode()).isEqualTo(CREATED.value());
+        ).statusCode()).isEqualTo(FORBIDDEN.value());
+
         assertThat(http.doGetAsUser(
             "/user/v1/favourites",
             HttpClient.getViewerBearerToken(),
             viewerId
-        ).jsonPath().getList("content.id", String.class)).contains(courtId.toString());
+        ).statusCode()).isEqualTo(FORBIDDEN.value());
+
         assertThat(http.doDeleteAsUser(
             "/user/v1/favourites/COURT/" + courtId,
             HttpClient.getViewerBearerToken(),
