@@ -76,7 +76,7 @@ public final class UserFavouritesFunctionalTest {
     }
 
     @Test
-    void viewerCannotAddOrListFavouritesButCanRemoveOwnFavourite() {
+    void viewerCannotAddListOrDeleteFavourites() {
         final UUID viewerId = UUID.fromString(http.getFactViewerUserId());
         final UUID courtId = TestDataHelper.createCourt(http, COURT_PREFIX + " Viewer");
         final FavouriteReference court = new FavouriteReference(courtId, SubjectType.COURT);
@@ -105,6 +105,12 @@ public final class UserFavouritesFunctionalTest {
         assertThat(http.doDeleteAsUser(
             "/user/v1/favourites/COURT/" + courtId,
             HttpClient.getViewerBearerToken(),
+            viewerId
+        ).statusCode()).isEqualTo(FORBIDDEN.value());
+
+        assertThat(http.doDeleteAsUser(
+            "/user/v1/favourites/COURT/" + courtId,
+            HttpClient.getAdminBearerToken(),
             viewerId
         ).statusCode()).isEqualTo(NO_CONTENT.value());
     }

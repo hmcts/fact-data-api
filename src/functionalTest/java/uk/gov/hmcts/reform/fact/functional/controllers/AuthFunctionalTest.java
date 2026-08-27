@@ -821,13 +821,14 @@ public class AuthFunctionalTest {
             http.doPostAsUser("/user/v1/favourites", favourite, viewerToken, viewerUserId),
             "/user/v1/favourites [POST]"
         );
-        assertThat(http.doDeleteAsUser(
-            "/user/v1/favourites/COURT/" + courtId,
-            viewerToken,
-            viewerUserId
-        ).statusCode())
-            .as("Viewer should be allowed to remove their own favourite")
-            .isEqualTo(NO_CONTENT.value());
+        assertViewerForbidden(
+            http.doDeleteAsUser(
+                "/user/v1/favourites/COURT/" + courtId,
+                viewerToken,
+                viewerUserId
+            ),
+            "/user/v1/favourites/{subjectType}/{subjectId} [DELETE]"
+        );
         assertThat(http.doDeleteAsUser(
             "/user/v1/favourites/COURT/" + courtId,
             adminToken,
