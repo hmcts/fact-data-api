@@ -11,7 +11,8 @@ import uk.gov.hmcts.reform.fact.data.api.services.CsvService;
 
 @SecuredFactRestController(
     name = "CSV",
-    description = "Operations related to CSV file handling"
+    description = "Operations related to CSV file handling",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/csv")
 @RequiredArgsConstructor

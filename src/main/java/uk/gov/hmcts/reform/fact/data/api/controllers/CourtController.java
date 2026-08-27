@@ -79,6 +79,7 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Court> getCourtById(
         @Parameter(description = "UUID of the court", required = true)
         @ValidUUID @PathVariable String courtId) {
@@ -95,6 +96,7 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid court name supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Court> getCourtByName(
         @Parameter(description = "Exact name of the court", required = true)
         @NotBlank(message = "name must not be blank")
