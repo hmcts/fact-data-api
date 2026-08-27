@@ -159,11 +159,10 @@ public class AuthFunctionalTest {
             Response admin = http.doGet(endpoint, adminToken);
             Response viewer = http.doGet(endpoint, viewerToken);
             Response noToken = http.doGet(endpoint, "");
-            Response badToken = http.doGet(endpoint, invalidToken);
             assertAdminAllowed(admin, endpoint);
             assertViewerForbidden(viewer, endpoint);
             assertUnauthenticated(noToken, endpoint);
-            assertInvalidToken(badToken, endpoint);
+            assertInvalidToken(http.doGet(endpoint, invalidToken), endpoint);
         }
     }
 
@@ -269,7 +268,6 @@ public class AuthFunctionalTest {
         Response createAddressAdmin =
             http.doPost("/service-centres/" + serviceCentreId + "/v1/address", address, adminToken);
         assertThat(createAddressAdmin.statusCode()).isEqualTo(201);
-        UUID addressId = UUID.fromString(createAddressAdmin.jsonPath().getString("id"));
 
         String serviceCentreAddressEndpoint = "/service-centres/{serviceCentreId}/v1/address [GET]";
         assertAdminAllowed(
@@ -284,6 +282,7 @@ public class AuthFunctionalTest {
             http.doPost("/service-centres/" + serviceCentreId + "/v1/address", address, viewerToken),
             "/service-centres/{serviceCentreId}/v1/address [POST]"
         );
+        UUID addressId = UUID.fromString(createAddressAdmin.jsonPath().getString("id"));
         assertViewerForbidden(
             http.doPut("/service-centres/" + serviceCentreId + "/v1/address/" + addressId, address, viewerToken),
             "/service-centres/{serviceCentreId}/v1/address/{addressId} [PUT]"
@@ -809,8 +808,14 @@ public class AuthFunctionalTest {
         assertThat(addFavAdmin.statusCode()).isEqualTo(CREATED.value());
 
         String favouritesGetEndpoint = "/user/v1/favourites [GET]";
-        assertAdminAllowed(http.doGetAsUser("/user/v1/favourites", adminToken, userId), favouritesGetEndpoint);
-        assertViewerForbidden(http.doGetAsUser("/user/v1/favourites", viewerToken, viewerUserId), favouritesGetEndpoint);
+        assertAdminAllowed(
+            http.doGetAsUser("/user/v1/favourites", adminToken, userId),
+            favouritesGetEndpoint
+        );
+        assertViewerForbidden(
+            http.doGetAsUser("/user/v1/favourites", viewerToken, viewerUserId),
+            favouritesGetEndpoint
+        );
 
         assertViewerForbidden(
             http.doPostAsUser("/user/v1/favourites", favourite, viewerToken, viewerUserId),
