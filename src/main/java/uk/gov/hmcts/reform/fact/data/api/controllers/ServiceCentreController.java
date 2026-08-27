@@ -101,6 +101,7 @@ public class ServiceCentreController {
         @ApiResponse(responseCode = "400", description = "Invalid service centre ID supplied"),
         @ApiResponse(responseCode = "404", description = "Service centre not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<ServiceCentre> getServiceCentreById(
         @Parameter(description = "UUID of the service centre", required = true)
         @ValidUUID @PathVariable String serviceCentreId) {
@@ -117,6 +118,7 @@ public class ServiceCentreController {
         @ApiResponse(responseCode = "400", description = "Invalid service centre name supplied"),
         @ApiResponse(responseCode = "404", description = "Service centre not found")
     })
+    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<ServiceCentre> getServiceCentreByName(
         @Parameter(description = "Exact name of the service centre", required = true)
         @NotBlank(message = "name must not be blank")

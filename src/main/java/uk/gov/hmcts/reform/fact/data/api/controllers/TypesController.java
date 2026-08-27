@@ -22,7 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @SecuredFactRestController(
     name = "Types",
-    description = "Operations related to types required for the functionality of both the admin portal and frontend"
+    description = "Operations related to types required for the functionality of both the admin portal and frontend",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/types")
 @SuppressWarnings("java:S4684")

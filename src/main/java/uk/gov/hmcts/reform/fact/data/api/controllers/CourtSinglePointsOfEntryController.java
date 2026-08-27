@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -24,7 +23,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @SecuredFactRestController(
     name = "Court Single Points of Entry",
-    description = "Operations related to single points of entry for courts"
+    description = "Operations related to single points of entry for courts",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/courts/{courtId}")
 @RequiredArgsConstructor
@@ -65,7 +65,6 @@ public class CourtSinglePointsOfEntryController {
             description = "court ID and/or Single Point of Entry configuration data is invalid"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> updateSinglePointsOfEntry(
         @Parameter(description = "UUID of the court", required = true)
         @ValidUUID @PathVariable String courtId,
