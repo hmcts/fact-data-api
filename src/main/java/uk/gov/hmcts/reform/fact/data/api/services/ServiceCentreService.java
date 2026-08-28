@@ -206,7 +206,7 @@ public class ServiceCentreService {
     }
 
     private UUID getValidatedRegionId(UUID regionId) {
-        return regionId == null ? null : regionService.getRegionById(regionId).getId();
+        return regionService.getRegionById(regionId).getId();
     }
 
 }

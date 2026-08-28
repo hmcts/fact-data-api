@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import tools.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class CsvService {
 
     private static final String CSV_FILE_NAME = "courts-and-tribunals-data.csv";
@@ -33,25 +35,10 @@ public class CsvService {
     private final CourtDetailsViewService courtDetailsViewService;
     private final ServiceCentreService serviceCentreService;
     private final ServiceCentreDetailsViewService serviceCentreDetailsViewService;
+    @Qualifier("csvAzureBlobService")
     private final AzureBlobService azureBlobService;
     private final ObjectMapper objectMapper;
     private final SlackClient slackClient;
-
-    public CsvService(CourtService courtService,
-                      CourtDetailsViewService courtDetailsViewService,
-                      ServiceCentreService serviceCentreService,
-                      ServiceCentreDetailsViewService serviceCentreDetailsViewService,
-                      @Qualifier("csvAzureBlobService") AzureBlobService azureBlobService,
-                      ObjectMapper objectMapper,
-                      SlackClient slackClient) {
-        this.courtService = courtService;
-        this.courtDetailsViewService = courtDetailsViewService;
-        this.serviceCentreService = serviceCentreService;
-        this.serviceCentreDetailsViewService = serviceCentreDetailsViewService;
-        this.azureBlobService = azureBlobService;
-        this.objectMapper = objectMapper;
-        this.slackClient = slackClient;
-    }
 
     public void createAndUploadCsv() {
         List<String> actions = new ArrayList<>();

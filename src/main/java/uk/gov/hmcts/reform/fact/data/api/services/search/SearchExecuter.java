@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services.search;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
@@ -18,16 +19,11 @@ import java.util.UUID;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class SearchExecuter {
 
     private final CourtAddressRepository courtAddressRepository;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
-
-    public SearchExecuter(CourtAddressRepository courtAddressRepository,
-                          LocalAuthorityTypeRepository localAuthorityTypeRepository) {
-        this.courtAddressRepository = courtAddressRepository;
-        this.localAuthorityTypeRepository = localAuthorityTypeRepository;
-    }
 
     /**
      * Based on the SearchStrategy determined, perform the relevant business logic.

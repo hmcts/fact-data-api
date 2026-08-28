@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
@@ -10,16 +11,14 @@ import uk.gov.hmcts.reform.fact.data.api.services.CsvService;
 
 @SecuredFactRestController(
     name = "CSV",
-    description = "Operations related to CSV file handling"
+    description = "Operations related to CSV file handling",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/csv")
+@RequiredArgsConstructor
 public class CsvController {
 
     private final CsvService csvService;
-
-    public CsvController(CsvService csvService) {
-        this.csvService = csvService;
-    }
 
     @PostMapping("/")
     @Operation(

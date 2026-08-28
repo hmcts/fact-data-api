@@ -114,7 +114,8 @@ public class ServiceCentre implements AuditableEntity {
     private List<UUID> serviceAreaIds;
 
     @Schema(description = "The ID of the associated Region")
-    @Column(name = "region_id")
+    @NotNull
+    @Column(name = "region_id", nullable = false)
     private UUID regionId;
 
     @Schema(description = "The catchment type")

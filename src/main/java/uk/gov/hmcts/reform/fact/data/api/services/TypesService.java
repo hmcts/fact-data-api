@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class TypesService {
 
     private final AreaOfLawTypeRepository areaOfLawTypeRepository;
@@ -30,22 +32,6 @@ public class TypesService {
     private final RegionRepository regionRepository;
     private final ServiceAreaRepository serviceAreaRepository;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
-
-    public TypesService(
-        AreaOfLawTypeRepository areaOfLawTypeRepository,
-        CourtTypeRepository courtTypeRepository,
-        OpeningHoursTypeRepository openingHoursTypeRepository,
-        ContactDescriptionTypeRepository contactDescriptionTypeRepository,
-        RegionRepository regionRepository,
-        ServiceAreaRepository serviceAreaRepository, final LocalAuthorityTypeRepository localAuthorityTypeRepository) {
-        this.areaOfLawTypeRepository = areaOfLawTypeRepository;
-        this.courtTypeRepository = courtTypeRepository;
-        this.openingHoursTypeRepository = openingHoursTypeRepository;
-        this.contactDescriptionTypeRepository = contactDescriptionTypeRepository;
-        this.regionRepository = regionRepository;
-        this.serviceAreaRepository = serviceAreaRepository;
-        this.localAuthorityTypeRepository = localAuthorityTypeRepository;
-    }
 
     /**
      * Get all area of law types.

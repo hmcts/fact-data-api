@@ -168,11 +168,6 @@ repositories {
   }
 }
 
-ext {
-  log4JVersion = "2.25.3"
-  logbackVersion = "1.5.19"
-}
-
 ext['snakeyaml.version'] = '2.0'
 ext['log4j2.version'] = '2.25.3' // CVE-2025-68161
 
@@ -183,10 +178,7 @@ dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-aspectj'
   implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-openfeign', version: '5.0.1'
   // auth
-  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security'
-  implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security-oauth2-client'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security-oauth2-resource-server'
-  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter', version: '7.3.0'
   // cache
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-cache'
   implementation group: 'com.github.ben-manes.caffeine', name: 'caffeine'
@@ -202,7 +194,6 @@ dependencies {
   implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.3.0'
 
   implementation group: 'tools.jackson.dataformat', name: 'jackson-dataformat-csv'
-  implementation group: 'tools.jackson.datatype', name: 'jackson-datatype-hibernate7'
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '8.0.0'
 
@@ -210,8 +201,6 @@ dependencies {
 
   implementation group: 'com.slack.api', name: 'slack-api-client', version: '1.50.0'
 
-  //Solves CVE-2025-48976
-  implementation group: 'commons-fileupload', name: 'commons-fileupload', version: '1.6.0'
 
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-webmvc-test'
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator-test'

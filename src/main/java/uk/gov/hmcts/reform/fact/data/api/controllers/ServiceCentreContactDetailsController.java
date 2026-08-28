@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +25,8 @@ import java.util.UUID;
 
 @SecuredFactRestController(
     name = "Service Centre Contact Details",
-    description = "Operations related to contact details available for service centres"
+    description = "Operations related to contact details available for service centres",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/service-centres/{serviceCentreId}")
 @RequiredArgsConstructor
@@ -86,7 +86,6 @@ public class ServiceCentreContactDetailsController {
         @ApiResponse(responseCode = "400", description = "Invalid service centre ID supplied or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Service centre or contact description type not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<ServiceCentreContactDetails> createContactDetail(
         @Parameter(description = "UUID of the service centre", required = true)
         @ValidUUID @PathVariable String serviceCentreId,
@@ -113,7 +112,6 @@ public class ServiceCentreContactDetailsController {
         @ApiResponse(responseCode = "404",
             description = "Contact detail, service centre, or contact description type not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<ServiceCentreContactDetails> updateContactDetail(
         @Parameter(description = "UUID of the service centre", required = true)
         @ValidUUID @PathVariable String serviceCentreId,
@@ -140,7 +138,6 @@ public class ServiceCentreContactDetailsController {
         @ApiResponse(responseCode = "400", description = "Invalid service centre ID or contact ID supplied"),
         @ApiResponse(responseCode = "404", description = "Contact detail or service centre not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteContactDetail(
         @Parameter(description = "UUID of the service centre", required = true)
         @ValidUUID @PathVariable String serviceCentreId,

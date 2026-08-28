@@ -9,6 +9,7 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtProfessionalInformationDetailsDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
 import uk.gov.hmcts.reform.fact.data.api.dto.ProfessionalInformationDto;
@@ -40,7 +41,6 @@ import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 import java.io.File;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -101,6 +101,12 @@ public class AuthFunctionalTest {
             .isEqualTo(adminResponse.statusCode());
     }
 
+    private static void assertAdminAllowed(Response adminResponse, String endpoint) {
+        assertThat(adminResponse.statusCode())
+            .as("Admin should not be unauthorized or forbidden for %s", endpoint)
+            .isNotIn(UNAUTHORIZED.value(), FORBIDDEN.value());
+    }
+
     private static void assertViewerForbidden(Response viewerResponse, String endpoint) {
         assertThat(viewerResponse.statusCode())
             .as("Viewer should be forbidden for %s", endpoint)
@@ -138,7 +144,7 @@ public class AuthFunctionalTest {
     }
 
     @Test
-    @DisplayName("Types endpoints allow admin and viewer, reject unauthenticated")
+    @DisplayName("Types endpoints require admin and reject viewer/unauthenticated")
     void typesEndpointsAuth() {
         String[] endpoints = new String[]{
             "/types/v1/areas-of-law",
@@ -153,10 +159,10 @@ public class AuthFunctionalTest {
             Response admin = http.doGet(endpoint, adminToken);
             Response viewer = http.doGet(endpoint, viewerToken);
             Response noToken = http.doGet(endpoint, "");
-            Response badToken = http.doGet(endpoint, invalidToken);
-            assertViewerAllowed(admin, viewer, endpoint);
+            assertAdminAllowed(admin, endpoint);
+            assertViewerForbidden(viewer, endpoint);
             assertUnauthenticated(noToken, endpoint);
-            assertInvalidToken(badToken, endpoint);
+            assertInvalidToken(http.doGet(endpoint, invalidToken), endpoint);
         }
     }
 
@@ -262,17 +268,21 @@ public class AuthFunctionalTest {
         Response createAddressAdmin =
             http.doPost("/service-centres/" + serviceCentreId + "/v1/address", address, adminToken);
         assertThat(createAddressAdmin.statusCode()).isEqualTo(201);
-        UUID addressId = UUID.fromString(createAddressAdmin.jsonPath().getString("id"));
 
-        assertViewerAllowed(
+        String serviceCentreAddressEndpoint = "/service-centres/{serviceCentreId}/v1/address [GET]";
+        assertAdminAllowed(
             http.doGet("/service-centres/" + serviceCentreId + "/v1/address", adminToken),
+            serviceCentreAddressEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/service-centres/" + serviceCentreId + "/v1/address", viewerToken),
-            "/service-centres/{serviceCentreId}/v1/address [GET]"
+            serviceCentreAddressEndpoint
         );
         assertViewerForbidden(
             http.doPost("/service-centres/" + serviceCentreId + "/v1/address", address, viewerToken),
             "/service-centres/{serviceCentreId}/v1/address [POST]"
         );
+        UUID addressId = UUID.fromString(createAddressAdmin.jsonPath().getString("id"));
         assertViewerForbidden(
             http.doPut("/service-centres/" + serviceCentreId + "/v1/address/" + addressId, address, viewerToken),
             "/service-centres/{serviceCentreId}/v1/address/{addressId} [PUT]"
@@ -295,10 +305,14 @@ public class AuthFunctionalTest {
         assertThat(createContactAdmin.statusCode()).isEqualTo(201);
         UUID contactId = UUID.fromString(createContactAdmin.jsonPath().getString("id"));
 
-        assertViewerAllowed(
+        String serviceCentreContactEndpoint = "/service-centres/{serviceCentreId}/v1/contact-details [GET]";
+        assertAdminAllowed(
             http.doGet("/service-centres/" + serviceCentreId + "/v1/contact-details", adminToken),
+            serviceCentreContactEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/service-centres/" + serviceCentreId + "/v1/contact-details", viewerToken),
-            "/service-centres/{serviceCentreId}/v1/contact-details [GET]"
+            serviceCentreContactEndpoint
         );
         assertViewerForbidden(
             http.doPut(
@@ -320,10 +334,14 @@ public class AuthFunctionalTest {
             areasOfLaw,
             adminToken
         ).statusCode()).isEqualTo(201);
-        assertViewerAllowed(
+        String serviceCentreAolEndpoint = "/service-centres/{serviceCentreId}/v1/areas-of-law [GET]";
+        assertAdminAllowed(
             http.doGet("/service-centres/" + serviceCentreId + "/v1/areas-of-law", adminToken),
+            serviceCentreAolEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/service-centres/" + serviceCentreId + "/v1/areas-of-law", viewerToken),
-            "/service-centres/{serviceCentreId}/v1/areas-of-law [GET]"
+            serviceCentreAolEndpoint
         );
         assertViewerForbidden(
             http.doPut("/service-centres/" + serviceCentreId + "/v1/areas-of-law", areasOfLaw, viewerToken),
@@ -360,11 +378,13 @@ public class AuthFunctionalTest {
 
         Response listAdmin = http.doGet("/courts/" + courtId + "/v1/address", adminToken);
         Response listViewer = http.doGet("/courts/" + courtId + "/v1/address", viewerToken);
-        assertViewerAllowed(listAdmin, listViewer, "/courts/{courtId}/v1/address [GET]");
+        assertAdminAllowed(listAdmin, "/courts/{courtId}/v1/address [GET]");
+        assertViewerForbidden(listViewer, "/courts/{courtId}/v1/address [GET]");
 
         Response byIdAdmin = http.doGet("/courts/" + courtId + "/v1/address/" + addressId, adminToken);
         Response byIdViewer = http.doGet("/courts/" + courtId + "/v1/address/" + addressId, viewerToken);
-        assertViewerAllowed(byIdAdmin, byIdViewer, "/courts/{courtId}/v1/address/{addressId} [GET]");
+        assertAdminAllowed(byIdAdmin, "/courts/{courtId}/v1/address/{addressId} [GET]");
+        assertViewerForbidden(byIdViewer, "/courts/{courtId}/v1/address/{addressId} [GET]");
 
         Response createViewer = http.doPost("/courts/" + courtId + "/v1/address", address, viewerToken);
         assertViewerForbidden(createViewer, "/courts/{courtId}/v1/address [POST]");
@@ -399,15 +419,23 @@ public class AuthFunctionalTest {
         assertThat(createAdmin.statusCode()).isEqualTo(201);
         UUID contactId = UUID.fromString(createAdmin.jsonPath().getString("id"));
 
-        assertViewerAllowed(
+        String courtContactListEndpoint = "/courts/{courtId}/v1/contact-details [GET]";
+        assertAdminAllowed(
             http.doGet("/courts/" + courtId + "/v1/contact-details", adminToken),
-            http.doGet("/courts/" + courtId + "/v1/contact-details", viewerToken),
-            "/courts/{courtId}/v1/contact-details [GET]"
+            courtContactListEndpoint
         );
-        assertViewerAllowed(
+        assertViewerForbidden(
+            http.doGet("/courts/" + courtId + "/v1/contact-details", viewerToken),
+            courtContactListEndpoint
+        );
+        String courtContactByIdEndpoint = "/courts/{courtId}/v1/contact-details/{contactId} [GET]";
+        assertAdminAllowed(
             http.doGet("/courts/" + courtId + "/v1/contact-details/" + contactId, adminToken),
+            courtContactByIdEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/courts/" + courtId + "/v1/contact-details/" + contactId, viewerToken),
-            "/courts/{courtId}/v1/contact-details/{contactId} [GET]"
+            courtContactByIdEndpoint
         );
         assertViewerForbidden(
             http.doPost("/courts/" + courtId + "/v1/contact-details", details, viewerToken),
@@ -445,10 +473,14 @@ public class AuthFunctionalTest {
             .as("Admin POST accessibility-options failed. Body: %s", createAdmin.asString())
             .isEqualTo(201);
 
-        assertViewerAllowed(
+        String accessibilityGetEndpoint = "/courts/{courtId}/v1/accessibility-options [GET]";
+        assertAdminAllowed(
             http.doGet("/courts/" + courtId + "/v1/accessibility-options", adminToken),
+            accessibilityGetEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/courts/" + courtId + "/v1/accessibility-options", viewerToken),
-            "/courts/{courtId}/v1/accessibility-options [GET]"
+            accessibilityGetEndpoint
         );
         assertViewerForbidden(
             http.doPost("/courts/" + courtId + "/v1/accessibility-options", payload, viewerToken),
@@ -466,10 +498,14 @@ public class AuthFunctionalTest {
         Response putAdmin = http.doPut("/courts/" + courtId + "/v1/areas-of-law", payload, adminToken);
         assertThat(putAdmin.statusCode()).isEqualTo(201);
 
-        assertViewerAllowed(
+        String areasOfLawGetEndpoint = "/courts/{courtId}/v1/areas-of-law [GET]";
+        assertAdminAllowed(
             http.doGet("/courts/" + courtId + "/v1/areas-of-law", adminToken),
+            areasOfLawGetEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/courts/" + courtId + "/v1/areas-of-law", viewerToken),
-            "/courts/{courtId}/v1/areas-of-law [GET]"
+            areasOfLawGetEndpoint
         );
         assertViewerForbidden(
             http.doPut("/courts/" + courtId + "/v1/areas-of-law", payload, viewerToken),
@@ -486,10 +522,14 @@ public class AuthFunctionalTest {
         Response postAdmin = http.doPost("/courts/" + courtId + "/v1/building-facilities", payload, adminToken);
         assertThat(postAdmin.statusCode()).isEqualTo(201);
 
-        assertViewerAllowed(
+        String facilitiesGetEndpoint = "/courts/{courtId}/v1/building-facilities [GET]";
+        assertAdminAllowed(
             http.doGet("/courts/" + courtId + "/v1/building-facilities", adminToken),
+            facilitiesGetEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/courts/" + courtId + "/v1/building-facilities", viewerToken),
-            "/courts/{courtId}/v1/building-facilities [GET]"
+            facilitiesGetEndpoint
         );
         assertViewerForbidden(
             http.doPost("/courts/" + courtId + "/v1/building-facilities", payload, viewerToken),
@@ -514,7 +554,8 @@ public class AuthFunctionalTest {
 
         Response getAdmin = http.doGet("/courts/" + courtId + "/v1/local-authorities", adminToken);
         Response getViewer = http.doGet("/courts/" + courtId + "/v1/local-authorities", viewerToken);
-        assertViewerAllowed(getAdmin, getViewer, "/courts/{courtId}/v1/local-authorities [GET]");
+        assertAdminAllowed(getAdmin, "/courts/{courtId}/v1/local-authorities [GET]");
+        assertViewerForbidden(getViewer, "/courts/{courtId}/v1/local-authorities [GET]");
 
         final List<CourtLocalAuthorityDto> authorities = mapper.readValue(
             getAdmin.asString(), new TypeReference<List<CourtLocalAuthorityDto>>() { }
@@ -535,16 +576,19 @@ public class AuthFunctionalTest {
         Response postAdmin = http.doPost(lockPath, mapper.writeValueAsString(userId), adminToken);
         assertThat(postAdmin.statusCode()).isIn(200, 201);
 
-        assertViewerAllowed(
-            http.doGet("/locks/" + SubjectType.COURT + "/" + courtId + "/v1/", adminToken),
-            http.doGet("/locks/" + SubjectType.COURT + "/" + courtId + "/v1/", viewerToken),
-            "/locks/{subjectType}/{subjectId}/v1 [GET]"
+        String lockListPath = "/locks/" + SubjectType.COURT + "/" + courtId + "/v1";
+        String locksBySubjectEndpoint = "/locks/{subjectType}/{subjectId}/v1 [GET]";
+        assertAdminAllowed(
+            http.doGet(lockListPath, adminToken),
+            locksBySubjectEndpoint
         );
-        assertViewerAllowed(
-            http.doGet(lockPath, adminToken),
-            http.doGet(lockPath, viewerToken),
-            "/locks/{subjectType}/{subjectId}/v1/{page} [GET]"
+        assertViewerForbidden(
+            http.doGet(lockListPath, viewerToken),
+            locksBySubjectEndpoint
         );
+        String lockByPageEndpoint = "/locks/{subjectType}/{subjectId}/v1/{page} [GET]";
+        assertAdminAllowed(http.doGet(lockPath, adminToken), lockByPageEndpoint);
+        assertViewerForbidden(http.doGet(lockPath, viewerToken), lockByPageEndpoint);
         assertViewerForbidden(
             http.doPost(lockPath, mapper.writeValueAsString(userId), viewerToken),
             "/locks/{subjectType}/{subjectId}/v1/{page} [POST]"
@@ -600,20 +644,32 @@ public class AuthFunctionalTest {
             .as("Admin PUT opening-hours counter-service failed. Body: %s", counterAdmin.asString())
             .isEqualTo(200);
 
-        assertViewerAllowed(
+        String openingHoursEndpoint = "/courts/{courtId}/v1/opening-hours [GET]";
+        assertAdminAllowed(
             http.doGet("/courts/" + courtId + "/v1/opening-hours", adminToken),
+            openingHoursEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/courts/" + courtId + "/v1/opening-hours", viewerToken),
-            "/courts/{courtId}/v1/opening-hours [GET]"
+            openingHoursEndpoint
         );
-        assertViewerAllowed(
+        String openingHoursByIdEndpoint = "/courts/{courtId}/v1/opening-hours/{openingHoursId} [GET]";
+        assertAdminAllowed(
             http.doGet("/courts/" + courtId + "/v1/opening-hours/" + hours.getId(), adminToken),
-            http.doGet("/courts/" + courtId + "/v1/opening-hours/" + hours.getId(), viewerToken),
-            "/courts/{courtId}/v1/opening-hours/{openingHoursId} [GET]"
+            openingHoursByIdEndpoint
         );
-        assertViewerAllowed(
+        assertViewerForbidden(
+            http.doGet("/courts/" + courtId + "/v1/opening-hours/" + hours.getId(), viewerToken),
+            openingHoursByIdEndpoint
+        );
+        String counterServiceEndpoint = "/courts/{courtId}/v1/opening-hours/counter-service [GET]";
+        assertAdminAllowed(
             http.doGet("/courts/" + courtId + "/v1/opening-hours/counter-service", adminToken),
+            counterServiceEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/courts/" + courtId + "/v1/opening-hours/counter-service", viewerToken),
-            "/courts/{courtId}/v1/opening-hours/counter-service [GET]"
+            counterServiceEndpoint
         );
         assertViewerForbidden(
             http.doPut("/courts/" + courtId + "/v1/opening-hours", hours, viewerToken),
@@ -638,10 +694,14 @@ public class AuthFunctionalTest {
         Response uploadAdmin = http.doMultipartPost("/courts/" + courtId + "/v1/photo", "file", image, adminToken);
         assertThat(uploadAdmin.statusCode()).isEqualTo(201);
 
-        assertViewerAllowed(
+        String photoGetEndpoint = "/courts/{courtId}/v1/photo [GET]";
+        assertAdminAllowed(
             http.doGet("/courts/" + courtId + "/v1/photo", adminToken),
+            photoGetEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/courts/" + courtId + "/v1/photo", viewerToken),
-            "/courts/{courtId}/v1/photo [GET]"
+            photoGetEndpoint
         );
         assertViewerForbidden(
             http.doMultipartPost("/courts/" + courtId + "/v1/photo", "file", image, viewerToken),
@@ -672,10 +732,14 @@ public class AuthFunctionalTest {
             .as("Admin POST professional-information failed. Body: %s", postAdmin.asString())
             .isEqualTo(201);
 
-        assertViewerAllowed(
+        String professionalInfoGetEndpoint = "/courts/{courtId}/v1/professional-information [GET]";
+        assertAdminAllowed(
             http.doGet("/courts/" + courtId + "/v1/professional-information", adminToken),
+            professionalInfoGetEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/courts/" + courtId + "/v1/professional-information", viewerToken),
-            "/courts/{courtId}/v1/professional-information [GET]"
+            professionalInfoGetEndpoint
         );
         assertViewerForbidden(
             http.doPost("/courts/" + courtId + "/v1/professional-information", payload, viewerToken),
@@ -690,7 +754,8 @@ public class AuthFunctionalTest {
 
         Response getAdmin = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry", adminToken);
         Response getViewer = http.doGet("/courts/" + courtId + "/v1/single-point-of-entry", viewerToken);
-        assertViewerAllowed(getAdmin, getViewer, "/courts/{courtId}/v1/single-point-of-entry [GET]");
+        assertAdminAllowed(getAdmin, "/courts/{courtId}/v1/single-point-of-entry [GET]");
+        assertViewerForbidden(getViewer, "/courts/{courtId}/v1/single-point-of-entry [GET]");
 
         List<AreaOfLawSelectionDto> payload = mapper.readValue(
             getAdmin.asString(),
@@ -716,10 +781,14 @@ public class AuthFunctionalTest {
         Response postAdmin = http.doPost("/courts/" + courtId + "/v1/translation-services", payload, adminToken);
         assertThat(postAdmin.statusCode()).isEqualTo(201);
 
-        assertViewerAllowed(
+        String translationGetEndpoint = "/courts/{courtId}/v1/translation-services [GET]";
+        assertAdminAllowed(
             http.doGet("/courts/" + courtId + "/v1/translation-services", adminToken),
+            translationGetEndpoint
+        );
+        assertViewerForbidden(
             http.doGet("/courts/" + courtId + "/v1/translation-services", viewerToken),
-            "/courts/{courtId}/v1/translation-services [GET]"
+            translationGetEndpoint
         );
         assertViewerForbidden(
             http.doPost("/courts/" + courtId + "/v1/translation-services", payload, viewerToken),
@@ -728,7 +797,7 @@ public class AuthFunctionalTest {
     }
 
     @Test
-    @DisplayName("User endpoints allow user-scoped favourite writes while retaining other viewer restrictions")
+    @DisplayName("User endpoints restrict favourites read/write to admin while retaining other viewer restrictions")
     void userControllerAuth() {
         final UUID userId = createUserAsAdmin("test.user.auth.main");
         final UUID viewerUserId = UUID.fromString(http.getFactViewerUserId());
@@ -738,22 +807,28 @@ public class AuthFunctionalTest {
         Response addFavAdmin = http.doPostAsUser("/user/v1/favourites", favourite, adminToken, userId);
         assertThat(addFavAdmin.statusCode()).isEqualTo(CREATED.value());
 
-        assertViewerAllowed(
+        String favouritesGetEndpoint = "/user/v1/favourites [GET]";
+        assertAdminAllowed(
             http.doGetAsUser("/user/v1/favourites", adminToken, userId),
+            favouritesGetEndpoint
+        );
+        assertViewerForbidden(
             http.doGetAsUser("/user/v1/favourites", viewerToken, viewerUserId),
-            "/user/v1/favourites [GET]"
+            favouritesGetEndpoint
         );
 
-        assertThat(http.doPostAsUser("/user/v1/favourites", favourite, viewerToken, viewerUserId).statusCode())
-            .as("Viewer should be allowed to add their own favourite")
-            .isEqualTo(CREATED.value());
-        assertThat(http.doDeleteAsUser(
-            "/user/v1/favourites/COURT/" + courtId,
-            viewerToken,
-            viewerUserId
-        ).statusCode())
-            .as("Viewer should be allowed to remove their own favourite")
-            .isEqualTo(NO_CONTENT.value());
+        assertViewerForbidden(
+            http.doPostAsUser("/user/v1/favourites", favourite, viewerToken, viewerUserId),
+            "/user/v1/favourites [POST]"
+        );
+        assertViewerForbidden(
+            http.doDeleteAsUser(
+                "/user/v1/favourites/COURT/" + courtId,
+                viewerToken,
+                viewerUserId
+            ),
+            "/user/v1/favourites/{subjectType}/{subjectId} [DELETE]"
+        );
         assertThat(http.doDeleteAsUser(
             "/user/v1/favourites/COURT/" + courtId,
             adminToken,
@@ -782,21 +857,37 @@ public class AuthFunctionalTest {
     }
 
     @Test
-    @DisplayName("Search endpoints require auth but allow admin and viewer")
+    @DisplayName("Search endpoints require auth with mixed admin/viewer access")
     void searchEndpointsAuth() {
-        Map<String, String> endpoints = Map.of(
-            "/search/address/v1/postcode/SW1A1AA", "address",
-            "/search/courts/v1/postcode?postcode=SW1A1AA&limit=5", "courts by postcode",
-            "/search/courts/v1/prefix?prefix=A", "locations by prefix",
-            "/search/courts/v1/name?q=court", "courts by name",
-            "/search/services/v1", "services",
-            "/search/services/v1/divorce/service-areas", "service areas by service"
-        );
+        String[] adminOnlyEndpoints = new String[]{
+            "/search/address/v1/postcode/SW1A1AA"
+        };
 
-        for (String endpoint : endpoints.keySet()) {
+        String[] viewerAllowedEndpoints = new String[]{
+            "/search/courts/v1/postcode?postcode=SW1A1AA&limit=5",
+            "/search/courts/v1/prefix?prefix=A",
+            "/search/courts/v1/name?q=court",
+            "/search/services/v1",
+            "/search/services/v1/divorce/service-areas"
+        };
+
+        for (String endpoint : adminOnlyEndpoints) {
             Response admin = http.doGet(endpoint, adminToken);
             Response viewer = http.doGet(endpoint, viewerToken);
             Response noToken = http.doGet(endpoint, "");
+
+            assertThat(admin.statusCode())
+                .as("Admin status should not be 401 for %s", endpoint)
+                .isNotEqualTo(UNAUTHORIZED.value());
+            assertViewerForbidden(viewer, endpoint);
+            assertUnauthenticated(noToken, endpoint);
+        }
+
+        for (String endpoint : viewerAllowedEndpoints) {
+            Response admin = http.doGet(endpoint, adminToken);
+            Response viewer = http.doGet(endpoint, viewerToken);
+            Response noToken = http.doGet(endpoint, "");
+
             assertViewerAllowed(admin, viewer, endpoint);
             assertUnauthenticated(noToken, endpoint);
         }
@@ -804,6 +895,7 @@ public class AuthFunctionalTest {
 
     @Test
     @DisplayName("Testing support endpoints don't require auth")
+    @EnabledIfEnvironmentVariable(named = "TESTING_SUPPORT_ENABLE_API", matches = "(?i)true")
     void testingSupportEndpointAuth() {
         String endpoint = "/testing-support/courts?courtName=Auth Test Cleanup";
         Response noToken = http.doGet(endpoint);

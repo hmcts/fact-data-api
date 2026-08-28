@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.functional.helpers;
 
 import io.restassured.response.Response;
+import lombok.experimental.UtilityClass;
 import org.springframework.http.HttpStatus;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
 
@@ -13,11 +14,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Helper methods for assertions in functional tests.
  */
-public final class AssertionHelper {
-
-    private AssertionHelper() {
-        // Utility class
-    }
+@UtilityClass
+public class AssertionHelper {
 
     /**
      * Asserts that a response has the expected HTTP status.
