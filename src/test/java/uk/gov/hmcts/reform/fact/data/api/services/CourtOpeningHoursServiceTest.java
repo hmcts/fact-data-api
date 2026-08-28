@@ -441,15 +441,26 @@ class CourtOpeningHoursServiceTest {
 
     @Test
     void setCounterServiceOpeningHoursUpdatesExistingOpeningHours() {
+        UUID existingId = UUID.randomUUID();
+
         CourtCounterServiceOpeningHours updatedHours = new CourtCounterServiceOpeningHours();
+        updatedHours.setId(existingId);
         updatedHours.setOpeningTimesDetails(List.of());
+
+        CourtCounterServiceOpeningHours existingHours = new CourtCounterServiceOpeningHours();
+        existingHours.setId(existingId);
+
+        when(courtCounterServiceOpeningHoursRepository.findByCourtIdAndId(courtId, existingId))
+            .thenReturn(Optional.of(existingHours));
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtCounterServiceOpeningHoursRepository.save(any())).thenReturn(updatedHours);
+        when(courtCounterServiceOpeningHoursRepository.save(any(CourtCounterServiceOpeningHours.class)))
+            .thenReturn(updatedHours);
 
         CourtCounterServiceOpeningHours result =
             courtOpeningHoursService.setCounterServiceOpeningHours(courtId, updatedHours);
 
         assertThat(result).isEqualTo(updatedHours);
+        verify(courtCounterServiceOpeningHoursRepository).findByCourtIdAndId(courtId, existingId);
         verify(courtCounterServiceOpeningHoursRepository).save(updatedHours);
     }
 
@@ -494,8 +505,8 @@ class CourtOpeningHoursServiceTest {
         when(courtCounterServiceOpeningHoursRepository.save(any(CourtCounterServiceOpeningHours.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
-        CourtCounterServiceOpeningHours result
-            = courtOpeningHoursService.setCounterServiceOpeningHours(courtId, counterServiceOpeningHours);
+        CourtCounterServiceOpeningHours result =
+            courtOpeningHoursService.setCounterServiceOpeningHours(courtId, counterServiceOpeningHours);
 
         assertThat(result.getCourtTypes()).isEqualTo(courtTypeIds);
         verify(typesService).getCourtTypeById(courtTypeIds.getFirst());
@@ -504,16 +515,64 @@ class CourtOpeningHoursServiceTest {
 
     @Test
     void deleteCourtOpeningHoursSuccessfullyDeletesHours() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, openingHours.getId()))
+            .thenReturn(Optional.of(openingHours));
         courtOpeningHoursService.deleteCourtOpeningHours(courtId, openingHours.getId());
 
-        verify(courtOpeningHoursRepository).deleteById(openingHours.getId());
+        verify(courtOpeningHoursRepository).deleteByCourtIdAndId(courtId, openingHours.getId());
     }
 
     @Test
     void deleteCounterServiceOpeningHoursSuccessfullyDeletesHours() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtCounterServiceOpeningHoursRepository.findByCourtIdAndId(courtId, counterServiceOpeningHours.getId()))
+            .thenReturn(Optional.of(counterServiceOpeningHours));
         courtOpeningHoursService.deleteCourtCounterServiceOpeningHours(courtId, counterServiceOpeningHours.getId());
 
-        verify(courtCounterServiceOpeningHoursRepository).deleteById(counterServiceOpeningHours.getId());
+        verify(courtCounterServiceOpeningHoursRepository)
+            .deleteByCourtIdAndId(courtId, counterServiceOpeningHours.getId());
+    }
+
+    @Test
+    void setCounterServiceOpeningHoursThrowsExceptionWhenIdNotFoundForCourt() {
+        UUID existingId = UUID.randomUUID();
+
+        CourtCounterServiceOpeningHours hours = new CourtCounterServiceOpeningHours();
+        hours.setId(existingId);
+        hours.setOpeningTimesDetails(List.of());
+
+        when(courtCounterServiceOpeningHoursRepository.findByCourtIdAndId(courtId, existingId))
+            .thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class,
+            () -> courtOpeningHoursService.setCounterServiceOpeningHours(courtId, hours));
+
+        verify(courtCounterServiceOpeningHoursRepository).findByCourtIdAndId(courtId, existingId);
+    }
+
+    @Test
+    void setCounterServiceOpeningHoursUpdatesExistingOpeningHoursWhenIdBelongsToCourt() {
+        UUID existingId = UUID.randomUUID();
+
+        CourtCounterServiceOpeningHours hours = new CourtCounterServiceOpeningHours();
+        hours.setId(existingId);
+        hours.setOpeningTimesDetails(List.of());
+
+        CourtCounterServiceOpeningHours existingHours = new CourtCounterServiceOpeningHours();
+        existingHours.setId(existingId);
+
+        when(courtCounterServiceOpeningHoursRepository.findByCourtIdAndId(courtId, existingId))
+            .thenReturn(Optional.of(existingHours));
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtCounterServiceOpeningHoursRepository.save(any(CourtCounterServiceOpeningHours.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        CourtCounterServiceOpeningHours result =
+            courtOpeningHoursService.setCounterServiceOpeningHours(courtId, hours);
+
+        assertThat(result.getId()).isEqualTo(existingId);
+        verify(courtCounterServiceOpeningHoursRepository).findByCourtIdAndId(courtId, existingId);
+        verify(courtCounterServiceOpeningHoursRepository).save(hours);
     }
 }
-
