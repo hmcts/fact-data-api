@@ -172,6 +172,16 @@ class AuthServiceTest {
     }
 
     @Test
+    void isAdminSuppressesAuditForCreateAndUploadCsvEndpoint() {
+        assertAuditSuppressedFor("POST", "/csv/");
+    }
+
+    @Test
+    void isAdminSuppressesAuditForCreateAndUploadCsvEndpointWithoutTrailingSlash() {
+        assertAuditSuppressedFor("POST", "/csv");
+    }
+
+    @Test
     void isAdminSuppressesAuditForDeleteInactiveUsersEndpoint() {
         assertAuditSuppressedFor("DELETE", "/user/v1/retention");
     }
