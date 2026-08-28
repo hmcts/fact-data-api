@@ -29,9 +29,16 @@ public class AuthService {
     static final String ROLE_VIEWER = "Role.Fact.Viewer";
     private static final String COURT_LINK_PATH = "/courts/v1/link";
     private static final String USER_PATH = "/user/v1";
+    private static final String CSV_PATH = "/csv";
+    private static final String CSV_PATH_WITH_TRAILING_SLASH = "/csv/";
     private static final String USER_RETENTION_PATH = "/user/v1/retention";
     private static final String AUDIT_RETENTION_PATH = "/audits/v1";
-    private static final Set<String> POST_ENDPOINTS_WITHOUT_USER_HEADER = Set.of(COURT_LINK_PATH, USER_PATH);
+    private static final Set<String> POST_ENDPOINTS_WITHOUT_USER_HEADER = Set.of(
+        COURT_LINK_PATH,
+        USER_PATH,
+        CSV_PATH,
+        CSV_PATH_WITH_TRAILING_SLASH
+    );
     private static final Set<String> DELETE_ENDPOINTS_WITHOUT_USER_HEADER = Set.of(
         USER_RETENTION_PATH,
         AUDIT_RETENTION_PATH
