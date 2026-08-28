@@ -30,14 +30,13 @@ public class AuthService {
     private static final String COURT_LINK_PATH = "/courts/v1/link";
     private static final String USER_PATH = "/user/v1";
     private static final String CSV_PATH = "/csv";
-    private static final String CSV_PATH_WITH_TRAILING_SLASH = CSV_PATH + "/";
+    private static final char URI_PATH_DELIMITER = CSV_PATH.charAt(0);
     private static final String USER_RETENTION_PATH = "/user/v1/retention";
     private static final String AUDIT_RETENTION_PATH = "/audits/v1";
     private static final Set<String> POST_ENDPOINTS_WITHOUT_USER_HEADER = Set.of(
         COURT_LINK_PATH,
         USER_PATH,
-        CSV_PATH,
-        CSV_PATH_WITH_TRAILING_SLASH
+        CSV_PATH
     );
     private static final Set<String> DELETE_ENDPOINTS_WITHOUT_USER_HEADER = Set.of(
         USER_RETENTION_PATH,
@@ -116,9 +115,24 @@ public class AuthService {
 
     private boolean isAdminEndpointWithoutUserHeader(HttpServletRequest request) {
         String method = request.getMethod();
-        String requestUri = request.getRequestURI();
+        String requestUri = trimTrailingPathDelimiter(request.getRequestURI());
         return ("POST".equals(method) && POST_ENDPOINTS_WITHOUT_USER_HEADER.contains(requestUri))
-            || ("PUT".equals(method) && requestUri.startsWith(COURT_LINK_PATH + "/"))
+            || ("PUT".equals(method) && requestUri.startsWith(COURT_LINK_PATH + URI_PATH_DELIMITER))
             || ("DELETE".equals(method) && DELETE_ENDPOINTS_WITHOUT_USER_HEADER.contains(requestUri));
+    }
+
+    private String trimTrailingPathDelimiter(String requestUri) {
+        if (requestUri == null) {
+            return null;
+        }
+
+        int normalizedLength = requestUri.length();
+        while (normalizedLength > 1 && requestUri.charAt(normalizedLength - 1) == URI_PATH_DELIMITER) {
+            normalizedLength--;
+        }
+
+        return normalizedLength == requestUri.length()
+            ? requestUri
+            : requestUri.substring(0, normalizedLength);
     }
 }
