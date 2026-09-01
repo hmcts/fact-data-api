@@ -25,20 +25,19 @@ import java.security.SecureRandom;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
+import lombok.experimental.UtilityClass;
 
 /**
  * Helper methods for fetching test data via API endpoints.
  */
-public final class TestDataHelper {
+@UtilityClass
+public class TestDataHelper {
 
     private static final ObjectMapper mapper = JsonMapper.builder()
         .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
         .build();
     private static final SecureRandom random = new SecureRandom();
 
-    private TestDataHelper() {
-        // Utility class
-    }
 
     /**
      * Fetches the first region ID from the regions' endpoint.
@@ -196,6 +195,7 @@ public final class TestDataHelper {
         serviceCentre.setServiceAreaIds(List.of(UUID.fromString(
             http.doGet("/types/v1/service-areas", bearerToken).jsonPath().getString("[0].id")
         )));
+        serviceCentre.setRegionId(UUID.fromString(fetchFirstRegionId(http)));
         serviceCentre.setCatchmentType(CatchmentType.NATIONAL);
         return serviceCentre;
     }

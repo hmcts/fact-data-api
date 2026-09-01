@@ -4,20 +4,18 @@ import com.slack.api.Slack;
 import com.slack.api.methods.SlackApiException;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import uk.gov.hmcts.reform.fact.data.api.config.SlackProperties;
 
 import java.io.IOException;
 
 @Slf4j
+@RequiredArgsConstructor
 @Component
 public class SlackClient {
 
     private final SlackProperties properties;
-
-    public SlackClient(SlackProperties properties) {
-        this.properties = properties;
-    }
 
     public void sendSlackMessage(String message) {
         try {

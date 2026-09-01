@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -9,17 +10,13 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFacilitiesRepository;
 
 import java.util.UUID;
 
-@Service
 @Slf4j
+@Service
+@RequiredArgsConstructor
 public class CourtFacilitiesService {
 
     private final CourtFacilitiesRepository courtFacilitiesRepository;
     private final CourtService courtService;
-
-    public CourtFacilitiesService(CourtFacilitiesRepository courtFacilitiesRepository, CourtService courtService) {
-        this.courtFacilitiesRepository = courtFacilitiesRepository;
-        this.courtService = courtService;
-    }
 
     /**
      * Get facilities by court id. A court will only ever have zero or one facilities record.

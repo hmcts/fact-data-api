@@ -12,10 +12,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,17 +24,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @SecuredFactRestController(
     name = "Court Translation",
-    description = "Operations related to translation services available for courts"
+    description = "Operations related to translation services available for courts",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/courts/{courtId}")
 @SuppressWarnings("java:S4684")
+@RequiredArgsConstructor
 public class CourtTranslationController {
 
     private final CourtTranslationService courtTranslationService;
-
-    public CourtTranslationController(CourtTranslationService courtTranslationService) {
-        this.courtTranslationService = courtTranslationService;
-    }
 
     @GetMapping("/v1/translation-services")
     @Operation(
@@ -63,7 +61,6 @@ public class CourtTranslationController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtTranslation> setTranslationServices(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Translation object to create or update", required = true)

@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CourtOpeningHoursService {
 
     private final CourtOpeningHoursRepository courtOpeningHoursRepository;
@@ -27,18 +29,6 @@ public class CourtOpeningHoursService {
     private final OpeningHoursTypeService openingHoursTypeService;
     private final TypesService typesService;
 
-    public CourtOpeningHoursService(
-        CourtOpeningHoursRepository courtOpeningHoursRepository,
-        CourtCounterServiceOpeningHoursRepository courtCounterServiceOpeningHoursRepository,
-        CourtService courtService,
-        OpeningHoursTypeService openingHoursTypeService,
-        TypesService typesService) {
-        this.courtOpeningHoursRepository = courtOpeningHoursRepository;
-        this.courtCounterServiceOpeningHoursRepository = courtCounterServiceOpeningHoursRepository;
-        this.courtService = courtService;
-        this.openingHoursTypeService = openingHoursTypeService;
-        this.typesService = typesService;
-    }
 
     /**
      * Get a list of opening hours by court ID.
@@ -115,7 +105,11 @@ public class CourtOpeningHoursService {
     @Transactional
     public CourtOpeningHours setOpeningHours(UUID courtId, CourtOpeningHours courtOpeningHours) {
 
-        if (courtOpeningHours != null && courtOpeningHours.getId() != null) {
+        if (courtOpeningHours == null) {
+            throw new IllegalArgumentException("Court opening hours cannot be null");
+        }
+
+        if (courtOpeningHours.getId() != null) {
             getOpeningHoursById(courtId, courtOpeningHours.getId());
         }
 
@@ -147,12 +141,22 @@ public class CourtOpeningHoursService {
     public CourtCounterServiceOpeningHours setCounterServiceOpeningHours(
         UUID courtId, CourtCounterServiceOpeningHours courtCounterServiceOpeningHours) {
 
-        if (courtCounterServiceOpeningHours != null && courtCounterServiceOpeningHours.getId() != null) {
-            courtCounterServiceOpeningHoursRepository
-                .findById(courtCounterServiceOpeningHours.getId()).orElseThrow(
-                    () -> new NotFoundException(
-                        "No counter service opening hours found with ID: " + courtCounterServiceOpeningHours.getId()
-                    ));
+        Optional<CourtCounterServiceOpeningHours> existingOpeningHours = Optional.empty();
+
+        if (courtCounterServiceOpeningHours == null) {
+            throw new IllegalArgumentException("Court counter service opening hours cannot be null");
+        }
+
+        if (courtCounterServiceOpeningHours.getId() != null) {
+            existingOpeningHours = courtCounterServiceOpeningHoursRepository
+                .findByCourtIdAndId(courtId, courtCounterServiceOpeningHours.getId());
+
+            if (existingOpeningHours.isEmpty()) {
+                throw new NotFoundException(
+                    "No counter service opening hours found for court ID: " + courtId
+                        + " with ID: " + courtCounterServiceOpeningHours.getId()
+                );
+            }
         }
 
         courtCounterServiceOpeningHours.setCourt(courtService.getCourtById(courtId));
@@ -165,8 +169,7 @@ public class CourtOpeningHoursService {
             .map(this::validateCourtTypeIds)
             .ifPresent(courtCounterServiceOpeningHours::setCourtTypes);
 
-        courtCounterServiceOpeningHoursRepository.findByCourtIdAndId(courtId, courtCounterServiceOpeningHours.getId())
-            .ifPresent(existing -> courtCounterServiceOpeningHours.setId(existing.getId()));
+        existingOpeningHours.ifPresent(existing -> courtCounterServiceOpeningHours.setId(existing.getId()));
 
         return courtCounterServiceOpeningHoursRepository.save(courtCounterServiceOpeningHours);
     }
@@ -178,7 +181,9 @@ public class CourtOpeningHoursService {
     @Transactional
     public void deleteCourtOpeningHours(UUID courtId, UUID openingHoursId) {
         log.info("Deleting court opening hours for court ID: {} and opening hours ID: {}", courtId, openingHoursId);
-        courtOpeningHoursRepository.deleteById(openingHoursId);
+        // will generate required 404 if not found
+        getOpeningHoursById(courtId, openingHoursId);
+        courtOpeningHoursRepository.deleteByCourtIdAndId(courtId, openingHoursId);
     }
 
     /**
@@ -189,15 +194,17 @@ public class CourtOpeningHoursService {
     public void deleteCourtCounterServiceOpeningHours(final UUID courtId, final UUID counterServiceId) {
         log.info("Deleting court counter service opening hours for court ID: {} and counter service ID: {}",
                  courtId, counterServiceId);
-        courtCounterServiceOpeningHoursRepository.deleteById(counterServiceId);
+        // will generate required 404 if not found
+        getCounterServiceOpeningHoursById(courtId, counterServiceId);
+        courtCounterServiceOpeningHoursRepository.deleteByCourtIdAndId(courtId, counterServiceId);
     }
 
     /**
-     * Normalizes a list of opening times details by enforcing the rule that if "everyday" is specified,
+     * Normalises a list of opening times details by enforcing the rule that if "everyday" is specified,
      * it takes precedence over individual days.
      *
-     * @param openingTimesDetails The list of opening times details to normalize
-     * @return A normalized list where either all entries are "everyday" or specific days
+     * @param openingTimesDetails The list of opening times details to normalise
+     * @return A normalised list where either all entries are "everyday" or specific days
      */
     private List<OpeningTimesDetail> normaliseOpeningTimesDetails(List<OpeningTimesDetail> openingTimesDetails) {
         List<OpeningTimesDetail> hoursToSave = new ArrayList<>(openingTimesDetails);

@@ -43,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ServiceCentreControllerTest {
 
     private static final UUID SERVICE_CENTRE_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+    private static final UUID REGION_ID = UUID.fromString("133e4567-e89b-12d3-a456-426614174000");
     private static final UUID CONTACT_DESCRIPTION_ID = UUID.fromString("223e4567-e89b-12d3-a456-426614174000");
     private static final UUID AREA_OF_LAW_ID = UUID.fromString("323e4567-e89b-12d3-a456-426614174000");
     private static final UUID SERVICE_AREA_ID = UUID.fromString("423e4567-e89b-12d3-a456-426614174000");
@@ -159,6 +160,18 @@ class ServiceCentreControllerTest {
     }
 
     @Test
+    @DisplayName("POST /service-centres/v1 rejects missing region ID")
+    void createServiceCentreRejectsMissingRegionId() throws Exception {
+        ServiceCentre serviceCentre = buildServiceCentre();
+        serviceCentre.setRegionId(null);
+
+        mockMvc.perform(post("/service-centres/v1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(serviceCentre)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("POST /service-centres/v1 rejects a Welsh warning notice longer than 500 characters")
     void createServiceCentreRejectsLongWelshWarningNotice() throws Exception {
         ServiceCentre serviceCentre = buildServiceCentre();
@@ -204,6 +217,7 @@ class ServiceCentreControllerTest {
             .slug("test-service-centre")
             .open(true)
             .warningNoticeCy("Rhybudd: mae'r ganolfan ym Môn ar gau!")
+            .regionId(REGION_ID)
             .catchmentType(CatchmentType.REGIONAL)
             .build();
     }
@@ -230,6 +244,7 @@ class ServiceCentreControllerTest {
             .slug("test-service-centre")
             .open(true)
             .warningNoticeCy("Rhybudd: mae'r ganolfan ym Môn ar gau!")
+            .regionId(REGION_ID)
             .catchmentType(CatchmentType.NATIONAL)
             .serviceAreaIds(List.of(SERVICE_AREA_ID))
             .serviceAreaDetails(List.of(ServiceArea.builder()

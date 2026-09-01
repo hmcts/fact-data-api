@@ -5,9 +5,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,19 +22,15 @@ import java.util.UUID;
 
 @SecuredFactRestController(
     name = "Court Professional Information",
-    description = "Operations related to professional services for courts"
+    description = "Operations related to professional services for courts",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/courts/{courtId}")
 @SuppressWarnings("java:S4684")
+@RequiredArgsConstructor
 public class CourtProfessionalInformationController {
 
     private final CourtProfessionalInformationService courtProfessionalInformationService;
-
-    public CourtProfessionalInformationController(
-        CourtProfessionalInformationService courtProfessionalInformationService
-    ) {
-        this.courtProfessionalInformationService = courtProfessionalInformationService;
-    }
 
     @GetMapping("/v1/professional-information")
     @Operation(
@@ -66,7 +62,6 @@ public class CourtProfessionalInformationController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtProfessionalInformationDetailsDto> setProfessionalInformation(
         @Parameter(description = "UUID of the court", required = true)
         @ValidUUID

@@ -5,6 +5,7 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
 import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
@@ -70,6 +71,7 @@ public final class ServiceCentreControllerFunctionalTest {
 
     @Test
     @DisplayName("Service centre details endpoint returns child resources")
+    @EnabledIfEnvironmentVariable(named = "TESTING_SUPPORT_ENABLE_API", matches = "(?i)true")
     void shouldReturnServiceCentreDetailsWithChildResources() {
         Response createResponse = http.doGet(
             "/testing-support/service-centres",

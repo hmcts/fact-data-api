@@ -17,12 +17,14 @@ import io.restassured.response.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 
 @Feature("Testing Support Controller Controller")
 @DisplayName("Testing Support Controller Controller")
+@EnabledIfEnvironmentVariable(named = "TESTING_SUPPORT_ENABLE_API", matches = "(?i)true")
 @Slf4j
 public class TestingSupportControllerTest {
     private static final HttpClient http = new HttpClient();

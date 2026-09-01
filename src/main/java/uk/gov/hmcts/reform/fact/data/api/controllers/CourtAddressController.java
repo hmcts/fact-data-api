@@ -13,9 +13,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,17 +26,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @SecuredFactRestController(
     name = "Court Addresses",
-    description = "Operations related to addresses available for courts"
+    description = "Operations related to addresses available for courts",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/courts/{courtId}")
 @SuppressWarnings("java:S4684")
+@RequiredArgsConstructor
 public class CourtAddressController {
 
     private final CourtAddressService courtAddressService;
-
-    public CourtAddressController(CourtAddressService courtAddressService) {
-        this.courtAddressService = courtAddressService;
-    }
 
     @GetMapping("/v1/address")
     @Operation(
@@ -88,7 +86,6 @@ public class CourtAddressController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtAddress> createAddress(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Address to create", required = true)
@@ -110,7 +107,6 @@ public class CourtAddressController {
             description = "Invalid court ID or address ID supplied, or invalid request body"),
         @ApiResponse(responseCode = "404", description = "Address or court not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtAddress> updateCourtAddress(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the address", required = true) @ValidUUID @PathVariable String addressId,
@@ -136,7 +132,6 @@ public class CourtAddressController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID or address ID supplied"),
         @ApiResponse(responseCode = "404", description = "Address or court not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteCourtAddress(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "UUID of the address", required = true) @ValidUUID @PathVariable String addressId

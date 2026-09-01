@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.constraints.NotBlank;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,16 +18,14 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
 
 @SecuredFactRestController(
     name = "Search Address",
-    description = "Operations related to the searching of addresses"
+    description = "Operations related to the searching of addresses",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/search/address")
+@RequiredArgsConstructor
 public class SearchAddressController {
 
     private final OsService osService;
-
-    public SearchAddressController(OsService osService) {
-        this.osService = osService;
-    }
 
     @GetMapping("/v1/postcode/{postcode}")
     @Operation(

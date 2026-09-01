@@ -13,9 +13,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -24,17 +24,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @SecuredFactRestController(
     name = "Local Authorities",
-    description = "Operations related to court local authorities"
+    description = "Operations related to court local authorities",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/courts/{courtId}")
 @SuppressWarnings("java:S4684")
+@RequiredArgsConstructor
 public class CourtLocalAuthoritiesController {
 
     private final CourtLocalAuthoritiesService courtLocalAuthoritiesService;
-
-    public CourtLocalAuthoritiesController(CourtLocalAuthoritiesService courtLocalAuthoritiesService) {
-        this.courtLocalAuthoritiesService = courtLocalAuthoritiesService;
-    }
 
     @GetMapping(value = "/v1/local-authorities", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
@@ -66,7 +64,6 @@ public class CourtLocalAuthoritiesController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or request validation failed"),
         @ApiResponse(responseCode = "404", description = "Court or local authority not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<String> updateCourtLocalAuthorities(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId,
         @Parameter(description = "Local authority mappings to update", required = true)

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,13 +20,10 @@ import java.util.List;
     description = "Operations related to the searching of service areas"
 )
 @RequestMapping("/search/service-area")
+@RequiredArgsConstructor
 public class SearchServiceAreaController {
 
     private final SearchServiceAreaService searchServiceAreaService;
-
-    public SearchServiceAreaController(SearchServiceAreaService searchServiceAreaService) {
-        this.searchServiceAreaService = searchServiceAreaService;
-    }
 
     @GetMapping("/v1/{serviceAreaName}")
     @Operation(

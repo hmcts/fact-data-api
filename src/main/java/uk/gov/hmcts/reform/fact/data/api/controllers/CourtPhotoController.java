@@ -12,9 +12,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,17 +25,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 @SecuredFactRestController(
     name = "Court Photo",
-    description = "Operations related to photos for courts"
+    description = "Operations related to photos for courts",
+    preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/courts/{courtId}")
 @SuppressWarnings("java:S4684")
+@RequiredArgsConstructor
 public class CourtPhotoController {
 
     private final CourtPhotoService courtPhotoService;
-
-    public CourtPhotoController(CourtPhotoService courtPhotoService) {
-        this.courtPhotoService = courtPhotoService;
-    }
 
     @GetMapping("/v1/photo")
     @Operation(
@@ -62,7 +60,6 @@ public class CourtPhotoController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied or invalid file"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<CourtPhoto> setCourtPhotoByCourtId(
         @Parameter(description = "UUID of the court", required = true)
         @ValidUUID @PathVariable String courtId, @ValidImage @RequestPart("file") MultipartFile file) {
@@ -80,7 +77,6 @@ public class CourtPhotoController {
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court or court photo not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Void> deleteCourtPhotoByCourtId(
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
         courtPhotoService.deleteCourtPhotoByCourtId(UUID.fromString(courtId));
