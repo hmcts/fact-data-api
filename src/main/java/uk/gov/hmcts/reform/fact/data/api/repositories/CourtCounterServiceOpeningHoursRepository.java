@@ -16,4 +16,6 @@ public interface CourtCounterServiceOpeningHoursRepository
     List<CourtCounterServiceOpeningHours> findByCourtId(UUID courtId);
 
     Optional<CourtCounterServiceOpeningHours> findByCourtIdAndId(UUID courtId, UUID counterServiceOpeningHourId);
+
+    void deleteByCourtIdAndId(UUID courtId, UUID counterServiceOpeningHourId);
 }
