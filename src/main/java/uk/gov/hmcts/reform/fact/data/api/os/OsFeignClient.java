@@ -21,6 +21,16 @@ public interface OsFeignClient {
         @RequestParam("maxresults") int maxResults
     );
 
+    /**
+     * Retrieves one page of DPA and LPI records for the admin address picker.
+     *
+     * @param postcode full postcode to search for
+     * @param dataset OS datasets to include
+     * @param language language used for LPI records
+     * @param maxResults maximum number of records in the page
+     * @param offset first record to return
+     * @return one page of OS address records
+     */
     @GetMapping("${os.endpoint.postcode-search}")
     OsData getOsAdminPostcodeData(
         @RequestParam("postcode") String postcode,

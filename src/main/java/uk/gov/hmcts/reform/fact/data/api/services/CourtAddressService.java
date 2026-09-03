@@ -176,8 +176,8 @@ public class CourtAddressService {
             address.getOsAddressUprn(),
             address.getOsAddressLpiKey()
         ).ifPresent(coordinates -> {
-            address.setLat(BigDecimal.valueOf(coordinates.latitude()));
-            address.setLon(BigDecimal.valueOf(coordinates.longitude()));
+            address.setLat(BigDecimal.valueOf(coordinates.getLatitude()));
+            address.setLon(BigDecimal.valueOf(coordinates.getLongitude()));
         });
     }
 

@@ -4,6 +4,7 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import uk.gov.hmcts.reform.fact.data.api.config.CacheConfiguration;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
@@ -74,8 +75,8 @@ public class OsService {
     }
 
     /**
-     * Retrieve all DPA and LPI address options for the admin portal. An empty combined
-     * result retains the existing invalid-postcode response used by the address picker.
+     * Fetches every page of DPA and LPI addresses for the admin picker. Including LPI
+     * allows staff to select premises that do not have a Royal Mail DPA record.
      *
      * @param postcode full postcode to look up
      * @return all paged DPA and LPI results returned by OS
@@ -123,8 +124,9 @@ public class OsService {
     }
 
     /**
-     * Resolve coordinates for an explicitly selected admin address, or retain the
-     * existing first-DPA behaviour when the address was entered manually.
+     * Resolves coordinates for the address selected in the admin picker. The identifiers
+     * posted by the browser are checked against OS again before any coordinates are used.
+     * Manually entered addresses keep the existing first-DPA behaviour.
      *
      * @param postcode postcode on the address being saved
      * @param dataset selected OS dataset, if an option was selected
@@ -138,9 +140,11 @@ public class OsService {
         String uprn,
         String lpiKey
     ) {
-        boolean hasSelectionData = isNotBlank(dataset) || isNotBlank(uprn) || isNotBlank(lpiKey);
+        boolean hasSelectionData = StringUtils.hasText(dataset)
+            || StringUtils.hasText(uprn)
+            || StringUtils.hasText(lpiKey);
         if (hasSelectionData) {
-            if (!isNotBlank(dataset) || !isNotBlank(uprn)) {
+            if (!StringUtils.hasText(dataset) || !StringUtils.hasText(uprn)) {
                 throw new IllegalArgumentException("Selected OS address must include both dataset and UPRN");
             }
 
@@ -164,7 +168,7 @@ public class OsService {
                         .map(OsResult::getLpi)
                         .filter(Objects::nonNull)
                         .filter(lpi -> uprn.equals(lpi.getUprn()))
-                        .filter(lpi -> !isNotBlank(lpiKey) || lpiKey.equals(lpi.getLpiKey()))
+                        .filter(lpi -> !StringUtils.hasText(lpiKey) || lpiKey.equals(lpi.getLpiKey()))
                         .findFirst()
                         .orElseThrow(() -> new IllegalArgumentException(
                             "Selected OS address is no longer available for postcode %s".formatted(postcode)
@@ -262,6 +266,13 @@ public class OsService {
         }
     }
 
+    /**
+     * Calls a single page of the combined admin lookup and keeps OS errors free of API keys.
+     *
+     * @param postcode formatted postcode to search for
+     * @param offset first record to return
+     * @return one page of OS address records
+     */
     private OsData getOsAdminAddressPage(String postcode, int offset) {
         try {
             return osFeignClient.getOsAdminPostcodeData(
@@ -287,6 +298,12 @@ public class OsService {
         }
     }
 
+    /**
+     * Describes the combined response returned after all OS pages have been collected.
+     *
+     * @param totalResults total reported by OS, or the number collected when no total was supplied
+     * @return header for the combined response
+     */
     private OsHeader buildCombinedHeader(int totalResults) {
         return OsHeader.builder()
             .dataset(ADMIN_DATASETS)
@@ -296,6 +313,13 @@ public class OsService {
             .build();
     }
 
+    /**
+     * Accepts only a complete, finite coordinate pair within valid latitude and longitude ranges.
+     *
+     * @param latitude latitude supplied by OS
+     * @param longitude longitude supplied by OS
+     * @return the coordinate pair, or empty when it cannot safely be stored
+     */
     private Optional<OsAddressCoordinates> toCoordinates(Double latitude, Double longitude) {
         if (latitude == null
             || longitude == null
@@ -309,10 +333,6 @@ public class OsService {
         }
 
         return Optional.of(new OsAddressCoordinates(latitude, longitude));
-    }
-
-    private boolean isNotBlank(String value) {
-        return value != null && !value.isBlank();
     }
 
     private String sanitiseOsException(FeignException exception) {
