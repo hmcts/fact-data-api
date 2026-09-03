@@ -18,6 +18,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceN
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtProfessionalInformationService;
 
+import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -350,9 +351,10 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /courts/{courtId}/v1/professional-information accepts decomposed Welsh diacritics in Welsh DX and fax fields")
+    @DisplayName("POST /courts/{courtId}/v1/professional-information accepts decomposed Welsh diacritics")
     void postProfessionalInformationAllowsDecomposedWelshLettersInWelshFields() throws Exception {
-        String welshWithCombiningMarks = "Disgrifiad gyda w\u0302 y\u0302 a\u0302 e\u0302 i\u0302 o\u0302 u\u0302";
+        String welshWithCombiningMarks =
+            Normalizer.normalize("Disgrifiad gyda ŵ ŷ â ê î ô û", Normalizer.Form.NFD);
         CourtProfessionalInformationDetailsDto valid = buildDetails(
             ProfessionalInformationDto.builder()
                 .interviewRooms(true)
