@@ -147,7 +147,7 @@ public class OsService {
             OsData osData = getOsAdminAddressByFullPostcode(postcode);
             List<OsResult> results = osData.getResults() == null ? Collections.emptyList() : osData.getResults();
             String normalisedDataset = dataset.trim().toUpperCase(Locale.ROOT);
-            Optional<OsAddressCoordinates> selectedCoordinates = switch (normalisedDataset) {
+            return switch (normalisedDataset) {
                 case "DPA" -> {
                     OsDpa selectedDpa = results.stream()
                         .map(OsResult::getDpa)
@@ -173,8 +173,6 @@ public class OsService {
                 }
                 default -> throw new IllegalArgumentException("Unsupported OS address dataset: " + dataset);
             };
-
-            return selectedCoordinates;
         }
 
         OsDpa firstDpa = getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
