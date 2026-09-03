@@ -312,6 +312,76 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
+    @DisplayName("POST /courts/{courtId}/v1/professional-information accepts Welsh letters in Welsh DX and fax fields")
+    void postProfessionalInformationAllowsWelshLettersInWelshFields() throws Exception {
+        CourtProfessionalInformationDetailsDto valid = buildDetails(
+            ProfessionalInformationDto.builder()
+                .interviewRooms(true)
+                .interviewRoomCount(2)
+                .interviewPhoneNumber("0207 123 4567")
+                .videoHearings(true)
+                .commonPlatform(false)
+                .accessScheme(true)
+                .build(),
+            CourtCodesDto.builder().gbs("123").build(),
+            List.of(CourtDxCodeDto.builder()
+                .dxCode("120551 Marylebone 9")
+                .explanation("Valid explanation")
+                .explanationCy("Esboniad gyda ŵ ŷ â ê î ô û")
+                .build()),
+            List.of(CourtFaxDto.builder()
+                .faxNumber("0207 111 1111")
+                .description("Fax")
+                .descriptionCy("Disgrifiad gyda ŵ ŷ â ê î ô û")
+                .build())
+        );
+
+        when(courtProfessionalInformationService.setProfessionalInformation(
+            any(UUID.class),
+            any(CourtProfessionalInformationDetailsDto.class)
+        )).thenReturn(valid);
+
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(valid)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.dxCodes[0].explanationCy").value("Esboniad gyda ŵ ŷ â ê î ô û"))
+            .andExpect(jsonPath("$.faxNumbers[0].descriptionCy").value("Disgrifiad gyda ŵ ŷ â ê î ô û"));
+    }
+
+    @Test
+    @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for invalid Welsh DX punctuation")
+    void postProfessionalInformationInvalidWelshDxPunctuationReturnsBadRequest() throws Exception {
+        CourtProfessionalInformationDetailsDto invalid = buildDetails(
+            ProfessionalInformationDto.builder()
+                .interviewRooms(true)
+                .interviewRoomCount(2)
+                .interviewPhoneNumber("0207 123 4567")
+                .videoHearings(true)
+                .commonPlatform(false)
+                .accessScheme(true)
+                .build(),
+            CourtCodesDto.builder().gbs("123").build(),
+            List.of(CourtDxCodeDto.builder()
+                .dxCode("120551 Marylebone 9")
+                .explanation("Valid explanation")
+                .explanationCy("Esboniad@")
+                .build()),
+            List.of(CourtFaxDto.builder()
+                .faxNumber("0207 111 1111")
+                .description("Fax")
+                .descriptionCy("Ffacs")
+                .build())
+        );
+
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalid)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$['dxCodes[0].explanationCy']").exists());
+    }
+
+    @Test
     @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for DX code too long")
     void postProfessionalInformationInvalidDxCodeTooLongReturnsBadRequest() throws Exception {
         String longCode = ("DX" + "0123456789".repeat(21));

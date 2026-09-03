@@ -34,7 +34,7 @@ public class CourtFaxDto {
 
     @Schema(description = "Welsh language fax description")
     @Size(max = 250, message = "Welsh fax description must be {max} characters or fewer")
-    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
+    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX_WELSH,
         message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
     private String descriptionCy;
 

@@ -35,7 +35,7 @@ public class CourtDxCodeDto {
 
     @Schema(description = "Welsh language explanation of the DX code")
     @Size(max = 250, message = "DX Welsh explanation must be {max} characters or fewer")
-    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
+    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX_WELSH,
         message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
     private String explanationCy;
 
