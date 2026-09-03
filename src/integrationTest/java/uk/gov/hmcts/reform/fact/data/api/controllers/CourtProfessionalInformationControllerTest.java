@@ -350,6 +350,45 @@ class CourtProfessionalInformationControllerTest {
     }
 
     @Test
+    @DisplayName("POST /courts/{courtId}/v1/professional-information accepts decomposed Welsh diacritics in Welsh DX and fax fields")
+    void postProfessionalInformationAllowsDecomposedWelshLettersInWelshFields() throws Exception {
+        String welshWithCombiningMarks = "Disgrifiad gyda w\u0302 y\u0302 a\u0302 e\u0302 i\u0302 o\u0302 u\u0302";
+        CourtProfessionalInformationDetailsDto valid = buildDetails(
+            ProfessionalInformationDto.builder()
+                .interviewRooms(true)
+                .interviewRoomCount(2)
+                .interviewPhoneNumber("0207 123 4567")
+                .videoHearings(true)
+                .commonPlatform(false)
+                .accessScheme(true)
+                .build(),
+            CourtCodesDto.builder().gbs("123").build(),
+            List.of(CourtDxCodeDto.builder()
+                .dxCode("120551 Marylebone 9")
+                .explanation("Valid explanation")
+                .explanationCy(welshWithCombiningMarks)
+                .build()),
+            List.of(CourtFaxDto.builder()
+                .faxNumber("0207 111 1111")
+                .description("Fax")
+                .descriptionCy(welshWithCombiningMarks)
+                .build())
+        );
+
+        when(courtProfessionalInformationService.setProfessionalInformation(
+            any(UUID.class),
+            any(CourtProfessionalInformationDetailsDto.class)
+        )).thenReturn(valid);
+
+        mockMvc.perform(post("/courts/{courtId}/v1/professional-information", courtId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(valid)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.dxCodes[0].explanationCy").value(welshWithCombiningMarks))
+            .andExpect(jsonPath("$.faxNumbers[0].descriptionCy").value(welshWithCombiningMarks));
+    }
+
+    @Test
     @DisplayName("POST /courts/{courtId}/v1/professional-information returns 400 for invalid Welsh DX punctuation")
     void postProfessionalInformationInvalidWelshDxPunctuationReturnsBadRequest() throws Exception {
         CourtProfessionalInformationDetailsDto invalid = buildDetails(
