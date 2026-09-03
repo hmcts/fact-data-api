@@ -13,9 +13,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.os.OsData;
-import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
-import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
+import uk.gov.hmcts.reform.fact.data.api.os.OsAddressCoordinates;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 
 import java.util.List;
@@ -26,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -83,17 +82,12 @@ class CourtAddressServiceTest {
             .addressType(AddressType.VISIT_US)
             .build();
 
-        OsDpa osDpa = OsDpa.builder()
-            .lat(51.5)
-            .lng(-0.1)
-            .build();
-        OsResult osResult = OsResult.builder()
-            .dpa(osDpa)
-            .build();
-        OsData osData = OsData.builder()
-            .results(List.of(osResult))
-            .build();
-        lenient().when(osService.getOsAddressByFullPostcode(anyString())).thenReturn(osData);
+        lenient().when(osService.getOsAdminAddressCoordinates(
+            anyString(),
+            nullable(String.class),
+            nullable(String.class),
+            nullable(String.class)
+        )).thenReturn(Optional.of(new OsAddressCoordinates(51.5, -0.1)));
     }
 
     @Test
@@ -271,13 +265,13 @@ class CourtAddressServiceTest {
     }
 
     @Test
-    void setLatLonFromPostcodeHandlesNullOsData() {
+    void setLatLonFromPostcodeHandlesEmptyCoordinates() {
         CourtAddress newAddress = CourtAddress.builder()
             .postcode("TE1 1ST")
             .build();
 
         when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(osService.getOsAddressByFullPostcode("TE1 1ST")).thenReturn(null);
+        when(osService.getOsAdminAddressCoordinates("TE1 1ST", null, null, null)).thenReturn(Optional.empty());
         when(courtAddressRepository.save(any(CourtAddress.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -285,5 +279,51 @@ class CourtAddressServiceTest {
 
         assertThat(result.getLat()).isNull();
         assertThat(result.getLon()).isNull();
+    }
+
+    @Test
+    void updateAddressClearsStaleCoordinatesWhenNewPostcodeHasNoOsCoordinates() {
+        address.setLat(java.math.BigDecimal.valueOf(52.5));
+        address.setLon(java.math.BigDecimal.valueOf(-1.5));
+        CourtAddress update = CourtAddress.builder()
+            .addressLine1("Updated Street")
+            .townCity("Updated City")
+            .postcode("UP1 2ED")
+            .addressType(AddressType.VISIT_US)
+            .build();
+
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtAddressRepository.findByIdAndCourtId(addressId, courtId)).thenReturn(Optional.of(address));
+        when(osService.getOsAdminAddressCoordinates("UP1 2ED", null, null, null)).thenReturn(Optional.empty());
+        when(courtAddressRepository.save(address)).thenReturn(address);
+
+        CourtAddress result = courtAddressService.updateAddress(courtId, addressId, update);
+
+        assertThat(result.getLat()).isNull();
+        assertThat(result.getLon()).isNull();
+    }
+
+    @Test
+    void createAddressResolvesSelectedLpiIdentityServerSide() {
+        CourtAddress selectedAddress = CourtAddress.builder()
+            .addressLine1("Durham Justice Centre")
+            .townCity("Durham")
+            .postcode("DH1 3RG")
+            .addressType(AddressType.VISIT_US)
+            .osAddressDataset("LPI")
+            .osAddressUprn("123456789")
+            .osAddressLpiKey("lpi-key")
+            .build();
+
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(osService.getOsAdminAddressCoordinates("DH1 3RG", "LPI", "123456789", "lpi-key"))
+            .thenReturn(Optional.of(new OsAddressCoordinates(54.77, -1.57)));
+        when(courtAddressRepository.save(selectedAddress)).thenReturn(selectedAddress);
+
+        CourtAddress result = courtAddressService.createAddress(courtId, selectedAddress);
+
+        assertThat(result.getLat()).isEqualByComparingTo("54.77");
+        assertThat(result.getLon()).isEqualByComparingTo("-1.57");
+        verify(osService).getOsAdminAddressCoordinates("DH1 3RG", "LPI", "123456789", "lpi-key");
     }
 }

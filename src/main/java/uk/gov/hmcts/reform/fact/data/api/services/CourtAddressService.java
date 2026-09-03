@@ -11,8 +11,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.Court;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.os.OsData;
-import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -164,17 +162,23 @@ public class CourtAddressService {
      * Updates the latitude and longitude coordinates for a court address based on its postcode.
      * Uses the Ordnance Survey API to look up geographic coordinates from the postcode.
      * If valid postcode data is found, updates the address with the corresponding lat/lon values.
-     * If postcode is null or no valid coordinates are found, the address remains unchanged.
+     * If no valid coordinates are found, both coordinates remain cleared.
      *
      * @param address The court address entity to update with geographic coordinates
      */
     private void setLatLonFromPostcode(CourtAddress address) {
-        OsData osData = osService.getOsAddressByFullPostcode(address.getPostcode());
-        if (osData != null && osData.getResults() != null && !osData.getResults().isEmpty()) {
-            OsDpa dpa = osData.getResults().getFirst().getDpa();
-            address.setLat(BigDecimal.valueOf(dpa.getLat()));
-            address.setLon(BigDecimal.valueOf(dpa.getLng()));
-        }
+        address.setLat(null);
+        address.setLon(null);
+
+        osService.getOsAdminAddressCoordinates(
+            address.getPostcode(),
+            address.getOsAddressDataset(),
+            address.getOsAddressUprn(),
+            address.getOsAddressLpiKey()
+        ).ifPresent(coordinates -> {
+            address.setLat(BigDecimal.valueOf(coordinates.latitude()));
+            address.setLon(BigDecimal.valueOf(coordinates.longitude()));
+        });
     }
 
     private void setNewAddressFieldsOnExistingAddress(CourtAddress existing, CourtAddress newAddress) {
@@ -185,6 +189,9 @@ public class CourtAddressService {
         existing.setPostcode(newAddress.getPostcode());
         existing.setAddressType(newAddress.getAddressType());
         existing.setEpimId(newAddress.getEpimId());
+        existing.setOsAddressDataset(newAddress.getOsAddressDataset());
+        existing.setOsAddressUprn(newAddress.getOsAddressUprn());
+        existing.setOsAddressLpiKey(newAddress.getOsAddressLpiKey());
 
         if (newAddress.getAreasOfLaw() != null) {
             existing.setAreasOfLaw(getValidatedAreasOfLawTypeIds(newAddress.getAreasOfLaw()));

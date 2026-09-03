@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -98,6 +99,21 @@ public class ServiceCentreAddress implements AuditableEntity {
 
     @Schema(description = "The longitude coordinate")
     private BigDecimal lon;
+
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(description = "OS dataset for the selected admin address", accessMode = Schema.AccessMode.WRITE_ONLY)
+    private String osAddressDataset;
+
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(description = "OS UPRN for the selected admin address", accessMode = Schema.AccessMode.WRITE_ONLY)
+    private String osAddressUprn;
+
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(description = "OS LPI key for the selected admin address", accessMode = Schema.AccessMode.WRITE_ONLY)
+    private String osAddressLpiKey;
 
     @Schema(description = "The address type")
     @Enumerated(EnumType.STRING)

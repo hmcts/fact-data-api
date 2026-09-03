@@ -6,8 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.os.OsData;
-import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreAddressRepository;
 
 import java.math.BigDecimal;
@@ -106,12 +104,18 @@ public class ServiceCentreAddressService {
     }
 
     private void setLatLonFromPostcode(ServiceCentreAddress address) {
-        OsData osData = osService.getOsAddressByFullPostcode(address.getPostcode());
-        if (osData != null && osData.getResults() != null && !osData.getResults().isEmpty()) {
-            OsDpa dpa = osData.getResults().getFirst().getDpa();
-            address.setLat(BigDecimal.valueOf(dpa.getLat()));
-            address.setLon(BigDecimal.valueOf(dpa.getLng()));
-        }
+        address.setLat(null);
+        address.setLon(null);
+
+        osService.getOsAdminAddressCoordinates(
+            address.getPostcode(),
+            address.getOsAddressDataset(),
+            address.getOsAddressUprn(),
+            address.getOsAddressLpiKey()
+        ).ifPresent(coordinates -> {
+            address.setLat(BigDecimal.valueOf(coordinates.latitude()));
+            address.setLon(BigDecimal.valueOf(coordinates.longitude()));
+        });
     }
 
     private void setNewAddressFieldsOnExistingAddress(ServiceCentreAddress existing, ServiceCentreAddress newAddress) {
@@ -121,6 +125,9 @@ public class ServiceCentreAddressService {
         existing.setCounty(newAddress.getCounty());
         existing.setPostcode(newAddress.getPostcode());
         existing.setAddressType(newAddress.getAddressType());
+        existing.setOsAddressDataset(newAddress.getOsAddressDataset());
+        existing.setOsAddressUprn(newAddress.getOsAddressUprn());
+        existing.setOsAddressLpiKey(newAddress.getOsAddressLpiKey());
 
         setLatLonFromPostcode(existing);
     }

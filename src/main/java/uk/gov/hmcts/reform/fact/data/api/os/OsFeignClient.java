@@ -20,4 +20,13 @@ public interface OsFeignClient {
         @RequestParam("postcode") String postcode,
         @RequestParam("maxresults") int maxResults
     );
+
+    @GetMapping("${os.endpoint.postcode-search}")
+    OsData getOsAdminPostcodeData(
+        @RequestParam("postcode") String postcode,
+        @RequestParam("dataset") String dataset,
+        @RequestParam("lr") String language,
+        @RequestParam("maxresults") int maxResults,
+        @RequestParam("offset") int offset
+    );
 }

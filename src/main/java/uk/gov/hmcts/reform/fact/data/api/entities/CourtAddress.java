@@ -114,6 +114,21 @@ public class CourtAddress implements AuditableCourtEntity {
     @Schema(description = "The longitude coordinate")
     private BigDecimal lon;
 
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(description = "OS dataset for the selected admin address", accessMode = Schema.AccessMode.WRITE_ONLY)
+    private String osAddressDataset;
+
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(description = "OS UPRN for the selected admin address", accessMode = Schema.AccessMode.WRITE_ONLY)
+    private String osAddressUprn;
+
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(description = "OS LPI key for the selected admin address", accessMode = Schema.AccessMode.WRITE_ONLY)
+    private String osAddressLpiKey;
+
     @Schema(description = "The address type")
     @NotNull
     @Enumerated(EnumType.STRING)
