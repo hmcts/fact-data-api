@@ -85,13 +85,13 @@ class ServiceAreaServiceTest {
         area.setName("Money Claims");
         when(serviceAreaRepository.findByNameIgnoreCase("Money Claims"))
             .thenReturn(Optional.of(area));
-        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(
             serviceAreaId, List.of(CatchmentType.LOCAL))
         ).thenReturn(true);
-        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(
             serviceAreaId, List.of(CatchmentType.NATIONAL))
         ).thenReturn(false);
-        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(
             serviceAreaId, List.of(CatchmentType.REGIONAL))
         ).thenReturn(true);
 
@@ -112,7 +112,7 @@ class ServiceAreaServiceTest {
         area.setName("Family");
         when(serviceAreaRepository.findByNameIgnoreCase("Family"))
             .thenReturn(Optional.of(area));
-        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(
             serviceAreaId, List.of(CatchmentType.LOCAL))
         ).thenReturn(false);
         when(courtLocalAuthoritiesRepository.existsByAreaOfLawId(areaOfLawId)).thenReturn(true);

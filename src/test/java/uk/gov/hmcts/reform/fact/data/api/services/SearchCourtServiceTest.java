@@ -177,11 +177,11 @@ class SearchCourtServiceTest {
     }
 
     @Test
-    void selectSearchStrategyShouldReturnFamilyRegionalWhenRegionalServiceCentreExists() {
+    void selectSearchStrategyShouldReturnFamilyRegionalWhenOpenRegionalServiceCentreExists() {
         ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
         area.setCatchmentMethod(CatchmentMethod.LOCAL_AUTHORITY);
 
-        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(
             area.getId(),
             List.of(CatchmentType.REGIONAL)
         )).thenReturn(true);
@@ -196,7 +196,7 @@ class SearchCourtServiceTest {
     }
 
     @Test
-    void selectSearchStrategyShouldReturnFamilyNonRegionalWhenRegionalServiceCentreDoesNotExist() {
+    void selectSearchStrategyShouldReturnFamilyNonRegionalWhenOpenRegionalServiceCentreDoesNotExist() {
         ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
         area.setCatchmentMethod(CatchmentMethod.LOCAL_AUTHORITY);
 
