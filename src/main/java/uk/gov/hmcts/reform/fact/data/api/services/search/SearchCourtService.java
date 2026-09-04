@@ -168,7 +168,7 @@ public class SearchCourtService {
     private SearchStrategy getFamilyStrategy(SearchAction action, ServiceArea serviceArea, String authorityName) {
         if (LOCAL_AUTHORITY.equals(serviceArea.getCatchmentMethod())
                 && !authorityName.isEmpty()) {
-            return serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+            return serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(
                 serviceArea.getId(),
                 List.of(REGIONAL)
             ) ? FAMILY_REGIONAL : FAMILY_NON_REGIONAL;
