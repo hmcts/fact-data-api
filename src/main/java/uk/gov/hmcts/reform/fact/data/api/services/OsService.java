@@ -4,17 +4,27 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import uk.gov.hmcts.reform.fact.data.api.config.CacheConfiguration;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.OsProcessException;
+import uk.gov.hmcts.reform.fact.data.api.os.OsAddressCoordinates;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
+import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsFeignClient;
+import uk.gov.hmcts.reform.fact.data.api.os.OsHeader;
+import uk.gov.hmcts.reform.fact.data.api.os.OsLpi;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
+import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +41,10 @@ public class OsService {
         );
     private static final Pattern OS_API_KEY_QUERY_PARAMETER_PATTERN =
         Pattern.compile("([?&]key=)[^&\\]\\s]+", Pattern.CASE_INSENSITIVE);
+    private static final String ADMIN_DATASETS = "DPA,LPI";
+    private static final String ADMIN_LANGUAGE = "EN";
+    private static final int ADMIN_PAGE_SIZE = 100;
+    private static final int MAX_ADMIN_PAGES = 100;
 
     /**
      * For the frontend logic. Take in the full postcode and provide a search
@@ -58,6 +72,115 @@ public class OsService {
     @Cacheable(cacheNames = CacheConfiguration.OSDATA_CACHE_NAME, key = "'F-' + #postcode")
     public OsData getOsAddressByFullPostcode(String postcode) {
         return getOsAddressData(validateAndFormatPostcode(postcode), false);
+    }
+
+    /**
+     * Fetches every page of DPA and LPI addresses for the admin picker. Including LPI
+     * allows staff to select premises that do not have a Royal Mail DPA record.
+     *
+     * @param postcode full postcode to look up
+     * @return all paged DPA and LPI results returned by OS
+     */
+    @Cacheable(
+        cacheNames = CacheConfiguration.OSDATA_CACHE_NAME,
+        key = "'A-' + #postcode.trim().replaceAll('\\s+', '').toUpperCase()"
+    )
+    public OsData getOsAdminAddressByFullPostcode(String postcode) {
+        String formattedPostcode = validateAndFormatPostcode(postcode);
+        List<OsResult> combinedResults = new ArrayList<>();
+        int offset = 0;
+
+        for (int pageNumber = 0; pageNumber < MAX_ADMIN_PAGES; pageNumber++) {
+            OsData page = getOsAdminAddressPage(formattedPostcode, offset);
+            List<OsResult> pageResults = page == null || page.getResults() == null
+                ? Collections.emptyList()
+                : page.getResults();
+            combinedResults.addAll(pageResults);
+
+            int totalResults = page != null
+                && page.getHeader() != null
+                && page.getHeader().getTotalresults() != null
+                ? page.getHeader().getTotalresults()
+                : combinedResults.size();
+
+            if (pageResults.isEmpty() || combinedResults.size() >= totalResults) {
+                if (combinedResults.isEmpty()) {
+                    throw new InvalidPostcodeException(
+                        "No address results returned from OS for postcode %s".formatted(formattedPostcode)
+                    );
+                }
+                return OsData.builder()
+                    .header(buildCombinedHeader(totalResults))
+                    .results(combinedResults)
+                    .build();
+            }
+
+            offset += pageResults.size();
+        }
+
+        throw new OsProcessException(
+            "OS address lookup exceeded %s pages for postcode %s".formatted(MAX_ADMIN_PAGES, formattedPostcode)
+        );
+    }
+
+    /**
+     * Resolves coordinates for the address selected in the admin picker. The identifiers
+     * posted by the browser are checked against OS again before any coordinates are used.
+     * Manually entered addresses keep the existing first-DPA behaviour.
+     *
+     * @param postcode postcode on the address being saved
+     * @param dataset selected OS dataset, if an option was selected
+     * @param uprn selected OS UPRN, if an option was selected
+     * @param lpiKey selected LPI key, when applicable
+     * @return usable OS coordinates, or empty when no address option has usable coordinates
+     */
+    public Optional<OsAddressCoordinates> getOsAdminAddressCoordinates(
+        String postcode,
+        String dataset,
+        String uprn,
+        String lpiKey
+    ) {
+        boolean hasSelectionData = StringUtils.hasText(dataset)
+            || StringUtils.hasText(uprn)
+            || StringUtils.hasText(lpiKey);
+        if (hasSelectionData) {
+            if (!StringUtils.hasText(dataset) || !StringUtils.hasText(uprn)) {
+                throw new IllegalArgumentException("Selected OS address must include both dataset and UPRN");
+            }
+
+            OsData osData = getOsAdminAddressByFullPostcode(postcode);
+            List<OsResult> results = osData.getResults() == null ? Collections.emptyList() : osData.getResults();
+            String normalisedDataset = dataset.trim().toUpperCase(Locale.ROOT);
+            return switch (normalisedDataset) {
+                case "DPA" -> {
+                    OsDpa selectedDpa = results.stream()
+                        .map(OsResult::getDpa)
+                        .filter(Objects::nonNull)
+                        .filter(dpa -> uprn.equals(dpa.getUprn()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException(
+                            "Selected OS address is no longer available for postcode %s".formatted(postcode)
+                        ));
+                    yield toCoordinates(selectedDpa.getLat(), selectedDpa.getLng());
+                }
+                case "LPI" -> {
+                    OsLpi selectedLpi = results.stream()
+                        .map(OsResult::getLpi)
+                        .filter(Objects::nonNull)
+                        .filter(lpi -> uprn.equals(lpi.getUprn()))
+                        .filter(lpi -> !StringUtils.hasText(lpiKey) || lpiKey.equals(lpi.getLpiKey()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException(
+                            "Selected OS address is no longer available for postcode %s".formatted(postcode)
+                        ));
+                    yield toCoordinates(selectedLpi.getLat(), selectedLpi.getLng());
+                }
+                default -> throw new IllegalArgumentException("Unsupported OS address dataset: " + dataset);
+            };
+        }
+
+        OsDpa firstDpa = getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
+        return firstDpa == null ? Optional.empty() : toCoordinates(firstDpa.getLat(), firstDpa.getLng());
     }
 
     /**
@@ -120,7 +243,7 @@ public class OsService {
                 ? osFeignClient.getOsPostcodeDataWithMaxResultsLimit(postcode.trim(), 1)
                 : osFeignClient.getOsPostcodeData(postcode.trim());
 
-            if (osData.getResults() == null || osData.getResults().isEmpty()) {
+            if (osData == null || osData.getResults() == null || osData.getResults().isEmpty()) {
                 throw new InvalidPostcodeException(
                     "No address results returned from OS for postcode %s".formatted(postcode)
                 );
@@ -143,6 +266,69 @@ public class OsService {
         }
     }
 
+    /**
+     * Calls a single page of the combined admin lookup and keeps OS errors free of API keys.
+     *
+     * @param postcode formatted postcode to search for
+     * @param offset first record to return
+     * @return one page of OS address records
+     */
+    private OsData getOsAdminAddressPage(String postcode, int offset) {
+        try {
+            return osFeignClient.getOsAdminPostcodeData(
+                postcode.trim(),
+                ADMIN_DATASETS,
+                ADMIN_LANGUAGE,
+                ADMIN_PAGE_SIZE,
+                offset
+            );
+        } catch (FeignException e) {
+            String safeExceptionDetails = sanitiseOsException(e);
+            if (e.status() >= 400 && e.status() < 500) {
+                throw new InvalidPostcodeException(
+                    "OS rejected postcode %s with status %s, %s"
+                        .formatted(postcode, e.status(), safeExceptionDetails)
+                );
+            }
+
+            throw new OsProcessException(
+                "Error calling Ordnance Survey for postcode %s, %s"
+                    .formatted(postcode, safeExceptionDetails)
+            );
+        }
+    }
+
+    private OsHeader buildCombinedHeader(int totalResults) {
+        return OsHeader.builder()
+            .dataset(ADMIN_DATASETS)
+            .totalresults(totalResults)
+            .maxresults(ADMIN_PAGE_SIZE)
+            .offset(0)
+            .build();
+    }
+
+    /**
+     * Accepts only a complete, finite coordinate pair within valid latitude and longitude ranges.
+     *
+     * @param latitude latitude supplied by OS
+     * @param longitude longitude supplied by OS
+     * @return the coordinate pair, or empty when it cannot safely be stored
+     */
+    private Optional<OsAddressCoordinates> toCoordinates(Double latitude, Double longitude) {
+        if (latitude == null
+            || longitude == null
+            || !Double.isFinite(latitude)
+            || !Double.isFinite(longitude)
+            || latitude < -90
+            || latitude > 90
+            || longitude < -180
+            || longitude > 180) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new OsAddressCoordinates(latitude, longitude));
+    }
+
     private String sanitiseOsException(FeignException exception) {
         return OS_API_KEY_QUERY_PARAMETER_PATTERN
             .matcher(exception.toString())
@@ -158,7 +344,9 @@ public class OsService {
     private List<Integer> getCustodianCodes(OsData osData) {
         return osData.getResults()
             .stream()
-            .map(address -> address.getDpa().getLocalCustodianCode())
+            .map(OsResult::getDpa)
+            .filter(Objects::nonNull)
+            .map(OsDpa::getLocalCustodianCode)
             .filter(Objects::nonNull)
             .toList();
     }

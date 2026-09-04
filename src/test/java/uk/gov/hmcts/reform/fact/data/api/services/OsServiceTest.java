@@ -13,7 +13,10 @@ import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.OsProcessException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
+import uk.gov.hmcts.reform.fact.data.api.os.OsAddressCoordinates;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
+import uk.gov.hmcts.reform.fact.data.api.os.OsHeader;
+import uk.gov.hmcts.reform.fact.data.api.os.OsLpi;
 import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsFeignClient;
@@ -24,10 +27,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -134,6 +140,236 @@ class OsServiceTest {
     }
 
     @Test
+    void shouldRetrieveEveryPageOfCombinedAdminAddressResults() {
+        List<OsResult> firstPageResults = IntStream.range(0, 100)
+            .mapToObj(index -> OsResult.builder()
+                .dpa(OsDpa.builder().uprn("dpa-" + index).build())
+                .build())
+            .toList();
+        OsData firstPage = OsData.builder()
+            .header(OsHeader.builder().totalresults(101).offset(0).maxresults(100).build())
+            .results(firstPageResults)
+            .build();
+        OsData secondPage = OsData.builder()
+            .header(OsHeader.builder().totalresults(101).offset(100).maxresults(100).build())
+            .results(List.of(OsResult.builder().lpi(OsLpi.builder().uprn("lpi-100").build()).build()))
+            .build();
+
+        when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0))
+            .thenReturn(firstPage);
+        when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 100))
+            .thenReturn(secondPage);
+
+        OsData result = osService.getOsAdminAddressByFullPostcode("DH1 3RG");
+
+        assertThat(result.getResults()).hasSize(101);
+        assertThat(result.getHeader().getDataset()).isEqualTo("DPA,LPI");
+        assertThat(result.getHeader().getTotalresults()).isEqualTo(101);
+        verify(osFeignClient).getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0);
+        verify(osFeignClient).getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 100);
+    }
+
+    @Test
+    void shouldStopAdminAddressLookupAtTheMaximumPageCount() {
+        OsData page = OsData.builder()
+            .header(OsHeader.builder().totalresults(101).build())
+            .results(List.of(OsResult.builder().dpa(OsDpa.builder().uprn("uprn").build()).build()))
+            .build();
+        when(osFeignClient.getOsAdminPostcodeData(
+            eq("DH1 3RG"), eq("DPA,LPI"), eq("EN"), eq(100), anyInt()
+        )).thenReturn(page);
+
+        assertThatThrownBy(() -> osService.getOsAdminAddressByFullPostcode("DH1 3RG"))
+            .isInstanceOf(OsProcessException.class)
+            .hasMessageContaining("exceeded 100 pages");
+
+        verify(osFeignClient, times(100)).getOsAdminPostcodeData(
+            eq("DH1 3RG"), eq("DPA,LPI"), eq("EN"), eq(100), anyInt()
+        );
+    }
+
+    @Test
+    void shouldPreserveInvalidPostcodeBehaviourWhenCombinedLookupReturnsNoResults() {
+        when(osFeignClient.getOsAdminPostcodeData("WR1 1EQ", "DPA,LPI", "EN", 100, 0))
+            .thenReturn(OsData.builder().header(OsHeader.builder().totalresults(0).build()).results(null).build());
+
+        assertThatThrownBy(() -> osService.getOsAdminAddressByFullPostcode("WR1 1EQ"))
+            .isInstanceOf(InvalidPostcodeException.class)
+            .hasMessageContaining("No address results returned from OS");
+    }
+
+    @Test
+    void shouldUseReturnedResultCountWhenAdminResponseHasNoHeader() {
+        OsResult result = OsResult.builder().dpa(OsDpa.builder().uprn("uprn").build()).build();
+        when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0))
+            .thenReturn(OsData.builder().results(List.of(result)).build());
+
+        OsData response = osService.getOsAdminAddressByFullPostcode("DH1 3RG");
+
+        assertThat(response.getResults()).containsExactly(result);
+        assertThat(response.getHeader().getTotalresults()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldRejectIncompleteSelectedAddressIdentity() {
+        assertThatThrownBy(() -> osService.getOsAdminAddressCoordinates(
+            "DH1 3RG", "LPI", null, "lpi-key"
+        ))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("must include both dataset and UPRN");
+    }
+
+    @Test
+    void shouldResolveTheSelectedLpiRatherThanAnUnrelatedDpa() {
+        OsData combined = OsData.builder()
+            .header(OsHeader.builder().totalresults(2).build())
+            .results(List.of(
+                OsResult.builder().dpa(OsDpa.builder()
+                    .uprn("dpa-uprn")
+                    .lat(51.0)
+                    .lng(-1.0)
+                    .build()).build(),
+                OsResult.builder().lpi(OsLpi.builder()
+                    .uprn("selected-uprn")
+                    .lpiKey("selected-key")
+                    .lat(54.77)
+                    .lng(-1.57)
+                    .build()).build()
+            ))
+            .build();
+        when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0)).thenReturn(combined);
+
+        Optional<OsAddressCoordinates> result = osService.getOsAdminAddressCoordinates(
+            "DH1 3RG", "LPI", "selected-uprn", "selected-key"
+        );
+
+        assertThat(result).contains(new OsAddressCoordinates(54.77, -1.57));
+    }
+
+    @Test
+    void shouldResolveTheExactSelectedDpaRatherThanAnotherDpa() {
+        OsData combined = OsData.builder()
+            .header(OsHeader.builder().totalresults(2).build())
+            .results(List.of(
+                OsResult.builder().dpa(OsDpa.builder()
+                    .uprn("unrelated-uprn")
+                    .lat(51.0)
+                    .lng(-1.0)
+                    .build()).build(),
+                OsResult.builder().dpa(OsDpa.builder()
+                    .uprn("selected-uprn")
+                    .lat(52.0)
+                    .lng(-2.0)
+                    .build()).build()
+            ))
+            .build();
+        when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0)).thenReturn(combined);
+
+        Optional<OsAddressCoordinates> result = osService.getOsAdminAddressCoordinates(
+            "DH1 3RG", "DPA", "selected-uprn", null
+        );
+
+        assertThat(result).contains(new OsAddressCoordinates(52.0, -2.0));
+    }
+
+    @Test
+    void shouldPreserveDpaCoordinateBehaviourWhenNoSelectionIdentityIsSupplied() {
+        OsData dpaData = OsData.builder()
+            .results(List.of(OsResult.builder().dpa(OsDpa.builder()
+                .uprn("first-dpa")
+                .lat(52.0)
+                .lng(-1.0)
+                .build()).build()))
+            .build();
+        when(osFeignClient.getOsPostcodeData("EC4N 4XY")).thenReturn(dpaData);
+
+        Optional<OsAddressCoordinates> result = osService.getOsAdminAddressCoordinates(
+            "EC4N 4XY", null, null, null
+        );
+
+        assertThat(result).contains(new OsAddressCoordinates(52.0, -1.0));
+        verify(osFeignClient).getOsPostcodeData("EC4N 4XY");
+    }
+
+    @Test
+    void shouldRejectASelectedRecordThatDoesNotMatchTheCurrentOsResponse() {
+        when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0))
+            .thenReturn(OsData.builder()
+                .header(OsHeader.builder().totalresults(1).build())
+                .results(List.of(OsResult.builder().lpi(OsLpi.builder().uprn("different-uprn").build()).build()))
+                .build());
+
+        assertThatThrownBy(() -> osService.getOsAdminAddressCoordinates(
+            "DH1 3RG", "LPI", "tampered-uprn", null
+        ))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("no longer available");
+    }
+
+    @Test
+    void shouldRejectASelectedDpaThatDoesNotMatchTheCurrentOsResponse() {
+        when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0))
+            .thenReturn(OsData.builder()
+                .header(OsHeader.builder().totalresults(1).build())
+                .results(List.of(OsResult.builder().dpa(OsDpa.builder().uprn("different-uprn").build()).build()))
+                .build());
+
+        assertThatThrownBy(() -> osService.getOsAdminAddressCoordinates(
+            "DH1 3RG", "DPA", "tampered-uprn", null
+        ))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("no longer available");
+    }
+
+    @Test
+    void shouldRejectUnsupportedSelectedAddressDataset() {
+        when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0))
+            .thenReturn(OsData.builder()
+                .header(OsHeader.builder().totalresults(1).build())
+                .results(List.of(OsResult.builder().dpa(OsDpa.builder().uprn("uprn").build()).build()))
+                .build());
+
+        assertThatThrownBy(() -> osService.getOsAdminAddressCoordinates(
+            "DH1 3RG", "unsupported", "uprn", null
+        ))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Unsupported OS address dataset");
+    }
+
+    @Test
+    void shouldReturnEmptyWhenManualAddressLookupHasNoDpaRecord() {
+        when(osFeignClient.getOsPostcodeData("DH1 3RG"))
+            .thenReturn(OsData.builder()
+                .results(List.of(OsResult.builder().lpi(OsLpi.builder().uprn("uprn").build()).build()))
+                .build());
+
+        Optional<OsAddressCoordinates> result = osService.getOsAdminAddressCoordinates(
+            "DH1 3RG", null, null, null
+        );
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldIgnoreOutOfRangeCoordinates() {
+        OsData combined = OsData.builder()
+            .header(OsHeader.builder().totalresults(1).build())
+            .results(List.of(OsResult.builder().lpi(OsLpi.builder()
+                .uprn("uprn")
+                .lat(91.0)
+                .lng(-1.0)
+                .build()).build()))
+            .build();
+        when(osFeignClient.getOsAdminPostcodeData("EH2 4HH", "DPA,LPI", "EN", 100, 0)).thenReturn(combined);
+
+        Optional<OsAddressCoordinates> result = osService.getOsAdminAddressCoordinates(
+            "EH2 4HH", "LPI", "uprn", null
+        );
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void shouldThrowInvalidPostcodeWhenOsReturnsNoResults() {
         OsData osData = OsData.builder().results(List.of()).build();
         when(osFeignClient.getOsPostcodeData("SW1A 1AA")).thenReturn(osData);
@@ -175,6 +411,30 @@ class OsServiceTest {
             .isInstanceOf(OsProcessException.class)
             .hasMessageContaining("Error calling Ordnance Survey")
             .hasMessageContaining("api.os.uk")
+            .hasMessageContaining("key=[REDACTED]")
+            .hasMessageNotContaining(OS_API_KEY);
+    }
+
+    @Test
+    void shouldThrowInvalidPostcodeWhenAdminAddressLookupIsRejected() {
+        when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0))
+            .thenThrow(createFeignException(400));
+
+        assertThatThrownBy(() -> osService.getOsAdminAddressByFullPostcode("DH1 3RG"))
+            .isInstanceOf(InvalidPostcodeException.class)
+            .hasMessageContaining("OS rejected postcode DH1 3RG with status 400")
+            .hasMessageContaining("key=[REDACTED]")
+            .hasMessageNotContaining(OS_API_KEY);
+    }
+
+    @Test
+    void shouldThrowOsProcessExceptionWhenAdminAddressLookupFails() {
+        when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0))
+            .thenThrow(createFeignException(503));
+
+        assertThatThrownBy(() -> osService.getOsAdminAddressByFullPostcode("DH1 3RG"))
+            .isInstanceOf(OsProcessException.class)
+            .hasMessageContaining("Error calling Ordnance Survey")
             .hasMessageContaining("key=[REDACTED]")
             .hasMessageNotContaining(OS_API_KEY);
     }

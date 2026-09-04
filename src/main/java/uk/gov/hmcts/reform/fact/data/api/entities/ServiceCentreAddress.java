@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -98,6 +99,36 @@ public class ServiceCentreAddress implements AuditableEntity {
 
     @Schema(description = "The longitude coordinate")
     private BigDecimal lon;
+
+    /*
+     * The admin sends these values so the API can find the selected OS record again.
+     * Transient lets the existing entity carry them as request data without adding a
+     * separate request model or storing them. JsonProperty keeps them out of responses,
+     * and Schema documents that contract.
+     */
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(
+        description = "Request-only OS dataset used to verify the selected admin address",
+        accessMode = Schema.AccessMode.WRITE_ONLY
+    )
+    private String osAddressDataset;
+
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(
+        description = "Request-only OS UPRN used to verify the selected admin address",
+        accessMode = Schema.AccessMode.WRITE_ONLY
+    )
+    private String osAddressUprn;
+
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(
+        description = "Request-only OS LPI key used to verify the selected admin address",
+        accessMode = Schema.AccessMode.WRITE_ONLY
+    )
+    private String osAddressLpiKey;
 
     @Schema(description = "The address type")
     @Enumerated(EnumType.STRING)
