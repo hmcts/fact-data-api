@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +27,7 @@ import java.util.List;
 )
 @RequestMapping("/search/locations")
 @RequiredArgsConstructor
+@Slf4j
 public class SearchLocationController {
 
     private final SearchLocationService searchLocationService;
@@ -60,6 +62,13 @@ public class SearchLocationController {
         @Min(1)
         @Max(50)
         final Integer limit) {
+
+        log.debug(
+            "Location search request received (serviceAreaProvided={}, action={}, limit={})",
+            serviceArea != null && !serviceArea.isBlank(),
+            action,
+            limit
+        );
 
         return ResponseEntity.ok(
             searchLocationService.getLocationsBySearchParameters(postcode, serviceArea, action, limit)
