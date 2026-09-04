@@ -298,12 +298,6 @@ public class OsService {
         }
     }
 
-    /**
-     * Describes the combined response returned after all OS pages have been collected.
-     *
-     * @param totalResults total reported by OS, or the number collected when no total was supplied
-     * @return header for the combined response
-     */
     private OsHeader buildCombinedHeader(int totalResults) {
         return OsHeader.builder()
             .dataset(ADMIN_DATASETS)
