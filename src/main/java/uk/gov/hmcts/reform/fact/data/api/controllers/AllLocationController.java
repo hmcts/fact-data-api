@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,7 @@ import java.util.List;
 )
 @RequiredArgsConstructor
 @SuppressWarnings("java:S4684")
+@Slf4j
 public class AllLocationController {
 
     private final AllLocationService allLocationService;
@@ -54,6 +56,21 @@ public class AllLocationController {
         String partialCourtName,
         @RequestParam(name = "sortBy", required = false) String sortBy,
         @RequestParam(name = "sortOrder", required = false) String sortOrder) {
+
+        log.debug(
+            "All-location query: pageNumber={}, pageSize={}, includeClosed={}, onlyServiceCentres={}, "
+                + "hasRegionId={}, hasPartialCourtName={}, partialCourtNameLength={}, sortBy={}, sortOrder={}",
+            pageNumber,
+            pageSize,
+            includeClosed,
+            onlyServiceCentres,
+            regionId != null && !regionId.isBlank(),
+            partialCourtName != null && !partialCourtName.isBlank(),
+            partialCourtName == null ? 0 : partialCourtName.length(),
+            sortBy,
+            sortOrder
+        );
+
         return ResponseEntity.ok(allLocationService.getFilteredAndPaginatedLocations(
             pageNumber,
             pageSize,
