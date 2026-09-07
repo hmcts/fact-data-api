@@ -23,6 +23,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository.FavouriteLocationReference;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -159,7 +160,7 @@ public class UserService {
                 }
         );
 
-        user.setLastLogin(ZonedDateTime.now());
+        user.setLastLogin(ZonedDateTime.now(ZoneOffset.UTC));
         return userRepository.save(user);
     }
 
@@ -169,7 +170,7 @@ public class UserService {
      */
     @Transactional
     public int deleteInactiveUsers() {
-        final ZonedDateTime cutoffDate = ZonedDateTime.now().minusDays(retentionPeriod);
+        final ZonedDateTime cutoffDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(retentionPeriod);
         List<User> inactiveUsers = userRepository.deleteAllByLastLoginBefore(cutoffDate);
         log.debug("Deleted {} inactive users who haven't logged in since {}", inactiveUsers.size(), cutoffDate);
         return inactiveUsers.size();

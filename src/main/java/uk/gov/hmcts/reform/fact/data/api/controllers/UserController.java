@@ -45,7 +45,6 @@ import org.springframework.web.bind.annotation.RequestParam;
     preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/user")
-@SuppressWarnings("java:S4684")
 @RequiredArgsConstructor
 @Slf4j
 public class UserController {

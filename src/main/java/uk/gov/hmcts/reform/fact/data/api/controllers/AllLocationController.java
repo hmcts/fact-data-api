@@ -26,7 +26,6 @@ import java.util.List;
     description = "Operations related to combined courts and service centres"
 )
 @RequiredArgsConstructor
-@SuppressWarnings("java:S4684")
 @Slf4j
 public class AllLocationController {
 

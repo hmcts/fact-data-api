@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
     preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/courts/{courtId}")
-@SuppressWarnings("java:S4684")
 @RequiredArgsConstructor
 public class CourtAddressController {
 
