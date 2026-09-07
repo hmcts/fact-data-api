@@ -38,7 +38,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 )
 @RequiredArgsConstructor
 @RequestMapping("/audits")
-@SuppressWarnings("java:S4684")
 public class AuditController {
 
     private final AuditService auditService;
