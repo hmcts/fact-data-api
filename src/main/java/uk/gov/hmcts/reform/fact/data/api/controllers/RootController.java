@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Root")
 @RestController
 @RequestMapping
-@SuppressWarnings("java:S4684")
 public class RootController {
 
     /**

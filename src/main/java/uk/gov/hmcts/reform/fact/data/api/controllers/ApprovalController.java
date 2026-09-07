@@ -31,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 )
 @RequiredArgsConstructor
 @RequestMapping("/approvals")
-@SuppressWarnings("java:S4684")
 public class ApprovalController {
 
     private final ApprovalService approvalService;
