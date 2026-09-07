@@ -277,6 +277,7 @@ dependencyManagement {
     dependency group: 'com.azure', name: 'azure-core-http-netty', version: '1.16.7'
     dependency group: 'com.azure', name: 'azure-core-management', version: '1.19.7'
     dependency group: 'com.azure', name: 'azure-identity', version: '1.18.6'
+    dependency group: 'com.microsoft.azure', name: 'msal4j', version: '1.26.0'
 
     // CVE-2026-66257 and related proton-j advisories
     dependency group: 'org.apache.qpid', name: 'proton-j', version: '0.35.0'
