@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 
+@Slf4j
 @SecuredFactRestController(
     name = "Audit",
     description = "Operations related to audits",
@@ -73,6 +75,20 @@ public class AuditController {
         LocalDate fromDate,
         @Parameter(name = "toDate", description = "'To' date (end of day) for result filtering")
         @RequestParam(name = "toDate", required = false) LocalDate toDate) {
+
+        log.debug(
+            "Audit query: pageNumber={}, pageSize={}, fromDate={}, hasToDate={}, subjectType={}, "
+                + "hasCourtId={}, hasServiceCentreId={}, hasEmailMatch={}, emailMatchLength={}",
+            pageNumber,
+            pageSize,
+            fromDate,
+            toDate != null,
+            subjectType,
+            courtId != null && !courtId.isBlank(),
+            serviceCentreId != null && !serviceCentreId.isBlank(),
+            emailMatch != null && !emailMatch.isBlank(),
+            emailMatch == null ? 0 : emailMatch.length()
+        );
 
         if (toDate != null && toDate.isBefore(fromDate)) {
             throw new InvalidDateRangeException("toDate must not be before fromDate");

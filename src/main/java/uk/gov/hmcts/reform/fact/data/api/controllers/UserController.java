@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.DeleteInactiveUsersResponse;
 import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
@@ -46,6 +47,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping("/user")
 @SuppressWarnings("java:S4684")
 @RequiredArgsConstructor
+@Slf4j
 public class UserController {
 
     private static final String USER_ID_HEADER = "X-User-Id";
@@ -70,6 +72,17 @@ public class UserController {
         String search,
         @RequestParam(name = "sortBy", required = false) String sortBy,
         @RequestParam(name = "sortOrder", required = false) String sortOrder) {
+
+        log.debug(
+            "User list query pageNumber={}, pageSize={}, hasSearch={}, searchLength={}, sortBy={}, sortOrder={}",
+            pageNumber,
+            pageSize,
+            search != null && !search.isBlank(),
+            search == null ? 0 : search.length(),
+            sortBy,
+            sortOrder
+        );
+
         return ResponseEntity.ok(userService.getFilteredAndPaginatedUsers(
             pageNumber,
             pageSize,
