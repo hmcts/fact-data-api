@@ -116,6 +116,10 @@ public class AuthService {
     private boolean isAdminEndpointWithoutUserHeader(HttpServletRequest request) {
         String method = request.getMethod();
         String requestUri = trimTrailingPathDelimiter(request.getRequestURI());
+        if (requestUri == null) {
+            return false;
+        }
+
         return ("POST".equals(method) && POST_ENDPOINTS_WITHOUT_USER_HEADER.contains(requestUri))
             || ("PUT".equals(method) && requestUri.startsWith(COURT_LINK_PATH + URI_PATH_DELIMITER))
             || ("DELETE".equals(method) && DELETE_ENDPOINTS_WITHOUT_USER_HEADER.contains(requestUri));
