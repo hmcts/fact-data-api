@@ -3,7 +3,7 @@ import org.flywaydb.gradle.task.FlywayMigrateTask
 //This is required as flyway now has a stand alone library for each database rather than being bundled together
 buildscript {
   dependencies {
-    classpath("org.flywaydb:flyway-database-postgresql:12.11.0")
+    classpath("org.flywaydb:flyway-database-postgresql:13.5.0")
   }
 }
 
@@ -11,13 +11,13 @@ plugins {
   id 'application'
   id 'jacoco'
   id 'io.spring.dependency-management' version '1.1.7'
-  id 'org.springframework.boot' version '4.0.6'
-  id 'com.github.ben-manes.versions' version '0.61.0'
+  id 'org.springframework.boot' version '4.1.1'
+  id 'io.github.ben-manes.versions' version '0.61.0'
   id 'org.sonarqube' version '7.5.0.8588'
-  id 'uk.gov.hmcts.java' version '0.12.68'
+  id 'uk.gov.hmcts.java' version '0.12.70'
   id 'io.freefair.lombok' version '9.5.0'
-  id 'org.flywaydb.flyway' version '12.11.0'
-  id 'io.qameta.allure' version '4.1.0'
+  id 'org.flywaydb.flyway' version '13.5.0'
+  id 'io.qameta.allure' version '4.2.0'
 }
 
 application {
@@ -111,6 +111,10 @@ tasks.register('smoke', Test) {
   classpath = sourceSets.smokeTest.runtimeClasspath
 }
 
+jacoco {
+  toolVersion = '0.8.15'
+}
+
 jacocoTestReport {
   executionData(test, integration)
   reports {
@@ -153,11 +157,19 @@ dependencyCheck {
   suppressionFile = 'config/owasp/suppressions.xml'
 }
 
+checkstyle {
+  toolVersion = '14.1.0'
+}
+
 allure {
-  version = '2.34.1'
+  version = '2.46.1'
   adapter {
     aspectjWeaver.set(false)
   }
+}
+
+lombok {
+  version = '1.18.48'
 }
 
 repositories {
@@ -176,7 +188,7 @@ dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-aspectj'
-  implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-openfeign', version: '5.0.1'
+  implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-openfeign', version: '5.0.3'
   // auth
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security-oauth2-resource-server'
   // cache
@@ -188,18 +200,18 @@ dependencies {
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.7.13'
   implementation group:'org.springframework.boot', name:'spring-boot-flyway'
 
-  implementation group: 'org.flywaydb', name: 'flyway-core', version: '12.11.0'
-  implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '12.11.0'
+  implementation group: 'org.flywaydb', name: 'flyway-core', version: '13.5.0'
+  implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '13.5.0'
 
-  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.3.0'
+  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.4.0'
 
-  implementation group: 'tools.jackson.dataformat', name: 'jackson-dataformat-csv'
+  implementation group: 'tools.jackson.dataformat', name: 'jackson-dataformat-csv', version: '3.2.2'
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '8.0.0'
 
   implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.20.0'
 
-  implementation group: 'com.slack.api', name: 'slack-api-client', version: '1.50.0'
+  implementation group: 'com.slack.api', name: 'slack-api-client', version: '1.51.0'
 
 
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-webmvc-test'
