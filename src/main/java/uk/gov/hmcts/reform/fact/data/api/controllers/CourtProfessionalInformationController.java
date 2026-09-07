@@ -26,7 +26,6 @@ import java.util.UUID;
     preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/courts/{courtId}")
-@SuppressWarnings("java:S4684")
 @RequiredArgsConstructor
 public class CourtProfessionalInformationController {
 

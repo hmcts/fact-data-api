@@ -35,7 +35,6 @@ import java.util.UUID;
 )
 @RequestMapping("/service-centres")
 @RequiredArgsConstructor
-@SuppressWarnings("java:S4684")
 public class ServiceCentreController {
 
     /**
