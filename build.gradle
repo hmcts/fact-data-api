@@ -191,7 +191,7 @@ dependencies {
   implementation group: 'org.flywaydb', name: 'flyway-core', version: '12.11.0'
   implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '12.11.0'
 
-  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.3.0'
+  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.4.0'
 
   implementation group: 'tools.jackson.dataformat', name: 'jackson-dataformat-csv'
 
