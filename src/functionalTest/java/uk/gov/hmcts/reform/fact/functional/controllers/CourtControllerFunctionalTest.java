@@ -101,20 +101,20 @@ public final class CourtControllerFunctionalTest {
     }
 
     @Test
-    @DisplayName("POST /courts/v1 rejects a Welsh warning notice longer than 500 characters")
+    @DisplayName("POST /courts/v1 rejects a Welsh warning notice longer than 250 characters")
     void shouldRejectLongWelshWarningNotice() {
         final Court court = new Court();
         court.setName(TestDataHelper.appendRandomSuffixToCourtName("Test Court Long Welsh Warning"));
         court.setRegionId(UUID.fromString(regionId));
         court.setWarningNotice("Valid English warning notice");
-        court.setWarningNoticeCy("a".repeat(501));
+        court.setWarningNoticeCy("a".repeat(251));
 
         final Response response = http.doPost("/courts/v1", court);
 
         AssertionHelper.assertStatus(response, BAD_REQUEST);
         assertThat(response.jsonPath().getString("warningNoticeCy")).isNotBlank();
         assertThat(response.jsonPath().getString("warningNoticeCy"))
-            .contains("Welsh warning notice must be less than 500 characters");
+            .contains("Welsh warning notice must be less than 250 characters");
     }
 
     @Test

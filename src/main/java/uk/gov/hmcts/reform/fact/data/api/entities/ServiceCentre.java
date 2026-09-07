@@ -72,7 +72,7 @@ public class ServiceCentre implements AuditableEntity {
     private Boolean open;
 
     @Schema(description = "Any warning notices attached to the Service Centre")
-    @Size(max = 500, message = "Warning notice must be less than 500 characters")
+    @Size(max = 250, message = "Warning notice must be less than 250 characters")
     @Pattern(
         regexp = "^[A-Za-z0-9.,!?:;'\"()\\-/&@+\\s]+$",
         message = "Warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)"
@@ -81,7 +81,7 @@ public class ServiceCentre implements AuditableEntity {
     private String warningNotice;
 
     @Schema(description = "Any Welsh warning notices attached to the Service Centre")
-    @Size(max = 500, message = "Welsh warning notice must be less than 500 characters")
+    @Size(max = 250, message = "Welsh warning notice must be less than 250 characters")
     @Pattern(
         regexp = "^[\\p{L}0-9.,!?:;'\"()\\-/&@+\\s]+$",
         message = "Welsh warning notice may only contain letters, numbers, spaces, and standard punctuation or "
