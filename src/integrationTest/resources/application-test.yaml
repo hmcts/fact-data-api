@@ -4,10 +4,14 @@ spring:
     url: jdbc:tc:postgresql:17:///fact
   cloud:
     azure:
+      profile:
+        tenant-id: test-tenant
       storage:
         # allows blob store autoconfigure to complete without exception
         account-name: test
       active-directory:
+        profile:
+          tenant-id: test-tenant
         app-id-uri: test
   autoconfigure:
     exclude:
