@@ -56,7 +56,6 @@ public class AllLocationController {
         String partialCourtName,
         @RequestParam(name = "sortBy", required = false) String sortBy,
         @RequestParam(name = "sortOrder", required = false) String sortOrder) {
-
         log.debug(
             "All-location query: pageNumber={}, pageSize={}, includeClosed={}, onlyServiceCentres={}, "
                 + "hasRegionId={}, hasPartialCourtName={}, partialCourtNameLength={}, sortBy={}, sortOrder={}",
@@ -70,7 +69,6 @@ public class AllLocationController {
             sortBy,
             sortOrder
         );
-
         return ResponseEntity.ok(allLocationService.getFilteredAndPaginatedLocations(
             pageNumber,
             pageSize,
