@@ -15,6 +15,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -103,7 +104,7 @@ public class GlobalExceptionHandler {
             errors.putIfAbsent(fieldError.getField(), fieldError.getDefaultMessage())
         );
 
-        errors.put("timestamp", LocalDateTime.now().toString());
+        errors.put("timestamp", LocalDateTime.now(ZoneOffset.UTC).toString());
         return errors;
     }
 
@@ -234,7 +235,7 @@ public class GlobalExceptionHandler {
     private ExceptionResponse generateExceptionResponse(String message) {
         ExceptionResponse response = new ExceptionResponse();
         response.setMessage(message);
-        response.setTimestamp(LocalDateTime.now());
+        response.setTimestamp(LocalDateTime.now(ZoneOffset.UTC));
         return response;
     }
 }
