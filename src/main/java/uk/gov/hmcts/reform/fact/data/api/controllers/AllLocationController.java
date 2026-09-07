@@ -25,7 +25,6 @@ import java.util.List;
     description = "Operations related to combined courts and service centres"
 )
 @RequiredArgsConstructor
-@SuppressWarnings("java:S4684")
 public class AllLocationController {
 
     private final AllLocationService allLocationService;
