@@ -6,6 +6,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.AuditActionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Change;
 
 import java.io.Serializable;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -147,7 +148,7 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
             .subjectType(entity.getAuditSubjectType())
             .actionType(operationType)
             .actionEntity(entity.getClass().getSimpleName())
-            .createdAt(ZonedDateTime.now())
+            .createdAt(ZonedDateTime.now(ZoneOffset.UTC))
             .userId(auditUserContextRef.get().requireUserId());
         if (operationType != AuditActionType.DELETE) {
             audit.actionDataDiff(generateDiffs(previous, entity));
