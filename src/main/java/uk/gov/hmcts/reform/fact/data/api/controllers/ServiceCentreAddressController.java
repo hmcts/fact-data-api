@@ -30,7 +30,6 @@ import java.util.UUID;
 )
 @RequestMapping("/service-centres/{serviceCentreId}")
 @RequiredArgsConstructor
-@SuppressWarnings("java:S4684")
 public class ServiceCentreAddressController {
 
     private final ServiceCentreAddressService serviceCentreAddressService;

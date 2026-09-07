@@ -29,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
     preAuthorize = "@authService.isAdmin()"
 )
 @RequestMapping("/courts/{courtId}")
-@SuppressWarnings("java:S4684")
 @RequiredArgsConstructor
 public class CourtPhotoController {
 
