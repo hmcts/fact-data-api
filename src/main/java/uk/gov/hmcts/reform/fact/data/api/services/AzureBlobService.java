@@ -29,7 +29,7 @@ public class AzureBlobService {
         BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
         uploadToBlob(blobClient, file);
 
-        log.info("Uploaded file {} to {}", file.getOriginalFilename(), blobClient.getBlobUrl());
+        log.debug("Uploaded file {} to {}", file.getOriginalFilename(), blobClient.getBlobUrl());
 
         return blobClient.getBlobUrl();
     }
