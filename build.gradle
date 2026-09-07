@@ -188,6 +188,8 @@ dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa'
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-aspectj'
+  // Required for Azure AAD autoconfigure classpath expectations on Boot 4.x.
+  implementation group: 'org.springframework.boot', name: 'spring-boot-restclient'
   implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-openfeign', version: '5.0.3'
   // auth
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security-oauth2-resource-server'
