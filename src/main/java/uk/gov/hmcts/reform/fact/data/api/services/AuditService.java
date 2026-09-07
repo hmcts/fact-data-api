@@ -76,7 +76,7 @@ public class AuditService {
     @Transactional
     public void removeExpiredAuditEntries() {
         auditRepository.deleteAllByCreatedAtBefore(
-            ZonedDateTime.now().minusDays(auditConfiguration.getRetentionDays())
+            ZonedDateTime.now(ZoneOffset.UTC).minusDays(auditConfiguration.getRetentionDays())
         );
     }
 
