@@ -40,7 +40,7 @@ public class CourtFacilitiesService {
      * @return The created facilities entity.
      */
     public CourtFacilities setFacilities(UUID courtId, CourtFacilities courtFacilities) {
-        log.info("Setting facilities for court id: {}", courtId);
+        log.debug("Setting facilities for court id: {}", courtId);
         Court foundCourt = courtService.getCourtById(courtId);
         courtFacilities.setCourt(foundCourt);
         courtFacilities.setCourtId(courtId);

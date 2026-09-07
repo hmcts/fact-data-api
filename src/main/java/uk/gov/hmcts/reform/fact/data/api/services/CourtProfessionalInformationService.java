@@ -75,7 +75,7 @@ public class CourtProfessionalInformationService {
         UUID courtId,
         CourtProfessionalInformationDetailsDto professionalInformationDetails
     ) {
-        log.info("Setting professional information for court id: {}", courtId);
+        log.debug("Setting professional information for court id: {}", courtId);
         Court court = courtService.getCourtById(courtId);
 
         CourtProfessionalInformation savedProfessionalInformation = saveProfessionalInformation(

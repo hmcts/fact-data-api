@@ -83,7 +83,7 @@ public class CourtPhotoService {
     public void deleteCourtPhotoByCourtId(UUID courtId) {
         courtService.getCourtById(courtId);
 
-        log.info("Deleting court photo for court ID: {}", courtId);
+        log.debug("Deleting court photo for court ID: {}", courtId);
         CourtPhoto courtPhoto = getCourtPhotoByCourtId(courtId);
 
         azureBlobService.deleteBlob(courtPhoto.getCourtId().toString());

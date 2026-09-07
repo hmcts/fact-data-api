@@ -72,7 +72,7 @@ public class ServiceCentreContactDetailsService {
         request.setServiceCentre(serviceCentre);
         request.setServiceCentreContactDescription(description.orElse(null));
 
-        log.info("Creating contact detail for service centre {}", serviceCentreId);
+        log.debug("Creating contact detail for service centre {}", serviceCentreId);
         return serviceCentreContactDetailsRepository.save(request);
     }
 
@@ -100,7 +100,7 @@ public class ServiceCentreContactDetailsService {
         existing.setEmail(request.getEmail());
         existing.setPhoneNumber(request.getPhoneNumber());
 
-        log.info("Updating contact detail {} for service centre {}", contactId, serviceCentreId);
+        log.debug("Updating contact detail {} for service centre {}", contactId, serviceCentreId);
         return serviceCentreContactDetailsRepository.save(existing);
     }
 
@@ -121,7 +121,7 @@ public class ServiceCentreContactDetailsService {
             );
         }
 
-        log.info("Deleting contact detail {} for service centre {}", contactId, serviceCentreId);
+        log.debug("Deleting contact detail {} for service centre {}", contactId, serviceCentreId);
         serviceCentreContactDetailsRepository.deleteByIdAndServiceCentreId(contactId, serviceCentreId);
     }
 

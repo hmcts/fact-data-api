@@ -40,7 +40,7 @@ public class CourtTranslationService {
      * @return The created translation entity.
      */
     public CourtTranslation setTranslation(UUID courtId, CourtTranslation courtTranslation) {
-        log.info("Setting translation for court id: {}", courtId);
+        log.debug("Setting translation for court id: {}", courtId);
         Court foundCourt = courtService.getCourtById(courtId);
         courtTranslation.setCourt(foundCourt);
         courtTranslation.setCourtId(courtId);

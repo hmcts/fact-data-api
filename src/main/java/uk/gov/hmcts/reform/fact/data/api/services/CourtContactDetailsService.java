@@ -73,7 +73,7 @@ public class CourtContactDetailsService {
         request.setCourt(court);
         request.setCourtContactDescription(description.orElse(null));
 
-        log.info("Creating contact detail for court {}", courtId);
+        log.debug("Creating contact detail for court {}", courtId);
         return courtContactDetailsRepository.save(request);
     }
 
@@ -99,7 +99,7 @@ public class CourtContactDetailsService {
         existing.setEmail(request.getEmail());
         existing.setPhoneNumber(request.getPhoneNumber());
 
-        log.info("Updating contact detail {} for court {}", contactId, courtId);
+        log.debug("Updating contact detail {} for court {}", contactId, courtId);
         return courtContactDetailsRepository.save(existing);
     }
 
@@ -119,7 +119,7 @@ public class CourtContactDetailsService {
             );
         }
 
-        log.info("Deleting contact detail {} for court {}", contactId, courtId);
+        log.debug("Deleting contact detail {} for court {}", contactId, courtId);
         courtContactDetailsRepository.deleteByIdAndCourtId(contactId, courtId);
     }
 

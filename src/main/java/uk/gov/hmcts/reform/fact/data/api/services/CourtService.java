@@ -337,7 +337,7 @@ public class CourtService {
 
         if (shouldNotify) {
             try {
-                log.info("Notifying CaTH {}", court.getMrdId());
+                log.debug("Notifying CaTH {}", court.getMrdId());
                 cathClient.notifyCourtStatusChange(
                     court.getMrdId(),
                     Map.of("isOpen", Boolean.TRUE.equals(court.getOpen()))
