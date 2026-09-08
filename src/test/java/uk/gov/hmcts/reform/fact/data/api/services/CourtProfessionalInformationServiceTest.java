@@ -353,4 +353,28 @@ class CourtProfessionalInformationServiceTest {
         assertThat(result.getDxCodes()).isEmpty();
         assertThat(result.getFaxNumbers()).isEmpty();
     }
+
+    @Test
+    void setProfessionalInformationIgnoresNullOnlyDxAndFaxPayloads() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtProfessionalInformationRepository.findByCourtId(courtId)).thenReturn(Optional.empty());
+        when(courtProfessionalInformationRepository.save(any(CourtProfessionalInformation.class)))
+            .thenReturn(professionalInformation);
+
+        CourtProfessionalInformationDetailsDto request = CourtProfessionalInformationDetailsDto.builder()
+            .professionalInformation(professionalInformationDto)
+            .dxCodes(Collections.singletonList(null))
+            .faxNumbers(Collections.singletonList(null))
+            .build();
+
+        CourtProfessionalInformationDetailsDto result =
+            courtProfessionalInformationService.setProfessionalInformation(courtId, request);
+
+        verify(courtDxCodeRepository).deleteAllByCourtId(courtId);
+        verify(courtFaxRepository).deleteAllByCourtId(courtId);
+        verify(courtDxCodeRepository, never()).saveAll(any());
+        verify(courtFaxRepository, never()).saveAll(any());
+        assertThat(result.getDxCodes()).isEmpty();
+        assertThat(result.getFaxNumbers()).isEmpty();
+    }
 }

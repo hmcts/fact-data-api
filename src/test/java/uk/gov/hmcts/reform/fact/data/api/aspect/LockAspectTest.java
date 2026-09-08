@@ -204,6 +204,15 @@ class LockAspectTest {
     }
 
     @Test
+    @DisplayName("Should handle subjectType as String and convert to enum")
+    void shouldHandleSubjectTypeAsString() {
+        setupJoinPointWithStringSubjectType("court", courtId, page, userId);
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
+
+        assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
+    }
+
+    @Test
     @DisplayName("Should handle page as String and convert to enum")
     void shouldHandlePageAsString() {
         setupJoinPointWithStringPage(courtId, "GENERAL", userId);
@@ -262,6 +271,18 @@ class LockAspectTest {
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
             when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, page, userId});
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void setupJoinPointWithStringSubjectType(String subjectType, UUID courtId, Page page, UUID userId) {
+        try {
+            Method method = TestController.class.getMethod(
+                "testMethodWithStringSubjectType", String.class, UUID.class, Page.class, UUID.class);
+            when(joinPoint.getSignature()).thenReturn(methodSignature);
+            when(methodSignature.getMethod()).thenReturn(method);
+            when(joinPoint.getArgs()).thenReturn(new Object[]{subjectType, courtId, page, userId});
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -327,6 +348,14 @@ class LockAspectTest {
         public void testMethodWithStringSubjectId(
             @PathVariable("subjectType") SubjectType subjectType,
             @PathVariable("subjectId") String subjectId,
+            @PathVariable("page") Page page,
+            @RequestParam("userId") UUID userId) {
+            // empty
+        }
+
+        public void testMethodWithStringSubjectType(
+            @PathVariable("subjectType") String subjectType,
+            @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") Page page,
             @RequestParam("userId") UUID userId) {
             // empty
