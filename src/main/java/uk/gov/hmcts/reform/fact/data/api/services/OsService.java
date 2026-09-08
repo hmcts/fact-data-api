@@ -55,7 +55,11 @@ public class OsService {
      * @return the location data returned from OS plus a mapping to determine the admin
      *     district based on the child and parent custodian codes.
      */
-    @Cacheable(cacheNames = CacheConfiguration.OSDATA_CACHE_NAME, key = "'T-' + #postcode")
+    @Cacheable(
+        cacheNames = CacheConfiguration.OSDATA_CACHE_NAME,
+        key = "'T-' + #postcode.trim().replaceAll('\\s+', '').toUpperCase().replaceAll('..$', '')",
+        sync = true
+    )
     public OsLocationData getOsLonLatDistrictByPartial(String postcode) {
         return getOsLatLonDistrictLookup(
             toOutwardPlusSingleInwardDigit(
@@ -69,7 +73,11 @@ public class OsService {
      * @param postcode the postcode.
      * @return the OsData containing all addresses for the provided postcode.
      */
-    @Cacheable(cacheNames = CacheConfiguration.OSDATA_CACHE_NAME, key = "'F-' + #postcode")
+    @Cacheable(
+        cacheNames = CacheConfiguration.OSDATA_CACHE_NAME,
+        key = "'F-' + #postcode.trim().replaceAll('\\s+', '').toUpperCase()",
+        sync = true
+    )
     public OsData getOsAddressByFullPostcode(String postcode) {
         return getOsAddressData(validateAndFormatPostcode(postcode), false);
     }
@@ -83,7 +91,8 @@ public class OsService {
      */
     @Cacheable(
         cacheNames = CacheConfiguration.OSDATA_CACHE_NAME,
-        key = "'A-' + #postcode.trim().replaceAll('\\s+', '').toUpperCase()"
+        key = "'A-' + #postcode.trim().replaceAll('\\s+', '').toUpperCase()",
+        sync = true
     )
     public OsData getOsAdminAddressByFullPostcode(String postcode) {
         String formattedPostcode = validateAndFormatPostcode(postcode);

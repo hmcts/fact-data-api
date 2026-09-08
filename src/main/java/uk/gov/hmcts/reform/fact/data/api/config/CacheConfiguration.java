@@ -1,14 +1,11 @@
 package uk.gov.hmcts.reform.fact.data.api.config;
 
 import java.time.Duration;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Scheduler;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -18,13 +15,21 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableCaching
-@ConditionalOnProperty(prefix = "testingSupport", name = "enableCache", havingValue = "true")
-@Slf4j
+@ConditionalOnProperty(prefix = "os.cache", name = "enabled", havingValue = "true")
 public class CacheConfiguration {
 
     public static final String OSDATA_CACHE_NAME = "osdata";
 
-    ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private final long maximumSize;
+    private final long timeToLiveMillis;
+
+    public CacheConfiguration(
+        @Value("${os.cache.maximum-size:1000}") long maximumSize,
+        @Value("${os.cache.time-to-live-millis:3600000}") long timeToLiveMillis
+    ) {
+        this.maximumSize = maximumSize;
+        this.timeToLiveMillis = timeToLiveMillis;
+    }
 
     @Bean
     public CacheManager cacheManager() {
@@ -35,17 +40,11 @@ public class CacheConfiguration {
     }
 
     private Cache<Object, Object> buildOsDataCache() {
-        Cache<Object, Object> cache = Caffeine.newBuilder()
+        return Caffeine.newBuilder()
             .initialCapacity(10)
-            .maximumSize(1000)
-            .expireAfterWrite(Duration.ofHours(1))
-            .recordStats()
+            .maximumSize(maximumSize)
+            .expireAfterWrite(Duration.ofMillis(timeToLiveMillis))
             .scheduler(Scheduler.systemScheduler())
             .build();
-
-        executorService.scheduleWithFixedDelay(() -> log.info("OsData Cache stats: {}", cache.stats()),
-                                               0, 5, TimeUnit.MINUTES);
-
-        return cache;
     }
 }

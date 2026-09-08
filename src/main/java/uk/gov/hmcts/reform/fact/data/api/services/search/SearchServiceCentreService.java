@@ -54,6 +54,20 @@ public class SearchServiceCentreService {
                                                                   String serviceArea,
                                                                   Integer limit) {
         OsLocationData osLocationData = osService.getOsLonLatDistrictByPartial(postcode);
+        return searchWithServiceArea(osLocationData, serviceArea, limit);
+    }
+
+    /**
+     * Searches service centres using OS location data already resolved by a combined location search.
+     *
+     * @param osLocationData resolved OS location data
+     * @param serviceArea the service area
+     * @param limit maximum number of results
+     * @return matching service centres
+     */
+    public List<ServiceCentreWithDistance> searchWithServiceArea(OsLocationData osLocationData,
+                                                                 String serviceArea,
+                                                                 Integer limit) {
         ServiceArea serviceAreaFound = serviceAreaService.getServiceAreaByName(serviceArea);
 
         return serviceCentreRepository.findNearestByServiceAreaAndAreaOfLawAndCatchmentTypeIn(
