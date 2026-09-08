@@ -509,7 +509,7 @@ public final class CourtControllerFunctionalTest {
                          mrdid,
                          true);
 
-        final Response response = http.doPut("/courts/v1/link/"+mrdid, null);
+        final Response response = http.doPut("/courts/v1/link/" + mrdid, null);
 
         AssertionHelper.assertStatus(response, NO_CONTENT);
 
