@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.cache.CacheManager;
@@ -103,8 +104,12 @@ class OsServiceCacheTest {
         }
 
         @Bean
-        OsService osService(OsFeignClient client, LocalAuthorityTypeRepository repository) {
-            return new OsService(client, repository);
+        OsService osService(
+            OsFeignClient client,
+            LocalAuthorityTypeRepository repository,
+            ObjectProvider<OsService> osServiceProvider
+        ) {
+            return new OsService(client, repository, osServiceProvider);
         }
     }
 }

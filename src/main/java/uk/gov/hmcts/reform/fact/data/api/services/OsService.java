@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -34,6 +35,7 @@ public class OsService {
 
     private final OsFeignClient osFeignClient;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
+    private final ObjectProvider<OsService> osServiceProvider;
     private static final Pattern POSTCODE_PATTERN =
         Pattern.compile(
             "^([A-Z]{1,2}\\d[\\dA-Z]?)(?:\\s+(\\d[A-Z]{0,2}))?$",
@@ -157,7 +159,7 @@ public class OsService {
                 throw new IllegalArgumentException("Selected OS address must include both dataset and UPRN");
             }
 
-            OsData osData = getOsAdminAddressByFullPostcode(postcode);
+            OsData osData = osServiceProvider.getObject().getOsAdminAddressByFullPostcode(postcode);
             List<OsResult> results = osData.getResults() == null ? Collections.emptyList() : osData.getResults();
             String normalisedDataset = dataset.trim().toUpperCase(Locale.ROOT);
             return switch (normalisedDataset) {
@@ -188,7 +190,8 @@ public class OsService {
             };
         }
 
-        OsDpa firstDpa = getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
+        OsDpa firstDpa = osServiceProvider.getObject()
+            .getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
         return firstDpa == null ? Optional.empty() : toCoordinates(firstDpa.getLat(), firstDpa.getLng());
     }
 
