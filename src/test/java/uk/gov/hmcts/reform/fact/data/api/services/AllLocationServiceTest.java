@@ -308,6 +308,29 @@ class AllLocationServiceTest {
     }
 
     @Test
+    void searchOpenLocationsByNameOrAddressIgnoresUnknownLocationTypes() {
+        AllLocationSearchResult unknownResult = new AllLocationSearchResult() {
+            @Override
+            public UUID getId() {
+                return UUID.randomUUID();
+            }
+
+            @Override
+            public String getLocationType() {
+                return "UNKNOWN";
+            }
+        };
+
+        when(allLocationSearchRepository.searchOpenByNameOrAddress("Example")).thenReturn(List.of(unknownResult));
+        when(courtRepository.findAllById(List.of())).thenReturn(List.of());
+        when(serviceCentreRepository.findAllById(List.of())).thenReturn(List.of());
+
+        List<AllLocation> result = allLocationService.searchOpenLocationsByNameOrAddress("Example");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void getFilteredAndPaginatedLocationsAppliesRegionFilterToCourtsAndServiceCentres() {
         Court matchingCourt = buildCourt("Matching Court", true);
         Court otherCourt = buildCourt("Other Court", true);

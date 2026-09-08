@@ -13,6 +13,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 
 import java.util.UUID;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,8 +23,10 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -204,6 +207,30 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.isAdmin())
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("X-User-Id header is required for admin requests");
+    }
+
+    @Test
+    void isAdminRequiresUserIdHeaderWhenRequestUriIsNull() {
+        setAdminAuthentication();
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn(null);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        assertThatThrownBy(() -> authService.isAdmin())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("X-User-Id header is required for admin requests");
+    }
+
+    @Test
+    void isAdminSuppressesAuditWhenBypassConfigContainsBlankEntries() {
+        setAdminAuthentication();
+        ReflectionTestUtils.setField(authService, "postEndpointsWithoutUserHeaderConfig", " , /user/v1 , ,, ");
+        setRequest("POST", "/user/v1/", null);
+
+        assertThat(authService.isAdmin()).isTrue();
+        verify(auditUserContext).suppressAudit();
+        verifyNoInteractions(userRepository);
     }
 
     private void assertAuditSuppressedFor(String method, String requestUri) {

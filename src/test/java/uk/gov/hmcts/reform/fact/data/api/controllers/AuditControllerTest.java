@@ -184,6 +184,14 @@ class AuditControllerTest {
         );
     }
 
+    @Test
+    void removeExpiredAuditEntriesReturns204() {
+        ResponseEntity<Void> response = auditController.removeExpiredAuditEntries();
+
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode(), RESPONSE_STATUS_MISMATCH);
+        verify(auditService).removeExpiredAuditEntries();
+    }
+
     private Audit createAudit() {
         return Audit.builder()
             .id(AUDIT_ID)

@@ -70,6 +70,15 @@ class UserServiceTest {
     }
 
     @Test
+    void getUserByIdThrowsNotFoundWhenUserMissing() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getUserById(USER_ID))
+            .isInstanceOf(NotFoundException.class)
+            .hasMessage("No user found for user id: " + USER_ID);
+    }
+
+    @Test
     void createOrUpdateUserShouldSaveViewerRole() {
         User user = new User();
         user.setRole(UserRole.VIEWER);
@@ -282,6 +291,31 @@ class UserServiceTest {
     }
 
     @Test
+    void getFilteredAndPaginatedUsersShouldDefaultSortOrderToAscendingWhenMissing() {
+        User olderUser = createUser("older@justice.gov.uk", UUID.randomUUID(), UserRole.ADMIN,
+            ZonedDateTime.now().minusDays(2));
+        User newerUser = createUser("newer@justice.gov.uk", UUID.randomUUID(), UserRole.SUPER_ADMIN,
+            ZonedDateTime.now().minusDays(1));
+        when(userRepository.findAll()).thenReturn(List.of(newerUser, olderUser));
+
+        Page<User> result = userService.getFilteredAndPaginatedUsers(0, 25, null, "lastLogin", null);
+
+        assertThat(result.getContent()).extracting(User::getEmail)
+            .containsExactly("older@justice.gov.uk", "newer@justice.gov.uk");
+    }
+
+    @Test
+    void getFilteredAndPaginatedUsersShouldHandleUsersWithoutSsoIdDuringSearch() {
+        User matchingEmail = createUser("match@justice.gov.uk", null, UserRole.ADMIN, ZonedDateTime.now());
+        User nonMatchingEmail = createUser("other@justice.gov.uk", null, UserRole.VIEWER, ZonedDateTime.now());
+        when(userRepository.findAll()).thenReturn(List.of(matchingEmail, nonMatchingEmail));
+
+        Page<User> result = userService.getFilteredAndPaginatedUsers(0, 25, "match", null, null);
+
+        assertThat(result.getContent()).extracting(User::getEmail).containsExactly("match@justice.gov.uk");
+    }
+
+    @Test
     void getFilteredAndPaginatedUsersShouldRejectInvalidSortParameters() {
         InvalidParameterCombinationException missingSortBy = assertThrows(
             InvalidParameterCombinationException.class,
@@ -339,6 +373,19 @@ class UserServiceTest {
             .thenReturn(new PageImpl<>(List.of(courtReference), pageable, 1));
         when(courtRepository.findAllById(List.of(COURT_ID))).thenReturn(List.of());
         when(serviceCentreRepository.findAllById(List.of())).thenReturn(List.of());
+
+        assertThat(userService.getFavourites(USER_ID, 0, 25).getContent()).isEmpty();
+    }
+
+    @Test
+    void getFavouritesDefensivelyOmitsDeletedServiceCentre() {
+        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        FavouriteLocationReference serviceCentreReference = reference(SERVICE_CENTRE_ID, SubjectType.SERVICE_CENTRE);
+        PageRequest pageable = PageRequest.of(0, 25);
+        when(userRepository.findFavouriteLocationsByUserId(USER_ID, pageable))
+            .thenReturn(new PageImpl<>(List.of(serviceCentreReference), pageable, 1));
+        when(courtRepository.findAllById(List.of())).thenReturn(List.of());
+        when(serviceCentreRepository.findAllById(List.of(SERVICE_CENTRE_ID))).thenReturn(List.of());
 
         assertThat(userService.getFavourites(USER_ID, 0, 25).getContent()).isEmpty();
     }
@@ -410,6 +457,19 @@ class UserServiceTest {
     }
 
     @Test
+    void addFavouriteRejectsUnknownServiceCentre() {
+        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        when(serviceCentreRepository.existsById(SERVICE_CENTRE_ID)).thenReturn(false);
+        FavouriteReference favouriteReference = new FavouriteReference(SERVICE_CENTRE_ID, SubjectType.SERVICE_CENTRE);
+
+        assertThatThrownBy(() -> userService.addFavourite(USER_ID, favouriteReference))
+            .isInstanceOf(NotFoundException.class)
+            .hasMessage("Service centre not found, ID: " + SERVICE_CENTRE_ID);
+
+        verify(userRepository, never()).addFavouriteServiceCentreIfAbsent(any(), any());
+    }
+
+    @Test
     void removeFavouriteIsIdempotentAfterValidatingSubject() {
         when(userRepository.existsById(USER_ID)).thenReturn(true);
         when(serviceCentreRepository.existsById(SERVICE_CENTRE_ID)).thenReturn(true);
@@ -417,6 +477,16 @@ class UserServiceTest {
         userService.removeFavourite(USER_ID, SERVICE_CENTRE_ID, SubjectType.SERVICE_CENTRE);
 
         verify(userRepository).removeFavouriteServiceCentre(USER_ID, SERVICE_CENTRE_ID);
+    }
+
+    @Test
+    void removeFavouriteValidatesCourtAndRemovesCourtFavourite() {
+        when(userRepository.existsById(USER_ID)).thenReturn(true);
+        when(courtRepository.existsById(COURT_ID)).thenReturn(true);
+
+        userService.removeFavourite(USER_ID, COURT_ID, SubjectType.COURT);
+
+        verify(userRepository).removeFavouriteCourt(USER_ID, COURT_ID);
     }
 
     @Test

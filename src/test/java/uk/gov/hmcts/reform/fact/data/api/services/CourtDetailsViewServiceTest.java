@@ -16,6 +16,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtOpeningHours;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -221,5 +222,71 @@ class CourtDetailsViewServiceTest {
         assertThat(counterServiceOpeningHours.getCourtTypeDetails().get(0).getName()).isEqualTo("Crown Court");
         assertThat(counterServiceOpeningHours.getCourtTypeDetails().get(1).getId()).isEqualTo(courtTypeId2);
         assertThat(counterServiceOpeningHours.getCourtTypeDetails().get(1).getName()).isNull();
+    }
+
+    @Test
+    void prepareDetailsViewHandlesNullListsAndNullTypeIdsWithoutLookups() {
+        CourtOpeningHours openingHours = new CourtOpeningHours();
+        openingHours.setOpeningHourTypeId(null);
+
+        CourtContactDetails contactDetails = new CourtContactDetails();
+        contactDetails.setCourtContactDescriptionId(null);
+
+        CourtAddress address = new CourtAddress();
+        address.setAreasOfLaw(null);
+        address.setCourtTypes(null);
+
+        CourtCounterServiceOpeningHours counterServiceOpeningHours = new CourtCounterServiceOpeningHours();
+        counterServiceOpeningHours.setCourtTypes(null);
+
+        CourtAreasOfLaw courtAreasOfLaw = new CourtAreasOfLaw();
+        courtAreasOfLaw.setAreasOfLaw(null);
+
+        CourtDetails courtDetails = new CourtDetails();
+        courtDetails.setCourtOpeningHours(List.of(openingHours));
+        courtDetails.setCourtContactDetails(List.of(contactDetails));
+        courtDetails.setCourtAddresses(List.of(address));
+        courtDetails.setCourtCounterServiceOpeningHours(List.of(counterServiceOpeningHours));
+        courtDetails.setCourtAreasOfLaw(List.of(courtAreasOfLaw));
+
+        courtDetailsViewService.prepareDetailsView(courtDetails);
+
+        assertThat(openingHours.getOpeningHourTypeDetails()).isNull();
+        assertThat(contactDetails.getCourtContactDescriptionDetails()).isNull();
+        assertThat(address.getAreasOfLawDetails()).isEmpty();
+        assertThat(address.getCourtTypeDetails()).isEmpty();
+        assertThat(counterServiceOpeningHours.getCourtTypeDetails()).isEmpty();
+        assertThat(courtAreasOfLaw.getAreasOfLawDetails()).isEmpty();
+        verifyNoInteractions(typesService);
+    }
+
+    @Test
+    void prepareDetailsViewMapsNullIdsToNullStubEntries() {
+        List<UUID> idsWithNull = Arrays.asList((UUID) null);
+
+        CourtAddress address = new CourtAddress();
+        address.setAreasOfLaw(idsWithNull);
+        address.setCourtTypes(idsWithNull);
+
+        CourtCounterServiceOpeningHours counterServiceOpeningHours = new CourtCounterServiceOpeningHours();
+        counterServiceOpeningHours.setCourtTypes(idsWithNull);
+
+        CourtAreasOfLaw courtAreasOfLaw = new CourtAreasOfLaw();
+        courtAreasOfLaw.setAreasOfLaw(idsWithNull);
+
+        when(typesService.getAllAreasOfLawTypesByIds(anyList())).thenReturn(List.of());
+        when(typesService.getAllCourtTypesByIds(anyList())).thenReturn(List.of());
+
+        CourtDetails courtDetails = new CourtDetails();
+        courtDetails.setCourtAddresses(List.of(address));
+        courtDetails.setCourtCounterServiceOpeningHours(List.of(counterServiceOpeningHours));
+        courtDetails.setCourtAreasOfLaw(List.of(courtAreasOfLaw));
+
+        courtDetailsViewService.prepareDetailsView(courtDetails);
+
+        assertThat(address.getAreasOfLawDetails()).containsExactly((AreaOfLawType) null);
+        assertThat(address.getCourtTypeDetails()).containsExactly((CourtType) null);
+        assertThat(counterServiceOpeningHours.getCourtTypeDetails()).containsExactly((CourtType) null);
+        assertThat(courtAreasOfLaw.getAreasOfLawDetails()).containsExactly((AreaOfLawType) null);
     }
 }
