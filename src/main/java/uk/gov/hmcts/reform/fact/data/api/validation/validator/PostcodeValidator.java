@@ -24,6 +24,7 @@ public class PostcodeValidator implements ConstraintValidator<ValidPostcode, Str
      */
     @Override
     public void initialize(ValidPostcode constraintAnnotation) {
+        // No initialization is required for this stateless validator.
     }
 
     /**

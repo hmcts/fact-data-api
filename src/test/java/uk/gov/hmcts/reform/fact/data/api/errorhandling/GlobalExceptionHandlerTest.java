@@ -99,12 +99,8 @@ class GlobalExceptionHandlerTest {
         ConstraintViolation<?> violation = mock(ConstraintViolation.class);
         ConstraintDescriptor<?> descriptor = mock(ConstraintDescriptor.class);
         doReturn(descriptor).when(violation).getConstraintDescriptor();
-        doReturn(new Annotation() {
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return Annotation.class;
-            }
-        }).when(descriptor).getAnnotation();
+        Annotation nonUuidAnnotation = () -> Annotation.class;
+        doReturn(nonUuidAnnotation).when(descriptor).getAnnotation();
         when(violation.getMessage()).thenReturn("Bad request");
         when(violation.getInvalidValue()).thenReturn("oops");
 
@@ -141,9 +137,10 @@ class GlobalExceptionHandlerTest {
 
         Map<String, String> response = handler.handle(methodArgumentNotValidException);
 
-        assertThat(response).isNotNull();
-        assertThat(response).containsEntry("field", TEST_MESSAGE);
-        assertThat(response).containsKey("timestamp");
+        assertThat(response)
+            .isNotNull()
+            .containsEntry("field", TEST_MESSAGE)
+            .containsKey("timestamp");
     }
 
     @Test
@@ -157,7 +154,7 @@ class GlobalExceptionHandlerTest {
 
         Map<String, String> response = handler.handle(ex);
 
-        assertThat(response.get("field")).isEqualTo("first");
+        assertThat(response).containsEntry("field", "first");
     }
 
     @Test
@@ -368,9 +365,7 @@ class GlobalExceptionHandlerTest {
 
             @Override
             public Class<? extends Payload>[] payload() {
-                @SuppressWarnings("unchecked")
-                Class<? extends Payload>[] payload = (Class<? extends Payload>[]) new Class<?>[0];
-                return payload;
+                return emptyPayload();
             }
 
             @Override
@@ -383,5 +378,10 @@ class GlobalExceptionHandlerTest {
                 return ValidUUID.class;
             }
         };
+    }
+
+    @SafeVarargs
+    private static Class<? extends Payload>[] emptyPayload(Class<? extends Payload>... payload) {
+        return payload;
     }
 }

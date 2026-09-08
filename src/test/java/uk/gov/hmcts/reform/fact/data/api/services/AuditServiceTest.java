@@ -354,6 +354,9 @@ class AuditServiceTest {
 
     @Test
     void shouldThrowInvalidParameterCombinationExceptionWhenBothSubjectIdsProvided() {
+        String courtId = COURT_ID.toString();
+        String serviceCentreId = SERVICE_CENTRE_ID.toString();
+
         assertThrows(
             InvalidParameterCombinationException.class, () -> auditService.getFilteredAndPaginatedAudits(
                 PAGE_NUMBER,
@@ -361,8 +364,8 @@ class AuditServiceTest {
                 fromDate,
                 null,
                 null,
-                COURT_ID.toString(),
-                SERVICE_CENTRE_ID.toString(),
+                courtId,
+                serviceCentreId,
                 null
             )
         );
@@ -371,9 +374,8 @@ class AuditServiceTest {
     @Test
     void shouldThrowNullPointerExceptionWhenFromDateIsNull() {
         assertThrows(
-            NullPointerException.class, () -> {
-                auditService.getFilteredAndPaginatedAudits(0, 1, null, null, null,null, null, null);
-            }
+            NullPointerException.class,
+            () -> auditService.getFilteredAndPaginatedAudits(0, 1, null, null, null, null, null, null)
         );
     }
 
