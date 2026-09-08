@@ -10,6 +10,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
+import uk.gov.hmcts.reform.fact.data.api.os.OsLpi;
 import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.services.OsService;
 
@@ -36,20 +37,32 @@ class SearchAddressControllerTest {
     @DisplayName("GET /search/address/v1/postcode/{postcode} returns OS address data")
     void getAddressByPostcodeReturnsOk() throws Exception {
         OsData osData = OsData.builder()
-            .results(List.of(OsResult.builder()
-                .dpa(OsDpa.builder()
-                    .lat(51.501)
-                    .lng(-0.141)
-                    .build())
-                .build()))
+            .results(List.of(
+                OsResult.builder()
+                    .dpa(OsDpa.builder()
+                        .lat(51.501)
+                        .lng(-0.141)
+                        .build())
+                    .build(),
+                OsResult.builder()
+                    .lpi(OsLpi.builder()
+                        .uprn("100023336956")
+                        .lpiKey("12345L")
+                        .postcodeLocator("SW1A 1AA")
+                        .build())
+                    .build()
+            ))
             .build();
 
-        when(osService.getOsAddressByFullPostcode("SW1A 1AA")).thenReturn(osData);
+        when(osService.getOsAdminAddressByFullPostcode("SW1A 1AA")).thenReturn(osData);
 
         mockMvc.perform(get("/search/address/v1/postcode/{postcode}", "SW1A 1AA"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.results[0].DPA.LAT").value(51.501))
-            .andExpect(jsonPath("$.results[0].DPA.LNG").value(-0.141));
+            .andExpect(jsonPath("$.results[0].DPA.LNG").value(-0.141))
+            .andExpect(jsonPath("$.results[1].LPI.UPRN").value("100023336956"))
+            .andExpect(jsonPath("$.results[1].LPI.LPI_KEY").value("12345L"))
+            .andExpect(jsonPath("$.results[1].LPI.POSTCODE_LOCATOR").value("SW1A 1AA"));
     }
 
     @Test
