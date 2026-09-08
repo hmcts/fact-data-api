@@ -101,10 +101,11 @@ class LockControllerTest {
     void createOrUpdateCourtLockPropagatesConflictWhenLockHeldByAnotherUser() {
         when(lockService.createOrUpdateLock(SubjectType.COURT, COURT_ID, TEST_PAGE, USER_ID))
             .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Page locked by another user"));
+        String courtId = COURT_ID.toString();
 
         ResponseStatusException exception = assertThrows(
             ResponseStatusException.class, () ->
-                lockController.createOrUpdateSubjectLock(SubjectType.COURT, COURT_ID.toString(), TEST_PAGE, USER_ID)
+                lockController.createOrUpdateSubjectLock(SubjectType.COURT, courtId, TEST_PAGE, USER_ID)
         );
 
         assertThat(exception.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.CONFLICT);

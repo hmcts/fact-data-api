@@ -4,6 +4,7 @@ import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.UserRepository;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -11,6 +12,7 @@ import java.util.UUID;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,21 +29,16 @@ public class AuthService {
     static final String PREFIX = "APPROLE_";
     static final String ROLE_ADMIN = "Role.Fact.Admin";
     static final String ROLE_VIEWER = "Role.Fact.Viewer";
-    private static final String COURT_LINK_PATH = "/courts/v1/link";
-    private static final String USER_PATH = "/user/v1";
-    private static final String CSV_PATH = "/csv";
-    private static final char URI_PATH_DELIMITER = CSV_PATH.charAt(0);
-    private static final String USER_RETENTION_PATH = "/user/v1/retention";
-    private static final String AUDIT_RETENTION_PATH = "/audits/v1";
-    private static final Set<String> POST_ENDPOINTS_WITHOUT_USER_HEADER = Set.of(
-        COURT_LINK_PATH,
-        USER_PATH,
-        CSV_PATH
-    );
-    private static final Set<String> DELETE_ENDPOINTS_WITHOUT_USER_HEADER = Set.of(
-        USER_RETENTION_PATH,
-        AUDIT_RETENTION_PATH
-    );
+    private static final char URI_PATH_DELIMITER = '/';
+
+    @Value("${auth.user-header-bypass.post-endpoints:/courts/v1/link,/user/v1,/csv}")
+    private String postEndpointsWithoutUserHeaderConfig = "/courts/v1/link,/user/v1,/csv";
+
+    @Value("${auth.user-header-bypass.delete-endpoints:/user/v1/retention,/audits/v1}")
+    private String deleteEndpointsWithoutUserHeaderConfig = "/user/v1/retention,/audits/v1";
+
+    @Value("${auth.user-header-bypass.put-prefix:/courts/v1/link}")
+    private String putEndpointWithoutUserHeaderPrefix = "/courts/v1/link";
 
     private final ObjectProvider<AuditUserContext> auditUserContextProvider;
     private final ObjectProvider<UserRepository> userRepositoryProvider;
@@ -116,13 +113,26 @@ public class AuthService {
     private boolean isAdminEndpointWithoutUserHeader(HttpServletRequest request) {
         String method = request.getMethod();
         String requestUri = trimTrailingPathDelimiter(request.getRequestURI());
+        Set<String> postEndpointsWithoutUserHeader = parseConfiguredPaths(postEndpointsWithoutUserHeaderConfig);
+        Set<String> deleteEndpointsWithoutUserHeader = parseConfiguredPaths(deleteEndpointsWithoutUserHeaderConfig);
+        String putEndpointPrefix = trimTrailingPathDelimiter(putEndpointWithoutUserHeaderPrefix);
         if (requestUri == null) {
             return false;
         }
 
-        return ("POST".equals(method) && POST_ENDPOINTS_WITHOUT_USER_HEADER.contains(requestUri))
-            || ("PUT".equals(method) && requestUri.startsWith(COURT_LINK_PATH + URI_PATH_DELIMITER))
-            || ("DELETE".equals(method) && DELETE_ENDPOINTS_WITHOUT_USER_HEADER.contains(requestUri));
+        return ("POST".equals(method) && postEndpointsWithoutUserHeader.contains(requestUri))
+            || ("PUT".equals(method)
+            && putEndpointPrefix != null
+            && requestUri.startsWith(putEndpointPrefix + URI_PATH_DELIMITER))
+            || ("DELETE".equals(method) && deleteEndpointsWithoutUserHeader.contains(requestUri));
+    }
+
+    private Set<String> parseConfiguredPaths(String configuredPaths) {
+        return Arrays.stream(configuredPaths.split(","))
+            .map(String::trim)
+            .filter(path -> !path.isEmpty())
+            .map(this::trimTrailingPathDelimiter)
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
     }
 
     private String trimTrailingPathDelimiter(String requestUri) {

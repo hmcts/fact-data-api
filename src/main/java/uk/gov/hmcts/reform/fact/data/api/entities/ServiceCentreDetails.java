@@ -130,8 +130,12 @@ public class ServiceCentreDetails {
 
     @JsonView(ServiceCentreDetailsView.class)
     @JsonProperty("serviceAreas")
-    public List<?> getServiceAreasForView() {
-        return serviceAreaDetails != null ? serviceAreaDetails : serviceAreaIds;
+    public List<Object> getServiceAreasForView() {
+        return serviceAreaDetails != null ? asViewList(serviceAreaDetails) : asViewList(serviceAreaIds);
+    }
+
+    private static <T> List<Object> asViewList(List<T> values) {
+        return values == null ? null : values.stream().map(Object.class::cast).toList();
     }
 
     @Schema(description = "The catchment type")

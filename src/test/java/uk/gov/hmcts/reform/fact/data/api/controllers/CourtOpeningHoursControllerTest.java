@@ -32,8 +32,6 @@ class CourtOpeningHoursControllerTest {
 
     private static final UUID COURT_ID = UUID.randomUUID();
     private static final UUID UNKNOWN_COURT_ID = UUID.randomUUID();
-    private static final UUID OPENING_HOURS_TYPE_ID = UUID.randomUUID();
-    private static final UUID UNKNOWN_TYPE_ID = UUID.randomUUID();
     private static final UUID UNKNOWN_ID = UUID.randomUUID();
     private static final String INVALID_UUID = "abcde";
 
@@ -130,10 +128,11 @@ class CourtOpeningHoursControllerTest {
     void getOpeningHoursThrowsNotFound() {
         when(courtOpeningHoursService.getOpeningHoursByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new CourtResourceNotFoundException(OPENING_HOURS_NOT_FOUND_MESSAGE));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(
             CourtResourceNotFoundException.class, () ->
-                courtOpeningHoursController.getOpeningHoursByCourtId(UNKNOWN_COURT_ID.toString())
+                courtOpeningHoursController.getOpeningHoursByCourtId(unknownCourtId)
         );
     }
 
@@ -141,10 +140,11 @@ class CourtOpeningHoursControllerTest {
     void getOpeningHoursThrowsCourtNotFoundException() {
         when(courtOpeningHoursService.getOpeningHoursByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(
             NotFoundException.class, () ->
-                courtOpeningHoursController.getOpeningHoursByCourtId(UNKNOWN_COURT_ID.toString())
+                courtOpeningHoursController.getOpeningHoursByCourtId(unknownCourtId)
         );
     }
 
@@ -172,11 +172,13 @@ class CourtOpeningHoursControllerTest {
     void getOpeningHoursByIdThrowsCourtNotFoundException() {
         when(courtOpeningHoursService.getOpeningHoursById(UNKNOWN_COURT_ID, UNKNOWN_ID))
             .thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+        String unknownOpeningHoursId = UNKNOWN_ID.toString();
 
         assertThrows(
             NotFoundException.class, () ->
                 courtOpeningHoursController
-                    .getOpeningHoursById(UNKNOWN_COURT_ID.toString(), UNKNOWN_ID.toString())
+                    .getOpeningHoursById(unknownCourtId, unknownOpeningHoursId)
         );
     }
 
@@ -184,11 +186,13 @@ class CourtOpeningHoursControllerTest {
     void getOpeningHoursByIdThrowsNotFound() {
         when(courtOpeningHoursService.getOpeningHoursById(COURT_ID, UNKNOWN_ID))
             .thenThrow(new CourtResourceNotFoundException(OPENING_HOURS_NOT_FOUND_MESSAGE));
+        String courtId = COURT_ID.toString();
+        String unknownOpeningHoursId = UNKNOWN_ID.toString();
 
         assertThrows(
             CourtResourceNotFoundException.class, () ->
                 courtOpeningHoursController
-                    .getOpeningHoursById(COURT_ID.toString(), UNKNOWN_ID.toString())
+                    .getOpeningHoursById(courtId, unknownOpeningHoursId)
         );
     }
 
@@ -216,10 +220,11 @@ class CourtOpeningHoursControllerTest {
     void getCounterServiceOpeningHoursThrowsNotFound() {
         when(courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new CourtResourceNotFoundException(OPENING_HOURS_NOT_FOUND_MESSAGE));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(
             CourtResourceNotFoundException.class, () ->
-                courtOpeningHoursController.getCounterServiceOpeningHoursByCourtId(UNKNOWN_COURT_ID.toString())
+                courtOpeningHoursController.getCounterServiceOpeningHoursByCourtId(unknownCourtId)
         );
     }
 
@@ -227,10 +232,11 @@ class CourtOpeningHoursControllerTest {
     void getCounterServiceOpeningHoursThrowsCourtNotFoundException() {
         when(courtOpeningHoursService.getCounterServiceOpeningHoursByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(
             NotFoundException.class, () ->
-                courtOpeningHoursController.getCounterServiceOpeningHoursByCourtId(UNKNOWN_COURT_ID.toString())
+                courtOpeningHoursController.getCounterServiceOpeningHoursByCourtId(unknownCourtId)
         );
     }
 
@@ -256,26 +262,28 @@ class CourtOpeningHoursControllerTest {
 
     @Test
     void setOpeningHoursThrowsIllegalArgumentExceptionForInvalidCourtId() {
-        CourtOpeningHours openingHours = CourtOpeningHours.builder().build();
+        CourtOpeningHours invalidOpeningHours = CourtOpeningHours.builder().build();
         assertThrows(
             IllegalArgumentException.class, () ->
                 courtOpeningHoursController.setOpeningHours(
                     INVALID_UUID,
-                    openingHours
+                    invalidOpeningHours
                 )
         );
     }
 
     @Test
     void setOpeningHoursThrowsCourtNotFoundException() {
-        CourtOpeningHours openingHours = CourtOpeningHours.builder().build();
-        when(courtOpeningHoursService.setOpeningHours(UNKNOWN_COURT_ID, openingHours))
+        CourtOpeningHours requestOpeningHours = CourtOpeningHours.builder().build();
+        when(courtOpeningHoursService.setOpeningHours(UNKNOWN_COURT_ID, requestOpeningHours))
             .thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(
             NotFoundException.class, () ->
                 courtOpeningHoursController.setOpeningHours(
-                    UNKNOWN_COURT_ID.toString(), openingHours
+                    unknownCourtId,
+                    requestOpeningHours
                 )
         );
     }
@@ -299,11 +307,12 @@ class CourtOpeningHoursControllerTest {
     void setCounterServiceOpeningHoursThrowsNotFoundException() {
         when(courtOpeningHoursService.setCounterServiceOpeningHours(UNKNOWN_COURT_ID, counterServiceOpeningHours))
             .thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(
             NotFoundException.class, () ->
                 courtOpeningHoursController.setCounterServiceOpeningHours(
-                    UNKNOWN_COURT_ID.toString(),
+                    unknownCourtId,
                     counterServiceOpeningHours
                 )
         );
@@ -330,21 +339,24 @@ class CourtOpeningHoursControllerTest {
     void deleteCourtOpeningHoursThrowsNotFoundException() {
         doThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE))
             .when(courtOpeningHoursService).deleteCourtOpeningHours(UNKNOWN_COURT_ID, openingHours.getId());
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+        String openingHoursId = openingHours.getId().toString();
 
         assertThrows(
             NotFoundException.class, () ->
                 courtOpeningHoursController.deleteOpeningHours(
-                    UNKNOWN_COURT_ID.toString(),
-                    openingHours.getId().toString()
+                    unknownCourtId,
+                    openingHoursId
                 )
         );
     }
 
     @Test
     void deleteOpeningHoursByTypeIdThrowsIllegalArgumentException() {
+        String openingHoursId = openingHours.getId().toString();
         assertThrows(
             IllegalArgumentException.class, () ->
-                courtOpeningHoursController.deleteOpeningHours(INVALID_UUID, openingHours.getId().toString())
+                courtOpeningHoursController.deleteOpeningHours(INVALID_UUID, openingHoursId)
         );
     }
 
@@ -362,12 +374,14 @@ class CourtOpeningHoursControllerTest {
         doThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE))
             .when(courtOpeningHoursService)
             .deleteCourtCounterServiceOpeningHours(UNKNOWN_COURT_ID, UNKNOWN_ID);
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
+        String unknownId = UNKNOWN_ID.toString();
 
         assertThrows(
             NotFoundException.class, () ->
                 courtOpeningHoursController.deleteCounterServiceOpeningHours(
-                    UNKNOWN_COURT_ID.toString(),
-                    UNKNOWN_ID.toString()
+                    unknownCourtId,
+                    unknownId
                 )
         );
     }

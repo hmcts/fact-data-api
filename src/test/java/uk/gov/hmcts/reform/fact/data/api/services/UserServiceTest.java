@@ -398,10 +398,11 @@ class UserServiceTest {
     void addFavouriteRejectsUnknownSubject() {
         when(userRepository.existsById(USER_ID)).thenReturn(true);
         when(courtRepository.existsById(COURT_ID)).thenReturn(false);
+        FavouriteReference favouriteReference = new FavouriteReference(COURT_ID, SubjectType.COURT);
 
         assertThatThrownBy(() -> userService.addFavourite(
             USER_ID,
-            new FavouriteReference(COURT_ID, SubjectType.COURT)
+            favouriteReference
         )).isInstanceOf(NotFoundException.class)
             .hasMessage("Court not found, ID: " + COURT_ID);
 

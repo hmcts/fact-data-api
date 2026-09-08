@@ -169,8 +169,9 @@ class CourtServiceTest {
 
         List<Court> result = courtService.getAllCourtsByIds(courtIds);
 
-        assertThat(result).hasSize(2);
-        assertThat(result).containsExactlyElementsOf(expectedCourts);
+        assertThat(result)
+            .hasSize(2)
+            .containsExactlyElementsOf(expectedCourts);
     }
 
     @Test
@@ -189,8 +190,9 @@ class CourtServiceTest {
 
         List<Court> result = courtService.getAllCourtsByIds(courtIds);
 
-        assertThat(result).hasSize(1);
-        assertThat(result).containsExactly(court1);
+        assertThat(result)
+            .hasSize(1)
+            .containsExactly(court1);
     }
 
     @Test

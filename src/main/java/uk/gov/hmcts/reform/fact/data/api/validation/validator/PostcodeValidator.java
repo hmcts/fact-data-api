@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 public class PostcodeValidator implements ConstraintValidator<ValidPostcode, String> {
 
+    @SuppressWarnings("java:S5843")
     private static final Pattern UK_POSTCODE_REGEX = Pattern.compile(
         "([Gg][Ii][Rr] 0[Aa]{2})|((([A-Za-z]\\d{1,2})|(([A-Za-z]"
             + "[A-Ha-hJ-Yj-y]\\d{1,2})|(([A-Za-z]\\d[A-Za-z])|([A-Za-z][A-Ha-hJ-Yj-y]"
@@ -24,6 +25,7 @@ public class PostcodeValidator implements ConstraintValidator<ValidPostcode, Str
      */
     @Override
     public void initialize(ValidPostcode constraintAnnotation) {
+        // No initialization is required for this stateless validator.
     }
 
     /**

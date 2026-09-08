@@ -34,8 +34,6 @@ class CourtControllerTest {
     private static final String UNKNOWN_COURT_SLUG = "missing-court";
     private static final String COURT_NAME_WITH_SPECIAL_CHARACTER = "King's Lynn Crown Court";
 
-    private static final String REGION_ID = UUID.randomUUID().toString();
-
     private static final String RESPONSE_STATUS_MESSAGE = "Response status does not match";
     private static final String RESPONSE_BODY_MESSAGE = "Response body does not match";
 
@@ -63,9 +61,10 @@ class CourtControllerTest {
     @Test
     void getCourtDetailsByIdThrowsNotFoundException() {
         when(courtService.getCourtDetailsById(UNKNOWN_COURT_ID)).thenThrow(new NotFoundException("Court not found"));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(NotFoundException.class, () ->
-            courtController.getCourtDetailsById(UNKNOWN_COURT_ID.toString())
+            courtController.getCourtDetailsById(unknownCourtId)
         );
     }
 
@@ -91,9 +90,10 @@ class CourtControllerTest {
     @Test
     void getCourtByIdThrowsNotFoundException() {
         when(courtService.getCourtById(UNKNOWN_COURT_ID)).thenThrow(new NotFoundException("Court not found"));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(NotFoundException.class, () ->
-            courtController.getCourtById(UNKNOWN_COURT_ID.toString())
+            courtController.getCourtById(unknownCourtId)
         );
     }
 
@@ -190,9 +190,10 @@ class CourtControllerTest {
         Court court = createCourt();
 
         when(courtService.updateCourt(UNKNOWN_COURT_ID, court)).thenThrow(new NotFoundException("Court not found"));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(NotFoundException.class, () ->
-            courtController.updateCourt(UNKNOWN_COURT_ID.toString(), court)
+            courtController.updateCourt(unknownCourtId, court)
         );
     }
 
