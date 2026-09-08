@@ -111,10 +111,11 @@ class UserControllerTest {
     void clearUserLocksThrowsNotFoundExceptionWhenUserNotFound() {
         doThrow(new NotFoundException("User not found"))
             .when(lockService).clearUserLocks(UNKNOWN_USER_ID);
+        String unknownUserId = UNKNOWN_USER_ID.toString();
 
         assertThrows(
             NotFoundException.class, () ->
-                userController.clearUserLocks(UNKNOWN_USER_ID.toString())
+                userController.clearUserLocks(unknownUserId)
         );
     }
 

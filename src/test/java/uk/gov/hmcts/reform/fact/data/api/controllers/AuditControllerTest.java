@@ -106,17 +106,22 @@ class AuditControllerTest {
 
     @Test
     void getFilteredAndPaginatedAuditsThrowsInvalidParameterCombinationForBothSubjectIds() {
+        String courtId = COURT_ID.toString();
+        String serviceCentreId = SERVICE_CENTRE_ID.toString();
+        LocalDate fromDate = LocalDate.now().minusDays(1);
+        LocalDate toDate = LocalDate.now();
+
         assertThrows(
             InvalidParameterCombinationException.class, () ->
                 auditController.getFilteredAndPaginatedAudits(
                     PAGE_NUMBER,
                     PAGE_SIZE,
                     null,
-                    COURT_ID.toString(),
-                    SERVICE_CENTRE_ID.toString(),
+                    courtId,
+                    serviceCentreId,
                     null,
-                    LocalDate.now().minusDays(1),
-                    LocalDate.now()
+                    fromDate,
+                    toDate
                 )
         );
     }

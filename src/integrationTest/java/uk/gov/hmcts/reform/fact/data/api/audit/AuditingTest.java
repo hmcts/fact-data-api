@@ -360,7 +360,6 @@ class AuditingTest {
         );
     }
 
-    @SuppressWarnings({"java:S5960"})
     private void assertAuditActionsForEntity(Court owningCourt, String testedEntity, AuditActionType... actionTypes) {
         // list audits filtered by court id
         Page<Audit> audits = auditService.getFilteredAndPaginatedAudits(
@@ -391,10 +390,10 @@ class AuditingTest {
         // should have the right number of actions
         assertEquals(actionTypes.length, content.size());
 
-        // in the right order
-        for (int i = 0; i < actionTypes.length; i++) {
-            assertEquals(actionTypes[i], content.get(i).getActionType());
-        }
+        assertEquals(
+            List.of(actionTypes),
+            content.stream().map(Audit::getActionType).toList()
+        );
     }
 
     // entity creation methods
