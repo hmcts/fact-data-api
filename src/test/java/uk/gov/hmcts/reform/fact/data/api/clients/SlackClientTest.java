@@ -16,9 +16,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class SlackClientTest {
@@ -29,22 +29,14 @@ class SlackClientTest {
         Slack slack = mock(Slack.class);
         MethodsClient methodsClient = mock(MethodsClient.class);
 
-        AtomicReference<ChatPostMessageRequest> capturedRequest = new AtomicReference<>();
+        final AtomicReference<ChatPostMessageRequest> capturedRequest = new AtomicReference<>();
 
         when(slack.methods(properties.getToken())).thenReturn(methodsClient);
-        doAnswer(invocation -> {
-            ChatPostMessageRequest.ChatPostMessageRequestBuilder builder = ChatPostMessageRequest.builder();
-            @SuppressWarnings("unchecked")
-            RequestConfigurator<ChatPostMessageRequest.ChatPostMessageRequestBuilder> configurator =
-                invocation.getArgument(0);
-            configurator.configure(builder);
-            capturedRequest.set(builder.build());
-            ChatPostMessageResponse response = new ChatPostMessageResponse();
-            response.setOk(true);
-            return response;
-        }).when(methodsClient).chatPostMessage(
+        ChatPostMessageResponse response = new ChatPostMessageResponse();
+        response.setOk(true);
+        when(methodsClient.chatPostMessage(
             ArgumentMatchers.<RequestConfigurator<ChatPostMessageRequest.ChatPostMessageRequestBuilder>>any()
-        );
+        )).thenReturn(response);
 
         try (MockedStatic<Slack> slackStatic = mockStatic(Slack.class)) {
             slackStatic.when(Slack::getInstance).thenReturn(slack);
@@ -52,6 +44,16 @@ class SlackClientTest {
             SlackClient slackClient = new SlackClient(properties);
             slackClient.sendSlackMessage("Test message");
         }
+
+        verify(methodsClient).chatPostMessage(
+            ArgumentMatchers.<RequestConfigurator<ChatPostMessageRequest.ChatPostMessageRequestBuilder>>argThat(
+                configurator -> {
+                    ChatPostMessageRequest.ChatPostMessageRequestBuilder builder = ChatPostMessageRequest.builder();
+                    configurator.configure(builder);
+                    capturedRequest.set(builder.build());
+                    return true;
+                })
+        );
 
         ChatPostMessageRequest request = capturedRequest.get();
         assertThat(request).isNotNull();

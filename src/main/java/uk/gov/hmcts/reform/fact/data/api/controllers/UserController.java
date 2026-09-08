@@ -183,9 +183,10 @@ public class UserController {
     })
     public ResponseEntity<DeleteInactiveUsersResponse> deleteInactiveUsers() {
         final int deletedUsers = userService.deleteInactiveUsers();
+        final String pluralSuffix = deletedUsers == 1 ? "" : "s";
         final String message = deletedUsers == 0
             ? "No inactive users found for deletion"
-            : String.format("Deleted %d inactive user%s", deletedUsers, deletedUsers == 1 ? "" : "s");
+            : String.format("Deleted %d inactive user%s", deletedUsers, pluralSuffix);
 
         return ResponseEntity.ok(DeleteInactiveUsersResponse.builder()
             .deletedUsers(deletedUsers)

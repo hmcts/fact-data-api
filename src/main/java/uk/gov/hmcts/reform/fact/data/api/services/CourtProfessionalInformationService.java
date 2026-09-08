@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -223,7 +222,7 @@ public class CourtProfessionalInformationService {
                 courtDxCode.setCourt(court);
                 return courtDxCode;
             })
-            .collect(Collectors.toList());
+            .toList();
 
         if (toPersist.isEmpty()) {
             return Collections.emptyList();
@@ -260,7 +259,7 @@ public class CourtProfessionalInformationService {
                 courtFax.setCourt(court);
                 return courtFax;
             })
-            .collect(Collectors.toList());
+            .toList();
 
         if (toPersist.isEmpty()) {
             return Collections.emptyList();

@@ -69,6 +69,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
@@ -89,6 +90,7 @@ public class TestingSupportService {
 
     // used to generate alphanumeric strings
     private static final char[] ALPHA_NUMERICS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
+    private static final Pattern PHONE_PLACEHOLDER_PATTERN = Pattern.compile("x");
     private static final String TESTING_SUPPORT_USER_EMAIL = "testing-support-not-a-real-user@justice.gov.uk";
     private static final UUID TESTING_SUPPORT_USER_SSO_ID = UUID.fromString("00000000-0000-4000-a000-000000000002");
 
@@ -917,7 +919,7 @@ public class TestingSupportService {
     private static String rndPhoneNumber(Random random) {
         String code = new String[]{"020", "01xxx", "07xxx"}[random.nextInt(3)];
         while (code.contains("x")) {
-            code = code.replaceFirst("x", String.valueOf(random.nextInt(10)));
+            code = PHONE_PLACEHOLDER_PATTERN.matcher(code).replaceFirst(String.valueOf(random.nextInt(10)));
         }
         return code
             + " "
