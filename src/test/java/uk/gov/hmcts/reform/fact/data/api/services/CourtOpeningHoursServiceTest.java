@@ -145,6 +145,17 @@ class CourtOpeningHoursServiceTest {
     }
 
     @Test
+    void getOpeningHoursByCourtIdThrowsExceptionWhenRepositoryReturnsEmptyList() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.of(List.of()));
+
+        assertThrows(
+            CourtResourceNotFoundException.class,
+            () -> courtOpeningHoursService.getOpeningHoursByCourtId(courtId)
+        );
+    }
+
+    @Test
     void getOpeningHoursThrowsExceptionWhenCourtDoesNotExist() {
         when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
 
@@ -347,6 +358,33 @@ class CourtOpeningHoursServiceTest {
 
         assertThat(result).isEqualTo(updatedHours);
         verify(courtOpeningHoursRepository).save(updatedHours);
+    }
+
+    @Test
+    void setOpeningHoursWithExistingIdUsesPersistedId() {
+        UUID requestId = UUID.randomUUID();
+        UUID persistedId = UUID.randomUUID();
+
+        CourtOpeningHours hours = CourtOpeningHours.builder()
+            .id(requestId)
+            .courtId(courtId)
+            .openingHourTypeId(openingHourType.getId())
+            .openingTimesDetails(openingTimesDetails)
+            .build();
+        CourtOpeningHours existing = CourtOpeningHours.builder()
+            .id(persistedId)
+            .courtId(courtId)
+            .build();
+
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, requestId)).thenReturn(Optional.of(existing));
+        when(openingHoursTypeService.getOpeningHourTypeById(openingHourType.getId())).thenReturn(openingHourType);
+        when(courtOpeningHoursRepository.save(any(CourtOpeningHours.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        CourtOpeningHours result = courtOpeningHoursService.setOpeningHours(courtId, hours);
+
+        assertThat(result.getId()).isEqualTo(persistedId);
     }
 
     @Test

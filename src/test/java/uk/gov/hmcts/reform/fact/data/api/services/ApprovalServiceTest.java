@@ -98,6 +98,46 @@ class ApprovalServiceTest {
     }
 
     @Test
+    void getAllApprovalStatusesKeepsFirstApprovalWhenDuplicateSubjectsExist() {
+        User firstUser = User.builder().id(USER_ID).email(USER_EMAIL).build();
+        User secondUser = User.builder().id(UUID.randomUUID()).email("replacement@justice.gov.uk").build();
+
+        Approval firstApproval = Approval.builder()
+            .id(APPROVAL_ID)
+            .subjectId(SUBJECT_ID)
+            .subjectType(SubjectType.COURT)
+            .userId(USER_ID)
+            .user(firstUser)
+            .lastUpdatedAt(LAST_UPDATED_AT)
+            .build();
+        Approval replacementApproval = Approval.builder()
+            .id(UUID.randomUUID())
+            .subjectId(SUBJECT_ID)
+            .subjectType(SubjectType.COURT)
+            .userId(secondUser.getId())
+            .user(secondUser)
+            .lastUpdatedAt(LAST_UPDATED_AT.plusDays(1))
+            .build();
+
+        when(approvalRepository.findAll()).thenReturn(List.of(firstApproval, replacementApproval));
+        when(courtService.getAllCourtNameAndIds()).thenReturn(List.of(new NameAndId("Test Court", SUBJECT_ID)));
+        when(serviceCentreService.getAllServiceCentreNameAndIds()).thenReturn(List.of());
+
+        List<ApprovalStatus> result = approvalService.getAllApprovalStatuses();
+
+        assertThat(result).containsExactly(new ApprovalStatus(
+            SUBJECT_ID,
+            SubjectType.COURT,
+            "Test Court",
+            true,
+            APPROVAL_ID,
+            USER_ID,
+            firstUser,
+            LAST_UPDATED_AT
+        ));
+    }
+
+    @Test
     void createApprovalValidatesCourtAndUserBeforeSaving() {
         Approval approval = createApproval(SubjectType.COURT);
         approval.setId(APPROVAL_ID);

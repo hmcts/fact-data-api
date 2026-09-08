@@ -9,12 +9,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CsvCreationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.JsonConvertException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
@@ -22,6 +25,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfL
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -183,6 +187,36 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void testHandleIllegalArgumentException() {
+        IllegalArgumentException ex = new IllegalArgumentException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleInvalidPostcodeException() {
+        InvalidPostcodeException ex = new InvalidPostcodeException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleAccessDeniedException() {
+        AccessDeniedException ex = new AccessDeniedException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
     void testHandleMaxUploadSizeExceededException() {
         MaxUploadSizeExceededException ex = new MaxUploadSizeExceededException(2097152L);
         ExceptionResponse response = handler.handle(ex);
@@ -334,6 +368,26 @@ class GlobalExceptionHandlerTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getMessage()).contains("Json Convert Exception Message");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleAzureUploadException() {
+        AzureUploadException ex = new AzureUploadException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleCsvCreationException() {
+        CsvCreationException ex = new CsvCreationException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
         assertThat(response.getTimestamp()).isNotNull();
     }
 
