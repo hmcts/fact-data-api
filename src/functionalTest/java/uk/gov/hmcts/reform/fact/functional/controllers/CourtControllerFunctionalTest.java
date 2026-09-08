@@ -501,14 +501,15 @@ public final class CourtControllerFunctionalTest {
     @Test
     @DisplayName("PUT /courts/v1/link/{mrdId} handles CaTH court deletion successfully")
     void shouldHandleCaTHCourtDeletionSuccessfully() throws Exception {
+        String mrdid = TestDataHelper.rndAlphaNumeric(24);
         final UUID courtId = TestDataHelper
             .createCourt(http,
                          "Test Court For CaTH Linking",
                          false,
-                         "MRD12-34",
+                         mrdid,
                          true);
 
-        final Response response = http.doPut("/courts/v1/link/MRD12-34", null);
+        final Response response = http.doPut("/courts/v1/link/"+mrdid, null);
 
         AssertionHelper.assertStatus(response, NO_CONTENT);
 
