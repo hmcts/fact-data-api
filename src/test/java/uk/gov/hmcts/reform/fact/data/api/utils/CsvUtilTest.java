@@ -265,8 +265,7 @@ class CsvUtilTest {
         String csv = csvUtil.convertJsonToCsv(root);
 
         assertThat(csv)
-            .contains("name,lat,lon,number,cci_code,magistrate_code,slug,types,open,dx_number,areas_of_law,addresses");
-        assertThat(csv)
+            .contains("name,lat,lon,number,cci_code,magistrate_code,slug,types,open,dx_number,areas_of_law,addresses")
             .contains("Test Court")
             .contains("test-court");
     }
@@ -331,8 +330,9 @@ class CsvUtilTest {
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
 
-        assertThat(result).containsEntry("lat", 53.8);
-        assertThat(result).containsEntry("lon", -1.55);
+        assertThat(result)
+            .containsEntry("lat", 53.8)
+            .containsEntry("lon", -1.55);
         assertThat(result.get("addresses").toString())
             .contains("Address: 2 Service Road")
             .contains("Town: Leeds");
@@ -366,12 +366,13 @@ class CsvUtilTest {
         address.put("lon", -0.1);
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
-        assertThat(result).containsEntry("open",true);
-        assertThat(result).containsEntry("number", 123);
-        assertThat(result).containsEntry("cci_code", 456);
-        assertThat(result).containsEntry("magistrate_code", 789);
-        assertThat(result).containsEntry("lat", 51.5);
-        assertThat(result).containsEntry("lon", -0.1);
+        assertThat(result)
+            .containsEntry("open", true)
+            .containsEntry("number", 123)
+            .containsEntry("cci_code", 456)
+            .containsEntry("magistrate_code", 789)
+            .containsEntry("lat", 51.5)
+            .containsEntry("lon", -0.1);
     }
 
     @Test
@@ -385,7 +386,7 @@ class CsvUtilTest {
     }
 
     @Test
-    void shouldThrowJsonConvertExceptionWhenCsvWritingFails() throws Exception {
+    void shouldThrowJsonConvertExceptionWhenCsvWritingFails() {
         CsvMapper mockCsvMapper = mock(CsvMapper.class);
         CsvUtil utilWithMock = new CsvUtil(mockCsvMapper);
 

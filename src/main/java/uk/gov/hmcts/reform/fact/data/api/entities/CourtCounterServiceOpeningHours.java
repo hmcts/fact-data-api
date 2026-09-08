@@ -78,8 +78,12 @@ public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
 
     @JsonView(CourtDetailsView.class)
     @JsonProperty("courtTypes")
-    public List<?> getCourtTypesForView() {
-        return courtTypeDetails != null ? courtTypeDetails : courtTypes;
+    public List<Object> getCourtTypesForView() {
+        return courtTypeDetails != null ? asViewList(courtTypeDetails) : asViewList(courtTypes);
+    }
+
+    private static <T> List<Object> asViewList(List<T> values) {
+        return values == null ? null : values.stream().map(value -> (Object) value).toList();
     }
 
     @JsonIgnore

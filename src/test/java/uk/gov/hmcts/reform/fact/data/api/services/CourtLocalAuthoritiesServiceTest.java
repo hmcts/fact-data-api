@@ -112,8 +112,9 @@ class CourtLocalAuthoritiesServiceTest {
 
         CourtLocalAuthorityDto childrenResult = findResultByAreaId(result, CHILDREN_ID);
         List<LocalAuthoritySelectionDto> childrenAuthorities = childrenResult.getLocalAuthorities();
-        assertThat(childrenAuthorities).isNotEmpty();
-        assertThat(childrenAuthorities).allMatch(la -> Boolean.FALSE.equals(la.getSelected()));
+        assertThat(childrenAuthorities)
+            .isNotEmpty()
+            .allMatch(la -> Boolean.FALSE.equals(la.getSelected()));
         verify(localAuthorityTypeRepository).findAllParents();
         verify(localAuthorityTypeRepository, never()).findAll();
     }
