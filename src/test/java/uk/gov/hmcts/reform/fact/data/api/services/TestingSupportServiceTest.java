@@ -9,12 +9,14 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
+import uk.gov.hmcts.reform.fact.data.api.dto.CourtCodesDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtProfessionalInformationDetailsDto;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
@@ -41,6 +43,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
@@ -52,11 +55,23 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
+import java.awt.image.RenderedImage;
+import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
+import javax.imageio.ImageIO;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -65,6 +80,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -190,6 +206,8 @@ class TestingSupportServiceTest {
 
     @BeforeEach
     void setup() {
+        clearReferenceDataCaches();
+
         // RegionRepository
         lenient().when(regionRepository.findAll()).thenReturn(
             regionIds.stream().map(id -> Region.builder().id(id).build()).toList()
@@ -220,6 +238,11 @@ class TestingSupportServiceTest {
             user.setId(auditUserId);
             return user;
         });
+    }
+
+    @AfterEach
+    void tearDown() {
+        clearReferenceDataCaches();
     }
 
     @Test
@@ -482,6 +505,258 @@ class TestingSupportServiceTest {
         verify(serviceCentreContactDetailsService, never()).createContactDetail(any(), any());
     }
 
+    @Test
+    void createCourtUsingFourArgOverloadCanOpenCourt() {
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court court = Court.class.cast(inv.getArguments()[0]);
+            court.setSlug("open-court");
+            court.setId(UUID.randomUUID());
+            return court;
+        });
+
+        String slug = testingSupportService.createCourt("Open Court", 5L, true, true);
+
+        assertThat(slug).isEqualTo("open-court");
+        ArgumentCaptor<Court> updatedCourtCaptor = ArgumentCaptor.forClass(Court.class);
+        verify(courtService).updateCourt(any(), updatedCourtCaptor.capture());
+        assertThat(updatedCourtCaptor.getValue().getOpen()).isTrue();
+    }
+
+    @Test
+    void createCourtFallsBackToSingleCourtTypeWhenRandomSelectionIsEmpty() {
+        final UUID courtId = UUID.randomUUID();
+        final UUID regionId = UUID.randomUUID();
+        replaceStaticList("REGION_IDS", List.of(regionId));
+        replaceStaticList(
+            "AREAS_OF_LAW",
+            List.of(AreaOfLawType.builder().id(UUID.randomUUID()).name("Area").displayName("Area").build())
+        );
+        replaceStaticList(
+            "COURT_TYPES",
+            List.of(
+                CourtType.builder().id(UUID.randomUUID()).name("Type One").build(),
+                CourtType.builder().id(UUID.randomUUID()).name("Type Two").build()
+            )
+        );
+        replaceStaticList("CONTACT_DESCRIPTION_IDS", List.of(UUID.randomUUID()));
+        replaceStaticList("LOCAL_AUTHORITY_TYPE_IDS", List.of(UUID.randomUUID()));
+        replaceStaticList("OPENING_HOUR_TYPE_IDS", List.of(UUID.randomUUID()));
+        replaceStaticList("SERVICE_AREA_IDS", List.of(UUID.randomUUID()));
+
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court court = Court.class.cast(inv.getArguments()[0]);
+            court.setSlug("test-court");
+            court.setId(courtId);
+            return court;
+        });
+
+        long seed = findSeedWhereCourtTypeSelectionIsEmpty(1, 2);
+
+        String slug = testingSupportService.createCourt(
+            "Seed Court",
+            regionId,
+            seed,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+        );
+
+        assertThat(slug).isEqualTo("test-court");
+
+        ArgumentCaptor<CourtCounterServiceOpeningHours> openingHoursCaptor =
+            ArgumentCaptor.forClass(CourtCounterServiceOpeningHours.class);
+        verify(courtOpeningHoursService).setCounterServiceOpeningHours(eq(courtId), openingHoursCaptor.capture());
+        assertThat(openingHoursCaptor.getValue().getCourtTypes()).hasSize(1);
+    }
+
+    @Test
+    void createCourtThrowsWhenReferenceDataCannotInitialise() {
+        when(regionRepository.findAll()).thenReturn(List.of());
+
+        assertThrows(
+            IllegalStateException.class,
+            () -> testingSupportService.createCourt("Missing Reference Data Court", 1L, false, true, true)
+        );
+    }
+
+    @Test
+    void createServiceCentreRethrowsWhenCreationFails() {
+        when(serviceCentreService.createServiceCentre(any())).thenThrow(new RuntimeException("boom"));
+
+        RuntimeException exception = assertThrows(
+            RuntimeException.class,
+            () -> testingSupportService.createServiceCentre("Broken Service Centre", 1L, false, false, false)
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("boom");
+    }
+
+    @Test
+    void createServiceCentreFallsBackToSingleServiceAreaWhenSelectionIsEmpty() {
+        UUID serviceAreaId = UUID.randomUUID();
+        replaceStaticList("SERVICE_AREA_IDS", List.of(serviceAreaId));
+
+        when(serviceCentreService.createServiceCentre(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ServiceCentre serviceCentre = (ServiceCentre) invokePrivateInstanceMethod(
+            "createServiceCentre",
+            new Class<?>[]{String.class, UUID.class, boolean.class, Random.class},
+            "Service Centre",
+            UUID.randomUUID(),
+            false,
+            new ScriptedRandom(List.of(false), 0)
+        );
+
+        assertThat(serviceCentre.getServiceAreaIds()).containsExactly(serviceAreaId);
+    }
+
+    @Test
+    void setAreasOfLawAddsFallbackAreaWhenSelectionIsEmpty() {
+        AreaOfLawType areaOfLawType = AreaOfLawType.builder()
+            .id(UUID.randomUUID())
+            .name("Area")
+            .displayName("Area")
+            .build();
+        UUID courtId = UUID.randomUUID();
+        replaceStaticList("AREAS_OF_LAW", List.of(areaOfLawType));
+
+        Object selected = invokePrivateInstanceMethod(
+            "setAreasOfLaw",
+            new Class<?>[]{UUID.class, Random.class},
+            courtId,
+            new ScriptedRandom(List.of(), 99)
+        );
+
+        assertThat((List<?>) selected).hasSize(1);
+        ArgumentCaptor<CourtAreasOfLaw> captor = ArgumentCaptor.forClass(CourtAreasOfLaw.class);
+        verify(courtAreasOfLawService).setCourtAreasOfLaw(eq(courtId), captor.capture());
+        assertThat(captor.getValue().getAreasOfLaw()).containsExactly(areaOfLawType.getId());
+    }
+
+    @Test
+    void setServiceCentreAreasOfLawAddsFallbackAreaWhenSelectionIsEmpty() {
+        AreaOfLawType areaOfLawType = AreaOfLawType.builder()
+            .id(UUID.randomUUID())
+            .name("Area")
+            .displayName("Area")
+            .build();
+        UUID serviceCentreId = UUID.randomUUID();
+        replaceStaticList("AREAS_OF_LAW", List.of(areaOfLawType));
+
+        Object selected = invokePrivateInstanceMethod(
+            "setServiceCentreAreasOfLaw",
+            new Class<?>[]{UUID.class, Random.class},
+            serviceCentreId,
+            new ScriptedRandom(List.of(), 99)
+        );
+
+        assertThat((List<?>) selected).hasSize(1);
+        ArgumentCaptor<ServiceCentreAreasOfLaw> captor = ArgumentCaptor.forClass(ServiceCentreAreasOfLaw.class);
+        verify(serviceCentreAreasOfLawService).setServiceCentreAreasOfLaw(eq(serviceCentreId), captor.capture());
+        assertThat(captor.getValue().getAreasOfLaw()).containsExactly(areaOfLawType.getId());
+    }
+
+    @Test
+    void setLocalAuthoritiesFallsBackWhenSelectionIsEmpty() {
+        UUID localAuthorityTypeId = UUID.randomUUID();
+        UUID courtId = UUID.randomUUID();
+        replaceStaticList("LOCAL_AUTHORITY_TYPE_IDS", List.of(localAuthorityTypeId));
+
+        AreaOfLawType allowedArea = AreaOfLawType.builder()
+            .id(UUID.randomUUID())
+            .name(AllowedLocalAuthorityAreasOfLaw.displayNames().get(0))
+            .displayName("Allowed")
+            .build();
+
+        invokePrivateInstanceMethod(
+            "setLocalAuthorities",
+            new Class<?>[]{UUID.class, List.class, Random.class},
+            courtId,
+            List.of(allowedArea),
+            new ScriptedRandom(List.of(true, false), 0)
+        );
+
+        verify(courtLocalAuthoritiesService)
+            .setCourtLocalAuthorities(eq(courtId), courtLocalAuthorityDtoArgumentCaptor.capture());
+        assertThat(courtLocalAuthorityDtoArgumentCaptor.getValue()).hasSize(1);
+    }
+
+    @Test
+    void setOpeningTimesDetailsFallsBackToOneSpecificDayWhenRandomSelectionIsEmpty() {
+        AtomicReference<List<OpeningTimesDetail>> openingTimesDetailsReference = new AtomicReference<>();
+
+        invokePrivateInstanceMethod(
+            "setOpeningTimesDetails",
+            new Class<?>[]{Random.class, Consumer.class},
+            new ScriptedRandom(List.of(false), 0),
+            (Consumer<List<OpeningTimesDetail>>) openingTimesDetailsReference::set
+        );
+
+        assertThat(openingTimesDetailsReference.get()).hasSize(1);
+    }
+
+    @Test
+    void rndAddressFallsBackToOneCourtTypeWhenSelectionIsEmpty() {
+        UUID selectedCourtTypeId = UUID.randomUUID();
+        replaceStaticList(
+            "COURT_TYPES",
+            List.of(CourtType.builder().id(selectedCourtTypeId).name("Family").build())
+        );
+
+        CourtAddress address = (CourtAddress) invokePrivateStaticMethod(
+            "rndAddress",
+            new Class<?>[]{UUID.class, AddressType.class, List.class, Random.class},
+            UUID.randomUUID(),
+            AddressType.VISIT_US,
+            List.of(AreaOfLawType.builder().id(UUID.randomUUID()).name("Area").displayName("Area").build()),
+            new ScriptedRandom(List.of(false), 0)
+        );
+
+        assertThat(address.getCourtTypes()).containsExactly(selectedCourtTypeId);
+    }
+
+    @Test
+    void createCodesReturnsFamilyCodeWhenForcedAndRandomSkipsPrimaryBranch() {
+        Optional<?> courtCodes = (Optional<?>) invokePrivateInstanceMethod(
+            "createCodes",
+            new Class<?>[]{boolean.class, Random.class},
+            true,
+            new ScriptedRandom(List.of(false), 0)
+        );
+
+        assertThat(courtCodes).isPresent();
+        assertThat(((CourtCodesDto) courtCodes.orElseThrow()).getFamilyCourtCode()).isNotNull();
+    }
+
+    @Test
+    void createCourtFallsBackToPhotoRepositoryWhenImageWriterIsUnavailable() {
+        UUID courtId = UUID.randomUUID();
+        when(courtService.createCourt(any())).thenAnswer(inv -> {
+            Court court = Court.class.cast(inv.getArguments()[0]);
+            court.setSlug("photo-fallback");
+            court.setId(courtId);
+            return court;
+        });
+
+        try (MockedStatic<ImageIO> imageIoMock = mockStatic(ImageIO.class)) {
+            imageIoMock.when(() -> ImageIO.write(
+                any(RenderedImage.class),
+                eq("png"),
+                any(OutputStream.class)
+            )).thenReturn(false);
+
+            testingSupportService.createCourt("Photo Fallback Court", 100L, false, true, true);
+        }
+
+        ArgumentCaptor<CourtPhoto> courtPhotoCaptor = ArgumentCaptor.forClass(CourtPhoto.class);
+        verify(courtPhotoRepository).save(courtPhotoCaptor.capture());
+        assertThat(courtPhotoCaptor.getValue().getCourtId()).isEqualTo(courtId);
+        assertThat(courtPhotoCaptor.getValue().getUpdatedByUserId()).isEqualTo(auditUserId);
+    }
+
     @Captor
     private ArgumentCaptor<List<AreaOfLawSelectionDto>> aolSelectionDtoArgumentCaptor;
     @Captor
@@ -611,5 +886,123 @@ class TestingSupportServiceTest {
                                                                      times(2)
                                                                  ).updateCourtSinglePointsOfEntry(courtId, v)
         );
+    }
+
+    private Object invokePrivateInstanceMethod(String methodName, Class<?>[] paramTypes, Object... args) {
+        try {
+            Method method = TestingSupportService.class.getDeclaredMethod(methodName, paramTypes);
+            method.setAccessible(true);
+            return method.invoke(testingSupportService, args);
+        } catch (InvocationTargetException ex) {
+            rethrowInvocationException(ex);
+            return null;
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException("Could not invoke method: " + methodName, ex);
+        }
+    }
+
+    private static Object invokePrivateStaticMethod(String methodName, Class<?>[] paramTypes, Object... args) {
+        try {
+            Method method = TestingSupportService.class.getDeclaredMethod(methodName, paramTypes);
+            method.setAccessible(true);
+            return method.invoke(null, args);
+        } catch (InvocationTargetException ex) {
+            rethrowInvocationException(ex);
+            return null;
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException("Could not invoke static method: " + methodName, ex);
+        }
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void replaceStaticList(String fieldName, List<?> values) {
+        try {
+            Field field = TestingSupportService.class.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            List list = (List) field.get(null);
+            list.clear();
+            list.addAll(values);
+        } catch (ReflectiveOperationException ex) {
+            throw new IllegalStateException("Could not replace static list: " + fieldName, ex);
+        }
+    }
+
+    private static void clearReferenceDataCaches() {
+        replaceStaticList("REGION_IDS", List.of());
+        replaceStaticList("AREAS_OF_LAW", List.of());
+        replaceStaticList("COURT_TYPES", List.of());
+        replaceStaticList("CONTACT_DESCRIPTION_IDS", List.of());
+        replaceStaticList("LOCAL_AUTHORITY_TYPE_IDS", List.of());
+        replaceStaticList("OPENING_HOUR_TYPE_IDS", List.of());
+        replaceStaticList("SERVICE_AREA_IDS", List.of());
+    }
+
+    private static void rethrowInvocationException(InvocationTargetException ex) {
+        Throwable cause = ex.getCause();
+        if (cause instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+        }
+        if (cause instanceof Error error) {
+            throw error;
+        }
+        throw new IllegalStateException(cause);
+    }
+
+    private static long findSeedWhereCourtTypeSelectionIsEmpty(int areasOfLawCount, int courtTypeCount) {
+        for (long seed = 0; seed < 5_000; seed++) {
+            if (shouldUseCourtTypeFallback(seed, areasOfLawCount, courtTypeCount)) {
+                return seed;
+            }
+        }
+        throw new IllegalStateException("Could not find a deterministic seed for court-type fallback test");
+    }
+
+    private static boolean shouldUseCourtTypeFallback(long seed, int areasOfLawCount, int courtTypeCount) {
+        Random random = new Random(seed);
+        int mrdLength = random.nextInt(16, 32);
+        random.ints(mrdLength, 0, 36).toArray();
+
+        boolean selectedAnyAreaOfLaw = false;
+        for (int i = 0; i < areasOfLawCount; i++) {
+            if (random.nextInt(100) < 30) {
+                selectedAnyAreaOfLaw = true;
+            }
+        }
+        if (!selectedAnyAreaOfLaw) {
+            random.nextInt(areasOfLawCount);
+        }
+
+        boolean selectedAnyCourtType = false;
+        for (int i = 0; i < courtTypeCount; i++) {
+            if (random.nextBoolean()) {
+                selectedAnyCourtType = true;
+            }
+        }
+
+        return !selectedAnyCourtType;
+    }
+
+    private static final class ScriptedRandom extends Random {
+        private final Deque<Boolean> booleans;
+        private final int fixedIntValue;
+
+        private ScriptedRandom(List<Boolean> booleans, int fixedIntValue) {
+            super(1L);
+            this.booleans = new ArrayDeque<>(booleans);
+            this.fixedIntValue = fixedIntValue;
+        }
+
+        @Override
+        public boolean nextBoolean() {
+            return booleans.isEmpty() ? false : booleans.removeFirst();
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            if (bound <= 0) {
+                throw new IllegalArgumentException("bound must be positive");
+            }
+            return Math.floorMod(fixedIntValue, bound);
+        }
     }
 }

@@ -113,6 +113,37 @@ class SearchCourtServiceTest {
     }
 
     @Test
+    void getCourtsBySearchParametersShouldSearchWithServiceAreaWhenProvided() {
+        OsLocationData locationData = OsLocationData.builder()
+            .latitude(51.5)
+            .longitude(-0.1)
+            .authorityName("Authority")
+            .postcode("SW1A 1")
+            .build();
+        ServiceArea area = serviceAreaWithType(ServiceAreaType.OTHER);
+        List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
+
+        when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+        when(serviceAreaService.getServiceAreaByName("Other Service")).thenReturn(area);
+        when(searchExecuter.executeSearchStrategy(
+            locationData,
+            area,
+            SearchStrategy.DEFAULT_AOL_DISTANCE,
+            SearchAction.DOCUMENTS,
+            5
+        )).thenReturn(results);
+
+        List<CourtWithDistance> response = searchCourtService.getCourtsBySearchParameters(
+            "SW1A 1AA",
+            "Other Service",
+            SearchAction.DOCUMENTS,
+            5
+        );
+
+        assertThat(response).isEqualTo(results);
+    }
+
+    @Test
     void searchWithServiceAreaShouldUseSelectedStrategy() {
         OsLocationData locationData = OsLocationData.builder()
             .latitude(51.5)
@@ -174,6 +205,19 @@ class SearchCourtServiceTest {
         );
 
         assertThat(strategy).isEqualTo(SearchStrategy.CIVIL_POSTCODE_PREFERENCE);
+    }
+
+    @Test
+    void selectSearchStrategyShouldReturnDefaultForOtherAreaType() {
+        ServiceArea area = serviceAreaWithType(ServiceAreaType.OTHER);
+
+        SearchStrategy strategy = searchCourtService.selectSearchStrategy(
+            SearchAction.DOCUMENTS,
+            "Authority",
+            area
+        );
+
+        assertThat(strategy).isEqualTo(SearchStrategy.DEFAULT_AOL_DISTANCE);
     }
 
     @Test

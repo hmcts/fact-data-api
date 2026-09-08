@@ -29,9 +29,7 @@ public class ImageValidator implements ConstraintValidator<ValidImage, Multipart
         try (InputStream inputStream = file.getInputStream();
              ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream)) {
 
-            if (imageInputStream == null) {
-                throw new InvalidFileException("Unreadable file");
-            }
+            ensureReadableImageStream(imageInputStream);
 
             Iterator<ImageReader> readers = ImageIO.getImageReaders(imageInputStream);
             if (!readers.hasNext()) {
@@ -51,9 +49,7 @@ public class ImageValidator implements ConstraintValidator<ValidImage, Multipart
                 // Force actual decode metadata/content read - truncated streams fail here.
                 int width = reader.getWidth(0);
                 int height = reader.getHeight(0);
-                if (width <= 0 || height <= 0) {
-                    throw new InvalidFileException("Unreadable file");
-                }
+                ensurePositiveDimensions(width, height);
             } finally {
                 reader.dispose();
             }
@@ -62,6 +58,18 @@ public class ImageValidator implements ConstraintValidator<ValidImage, Multipart
         } catch (InvalidFileException e) {
             throw e;
         } catch (Exception e) {
+            throw new InvalidFileException("Unreadable file");
+        }
+    }
+
+    private static void ensureReadableImageStream(ImageInputStream imageInputStream) {
+        if (imageInputStream == null) {
+            throw new InvalidFileException("Unreadable file");
+        }
+    }
+
+    private static void ensurePositiveDimensions(int width, int height) {
+        if (width <= 0 || height <= 0) {
             throw new InvalidFileException("Unreadable file");
         }
     }

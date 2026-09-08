@@ -2,10 +2,12 @@ package uk.gov.hmcts.reform.fact.data.api.models;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 class StringMultipartFileTest {
 
@@ -66,6 +68,13 @@ class StringMultipartFileTest {
 
         assertThat(bytesRead).isEqualTo(CONTENT.length());
         assertThat(new String(buffer)).isEqualTo(CONTENT);
+    }
+
+    @Test
+    void transferToDoesNotThrow() {
+        StringMultipartFile file = new StringMultipartFile(NAME, ORIGINAL_FILE_NAME, CONTENT_TYPE, CONTENT);
+
+        assertDoesNotThrow(() -> file.transferTo(new File("unused")));
     }
 }
 

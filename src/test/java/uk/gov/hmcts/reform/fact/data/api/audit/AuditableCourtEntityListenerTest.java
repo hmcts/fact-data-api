@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.audit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
@@ -55,7 +56,7 @@ class AuditableCourtEntityListenerTest {
 
     @BeforeEach
     void setUp() {
-        when(applicationContext.getBean(EntityManager.class)).thenReturn(entityManager);
+        lenient().when(applicationContext.getBean(EntityManager.class)).thenReturn(entityManager);
         lenient().when(applicationContext.getBean(AuditUserContext.class)).thenReturn(auditUserContext);
         lenient().when(auditUserContext.requireUserId()).thenReturn(USER_ID);
         listener.setApplicationContext(applicationContext);
@@ -65,7 +66,9 @@ class AuditableCourtEntityListenerTest {
     void shouldNotPersistAuditOnMissingEntityManager() {
         when(applicationContext.getBean(EntityManager.class)).thenReturn(null);
         Court court = createCourt();
+
         assertThrows(IllegalStateException.class, () -> listener.beforePersist(court));
+
         verify(entityManager, times(0)).persist(any(Audit.class));
         verify(entityManager, times(0)).find(any(), any());
     }
@@ -73,10 +76,10 @@ class AuditableCourtEntityListenerTest {
     @Test
     void shouldNotPersistAuditIfPreviousStateLookupFails() {
         Court court = createCourt();
-
-        when(entityManager.find(Audit.class, court.getId())).thenThrow(new RuntimeException());
+        when(entityManager.find(Court.class, court.getId())).thenThrow(new RuntimeException());
 
         assertThrows(IllegalStateException.class, () -> listener.beforeUpdate(court));
+
         verify(entityManager, times(0)).persist(any(Audit.class));
         verify(entityManager, times(1)).find(Court.class, court.getId());
     }
@@ -84,7 +87,9 @@ class AuditableCourtEntityListenerTest {
     @Test
     void shouldPersistAuditOnBeforePersist() {
         Court court = createCourt();
+
         listener.beforePersist(court);
+
         verify(entityManager, times(1)).persist(any(Audit.class));
         verify(entityManager, times(0)).find(any(), any());
     }
@@ -92,7 +97,9 @@ class AuditableCourtEntityListenerTest {
     @Test
     void shouldPersistAuditOnBeforeUpdate() {
         Court court = createCourt();
+
         listener.beforeUpdate(court);
+
         verify(entityManager, times(1)).persist(any(Audit.class));
         verify(entityManager, times(1)).find(Court.class, court.getId());
     }
@@ -100,9 +107,57 @@ class AuditableCourtEntityListenerTest {
     @Test
     void shouldPersistAuditOnBeforeRemove() {
         Court court = createCourt();
+
         listener.beforeRemove(court);
+
         verify(entityManager, times(1)).persist(any(Audit.class));
         verify(entityManager, times(1)).find(Court.class, court.getId());
+    }
+
+    @Test
+    void shouldSkipAuditWhenAuditSuppressed() {
+        Court court = createCourt();
+        when(auditUserContext.isAuditSuppressed()).thenReturn(true);
+
+        listener.beforePersist(court);
+
+        verify(entityManager, times(0)).persist(any(Audit.class));
+        verify(entityManager, times(0)).find(any(), any());
+    }
+
+    @Test
+    void shouldThrowWhenNoApplicationContextIsConfigured() {
+        AuditableCourtEntityListener localListener = new AuditableCourtEntityListener(objectMapper);
+
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> localListener.beforePersist(createCourt())
+        );
+
+        assertEquals("No entity manager available during an audit operation", exception.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenAuditUserContextBeanIsUnavailable() {
+        when(applicationContext.getBean(AuditUserContext.class)).thenReturn(null);
+
+        IllegalStateException exception = assertThrows(
+            IllegalStateException.class,
+            () -> listener.beforePersist(createCourt())
+        );
+
+        assertEquals("No audit user context available during an audit operation", exception.getMessage());
+        verify(entityManager, times(0)).persist(any(Audit.class));
+    }
+
+    @Test
+    void shouldReuseEntityManagerAndAuditContextAcrossCalls() {
+        listener.beforePersist(createCourt());
+        listener.beforePersist(createCourt());
+
+        verify(applicationContext, times(1)).getBean(EntityManager.class);
+        verify(applicationContext, times(1)).getBean(AuditUserContext.class);
+        verify(entityManager, times(2)).persist(any(Audit.class));
     }
 
     @Test
@@ -113,11 +168,13 @@ class AuditableCourtEntityListenerTest {
         courtCurrent.setName("Court Name Updated");
 
         when(entityManager.find(Court.class, courtCurrent.getId())).thenReturn(courtPrevious);
+
         listener.beforeUpdate(courtCurrent);
 
         verify(entityManager, times(1)).persist(auditCaptor.capture());
         verify(entityManager, times(1)).find(Court.class, courtCurrent.getId());
         Audit audit = auditCaptor.getValue();
+
         assertEquals(USER_ID, audit.getUserId());
         assertEquals(COURT_ID, audit.getSubjectId());
         assertEquals(SubjectType.COURT, audit.getSubjectType());
@@ -140,7 +197,24 @@ class AuditableCourtEntityListenerTest {
         verify(entityManager, times(1)).persist(auditCaptor.capture());
         verify(entityManager, times(1)).find(Court.class, courtCurrent.getId());
         Audit audit = auditCaptor.getValue();
+
         assertEquals(0, audit.getActionDataDiff().size());
+    }
+
+    @Test
+    void shouldHandleInterruptedThreadDuringPreviousEntityLookup() {
+        Court court = createCourt();
+
+        Thread.currentThread().interrupt();
+        try {
+            listener.beforeUpdate(court);
+
+            verify(entityManager, times(1)).find(Court.class, court.getId());
+            verify(entityManager, times(1)).persist(any(Audit.class));
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+        }
     }
 
     private Court createCourt() {
@@ -153,3 +227,4 @@ class AuditableCourtEntityListenerTest {
             .build();
     }
 }
+
