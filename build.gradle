@@ -181,7 +181,8 @@ repositories {
 }
 
 ext['snakeyaml.version'] = '2.0'
-ext['log4j2.version'] = '2.25.3' // CVE-2025-68161
+ext['log4j2.version'] = '2.25.5' // CVE-2025-68161, CVE-2026-49844
+ext['tomcat.version'] = '11.0.25' // CVE-2026-65182, CVE-2026-65905, CVE-2026-68525
 
 dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-webmvc'
@@ -270,6 +271,23 @@ wrapper {
 
 dependencyManagement {
   dependencies {
+    // CVE-2026-33117
+    dependency group: 'com.azure', name: 'azure-core', version: '1.59.1'
+    dependency group: 'com.azure', name: 'azure-core-amqp', version: '2.12.1'
+    dependency group: 'com.azure', name: 'azure-core-http-netty', version: '1.16.7'
+    dependency group: 'com.azure', name: 'azure-core-management', version: '1.19.7'
+    dependency group: 'com.azure', name: 'azure-identity', version: '1.18.6'
+    dependency group: 'com.microsoft.azure', name: 'msal4j', version: '1.26.0'
+
+    // CVE-2026-66257 and related proton-j advisories
+    dependency group: 'org.apache.qpid', name: 'proton-j', version: '0.35.0'
+
+    // CVE-2026-53914
+    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '2.4.20'
+    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-common', version: '2.4.20'
+    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk7', version: '2.4.20'
+    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: '2.4.20'
+
     // CVE-2025-48976
     dependency group: 'commons-fileupload', name: 'commons-fileupload', version: '1.6.0'
   }
