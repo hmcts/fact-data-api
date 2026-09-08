@@ -50,6 +50,7 @@ public class AllLocationService {
     private final CourtDetailsViewService courtDetailsViewService;
     private final ServiceCentreDetailsViewService serviceCentreDetailsViewService;
 
+    @SuppressWarnings("java:S107")
     public Page<AllLocation> getFilteredAndPaginatedLocations(int pageNumber, int pageSize, Boolean includeClosed,
                                                               Boolean onlyServiceCentres, String regionId,
                                                               String partialName,
