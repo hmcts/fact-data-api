@@ -33,6 +33,8 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class TestDataHelper {
 
+    private static final char[] ALPHA_NUMERICS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
+
     private static final ObjectMapper mapper = JsonMapper.builder()
         .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
         .build();
@@ -108,6 +110,19 @@ public class TestDataHelper {
             randomString.append((char) ('a' + random.nextInt(26)));
         }
         return randomString.toString();
+    }
+
+    /**
+     * Generates a random alphanumeric string of the requested length.
+     *
+     * @param length the length of random string
+     * @return random alphanumeric string
+     */
+    public static String rndAlphaNumeric(int length) {
+        return random.ints(length, 0, ALPHA_NUMERICS.length)
+            .mapToObj(i -> ALPHA_NUMERICS[i])
+            .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
+            .toString();
     }
 
     /**
