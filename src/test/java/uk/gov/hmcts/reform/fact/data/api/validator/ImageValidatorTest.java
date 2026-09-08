@@ -16,7 +16,9 @@ import uk.gov.hmcts.reform.fact.data.api.validation.validator.ImageValidator;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageInputStream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -98,6 +100,13 @@ class ImageValidatorTest {
     }
 
     @Test
+    void shouldThrowWhenImageFormatIsUnsupported() throws IOException {
+        MockMultipartFile file = new MockMultipartFile("file", "photo.gif", "image/gif", createImageBytes("gif"));
+
+        assertThrows(InvalidFileException.class, () -> imageValidator.isValid(file, context));
+    }
+
+    @Test
     void shouldThrowWhenPngSignatureIsTooShort() {
         MockMultipartFile file = new MockMultipartFile(
             "file", "broken.png", "image/png", new byte[] {0x01, 0x02, 0x03}
@@ -133,6 +142,29 @@ class ImageValidatorTest {
         MockMultipartFile file = new MockMultipartFile("file", "broken.jpg", "image/jpeg", jpegContent);
 
         assertThrows(InvalidFileException.class, () -> imageValidator.isValid(file, context));
+    }
+
+    @Test
+    void shouldExerciseFormatAndHelperValidationBranches() throws Exception {
+        Method isAllowedFormat = ImageValidator.class.getDeclaredMethod("isAllowedFormat", String.class);
+        isAllowedFormat.setAccessible(true);
+
+        assertTrue(!(boolean)isAllowedFormat.invoke(imageValidator, new Object[] {null}));
+        assertTrue((boolean)isAllowedFormat.invoke(imageValidator, "jpg"));
+        assertTrue(!(boolean)isAllowedFormat.invoke(imageValidator, "gif"));
+
+        Method ensureReadableImageStream = ImageValidator.class
+            .getDeclaredMethod("ensureReadableImageStream", ImageInputStream.class);
+        ensureReadableImageStream.setAccessible(true);
+        assertThrows(Exception.class, () -> ensureReadableImageStream.invoke(null, new Object[] {null}));
+        assertDoesNotThrow(() -> ensureReadableImageStream.invoke(null, mock(ImageInputStream.class)));
+
+        Method ensurePositiveDimensions = ImageValidator.class
+            .getDeclaredMethod("ensurePositiveDimensions", int.class, int.class);
+        ensurePositiveDimensions.setAccessible(true);
+        assertThrows(Exception.class, () -> ensurePositiveDimensions.invoke(null, 0, 10));
+        assertThrows(Exception.class, () -> ensurePositiveDimensions.invoke(null, 10, 0));
+        assertDoesNotThrow(() -> ensurePositiveDimensions.invoke(null, 1, 1));
     }
 
     private byte[] createImageBytes(String format) throws IOException {

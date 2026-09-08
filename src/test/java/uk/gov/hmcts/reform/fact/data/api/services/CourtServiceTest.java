@@ -329,6 +329,25 @@ class CourtServiceTest {
     }
 
     @Test
+    void getFilteredAndPaginatedCourtsShouldSortByNameAscendingWhenExplicitlyRequested() {
+        Region region = new Region();
+        region.setId(UUID.randomUUID());
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+        when(regionService.getAllRegions()).thenReturn(List.of(region));
+        when(courtRepository.findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
+            anyList(), anyString(), pageableCaptor.capture())
+        ).thenReturn(Page.empty());
+
+        courtService.getFilteredAndPaginatedCourts(0, 25, null, null, "Name", "name", "asc");
+
+        assertThat(pageableCaptor.getValue().getSort()).isEqualTo(Sort.by(
+            Sort.Order.asc("name"),
+            Sort.Order.asc("id")
+        ));
+    }
+
+    @Test
     void getFilteredAndPaginatedCourtsShouldSortByLastUpdatedWhenRequested() {
         Region region = new Region();
         region.setId(UUID.randomUUID());
@@ -356,6 +375,26 @@ class CourtServiceTest {
         );
 
         assertThat(exception.getMessage()).isEqualTo("sortOrder cannot be provided without sortBy");
+    }
+
+    @Test
+    void getFilteredAndPaginatedCourtsShouldRejectInvalidSortOrder() {
+        InvalidParameterCombinationException exception = assertThrows(
+            InvalidParameterCombinationException.class,
+            () -> courtService.getFilteredAndPaginatedCourts(0, 25, null, null, "Name", "name", "sideways")
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("sortOrder must be one of: asc, desc");
+    }
+
+    @Test
+    void getFilteredAndPaginatedCourtsShouldRejectInvalidSortBy() {
+        InvalidParameterCombinationException exception = assertThrows(
+            InvalidParameterCombinationException.class,
+            () -> courtService.getFilteredAndPaginatedCourts(0, 25, null, null, "Name", "createdAt", "asc")
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("sortBy must be one of: name, lastUpdated");
     }
 
     @Test

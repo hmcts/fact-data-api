@@ -26,6 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -189,6 +190,28 @@ class ServiceCentreServiceTest {
     }
 
     @Test
+    void createServiceCentreDefaultsNullServiceAreaIdsToEmptyList() {
+        UUID regionId = UUID.randomUUID();
+        ServiceCentre request = ServiceCentre.builder()
+            .name("National Support Centre")
+            .regionId(regionId)
+            .serviceAreaIds(null)
+            .catchmentType(null)
+            .build();
+
+        when(regionService.getRegionById(regionId)).thenReturn(Region.builder().id(regionId).build());
+        when(serviceCentreRepository.existsBySlug("national-support-centre")).thenReturn(false);
+        when(serviceCentreRepository.save(any(ServiceCentre.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ServiceCentre result = serviceCentreService.createServiceCentre(request);
+
+        assertThat(result.getServiceAreaIds()).isEmpty();
+        assertThat(result.getCatchmentType()).isEqualTo(CatchmentType.NATIONAL);
+        verify(serviceAreaRepository, never()).findAllById(any());
+    }
+
+    @Test
     void updateServiceCentreRegeneratesSlugWhenNameChanges() {
         UUID serviceCentreId = UUID.randomUUID();
         UUID regionId = UUID.randomUUID();
@@ -242,6 +265,28 @@ class ServiceCentreServiceTest {
     }
 
     @Test
+    void deleteServiceCentresByNamePrefixReturnsZeroWhenNoRowsMatch() {
+        when(serviceCentreRepository.findByNameStartingWithIgnoreCase("Missing")).thenReturn(List.of());
+
+        long deleted = serviceCentreService.deleteServiceCentresByNamePrefix("Missing", true);
+
+        assertThat(deleted).isZero();
+        verify(serviceCentreRepository, never()).deleteAllInBatch(any());
+    }
+
+    @Test
+    void getAllServiceCentreDetailsReturnsRepositoryResults() {
+        ServiceCentreDetails first = ServiceCentreDetails.builder().id(UUID.randomUUID()).name("A").build();
+        ServiceCentreDetails second = ServiceCentreDetails.builder().id(UUID.randomUUID()).name("B").build();
+        when(serviceCentreDetailsRepository.findAll()).thenReturn(List.of(first, second));
+
+        List<ServiceCentreDetails> result = serviceCentreService.getAllServiceCentreDetails();
+
+        assertThat(result).containsExactly(first, second);
+        verify(serviceCentreDetailsRepository).findAll();
+    }
+
+    @Test
     void getAllServiceCentreNameAndIdsReturnsRepositoryResults() {
         NameAndId first = new NameAndId("ServiceCentre A", UUID.randomUUID());
         NameAndId second = new NameAndId("ServiceCentre B", UUID.randomUUID());
@@ -265,3 +310,4 @@ class ServiceCentreServiceTest {
         verify(serviceCentreRepository).findAllNameAndId();
     }
 }
+
