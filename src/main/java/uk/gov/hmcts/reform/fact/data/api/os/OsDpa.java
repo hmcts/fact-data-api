@@ -42,10 +42,10 @@ public class OsDpa {
     private String postcode;
 
     @JsonProperty("LNG")
-    private double lng;
+    private Double lng;
 
     @JsonProperty("LAT")
-    private double lat;
+    private Double lat;
 
     @JsonProperty("LOCAL_CUSTODIAN_CODE")
     private Integer localCustodianCode;

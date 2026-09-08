@@ -10,9 +10,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
-import uk.gov.hmcts.reform.fact.data.api.os.OsData;
-import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
-import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
+import uk.gov.hmcts.reform.fact.data.api.os.OsAddressCoordinates;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreAddressRepository;
 
 import java.math.BigDecimal;
@@ -24,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -61,10 +60,12 @@ class ServiceCentreAddressServiceTest {
             .addressType(AddressType.VISIT_US)
             .build();
 
-        OsDpa osDpa = OsDpa.builder().lat(51.5).lng(-0.1).build();
-        OsResult osResult = OsResult.builder().dpa(osDpa).build();
-        OsData osData = OsData.builder().results(List.of(osResult)).build();
-        lenient().when(osService.getOsAddressByFullPostcode(anyString())).thenReturn(osData);
+        lenient().when(osService.getOsAdminAddressCoordinates(
+            anyString(),
+            nullable(String.class),
+            nullable(String.class),
+            nullable(String.class)
+        )).thenReturn(Optional.of(new OsAddressCoordinates(51.5, -0.1)));
     }
 
     @Test
@@ -139,5 +140,51 @@ class ServiceCentreAddressServiceTest {
         serviceCentreAddressService.deleteAddress(serviceCentreId, addressId);
 
         verify(serviceCentreAddressRepository).deleteByIdAndServiceCentreId(addressId, serviceCentreId);
+    }
+
+    @Test
+    void updateAddressClearsStaleCoordinatesWhenNewPostcodeHasNoOsCoordinates() {
+        address.setLat(BigDecimal.valueOf(52.5));
+        address.setLon(BigDecimal.valueOf(-1.5));
+        ServiceCentreAddress request = ServiceCentreAddress.builder()
+            .addressLine1("Updated Street")
+            .postcode("UP1 2ED")
+            .addressType(AddressType.VISIT_US)
+            .build();
+
+        when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
+        when(serviceCentreAddressRepository.findByIdAndServiceCentreId(addressId, serviceCentreId))
+            .thenReturn(Optional.of(address));
+        when(osService.getOsAdminAddressCoordinates("UP1 2ED", null, null, null)).thenReturn(Optional.empty());
+        when(serviceCentreAddressRepository.save(address)).thenReturn(address);
+
+        ServiceCentreAddress result = serviceCentreAddressService.updateAddress(serviceCentreId, addressId, request);
+
+        assertThat(result.getLat()).isNull();
+        assertThat(result.getLon()).isNull();
+    }
+
+    @Test
+    void createAddressResolvesSelectedLpiIdentityServerSide() {
+        ServiceCentreAddress selectedAddress = ServiceCentreAddress.builder()
+            .addressLine1("Durham Service Centre")
+            .townCity("Durham")
+            .postcode("DH1 3RG")
+            .addressType(AddressType.VISIT_US)
+            .osAddressDataset("LPI")
+            .osAddressUprn("123456789")
+            .osAddressLpiKey("lpi-key")
+            .build();
+
+        when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
+        when(osService.getOsAdminAddressCoordinates("DH1 3RG", "LPI", "123456789", "lpi-key"))
+            .thenReturn(Optional.of(new OsAddressCoordinates(54.77, -1.57)));
+        when(serviceCentreAddressRepository.save(selectedAddress)).thenReturn(selectedAddress);
+
+        ServiceCentreAddress result = serviceCentreAddressService.createAddress(serviceCentreId, selectedAddress);
+
+        assertThat(result.getLat()).isEqualByComparingTo("54.77");
+        assertThat(result.getLon()).isEqualByComparingTo("-1.57");
+        verify(osService).getOsAdminAddressCoordinates("DH1 3RG", "LPI", "123456789", "lpi-key");
     }
 }

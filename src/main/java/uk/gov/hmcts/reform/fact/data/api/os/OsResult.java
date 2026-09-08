@@ -15,4 +15,7 @@ import lombok.NoArgsConstructor;
 public class OsResult {
     @JsonProperty("DPA")
     private OsDpa dpa;
+
+    @JsonProperty("LPI")
+    private OsLpi lpi;
 }

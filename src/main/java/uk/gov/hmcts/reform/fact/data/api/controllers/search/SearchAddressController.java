@@ -45,6 +45,6 @@ public class SearchAddressController {
         @NotBlank
         @PathVariable String postcode
     ) {
-        return ResponseEntity.ok(osService.getOsAddressByFullPostcode(postcode));
+        return ResponseEntity.ok(osService.getOsAdminAddressByFullPostcode(postcode));
     }
 }
