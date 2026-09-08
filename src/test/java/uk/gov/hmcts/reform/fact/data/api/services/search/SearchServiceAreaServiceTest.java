@@ -41,12 +41,13 @@ class SearchServiceAreaServiceTest {
             .id(serviceCentreId)
             .name("National Business Centre")
             .slug("national-business-centre")
+            .open(true)
             .serviceAreaIds(List.of(serviceAreaId))
             .catchmentType(CatchmentType.NATIONAL)
             .build();
 
         when(serviceAreaService.getServiceAreaByName("Money Claims")).thenReturn(serviceArea);
-        when(serviceCentreRepository.findByServiceAreaId(serviceAreaId)).thenReturn(List.of(serviceCentre));
+        when(serviceCentreRepository.findByServiceAreaIdAndOpenTrue(serviceAreaId)).thenReturn(List.of(serviceCentre));
 
         List<ServiceAreaSearchResult> results = searchServiceAreaService.findByServiceAreaName("Money Claims");
 

@@ -32,6 +32,21 @@ public interface ServiceCentreRepository extends JpaRepository<ServiceCentre, UU
 
     @Query(
         value = """
+            SELECT
+                *
+            FROM
+                service_centre sc
+            WHERE
+                CAST(:serviceAreaId AS uuid) = ANY(sc.service_area_ids)
+            AND
+                sc.open = TRUE
+        """,
+        nativeQuery = true
+    )
+    List<ServiceCentre> findByServiceAreaIdAndOpenTrue(@Param("serviceAreaId") UUID serviceAreaId);
+
+    @Query(
+        value = """
             SELECT EXISTS (
                 SELECT
                     sc.id
@@ -50,6 +65,30 @@ public interface ServiceCentreRepository extends JpaRepository<ServiceCentre, UU
         @Param("serviceAreaId") UUID serviceAreaId,
         @Param("catchmentTypes") List<CatchmentType> catchmentTypes
     );
+
+    @Query(
+        value = """
+            SELECT EXISTS (
+                SELECT
+                    sc.id
+                FROM
+                    service_centre sc
+                WHERE
+                    CAST(:serviceAreaId AS uuid) = ANY(sc.service_area_ids)
+                AND
+                    sc.catchment_type IN (:#{#catchmentTypes.![name()]})
+                AND
+                    sc.open = TRUE
+                LIMIT 1
+        )
+        """,
+        nativeQuery = true
+    )
+    boolean existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(
+        @Param("serviceAreaId") UUID serviceAreaId,
+        @Param("catchmentTypes") List<CatchmentType> catchmentTypes
+    );
+
 
     @Query(
         value = """
