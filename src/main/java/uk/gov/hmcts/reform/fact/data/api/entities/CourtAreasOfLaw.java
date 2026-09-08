@@ -75,7 +75,7 @@ public class CourtAreasOfLaw implements AuditableCourtEntity {
     }
 
     private static <T> List<Object> asViewList(List<T> values) {
-        return values == null ? null : values.stream().map(value -> (Object) value).toList();
+        return values == null ? null : values.stream().map(Object.class::cast).toList();
     }
 
     @JsonIgnore
