@@ -315,7 +315,6 @@ class LockAspectTest {
     }
 
     // Test controller class to provide methods with proper annotations
-    @SuppressWarnings("unused")
     static class TestController {
         public void testMethod(
             @PathVariable("subjectType") SubjectType subjectType,

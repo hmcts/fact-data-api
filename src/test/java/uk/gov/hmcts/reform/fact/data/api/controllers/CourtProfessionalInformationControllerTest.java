@@ -90,9 +90,10 @@ class CourtProfessionalInformationControllerTest {
     void getProfessionalInformationThrowsCourtResourceNotFound() {
         when(courtProfessionalInformationService.getProfessionalInformationByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new CourtResourceNotFoundException("Not found"));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(CourtResourceNotFoundException.class, () ->
-            courtProfessionalInformationController.getProfessionalInformationByCourtId(UNKNOWN_COURT_ID.toString())
+            courtProfessionalInformationController.getProfessionalInformationByCourtId(unknownCourtId)
         );
     }
 
@@ -100,9 +101,10 @@ class CourtProfessionalInformationControllerTest {
     void getProfessionalInformationThrowsNotFound() {
         when(courtProfessionalInformationService.getProfessionalInformationByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new NotFoundException("Court not found"));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(NotFoundException.class, () ->
-            courtProfessionalInformationController.getProfessionalInformationByCourtId(UNKNOWN_COURT_ID.toString())
+            courtProfessionalInformationController.getProfessionalInformationByCourtId(unknownCourtId)
         );
     }
 
@@ -133,6 +135,7 @@ class CourtProfessionalInformationControllerTest {
     @Test
     void setProfessionalInformationThrowsNotFound() {
         CourtProfessionalInformationDetailsDto professionalInformation = buildProfessionalInformationDetails();
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         when(courtProfessionalInformationService.setProfessionalInformation(
             UNKNOWN_COURT_ID,
@@ -142,7 +145,7 @@ class CourtProfessionalInformationControllerTest {
         assertThrows(
             NotFoundException.class,
             () -> courtProfessionalInformationController.setProfessionalInformation(
-                UNKNOWN_COURT_ID.toString(),
+                unknownCourtId,
                 professionalInformation
             )
         );
