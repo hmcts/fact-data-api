@@ -73,15 +73,16 @@ public class UserController {
         String search,
         @RequestParam(name = "sortBy", required = false) String sortBy,
         @RequestParam(name = "sortOrder", required = false) String sortOrder) {
-        log.debug(writeLog(String.format(
-            "User list query pageNumber=%s, pageSize=%s, hasSearch=%s, searchLength=%s, sortBy=%s, sortOrder=%s",
-            pageNumber,
-            pageSize,
-            search != null && !search.isBlank(),
-            search == null ? 0 : search.length(),
-            sortBy,
-            sortOrder
-        )));
+        log.debug(writeLog(
+            String.format("User list query pageNumber=%s, pageSize=%s, hasSearch=%s, searchLength=%s, sortBy=%s,"
+                              + " sortOrder=%s",
+                          pageNumber,
+                          pageSize,
+                          search != null && !search.isBlank(),
+                          search == null ? 0 : search.length(),
+                          sortBy,
+                          sortOrder)
+        ));
         return ResponseEntity.ok(userService.getFilteredAndPaginatedUsers(
             pageNumber,
             pageSize,

@@ -65,12 +65,12 @@ public class SearchLocationController {
         @Max(50)
         final Integer limit) {
 
-        log.debug(writeLog(String.format(
-            "Location search request received (serviceAreaProvided=%s, action=%s, limit=%s)",
-            serviceArea != null && !serviceArea.isBlank(),
-            action,
-            limit
-        )));
+        log.debug(writeLog(
+            String.format("Location search request received (serviceAreaProvided=%s, action=%s, limit=%s)",
+                          serviceArea != null && !serviceArea.isBlank(),
+                          action,
+                          limit)
+        ));
 
         return ResponseEntity.ok(
             searchLocationService.getLocationsBySearchParameters(postcode, serviceArea, action, limit)

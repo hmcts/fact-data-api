@@ -57,19 +57,20 @@ public class AllLocationController {
         String partialCourtName,
         @RequestParam(name = "sortBy", required = false) String sortBy,
         @RequestParam(name = "sortOrder", required = false) String sortOrder) {
-        log.debug(writeLog(String.format(
-            "All-location query: pageNumber=%s, pageSize=%s, includeClosed=%s, onlyServiceCentres=%s, "
-                + "hasRegionId=%s, hasPartialCourtName=%s, partialCourtNameLength=%s, sortBy=%s, sortOrder=%s",
-            pageNumber,
-            pageSize,
-            includeClosed,
-            onlyServiceCentres,
-            regionId != null && !regionId.isBlank(),
-            partialCourtName != null && !partialCourtName.isBlank(),
-            partialCourtName == null ? 0 : partialCourtName.length(),
-            sortBy,
-            sortOrder
-        )));
+        log.debug(writeLog(
+            String.format("All-location query: pageNumber=%s, pageSize=%s, includeClosed=%s, onlyServiceCentres=%s, "
+                              + "hasRegionId=%s, hasPartialCourtName=%s, partialCourtNameLength=%s, sortBy=%s,"
+                              + " sortOrder=%s",
+                          pageNumber,
+                          pageSize,
+                          includeClosed,
+                          onlyServiceCentres,
+                          regionId != null && !regionId.isBlank(),
+                          partialCourtName != null && !partialCourtName.isBlank(),
+                          partialCourtName == null ? 0 : partialCourtName.length(),
+                          sortBy,
+                          sortOrder)
+        ));
         return ResponseEntity.ok(allLocationService.getFilteredAndPaginatedLocations(
             pageNumber,
             pageSize,

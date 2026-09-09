@@ -33,6 +33,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 /**
  * Entity listener implementation for all {@link AuditableEntity} derived entities.
  */
@@ -112,7 +114,7 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
                 : findPreviousEntity(entity);
             writeAuditRecord(entity, previousEntity, auditActionType);
         } else {
-            log.error("No entity manager available during an audit operation");
+            log.error(writeLog("No entity manager available during an audit operation"));
             throw new IllegalStateException("No entity manager available during an audit operation");
         }
     }
@@ -147,7 +149,7 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
     private void writeAuditRecord(AuditableEntity entity, AuditableEntity previous,
                                   AuditActionType operationType) {
         if (auditUserContextRef.get() == null && !ensureAuditUserContext()) {
-            log.error("No audit user context available during an audit operation");
+            log.error(writeLog("No audit user context available during an audit operation"));
             throw new IllegalStateException("No audit user context available during an audit operation");
         }
 
@@ -183,7 +185,7 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
                 }
             });
         } catch (JacksonException e) {
-            log.warn("Failed to extract diffs for an entity during auditing", e);
+            log.warn(writeLog("Failed to extract diffs for an entity during auditing"), e);
         }
         return diffs;
     }

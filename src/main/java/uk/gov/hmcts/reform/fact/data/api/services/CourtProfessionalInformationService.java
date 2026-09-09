@@ -27,6 +27,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -74,7 +76,9 @@ public class CourtProfessionalInformationService {
         UUID courtId,
         CourtProfessionalInformationDetailsDto professionalInformationDetails
     ) {
-        log.debug("Setting professional information for court id: {}", courtId);
+        log.debug(writeLog(
+            String.format("Setting professional information for court id: %s", courtId)
+        ));
         Court court = courtService.getCourtById(courtId);
 
         CourtProfessionalInformation savedProfessionalInformation = saveProfessionalInformation(

@@ -36,6 +36,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -174,7 +176,10 @@ public class UserService {
     public int deleteInactiveUsers() {
         final ZonedDateTime cutoffDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(retentionPeriod);
         List<User> inactiveUsers = userRepository.deleteAllByLastLoginBefore(cutoffDate);
-        log.debug("Deleted {} inactive users who haven't logged in since {}", inactiveUsers.size(), cutoffDate);
+        log.debug(writeLog(
+            String.format("Deleted %s inactive users who haven't logged in since %s",
+                          inactiveUsers.size(), cutoffDate)
+        ));
         return inactiveUsers.size();
     }
 

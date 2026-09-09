@@ -53,11 +53,11 @@ public class LockController {
     public ResponseEntity<List<Lock>> getSubjectLocks(
         @Parameter(description = "The subject type", required = true) @PathVariable SubjectType subjectType,
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId) {
-        log.debug(writeLog(String.format(
-            "Get subject locks request: subjectType=%s, hasSubjectId=%s",
-            subjectType,
-            subjectId != null && !subjectId.isBlank()
-        )));
+        log.debug(writeLog(
+            String.format("Get subject locks request: subjectType=%s, hasSubjectId=%s",
+                          subjectType,
+                          subjectId != null && !subjectId.isBlank())
+        ));
         return ResponseEntity.ok(lockService.getAllSubjectLocks(subjectType, UUID.fromString(subjectId)));
     }
 
@@ -74,12 +74,12 @@ public class LockController {
         @Parameter(description = "The subject type", required = true) @PathVariable SubjectType subjectType,
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to check lock status", required = true) @PathVariable Page page) {
-        log.debug(writeLog(String.format(
-            "Get lock status request: subjectType=%s, page=%s, hasSubjectId=%s",
-            subjectType,
-            page,
-            subjectId != null && !subjectId.isBlank()
-        )));
+        log.debug(writeLog(
+            String.format("Get lock status request: subjectType=%s, page=%s, hasSubjectId=%s",
+                          subjectType,
+                          page,
+                          subjectId != null && !subjectId.isBlank())
+        ));
         return lockService.getPageLock(subjectType, UUID.fromString(subjectId), page)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.noContent().build());
@@ -99,13 +99,13 @@ public class LockController {
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to lock", required = true) @PathVariable Page page,
         @Parameter(description = "User ID creating the lock", required = true) @Valid @RequestBody UUID userId) {
-        log.debug(writeLog(String.format(
-            "Create/update lock request: subjectType=%s, page=%s, hasSubjectId=%s, hasUserId=%s",
-            subjectType,
-            page,
-            subjectId != null && !subjectId.isBlank(),
-            userId != null
-        )));
+        log.debug(writeLog(
+            String.format("Create/update lock request: subjectType=%s, page=%s, hasSubjectId=%s, hasUserId=%s",
+                          subjectType,
+                          page,
+                          subjectId != null && !subjectId.isBlank(),
+                          userId != null)
+        ));
 
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(lockService.createOrUpdateLock(subjectType, UUID.fromString(subjectId), page, userId));
@@ -122,12 +122,12 @@ public class LockController {
         @Parameter(description = "The subject type", required = true) @PathVariable SubjectType subjectType,
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to delete lock", required = true) @PathVariable Page page) {
-        log.debug(writeLog(String.format(
-            "Delete lock request: subjectType=%s, page=%s, hasSubjectId=%s",
-            subjectType,
-            page,
-            subjectId != null && !subjectId.isBlank()
-        )));
+        log.debug(writeLog(
+            String.format("Delete lock request: subjectType=%s, page=%s, hasSubjectId=%s",
+                          subjectType,
+                          page,
+                          subjectId != null && !subjectId.isBlank())
+        ));
         lockService.deleteLock(subjectType, UUID.fromString(subjectId), page);
         return ResponseEntity.noContent().build();
     }

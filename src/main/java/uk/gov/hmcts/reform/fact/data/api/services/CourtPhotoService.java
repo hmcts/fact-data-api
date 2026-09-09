@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -83,7 +85,9 @@ public class CourtPhotoService {
     public void deleteCourtPhotoByCourtId(UUID courtId) {
         courtService.getCourtById(courtId);
 
-        log.debug("Deleting court photo for court ID: {}", courtId);
+        log.debug(writeLog(
+            String.format("Deleting court photo for court ID: %s", courtId)
+        ));
         CourtPhoto courtPhoto = getCourtPhotoByCourtId(courtId);
 
         azureBlobService.deleteBlob(courtPhoto.getCourtId().toString());

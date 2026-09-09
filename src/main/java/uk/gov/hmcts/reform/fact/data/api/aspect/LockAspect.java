@@ -24,6 +24,8 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 /**
  * Aspect that intercepts methods annotated with @LockTimeoutCheck.
  * Validates lock timeout before allowing the method to execute.
@@ -80,7 +82,7 @@ public class LockAspect {
         try {
             this.lockService.deleteExpiredLocks();
         } catch (Exception ex) {
-            log.error(ex.getMessage(), ex);
+            log.error(writeLog("Lock clean up failed"), ex);
         }
     }
 

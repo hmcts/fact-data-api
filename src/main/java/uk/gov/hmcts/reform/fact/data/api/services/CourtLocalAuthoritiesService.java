@@ -28,6 +28,8 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtLocalAuthoritiesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -119,7 +121,9 @@ public class CourtLocalAuthoritiesService {
             this.courtLocalAuthoritiesRepository.deleteByCourtIdAndAreaOfLawIdNotIn(courtId, validUUIDs);
 
         } catch (Exception ex) {
-            log.error("Error performing housekeeping for court local authorities, court id: {}", courtId, ex);
+            log.error(writeLog(
+                String.format("Error performing housekeeping for court local authorities, court id: %s", courtId)
+            ), ex);
         }
     }
 

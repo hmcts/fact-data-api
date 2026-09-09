@@ -10,6 +10,8 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTranslationRepository
 
 import java.util.UUID;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -40,7 +42,9 @@ public class CourtTranslationService {
      * @return The created translation entity.
      */
     public CourtTranslation setTranslation(UUID courtId, CourtTranslation courtTranslation) {
-        log.debug("Setting translation for court id: {}", courtId);
+        log.debug(writeLog(
+            String.format("Setting translation for court id: %s", courtId)
+        ));
         Court foundCourt = courtService.getCourtById(courtId);
         courtTranslation.setCourt(foundCourt);
         courtTranslation.setCourtId(courtId);

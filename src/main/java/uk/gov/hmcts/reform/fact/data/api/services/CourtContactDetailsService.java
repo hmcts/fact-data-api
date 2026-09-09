@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -73,7 +75,9 @@ public class CourtContactDetailsService {
         request.setCourt(court);
         request.setCourtContactDescription(description.orElse(null));
 
-        log.debug("Creating contact detail for court {}", courtId);
+        log.debug(writeLog(
+            String.format("Creating contact detail for court %s", courtId)
+        ));
         return courtContactDetailsRepository.save(request);
     }
 
@@ -99,7 +103,9 @@ public class CourtContactDetailsService {
         existing.setEmail(request.getEmail());
         existing.setPhoneNumber(request.getPhoneNumber());
 
-        log.debug("Updating contact detail {} for court {}", contactId, courtId);
+        log.debug(writeLog(
+            String.format("Updating contact detail %s for court %s", contactId, courtId)
+        ));
         return courtContactDetailsRepository.save(existing);
     }
 
@@ -119,7 +125,9 @@ public class CourtContactDetailsService {
             );
         }
 
-        log.debug("Deleting contact detail {} for court {}", contactId, courtId);
+        log.debug(writeLog(
+            String.format("Deleting contact detail %s for court %s", contactId, courtId)
+        ));
         courtContactDetailsRepository.deleteByIdAndCourtId(contactId, courtId);
     }
 

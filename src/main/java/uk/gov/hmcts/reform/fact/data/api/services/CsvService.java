@@ -20,6 +20,8 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 /**
  * Service for handling CSV file operations.
  */
@@ -55,7 +57,7 @@ public class CsvService {
             azureBlobService
                 .uploadFile(CSV_FILE_NAME, stringMultipartFile);
         } catch (Exception e) {
-            log.error("Error while uploading CSV", e);
+            log.error(writeLog("Error while uploading CSV"), e);
             actions.add("Failed to upload CSV file to Azure Blob Storage. Check App insights.");
             throw new AzureUploadException("Failed to upload CSV file to Azure Blob Storage", e);
         }
@@ -78,7 +80,7 @@ public class CsvService {
                         objectMapper.valueToTree(allLocationDetails))
             );
         } catch (Exception e) {
-            log.error("Error while creating CSV file", e);
+            log.error(writeLog("Error while creating CSV file"), e);
             actions.add("Failed to create CSV file. Check App insights.");
             throw new CsvCreationException("Failed to create CSV file", e);
         }
