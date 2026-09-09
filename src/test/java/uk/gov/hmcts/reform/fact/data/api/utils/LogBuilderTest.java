@@ -32,4 +32,24 @@ class LogBuilderTest {
             "Log message should include action value and the 'at' timestamp marker"
         );
     }
+
+    @Test
+    void shouldWriteLogWithActionAndDetails() {
+        final String logMessage = writeLog("Upload CSV", "courtId=123", "status=FAILED");
+
+        assertTrue(
+            logMessage.startsWith("Track: Upload CSV, details: [courtId=123, status=FAILED], at "),
+            "Log message should include action, details list and the 'at' timestamp marker"
+        );
+    }
+
+    @Test
+    void shouldWriteLogWithActionAndNoDetails() {
+        final String logMessage = writeLog("Health check", (Object[]) new Object[]{});
+
+        assertTrue(
+            logMessage.startsWith("Track: Health check, details: [], at "),
+            "Varargs overload should support empty details"
+        );
+    }
 }
