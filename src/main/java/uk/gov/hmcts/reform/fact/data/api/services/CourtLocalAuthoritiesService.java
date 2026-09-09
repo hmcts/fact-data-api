@@ -151,7 +151,6 @@ public class CourtLocalAuthoritiesService {
     private List<AreaOfLawType> getAllowedAreasOfLawForCourt(UUID courtId) {
         List<UUID> courtAreaOfLawIds = courtAreasOfLawRepository.findByCourtId(courtId)
             .map(CourtAreasOfLaw::getAreasOfLaw)
-            .map(areasOfLaw -> areasOfLaw == null ? List.<UUID>of() : areasOfLaw)
             .orElse(List.of());
 
         if (courtAreaOfLawIds.isEmpty()) {

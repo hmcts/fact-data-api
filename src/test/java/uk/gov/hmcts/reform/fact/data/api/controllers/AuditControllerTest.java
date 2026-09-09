@@ -127,6 +127,38 @@ class AuditControllerTest {
     }
 
     @Test
+    void getFilteredAndPaginatedAuditsAllowsSingleCourtIdWhenToDateIsMissing() {
+        String courtId = COURT_ID.toString();
+        LocalDate fromDate = LocalDate.now().minusDays(2);
+        Page<Audit> auditPage = new PageImpl<>(List.of(createAudit()));
+
+        when(auditService.getFilteredAndPaginatedAudits(
+            PAGE_NUMBER,
+            PAGE_SIZE,
+            fromDate,
+            null,
+            null,
+            courtId,
+            null,
+            null
+        )).thenReturn(auditPage);
+
+        ResponseEntity<Page<Audit>> response = auditController.getFilteredAndPaginatedAudits(
+            PAGE_NUMBER,
+            PAGE_SIZE,
+            null,
+            courtId,
+            null,
+            null,
+            fromDate,
+            null
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode(), RESPONSE_STATUS_MISMATCH);
+        assertEquals(auditPage, response.getBody(), RESPONSE_BODY_MISMATCH);
+    }
+
+    @Test
     void getSubjectNameAndIdMapReturns200() {
         Map<SubjectType, List<NameAndId>> subjectMap = Map.of(
             SubjectType.COURT, List.of(

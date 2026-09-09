@@ -821,6 +821,20 @@ class CourtServiceTest {
     }
 
     @Test
+    void deleteCourtsByNamePrefixShouldSkipAuditDeletionWhenDisabled() {
+        UUID courtId = UUID.randomUUID();
+        Court court = Court.builder().id(courtId).build();
+        when(courtRepository.findByNameStartingWithIgnoreCase("Example")).thenReturn(List.of(court));
+
+        long deleted = courtService.deleteCourtsByNamePrefix("Example", false);
+
+        assertThat(deleted).isEqualTo(1);
+        verify(userRepository).removeCourtFromAllFavourites(courtId);
+        verify(courtRepository).deleteAllInBatch(List.of(court));
+        verify(auditRepository, never()).deleteBySubjectIdIn(anyList());
+    }
+
+    @Test
     void getCourtDetailsByIdReturnsCourtDetailsWhenFound() {
         UUID courtId = UUID.randomUUID();
         CourtDetails courtDetails = new CourtDetails();

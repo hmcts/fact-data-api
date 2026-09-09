@@ -151,6 +151,16 @@ class AuditableCourtEntityListenerTest {
     }
 
     @Test
+    void shouldPersistAuditWhenAuditContextBecomesAvailableBeforeRecordWrite() {
+        when(applicationContext.getBean(AuditUserContext.class)).thenReturn(null, auditUserContext);
+
+        listener.beforePersist(createCourt());
+
+        verify(applicationContext, times(2)).getBean(AuditUserContext.class);
+        verify(entityManager, times(1)).persist(any(Audit.class));
+    }
+
+    @Test
     void shouldReuseEntityManagerAndAuditContextAcrossCalls() {
         listener.beforePersist(createCourt());
         listener.beforePersist(createCourt());

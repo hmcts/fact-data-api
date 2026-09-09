@@ -147,6 +147,20 @@ class CourtLocalAuthoritiesServiceTest {
     }
 
     @Test
+    void shouldReturnEmptyListWhenAreasOfLawConfiguredAsEmptyForCourt() {
+        courtAreasOfLaw.setAreasOfLaw(List.of());
+        when(courtService.getCourtById(COURT_ID)).thenReturn(court);
+        when(courtAreasOfLawRepository.findByCourtId(COURT_ID)).thenReturn(Optional.of(courtAreasOfLaw));
+
+        List<CourtLocalAuthorityDto> result = courtLocalAuthoritiesService.getCourtLocalAuthorities(COURT_ID);
+
+        assertThat(result).isEmpty();
+        verify(localAuthorityTypeRepository, never()).findAllParents();
+        verify(areaOfLawTypeRepository, never()).findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames());
+        verify(areaOfLawTypeRepository, never()).findAllById(List.of());
+    }
+
+    @Test
     void shouldSetCourtLocalAuthoritiesForAllowedAreas() {
         when(courtService.getCourtById(COURT_ID)).thenReturn(court);
         mockAllowedAreasOfLaw();
