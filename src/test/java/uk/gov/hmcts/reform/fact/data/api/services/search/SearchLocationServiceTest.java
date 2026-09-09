@@ -10,12 +10,15 @@ import uk.gov.hmcts.reform.fact.data.api.dto.SearchResult;
 import uk.gov.hmcts.reform.fact.data.api.dto.ServiceCentreWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchResultType;
+import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
+import uk.gov.hmcts.reform.fact.data.api.services.OsService;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +39,9 @@ class SearchLocationServiceTest {
     @Mock
     private SearchServiceCentreService searchServiceCentreService;
 
+    @Mock
+    private OsService osService;
+
     @InjectMocks
     private SearchLocationService searchLocationService;
 
@@ -46,13 +52,14 @@ class SearchLocationServiceTest {
         CourtWithDistance court = courtWithDistance(courtId, BigDecimal.valueOf(3));
         ServiceCentreWithDistance serviceCentre =
             serviceCentreWithDistance(serviceCentreId, BigDecimal.valueOf(1));
+        OsLocationData osLocationData = osLocationData();
 
-        when(searchCourtService.getCourtsBySearchParameters("SW1A 1AA", "Money Claims", SearchAction.DOCUMENTS, 10))
+        when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(osLocationData);
+        when(searchCourtService.searchWithServiceArea(osLocationData, "Money Claims", SearchAction.DOCUMENTS, 10))
             .thenReturn(List.of(court));
-        when(searchServiceCentreService.getServiceCentresBySearchParameters(
-            "SW1A 1AA",
+        when(searchServiceCentreService.searchWithServiceArea(
+            osLocationData,
             "Money Claims",
-            SearchAction.DOCUMENTS,
             10
         )).thenReturn(List.of(serviceCentre));
 
@@ -67,6 +74,7 @@ class SearchLocationServiceTest {
             .containsExactly(SearchResultType.SERVICE_CENTRE, SearchResultType.COURT);
         assertThat(results).extracting(SearchResult::getId)
             .containsExactly(serviceCentreId, courtId);
+        verify(osService).getOsLonLatDistrictByPartial("SW1A 1AA");
     }
 
     @Test
@@ -230,17 +238,18 @@ class SearchLocationServiceTest {
         UUID serviceCentreId = UUID.randomUUID();
         ServiceCentreWithDistance serviceCentre =
             serviceCentreWithDistance(serviceCentreId, BigDecimal.valueOf(1));
+        OsLocationData osLocationData = osLocationData();
 
-        when(searchCourtService.getCourtsBySearchParameters(
-            "PL12 4ER",
+        when(osService.getOsLonLatDistrictByPartial("PL12 4ER")).thenReturn(osLocationData);
+        when(searchCourtService.searchWithServiceArea(
+            osLocationData,
             FORCED_MARRIAGE_SERVICE_AREA,
             SearchAction.DOCUMENTS,
             10
         )).thenReturn(List.of());
-        when(searchServiceCentreService.getServiceCentresBySearchParameters(
-            "PL12 4ER",
+        when(searchServiceCentreService.searchWithServiceArea(
+            osLocationData,
             FORCED_MARRIAGE_SERVICE_AREA,
-            SearchAction.DOCUMENTS,
             10
         )).thenReturn(List.of(serviceCentre));
 
@@ -255,6 +264,7 @@ class SearchLocationServiceTest {
             .containsExactly(SearchResultType.SERVICE_CENTRE);
         assertThat(results).extracting(SearchResult::getId)
             .containsExactly(serviceCentreId);
+        verify(osService).getOsLonLatDistrictByPartial("PL12 4ER");
     }
 
     @Test
@@ -264,17 +274,18 @@ class SearchLocationServiceTest {
         CourtWithDistance court = courtWithDistance(courtId, BigDecimal.valueOf(3));
         ServiceCentreWithDistance serviceCentre =
             serviceCentreWithDistance(serviceCentreId, BigDecimal.valueOf(1));
+        OsLocationData osLocationData = osLocationData();
 
-        when(searchCourtService.getCourtsBySearchParameters(
-            "PL12 4ER",
+        when(osService.getOsLonLatDistrictByPartial("PL12 4ER")).thenReturn(osLocationData);
+        when(searchCourtService.searchWithServiceArea(
+            osLocationData,
             CHILDCARE_SERVICE_AREA,
             SearchAction.NEAREST,
             10
         )).thenReturn(List.of(court));
-        when(searchServiceCentreService.getServiceCentresBySearchParameters(
-            "PL12 4ER",
+        when(searchServiceCentreService.searchWithServiceArea(
+            osLocationData,
             CHILDCARE_SERVICE_AREA,
-            SearchAction.NEAREST,
             10
         )).thenReturn(List.of(serviceCentre));
 
@@ -287,6 +298,15 @@ class SearchLocationServiceTest {
 
         assertThat(results).extracting(SearchResult::getType)
             .containsExactly(SearchResultType.SERVICE_CENTRE, SearchResultType.COURT);
+        verify(osService).getOsLonLatDistrictByPartial("PL12 4ER");
+    }
+
+    private OsLocationData osLocationData() {
+        return OsLocationData.builder()
+            .latitude(51.5)
+            .longitude(-0.1)
+            .authorityName("Test Authority")
+            .build();
     }
 
     @Test

@@ -59,6 +59,12 @@ spring:
     mapper:
       default-view-inclusion: true
   cloud:
+    openfeign:
+      client:
+        config:
+          os-feign-client:
+            connect-timeout: ${OS_CONNECT_TIMEOUT_MILLIS:2000}
+            read-timeout: ${OS_READ_TIMEOUT_MILLIS:5000}
     azure:
       profile:
         tenant-id: ${AZURE_TENANT_ID}
@@ -97,12 +103,15 @@ courtLock:
 os:
   key: ${OS_KEY}
   url: https://api.os.uk
+  cache:
+    enabled: ${OS_CACHE_ENABLED:${TESTING_SUPPORT_ENABLE_CACHE:false}}
+    maximum-size: ${OS_CACHE_MAXIMUM_SIZE:1000}
+    time-to-live-millis: ${OS_CACHE_TIME_TO_LIVE_MILLIS:3600000}
   endpoint:
     postcode-search: /search/places/v1/postcode
 
 testingSupport:
   enableApi: ${TESTING_SUPPORT_ENABLE_API:false}
-  enableCache: ${TESTING_SUPPORT_ENABLE_CACHE:false}
 
 clients:
   cath:

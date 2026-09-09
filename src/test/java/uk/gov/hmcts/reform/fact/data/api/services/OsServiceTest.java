@@ -4,11 +4,13 @@ import feign.FeignException;
 import feign.Request;
 import feign.RequestTemplate;
 import feign.Response;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.OsProcessException;
@@ -34,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,8 +53,16 @@ class OsServiceTest {
     @Mock
     private LocalAuthorityTypeRepository localAuthorityTypeRepository;
 
+    @Mock
+    private ObjectProvider<OsService> osServiceProvider;
+
     @InjectMocks
     private OsService osService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(osServiceProvider.getObject()).thenReturn(osService);
+    }
 
     @Test
     void shouldReturnLocationDataWhenCustodianCodesMatch() {

@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -34,6 +35,7 @@ public class OsService {
 
     private final OsFeignClient osFeignClient;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
+    private final ObjectProvider<OsService> osServiceProvider;
     private static final Pattern POSTCODE_PATTERN =
         Pattern.compile(
             "^([A-Z]{1,2}\\d[\\dA-Z]?)(?:\\s+(\\d[A-Z]{0,2}))?$",
@@ -55,7 +57,11 @@ public class OsService {
      * @return the location data returned from OS plus a mapping to determine the admin
      *     district based on the child and parent custodian codes.
      */
-    @Cacheable(cacheNames = CacheConfiguration.OSDATA_CACHE_NAME, key = "'T-' + #postcode")
+    @Cacheable(
+        cacheNames = CacheConfiguration.OSDATA_CACHE_NAME,
+        key = "'T-' + #postcode.trim().replaceAll('\\s+', '').toUpperCase().replaceAll('..$', '')",
+        sync = true
+    )
     public OsLocationData getOsLonLatDistrictByPartial(String postcode) {
         return getOsLatLonDistrictLookup(
             toOutwardPlusSingleInwardDigit(
@@ -69,7 +75,11 @@ public class OsService {
      * @param postcode the postcode.
      * @return the OsData containing all addresses for the provided postcode.
      */
-    @Cacheable(cacheNames = CacheConfiguration.OSDATA_CACHE_NAME, key = "'F-' + #postcode")
+    @Cacheable(
+        cacheNames = CacheConfiguration.OSDATA_CACHE_NAME,
+        key = "'F-' + #postcode.trim().replaceAll('\\s+', '').toUpperCase()",
+        sync = true
+    )
     public OsData getOsAddressByFullPostcode(String postcode) {
         return getOsAddressData(validateAndFormatPostcode(postcode), false);
     }
@@ -83,7 +93,8 @@ public class OsService {
      */
     @Cacheable(
         cacheNames = CacheConfiguration.OSDATA_CACHE_NAME,
-        key = "'A-' + #postcode.trim().replaceAll('\\s+', '').toUpperCase()"
+        key = "'A-' + #postcode.trim().replaceAll('\\s+', '').toUpperCase()",
+        sync = true
     )
     public OsData getOsAdminAddressByFullPostcode(String postcode) {
         String formattedPostcode = validateAndFormatPostcode(postcode);
@@ -148,7 +159,7 @@ public class OsService {
                 throw new IllegalArgumentException("Selected OS address must include both dataset and UPRN");
             }
 
-            OsData osData = getOsAdminAddressByFullPostcode(postcode);
+            OsData osData = osServiceProvider.getObject().getOsAdminAddressByFullPostcode(postcode);
             List<OsResult> results = osData.getResults() == null ? Collections.emptyList() : osData.getResults();
             String normalisedDataset = dataset.trim().toUpperCase(Locale.ROOT);
             return switch (normalisedDataset) {
@@ -179,7 +190,8 @@ public class OsService {
             };
         }
 
-        OsDpa firstDpa = getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
+        OsDpa firstDpa = osServiceProvider.getObject()
+            .getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
         return firstDpa == null ? Optional.empty() : toCoordinates(firstDpa.getLat(), firstDpa.getLng());
     }
 

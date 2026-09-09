@@ -57,7 +57,6 @@ class SearchAddressControllerTest {
 
         String json = new ObjectMapper().writeValueAsString(result);
 
-        assertThat(json).contains("\"DPA\":null");
-        assertThat(json).contains("\"LPI\":");
+        assertThat(json).contains("\"DPA\":null", "\"LPI\":");
     }
 }

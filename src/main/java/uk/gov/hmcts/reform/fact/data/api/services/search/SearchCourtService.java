@@ -95,6 +95,22 @@ public class SearchCourtService {
     public List<CourtWithDistance> searchWithServiceArea(String postcode, String serviceArea,
                                                          SearchAction action, Integer limit) {
         OsLocationData osLocationData = osService.getOsLonLatDistrictByPartial(postcode);
+        return searchWithServiceArea(osLocationData, serviceArea, action, limit);
+    }
+
+    /**
+     * Searches courts using OS location data already resolved by a combined location search.
+     *
+     * @param osLocationData resolved OS location data
+     * @param serviceArea the service area
+     * @param action the search action
+     * @param limit maximum number of results
+     * @return matching courts
+     */
+    public List<CourtWithDistance> searchWithServiceArea(OsLocationData osLocationData,
+                                                         String serviceArea,
+                                                         SearchAction action,
+                                                         Integer limit) {
         ServiceArea serviceAreaFound = serviceAreaService.getServiceAreaByName(serviceArea);
 
         if (serviceArea.equalsIgnoreCase(CHILDCARE_SERVICE_AREA) && action != NEAREST) {
