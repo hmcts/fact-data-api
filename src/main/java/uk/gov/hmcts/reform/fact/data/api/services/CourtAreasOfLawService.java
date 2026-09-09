@@ -47,7 +47,6 @@ public class CourtAreasOfLawService {
 
         List<UUID> courtAreasOfLawIds = courtAreasOfLawRepository.findByCourtId(courtId)
             .map(CourtAreasOfLaw::getAreasOfLaw)
-            .map(areasOfLaw -> areasOfLaw == null ? List.<UUID>of() : areasOfLaw)
             .orElse(List.of());
         List<AreaOfLawType> allAreasOfLawTypes = typesService.getAreaOfLawTypes();
 

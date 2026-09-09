@@ -420,6 +420,36 @@ class AuditServiceTest {
     }
 
     @Test
+    void shouldIgnoreBlankEmailWhenFilteringByCourtId() {
+        when(auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
+                 eq(COURT_ID),
+                 eq(SubjectType.COURT),
+                 eq(fromDateTime),
+                 any(Pageable.class)
+             )
+        ).thenReturn(new PageImpl<>(List.of(createAudit())));
+
+        Page<Audit> result = auditService.getFilteredAndPaginatedAudits(
+            PAGE_NUMBER,
+            PAGE_SIZE,
+            fromDate,
+            null,
+            null,
+            COURT_ID.toString(),
+            null,
+            " "
+        );
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(auditRepository).findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
+            eq(COURT_ID),
+            eq(SubjectType.COURT),
+            eq(fromDateTime),
+            any(Pageable.class)
+        );
+    }
+
+    @Test
     void getSubjectNameAndIdMapShouldAllSubjectData() {
         List<NameAndId> courts = List.of(
             new NameAndId("Birmingham Civil and Family Justice Centre", UUID.randomUUID()),
