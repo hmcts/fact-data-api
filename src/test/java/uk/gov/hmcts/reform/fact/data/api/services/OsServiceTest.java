@@ -34,8 +34,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -371,16 +369,14 @@ class OsServiceTest {
 
     @Test
     void shouldRejectSelectedAddressWhenResolvedAdminResultsListIsNull() {
-        OsService spyService = spy(osService);
-        doReturn(OsData.builder().results(null).build())
-            .when(spyService)
-            .getOsAdminAddressByFullPostcode("DH1 3RG");
+        when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0))
+            .thenReturn(OsData.builder().results(null).build());
 
-        assertThatThrownBy(() -> spyService.getOsAdminAddressCoordinates(
+        assertThatThrownBy(() -> osService.getOsAdminAddressCoordinates(
             "DH1 3RG", "DPA", "selected-uprn", null
         ))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("no longer available");
+            .isInstanceOf(InvalidPostcodeException.class)
+            .hasMessageContaining("No address results returned from OS");
     }
 
     @Test
