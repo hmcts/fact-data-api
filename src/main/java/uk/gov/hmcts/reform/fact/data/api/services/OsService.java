@@ -71,7 +71,7 @@ public class OsService {
      */
     @Cacheable(cacheNames = CacheConfiguration.OSDATA_CACHE_NAME, key = "'F-' + #postcode")
     public OsData getOsAddressByFullPostcode(String postcode) {
-        return getOsAddressData(validateAndFormatPostcode(postcode), false);
+        return getOsAddressByFullPostcodeInternal(postcode);
     }
 
     /**
@@ -86,6 +86,14 @@ public class OsService {
         key = "'A-' + #postcode.trim().replaceAll('\\s+', '').toUpperCase()"
     )
     public OsData getOsAdminAddressByFullPostcode(String postcode) {
+        return getOsAdminAddressByFullPostcodeInternal(postcode);
+    }
+
+    private OsData getOsAddressByFullPostcodeInternal(String postcode) {
+        return getOsAddressData(validateAndFormatPostcode(postcode), false);
+    }
+
+    private OsData getOsAdminAddressByFullPostcodeInternal(String postcode) {
         String formattedPostcode = validateAndFormatPostcode(postcode);
         List<OsResult> combinedResults = new ArrayList<>();
         int offset = 0;
@@ -148,7 +156,7 @@ public class OsService {
                 throw new IllegalArgumentException("Selected OS address must include both dataset and UPRN");
             }
 
-            OsData osData = getOsAdminAddressByFullPostcode(postcode);
+            OsData osData = getOsAdminAddressByFullPostcodeInternal(postcode);
             List<OsResult> results = osData.getResults() == null ? Collections.emptyList() : osData.getResults();
             String normalisedDataset = dataset.trim().toUpperCase(Locale.ROOT);
             return switch (normalisedDataset) {
@@ -179,7 +187,7 @@ public class OsService {
             };
         }
 
-        OsDpa firstDpa = getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
+        OsDpa firstDpa = getOsAddressByFullPostcodeInternal(postcode).getResults().getFirst().getDpa();
         return firstDpa == null ? Optional.empty() : toCoordinates(firstDpa.getLat(), firstDpa.getLng());
     }
 
