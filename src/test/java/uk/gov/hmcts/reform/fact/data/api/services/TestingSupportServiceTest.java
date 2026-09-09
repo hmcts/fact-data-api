@@ -385,17 +385,20 @@ class TestingSupportServiceTest {
             NullPointerException.class,
             () -> testingSupportService.createCourt(null, 1L, false, true, true, true, true, false)
         );
+        final UUID regionId = UUID.randomUUID();
         assertThrows(
             NullPointerException.class,
-            () -> testingSupportService.createCourt(null, UUID.randomUUID(), 1L, false, true, true, true, true, false)
+            () -> testingSupportService.createCourt(null, regionId, 1L, false, true, true, true, true, false)
         );
     }
 
     @Test
     void createServiceCentreOverloadsWithNullNameThrowException() {
+        final UUID regionId = UUID.randomUUID();
+
         assertThrows(
             NullPointerException.class,
-            () -> testingSupportService.createServiceCentre(null, UUID.randomUUID(), 1L, false, false, false)
+            () -> testingSupportService.createServiceCentre(null, regionId, 1L, false, false, false)
         );
         assertThrows(
             NullPointerException.class,

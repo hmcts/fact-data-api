@@ -47,7 +47,7 @@ class PostcodeLadderTest {
         PostcodeLadder ladder = PostcodeLadder.fromPartialPostcode("1aa");
 
         assertThat(ladder.getMinusUnitNoSpace()).isEqualTo("1");
-        assertThat(ladder.getOutCodeNoSpace()).isEqualTo("");
+        assertThat(ladder.getOutCodeNoSpace()).isEmpty();
         assertThat(ladder.getAreacodeNoSpace()).isEqualTo("1AA");
     }
 }

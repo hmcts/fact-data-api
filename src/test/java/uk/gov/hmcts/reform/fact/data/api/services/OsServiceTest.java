@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -370,7 +371,7 @@ class OsServiceTest {
 
     @Test
     void shouldRejectSelectedAddressWhenResolvedAdminResultsListIsNull() {
-        OsService spyService = org.mockito.Mockito.spy(osService);
+        OsService spyService = spy(osService);
         doReturn(OsData.builder().results(null).build())
             .when(spyService)
             .getOsAdminAddressByFullPostcode("DH1 3RG");

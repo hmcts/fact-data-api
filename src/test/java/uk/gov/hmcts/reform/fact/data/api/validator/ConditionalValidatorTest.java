@@ -6,10 +6,15 @@ import lombok.Setter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
 import uk.gov.hmcts.reform.fact.data.api.validation.validator.ConditionalValidator;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,27 +52,16 @@ class ConditionalValidatorTest {
         validator.initialize(validConditionalAnnotation);
     }
 
-    @Test
-    void shouldReturnTrueWhenSelectedValueDoesNotMatchCondition() {
+    @ParameterizedTest(name = "{index}: {2}")
+    @MethodSource("validScenarios")
+    void shouldReturnTrueForValidScenarios(String type, String value, String message) {
         TestObject testObject = new TestObject();
-        testObject.setType("OTHER");
-        testObject.setValue(null);
+        testObject.setType(type);
+        testObject.setValue(value);
 
         assertTrue(
             validator.isValid(testObject, context),
-            "Should be valid when selected value doesn't match condition"
-        );
-    }
-
-    @Test
-    void shouldReturnTrueWhenSelectedValueMatchesAndRequiredFieldIsNotEmpty() {
-        TestObject testObject = new TestObject();
-        testObject.setType("REQUIRED");
-        testObject.setValue("some value");
-
-        assertTrue(
-            validator.isValid(testObject, context),
-            "Should be valid when required field is not empty"
+            message
         );
     }
 
@@ -97,15 +91,11 @@ class ConditionalValidatorTest {
         verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
-    @Test
-    void shouldReturnTrueWhenSelectedValueIsNull() {
-        TestObject testObject = new TestObject();
-        testObject.setType(null);
-        testObject.setValue(null);
-
-        assertTrue(
-            validator.isValid(testObject, context),
-            "Should be valid when selected value is null"
+    private static Stream<Arguments> validScenarios() {
+        return Stream.of(
+            Arguments.of("OTHER", null, "Should be valid when selected value doesn't match condition"),
+            Arguments.of("REQUIRED", "some value", "Should be valid when required field is not empty"),
+            Arguments.of(null, null, "Should be valid when selected value is null")
         );
     }
 
