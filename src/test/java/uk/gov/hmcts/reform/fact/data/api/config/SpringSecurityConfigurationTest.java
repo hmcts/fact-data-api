@@ -32,7 +32,7 @@ class SpringSecurityConfigurationTest {
     private DefaultSecurityFilterChain securityFilterChain;
 
     @Test
-    void apiSecurityFilterChainBuildsWithAuthorizationAndCsrfCustomizers() throws Exception {
+    void apiSecurityFilterChainBuildsWithAuthorizationAndCsrfCustomizers() {
         SpringSecurityConfiguration configuration = new SpringSecurityConfiguration(authService);
 
         @SuppressWarnings("unchecked")
