@@ -142,6 +142,16 @@ class AuthServiceTest {
     }
 
     @Test
+    void isAdminRequiresUserIdHeaderWhenHeaderIsBlank() {
+        setAdminAuthentication();
+        setRequest("POST", "/courts/v1", "   ");
+
+        assertThatThrownBy(() -> authService.isAdmin())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("X-User-Id header is required for admin requests");
+    }
+
+    @Test
     void isAdminRequiresExistingUserIdHeaderForRequest() {
         setAdminAuthentication();
         setRequest("POST", "/courts/v1", USER_ID.toString());
@@ -185,6 +195,11 @@ class AuthServiceTest {
     }
 
     @Test
+    void isAdminSuppressesAuditForCreateAndUploadCsvEndpointWithMultipleTrailingSlashes() {
+        assertAuditSuppressedFor("POST", "/csv//");
+    }
+
+    @Test
     void isAdminSuppressesAuditForDeleteInactiveUsersEndpoint() {
         assertAuditSuppressedFor("DELETE", "/user/v1/retention");
     }
@@ -200,9 +215,40 @@ class AuthServiceTest {
     }
 
     @Test
+    void isAdminRequiresUserIdHeaderWhenPutRequestMatchesPrefixWithoutPathSuffix() {
+        setAdminAuthentication();
+        setRequest("PUT", "/courts/v1/link", null);
+
+        assertThatThrownBy(() -> authService.isAdmin())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("X-User-Id header is required for admin requests");
+    }
+
+    @Test
+    void isAdminRequiresUserIdHeaderWhenPutBypassPrefixConfigIsNull() {
+        setAdminAuthentication();
+        ReflectionTestUtils.setField(authService, "putEndpointWithoutUserHeaderPrefix", null);
+        setRequest("PUT", "/courts/v1/link/MRD123", null);
+
+        assertThatThrownBy(() -> authService.isAdmin())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("X-User-Id header is required for admin requests");
+    }
+
+    @Test
     void isAdminRequiresUserIdHeaderWhenMethodDoesNotMatchBypassEndpoint() {
         setAdminAuthentication();
         setRequest("GET", "/courts/v1/link", null);
+
+        assertThatThrownBy(() -> authService.isAdmin())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("X-User-Id header is required for admin requests");
+    }
+
+    @Test
+    void isAdminRequiresUserIdHeaderWhenDeleteEndpointIsNotConfiguredForBypass() {
+        setAdminAuthentication();
+        setRequest("DELETE", "/audits/v2", null);
 
         assertThatThrownBy(() -> authService.isAdmin())
             .isInstanceOf(IllegalArgumentException.class)
@@ -223,6 +269,16 @@ class AuthServiceTest {
     }
 
     @Test
+    void isAdminRequiresUserIdHeaderWhenRequestUriIsOnlyPathDelimiter() {
+        setAdminAuthentication();
+        setRequest("POST", "/", null);
+
+        assertThatThrownBy(() -> authService.isAdmin())
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("X-User-Id header is required for admin requests");
+    }
+
+    @Test
     void isAdminSuppressesAuditWhenBypassConfigContainsBlankEntries() {
         setAdminAuthentication();
         ReflectionTestUtils.setField(authService, "postEndpointsWithoutUserHeaderConfig", " , /user/v1 , ,, ");
@@ -230,6 +286,17 @@ class AuthServiceTest {
 
         assertThat(authService.isAdmin()).isTrue();
         verify(auditUserContext).suppressAudit();
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void isAdminDoesNotFailWhenBypassEndpointIsUsedAndAuditContextIsUnavailable() {
+        setAdminAuthentication();
+        when(auditUserContextObjectProvider.getIfAvailable()).thenReturn(null);
+        setRequest("POST", "/csv", null);
+
+        assertThat(authService.isAdmin()).isTrue();
+        verifyNoInteractions(auditUserContext);
         verifyNoInteractions(userRepository);
     }
 

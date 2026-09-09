@@ -31,5 +31,12 @@ class ServiceCentreDetailsTest {
 
         assertThat(details.getServiceAreasForView()).containsExactly(areaId);
     }
+
+    @Test
+    void getServiceAreasForViewReturnsNullWhenNoDetailsOrIdsExist() {
+        ServiceCentreDetails details = ServiceCentreDetails.builder().build();
+
+        assertThat(details.getServiceAreasForView()).isNull();
+    }
 }
 

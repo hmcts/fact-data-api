@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -167,6 +168,20 @@ class ApprovalServiceTest {
         approvalService.createApproval(approval);
 
         verify(serviceCentreService).getServiceCentreById(SUBJECT_ID);
+    }
+
+    @Test
+    void createApprovalWithNullSubjectTypeSkipsSubjectLookup() {
+        Approval approval = createApproval(null);
+        when(userService.getUserById(USER_ID)).thenReturn(new User());
+        when(approvalRepository.findBySubjectIdAndSubjectType(SUBJECT_ID, null)).thenReturn(Optional.empty());
+        when(approvalRepository.save(any(Approval.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Approval result = approvalService.createApproval(approval);
+
+        assertThat(result.getSubjectType()).isNull();
+        verify(courtService, never()).getCourtById(any());
+        verify(serviceCentreService, never()).getServiceCentreById(any());
     }
 
     @Test

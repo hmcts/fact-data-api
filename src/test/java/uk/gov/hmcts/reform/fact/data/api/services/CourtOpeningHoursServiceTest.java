@@ -335,6 +335,40 @@ class CourtOpeningHoursServiceTest {
     }
 
     @Test
+    void setOpeningHoursRemovesNullEntriesWhenEverydayPresent() {
+        OpeningTimesDetail everyday = OpeningTimesDetail.builder()
+            .dayOfWeek(DayOfTheWeek.EVERYDAY)
+            .openingTime(LocalTime.of(9, 0))
+            .closingTime(LocalTime.of(17, 0))
+            .build();
+        OpeningTimesDetail monday = OpeningTimesDetail.builder()
+            .dayOfWeek(DayOfTheWeek.MONDAY)
+            .openingTime(LocalTime.of(10, 0))
+            .closingTime(LocalTime.of(16, 0))
+            .build();
+
+        List<OpeningTimesDetail> details = new java.util.ArrayList<>();
+        details.add(null);
+        details.add(everyday);
+        details.add(monday);
+
+        CourtOpeningHours hours = CourtOpeningHours.builder()
+            .courtId(courtId)
+            .openingHourTypeId(openingHourTypeId)
+            .openingTimesDetails(details)
+            .build();
+
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(openingHoursTypeService.getOpeningHourTypeById(openingHourTypeId)).thenReturn(openingHourType);
+        when(courtOpeningHoursRepository.save(any(CourtOpeningHours.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        CourtOpeningHours result = courtOpeningHoursService.setOpeningHours(courtId, hours);
+
+        assertThat(result.getOpeningTimesDetails()).containsExactly(everyday);
+    }
+
+    @Test
     void setOpeningHoursSuccessfullyUpdatesExistingOpeningHours() {
         CourtOpeningHours updatedHours =
             CourtOpeningHours.builder()

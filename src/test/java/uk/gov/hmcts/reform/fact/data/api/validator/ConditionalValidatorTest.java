@@ -97,6 +97,18 @@ class ConditionalValidatorTest {
         verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
+    @Test
+    void shouldReturnTrueWhenSelectedValueIsNull() {
+        TestObject testObject = new TestObject();
+        testObject.setType(null);
+        testObject.setValue(null);
+
+        assertTrue(
+            validator.isValid(testObject, context),
+            "Should be valid when selected value is null"
+        );
+    }
+
     @Getter
     @Setter
     private static class TestObject {

@@ -374,6 +374,96 @@ class TestingSupportServiceTest {
     }
 
     @Test
+    void createCourtOverloadsWithNullNameThrowException() {
+        assertThrows(NullPointerException.class, () -> testingSupportService.createCourt(null, 1L, false, true));
+        assertThrows(NullPointerException.class, () -> testingSupportService.createCourt(null, 1L, false, true, true));
+        assertThrows(
+            NullPointerException.class,
+            () -> testingSupportService.createCourt(null, 1L, false, true, true, true)
+        );
+        assertThrows(
+            NullPointerException.class,
+            () -> testingSupportService.createCourt(null, 1L, false, true, true, true, true, false)
+        );
+        assertThrows(
+            NullPointerException.class,
+            () -> testingSupportService.createCourt(null, UUID.randomUUID(), 1L, false, true, true, true, true, false)
+        );
+    }
+
+    @Test
+    void createServiceCentreOverloadsWithNullNameThrowException() {
+        assertThrows(
+            NullPointerException.class,
+            () -> testingSupportService.createServiceCentre(null, UUID.randomUUID(), 1L, false, false, false)
+        );
+        assertThrows(
+            NullPointerException.class,
+            () -> testingSupportService.createServiceCentre(null, 1L, false, false, false)
+        );
+    }
+
+    @Test
+    void createCourtThrowsWhenAreasOfLawReferenceDataIsEmpty() {
+        when(areaOfLawTypeRepository.findAll()).thenReturn(List.of());
+
+        assertThrows(
+            IllegalStateException.class,
+            () -> testingSupportService.createCourt("Missing Areas Of Law Court", 1L, false, true, true)
+        );
+    }
+
+    @Test
+    void createCourtThrowsWhenCourtTypesReferenceDataIsEmpty() {
+        when(courtTypeRepository.findAll()).thenReturn(List.of());
+
+        assertThrows(
+            IllegalStateException.class,
+            () -> testingSupportService.createCourt("Missing Court Types Court", 1L, false, true, true)
+        );
+    }
+
+    @Test
+    void createCourtThrowsWhenContactDescriptionsReferenceDataIsEmpty() {
+        when(contactDescriptionTypeRepository.findAll()).thenReturn(List.of());
+
+        assertThrows(
+            IllegalStateException.class,
+            () -> testingSupportService.createCourt("Missing Contact Description Court", 1L, false, true, true)
+        );
+    }
+
+    @Test
+    void createCourtThrowsWhenLocalAuthoritiesReferenceDataIsEmpty() {
+        when(localAuthorityTypeRepository.findAll()).thenReturn(List.of());
+
+        assertThrows(
+            IllegalStateException.class,
+            () -> testingSupportService.createCourt("Missing Local Authority Court", 1L, false, true, true)
+        );
+    }
+
+    @Test
+    void createCourtThrowsWhenOpeningHourTypesReferenceDataIsEmpty() {
+        when(openingHoursTypeRepository.findAll()).thenReturn(List.of());
+
+        assertThrows(
+            IllegalStateException.class,
+            () -> testingSupportService.createCourt("Missing Opening Hour Type Court", 1L, false, true, true)
+        );
+    }
+
+    @Test
+    void createCourtThrowsWhenServiceAreasReferenceDataIsEmpty() {
+        when(serviceAreaRepository.findAll()).thenReturn(List.of());
+
+        assertThrows(
+            IllegalStateException.class,
+            () -> testingSupportService.createCourt("Missing Service Area Court", 1L, false, true, true)
+        );
+    }
+
+    @Test
     void createCourtWithoutTranslationsSkipsTranslationService() {
         String courtName = "Test Court";
         when(courtService.createCourt(any())).thenAnswer(inv -> {
@@ -729,6 +819,82 @@ class TestingSupportServiceTest {
 
         assertThat(courtCodes).isPresent();
         assertThat(((CourtCodesDto) courtCodes.orElseThrow()).getFamilyCourtCode()).isNotNull();
+    }
+
+    @Test
+    void createCodesCanSkipFamilyCodeWhenNotForced() {
+        Optional<?> courtCodes = (Optional<?>) invokePrivateInstanceMethod(
+            "createCodes",
+            new Class<?>[]{boolean.class, Random.class},
+            false,
+            new ScriptedRandom(List.of(true, false, false, false, false, false), 0)
+        );
+
+        assertThat(courtCodes).isPresent();
+        assertThat(((CourtCodesDto) courtCodes.orElseThrow()).getFamilyCourtCode()).isNull();
+    }
+
+    @Test
+    void createCodesSetsFamilyCodeWhenForcedAndPrimaryBranchIsTaken() {
+        Optional<?> courtCodes = (Optional<?>) invokePrivateInstanceMethod(
+            "createCodes",
+            new Class<?>[]{boolean.class, Random.class},
+            true,
+            new ScriptedRandom(List.of(true, false, false, false, false, false), 0)
+        );
+
+        assertThat(courtCodes).isPresent();
+        assertThat(((CourtCodesDto) courtCodes.orElseThrow()).getFamilyCourtCode()).isNotNull();
+    }
+
+    @Test
+    void setSinglePointsOfEntryFallsBackToFirstAllowedAreaWhenSelectionIsEmpty() {
+        UUID courtId = UUID.randomUUID();
+        AreaOfLawType allowedArea = AreaOfLawType.builder()
+            .id(UUID.randomUUID())
+            .name(AllowedLocalAuthorityAreasOfLaw.displayNames().getFirst())
+            .displayName("Allowed")
+            .build();
+
+        invokePrivateInstanceMethod(
+            "setSinglePointsOfEntry",
+            new Class<?>[]{UUID.class, List.class, Random.class},
+            courtId,
+            List.of(allowedArea),
+            new ScriptedRandom(List.of(true, false), 0)
+        );
+
+        verify(courtSinglePointsOfEntryService)
+            .updateCourtSinglePointsOfEntry(eq(courtId), aolSelectionDtoArgumentCaptor.capture());
+        assertThat(aolSelectionDtoArgumentCaptor.getValue()).hasSize(1);
+        assertThat(aolSelectionDtoArgumentCaptor.getValue().getFirst().getId()).isEqualTo(allowedArea.getId());
+        assertThat(aolSelectionDtoArgumentCaptor.getValue().getFirst().getSelected()).isTrue();
+    }
+
+    @Test
+    void genTestImageShrinksToMinimumFontWhenCourtNameIsVeryLong() {
+        byte[] image = (byte[]) invokePrivateInstanceMethod(
+            "genTestImage",
+            new Class<?>[]{int.class, int.class, String.class},
+            24,
+            24,
+            "An Extremely Long Court Name That Cannot Fit At Large Font Sizes"
+        );
+
+        assertThat(image).isNotEmpty();
+    }
+
+    @Test
+    void genTestImageHandlesHeightConstraintWhenWidthAlreadyFits() {
+        byte[] image = (byte[]) invokePrivateInstanceMethod(
+            "genTestImage",
+            new Class<?>[]{int.class, int.class, String.class},
+            200,
+            20,
+            "A"
+        );
+
+        assertThat(image).isNotEmpty();
     }
 
     @Test

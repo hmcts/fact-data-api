@@ -307,6 +307,25 @@ class SearchLocationServiceTest {
         assertThat(results).extracting(SearchResult::getId).containsExactly(serviceCentreId, courtId);
     }
 
+    @Test
+    void nullActionWithServiceAreaStillReturnsCombinedResults() {
+        UUID courtId = UUID.randomUUID();
+        UUID serviceCentreId = UUID.randomUUID();
+        CourtWithDistance court = courtWithDistance(courtId, BigDecimal.valueOf(2));
+        ServiceCentreWithDistance serviceCentre =
+            serviceCentreWithDistance(serviceCentreId, BigDecimal.valueOf(1));
+
+        when(searchCourtService.getCourtsBySearchParameters("SW1A 1AA", "Money Claims", null, 10))
+            .thenReturn(List.of(court));
+        when(searchServiceCentreService.getServiceCentresBySearchParameters("SW1A 1AA", "Money Claims", null, 10))
+            .thenReturn(List.of(serviceCentre));
+
+        List<SearchResult> results =
+            searchLocationService.getLocationsBySearchParameters("SW1A 1AA", "Money Claims", null, 10);
+
+        assertThat(results).extracting(SearchResult::getId).containsExactly(serviceCentreId, courtId);
+    }
+
     private CourtWithDistance courtWithDistance(UUID courtId, BigDecimal distance) {
         return new CourtWithDistance() {
             @Override

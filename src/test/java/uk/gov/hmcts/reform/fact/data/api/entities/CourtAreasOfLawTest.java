@@ -31,5 +31,12 @@ class CourtAreasOfLawTest {
 
         assertThat(courtAreasOfLaw.getAreasOfLawForView()).containsExactly(areaOfLawId);
     }
+
+    @Test
+    void getAreasOfLawForViewReturnsNullWhenNoValuesAreConfigured() {
+        CourtAreasOfLaw courtAreasOfLaw = new CourtAreasOfLaw();
+
+        assertThat(courtAreasOfLaw.getAreasOfLawForView()).isNull();
+    }
 }
 
