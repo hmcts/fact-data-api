@@ -25,6 +25,8 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
 
 import java.util.List;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Slf4j
 @SecuredFactRestController(
     name = "Search Court",
@@ -71,13 +73,13 @@ public class SearchCourtController {
         @Min(1)
         @Max(50)
         final Integer limit) {
-        log.debug(
-            "Court postcode search: hasServiceArea={}, action={}, limit={}, postcodeLength={}",
+        log.debug(writeLog(String.format(
+            "Court postcode search: hasServiceArea=%s, action=%s, limit=%s, postcodeLength=%s",
             serviceArea != null && !serviceArea.isBlank(),
             action,
             limit,
             postcode == null ? 0 : postcode.length()
-        );
+        )));
         return ResponseEntity.ok(
             searchCourtService.getCourtsBySearchParameters(postcode, serviceArea, action, limit));
     }

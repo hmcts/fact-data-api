@@ -39,6 +39,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @SecuredFactRestController(
     name = "User",
     description = "Operations related to Users",
@@ -71,15 +73,15 @@ public class UserController {
         String search,
         @RequestParam(name = "sortBy", required = false) String sortBy,
         @RequestParam(name = "sortOrder", required = false) String sortOrder) {
-        log.debug(
-            "User list query pageNumber={}, pageSize={}, hasSearch={}, searchLength={}, sortBy={}, sortOrder={}",
+        log.debug(writeLog(String.format(
+            "User list query pageNumber=%s, pageSize=%s, hasSearch=%s, searchLength=%s, sortBy=%s, sortOrder=%s",
             pageNumber,
             pageSize,
             search != null && !search.isBlank(),
             search == null ? 0 : search.length(),
             sortBy,
             sortOrder
-        );
+        )));
         return ResponseEntity.ok(userService.getFilteredAndPaginatedUsers(
             pageNumber,
             pageSize,

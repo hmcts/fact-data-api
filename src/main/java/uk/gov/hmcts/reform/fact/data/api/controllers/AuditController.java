@@ -31,6 +31,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 
 @Slf4j
 @SecuredFactRestController(
@@ -74,9 +76,9 @@ public class AuditController {
         LocalDate fromDate,
         @Parameter(name = "toDate", description = "'To' date (end of day) for result filtering")
         @RequestParam(name = "toDate", required = false) LocalDate toDate) {
-        log.debug(
-            "Audit query: pageNumber={}, pageSize={}, fromDate={}, hasToDate={}, subjectType={}, "
-                + "hasCourtId={}, hasServiceCentreId={}, hasEmailMatch={}, emailMatchLength={}",
+        log.debug(writeLog(String.format(
+            "Audit query: pageNumber=%s, pageSize=%s, fromDate=%s, hasToDate=%s, subjectType=%s, "
+                + "hasCourtId=%s, hasServiceCentreId=%s, hasEmailMatch=%s, emailMatchLength=%s",
             pageNumber,
             pageSize,
             fromDate,
@@ -86,7 +88,7 @@ public class AuditController {
             serviceCentreId != null && !serviceCentreId.isBlank(),
             emailMatch != null && !emailMatch.isBlank(),
             emailMatch == null ? 0 : emailMatch.length()
-        );
+        )));
         if (toDate != null && toDate.isBefore(fromDate)) {
             throw new InvalidDateRangeException("toDate must not be before fromDate");
         }

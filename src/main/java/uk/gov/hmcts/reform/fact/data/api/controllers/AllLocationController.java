@@ -21,6 +21,8 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @SecuredFactRestController(
     name = "All Locations",
     description = "Operations related to combined courts and service centres"
@@ -55,9 +57,9 @@ public class AllLocationController {
         String partialCourtName,
         @RequestParam(name = "sortBy", required = false) String sortBy,
         @RequestParam(name = "sortOrder", required = false) String sortOrder) {
-        log.debug(
-            "All-location query: pageNumber={}, pageSize={}, includeClosed={}, onlyServiceCentres={}, "
-                + "hasRegionId={}, hasPartialCourtName={}, partialCourtNameLength={}, sortBy={}, sortOrder={}",
+        log.debug(writeLog(String.format(
+            "All-location query: pageNumber=%s, pageSize=%s, includeClosed=%s, onlyServiceCentres=%s, "
+                + "hasRegionId=%s, hasPartialCourtName=%s, partialCourtNameLength=%s, sortBy=%s, sortOrder=%s",
             pageNumber,
             pageSize,
             includeClosed,
@@ -67,7 +69,7 @@ public class AllLocationController {
             partialCourtName == null ? 0 : partialCourtName.length(),
             sortBy,
             sortOrder
-        );
+        )));
         return ResponseEntity.ok(allLocationService.getFilteredAndPaginatedLocations(
             pageNumber,
             pageSize,

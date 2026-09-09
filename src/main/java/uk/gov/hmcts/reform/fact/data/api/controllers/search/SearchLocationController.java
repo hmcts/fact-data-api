@@ -21,6 +21,8 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
 
 import java.util.List;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @SecuredFactRestController(
     name = "Search Location",
     description = "Operations related to searching courts and service centres"
@@ -63,12 +65,12 @@ public class SearchLocationController {
         @Max(50)
         final Integer limit) {
 
-        log.debug(
-            "Location search request received (serviceAreaProvided={}, action={}, limit={})",
+        log.debug(writeLog(String.format(
+            "Location search request received (serviceAreaProvided=%s, action=%s, limit=%s)",
             serviceArea != null && !serviceArea.isBlank(),
             action,
             limit
-        );
+        )));
 
         return ResponseEntity.ok(
             searchLocationService.getLocationsBySearchParameters(postcode, serviceArea, action, limit)

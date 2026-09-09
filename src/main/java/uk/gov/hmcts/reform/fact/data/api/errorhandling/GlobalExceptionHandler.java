@@ -33,6 +33,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -42,7 +44,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ExceptionResponse handle(NotFoundException ex) {
-        log.trace("404, unable to find entity. Details: {}", ex.getMessage());
+        log.trace(writeLog(
+            String.format("404, unable to find entity. Details: %s", ex.getMessage())
+        ));
         return generateExceptionResponse(ex.getMessage());
     }
 
@@ -52,7 +56,10 @@ public class GlobalExceptionHandler {
         String provided = request != null && request.getContentType() != null
             ? request.getContentType()
             : UNKNOWN;
-        log.warn("415, multipart handling error. Provided Content-Type: {}. Details: {}", provided, ex.getMessage());
+        log.warn(writeLog(
+            String.format("415, multipart handling error. Provided Content-Type: %s. Details: %s",
+                          provided, ex.getMessage())
+        ));
 
         String message = String.format(
             "Unsupported or malformed Content-Type '%s'. If uploading a file, use 'multipart/form-data'. "
@@ -65,14 +72,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CourtResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ExceptionResponse handle(CourtResourceNotFoundException ex) {
-        log.trace("204, unable to find court resource. Details: {}", ex.getMessage());
+        log.trace(writeLog(
+            String.format("204, unable to find court resource. Details: %s", ex.getMessage())
+        ));
         return generateExceptionResponse(ex.getMessage());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(ConstraintViolationException ex) {
-        log.warn("400, error while validating headers / body. Details: {}", ex.getMessage());
+        log.warn(writeLog(
+            String.format("400, error while validating headers / body. Details: %s", ex.getMessage())
+        ));
 
         String message = ex.getConstraintViolations().stream()
             .findFirst()
@@ -96,7 +107,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handle(MethodArgumentNotValidException ex) {
-        log.warn("400, error while validating request body. Details: {}", ex.getMessage());
+        log.warn(writeLog(
+            String.format("400, error while validating request body. Details: %s", ex.getMessage())
+        ));
 
         LinkedHashMap<String, String> errors = new LinkedHashMap<>();
 
@@ -111,7 +124,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(HttpMessageNotReadableException ex) {
-        log.warn("400, could not parse request body. Details: {}", ex.getMessage());
+        log.warn(writeLog(
+            String.format("400, could not parse request body. Details: %s", ex.getMessage())
+        ));
 
         String message = "Invalid request body: " + ex.getMessage();
 
@@ -121,14 +136,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(IllegalArgumentException ex) {
-        log.warn("400, illegal argument supplied. Details: {}", ex.getMessage());
+        log.warn(writeLog(
+            String.format("400, illegal argument supplied. Details: %s", ex.getMessage())
+        ));
         return generateExceptionResponse(ex.getMessage());
     }
 
     @ExceptionHandler(InvalidFileException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidFileException ex) {
-        log.warn("400, file failed validation. Details: {}", ex.getMessage());
+        log.warn(writeLog(
+            String.format("400, file failed validation. Details: %s", ex.getMessage())
+        ));
 
         return generateExceptionResponse(ex.getMessage());
     }
@@ -136,7 +155,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidPostcodeException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidPostcodeException ex) {
-        log.warn("400, invalid postcode. Details: {}", ex.getMessage());
+        log.warn(writeLog(
+            String.format("400, invalid postcode. Details: %s", ex.getMessage())
+        ));
 
         return generateExceptionResponse(ex.getMessage());
     }
@@ -144,7 +165,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
     public ExceptionResponse handle(MaxUploadSizeExceededException ex) {
-        log.warn("413, uploaded file size exceeds limit. Details: {}", ex.getMessage());
+        log.warn(writeLog(
+            String.format("413, uploaded file size exceeds limit. Details: %s", ex.getMessage())
+        ));
 
         return generateExceptionResponse("Uploaded file size exceeds the maximum allowed limit of 2MB.");
     }
@@ -152,11 +175,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(MethodArgumentTypeMismatchException ex) {
-        log.warn(
-            "400, invalid parameter type. Parameter: {}, Value: {}, Expected type: {}",
-            ex.getName(), ex.getValue(), ex.getRequiredType()
-                != null ? ex.getRequiredType().getSimpleName() : UNKNOWN
-        );
+        log.warn(writeLog(
+            String.format("400, invalid parameter type. Parameter: %s, Value: %s, Expected type: %s",
+                          ex.getName(),
+                          ex.getValue(),
+                          ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : UNKNOWN
+            )
+        ));
 
         String expectedType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : UNKNOWN;
         String message = String.format(
@@ -172,15 +197,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ExceptionResponse handle(AccessDeniedException ex) {
-        log.warn("403 Forbidden. Details: {}", ex.getMessage());
+        log.warn(writeLog(
+            String.format("403 Forbidden. Details: %s", ex.getMessage())
+        ));
         return generateExceptionResponse(ex.getMessage());
     }
 
     @ExceptionHandler(InvalidDateRangeException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidDateRangeException ex) {
-        log.warn("400, date range failed validation. Details: {}", ex.getMessage());
-
+        log.warn(writeLog(
+            String.format("400, date range failed validation. Details: %s", ex.getMessage())
+        ));
         return generateExceptionResponse(ex.getMessage());
     }
 
@@ -188,47 +216,57 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidParameterCombinationException ex,
                                     HttpServletRequest request) {
-
-        log.warn(
-            "400, invalid parameter combination. Path: {}. Details: {}",
-            request != null ? request.getRequestURI() : UNKNOWN,
-            ex.getMessage()
-        );
+        log.warn(writeLog(
+            String.format("400, invalid parameter combination. Path: %s. Details: %s",
+                          request != null ? request.getRequestURI() : UNKNOWN,
+                          ex.getMessage()
+            )
+        ));
         return generateExceptionResponse(ex.getMessage());
     }
 
     @ExceptionHandler(DuplicatedListItemException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(DuplicatedListItemException ex) {
-        log.warn("400, duplicated list item. Details: {}", ex.getMessage());
+        log.warn(writeLog(
+            String.format("400, duplicated list item. Details: %s", ex.getMessage())
+        ));
         return generateExceptionResponse(ex.getMessage());
     }
 
     @ExceptionHandler(InvalidAreaOfLawException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(InvalidAreaOfLawException ex) {
-        log.warn("400, invalid area of law. Details: {}", ex.getMessage());
+        log.warn(writeLog(
+            String.format("400, invalid area of law. Details: %s", ex.getMessage())
+        ));
         return generateExceptionResponse(ex.getMessage());
     }
 
     @ExceptionHandler(JsonConvertException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ExceptionResponse handle(JsonConvertException ex) {
-        log.warn("400, JSON conversion error. Details: {}", ex.getMessage());
+        log.warn(writeLog(
+            String.format("400, JSON conversion error. Details: %s", ex.getMessage())
+        ));
         return generateExceptionResponse(ex.getMessage());
     }
 
     @ExceptionHandler(AzureUploadException.class)
     @ResponseStatus(HttpStatus.BAD_GATEWAY)
     public ExceptionResponse handle(AzureUploadException ex) {
-        log.error("502, error while uploading CSV to Azure. Details: {}", ex.getMessage());
+        log.error(writeLog(
+            String.format("502, error while uploading CSV to Azure. Details: %s", ex.getMessage())
+        ));
         return generateExceptionResponse(ex.getMessage());
     }
 
     @ExceptionHandler(CsvCreationException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ExceptionResponse handle(CsvCreationException ex) {
-        log.error("500, error while creating CSV file. Details: {}", ex.getMessage());
+        log.error(writeLog(
+            String.format("500, error while creating CSV file. Details: %s", ex.getMessage())
+        ));
         return generateExceptionResponse(ex.getMessage());
     }
 
