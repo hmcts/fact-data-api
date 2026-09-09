@@ -25,11 +25,29 @@ class PostcodeLadderTest {
     }
 
     @Test
+    void fromPartialPostcodeShouldHandleTrailingLetterWhenPenultimateCharIsNotALetter() {
+        PostcodeLadder ladder = PostcodeLadder.fromPartialPostcode("ab1a");
+
+        assertThat(ladder.getMinusUnitNoSpace()).isEqualTo("AB1A");
+        assertThat(ladder.getOutCodeNoSpace()).isEqualTo("AB1A");
+        assertThat(ladder.getAreacodeNoSpace()).isEqualTo("AB");
+    }
+
+    @Test
     void fromPartialPostcodeShouldHandleNullInput() {
         PostcodeLadder ladder = PostcodeLadder.fromPartialPostcode(null);
 
         assertThat(ladder.getMinusUnitNoSpace()).isEmpty();
         assertThat(ladder.getOutCodeNoSpace()).isEmpty();
         assertThat(ladder.getAreacodeNoSpace()).isEmpty();
+    }
+
+    @Test
+    void fromPartialPostcodeShouldKeepLeadingDigitWhenNoAreaPrefixExists() {
+        PostcodeLadder ladder = PostcodeLadder.fromPartialPostcode("1aa");
+
+        assertThat(ladder.getMinusUnitNoSpace()).isEqualTo("1");
+        assertThat(ladder.getOutCodeNoSpace()).isEmpty();
+        assertThat(ladder.getAreacodeNoSpace()).isEqualTo("1AA");
     }
 }

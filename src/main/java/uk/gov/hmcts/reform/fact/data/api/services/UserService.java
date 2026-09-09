@@ -112,9 +112,10 @@ public class UserService {
     public void addFavourite(UUID userId, FavouriteReference favourite) {
         validateUserExists(userId);
         validateSubjectExists(favourite.getSubjectId(), favourite.getSubjectType());
-        switch (favourite.getSubjectType()) {
-            case COURT -> userRepository.addFavouriteCourtIfAbsent(userId, favourite.getSubjectId());
-            case SERVICE_CENTRE -> userRepository.addFavouriteServiceCentreIfAbsent(userId, favourite.getSubjectId());
+        if (favourite.getSubjectType() == SubjectType.COURT) {
+            userRepository.addFavouriteCourtIfAbsent(userId, favourite.getSubjectId());
+        } else {
+            userRepository.addFavouriteServiceCentreIfAbsent(userId, favourite.getSubjectId());
         }
     }
 
@@ -122,9 +123,10 @@ public class UserService {
     public void removeFavourite(UUID userId, UUID subjectId, SubjectType subjectType) {
         validateUserExists(userId);
         validateSubjectExists(subjectId, subjectType);
-        switch (subjectType) {
-            case COURT -> userRepository.removeFavouriteCourt(userId, subjectId);
-            case SERVICE_CENTRE -> userRepository.removeFavouriteServiceCentre(userId, subjectId);
+        if (subjectType == SubjectType.COURT) {
+            userRepository.removeFavouriteCourt(userId, subjectId);
+        } else {
+            userRepository.removeFavouriteServiceCentre(userId, subjectId);
         }
     }
 
