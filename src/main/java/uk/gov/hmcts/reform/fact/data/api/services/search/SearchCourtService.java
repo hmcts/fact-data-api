@@ -29,6 +29,7 @@ import static uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy.CI
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy.DEFAULT_AOL_DISTANCE;
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy.FAMILY_NON_REGIONAL;
 import static uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy.FAMILY_REGIONAL;
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 
 @Service
 @Slf4j
@@ -173,8 +174,13 @@ public class SearchCourtService {
                 List.of(REGIONAL)
             ) ? FAMILY_REGIONAL : FAMILY_NON_REGIONAL;
         }
-        log.debug("Setting search strategy to default for {}, {}, {}",
-                action, serviceArea, authorityName);
+        log.debug(writeLog(
+            "Setting search strategy to default",
+            "action=" + action,
+            "serviceAreaId=" + serviceArea.getId(),
+            "hasAuthorityName=" + (authorityName != null && !authorityName.isBlank()),
+            "authorityNameLength=" + (authorityName == null ? 0 : authorityName.length())
+        ));
         return FAMILY_NON_REGIONAL;
     }
 }

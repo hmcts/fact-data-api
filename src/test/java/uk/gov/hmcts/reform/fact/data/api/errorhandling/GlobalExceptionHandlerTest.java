@@ -212,7 +212,8 @@ class GlobalExceptionHandlerTest {
 
         ExceptionResponse response = handler.handle(ex);
 
-        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getMessage()).isEqualTo(
+            "Access denied: You do not have permission to access this resource.");
         assertThat(response.getTimestamp()).isNotNull();
     }
 
@@ -391,7 +392,8 @@ class GlobalExceptionHandlerTest {
 
         ExceptionResponse response = handler.handle(ex);
 
-        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getMessage())
+            .isEqualTo("Unable to complete the request due to an upstream service error.");
         assertThat(response.getTimestamp()).isNotNull();
     }
 
@@ -401,7 +403,7 @@ class GlobalExceptionHandlerTest {
 
         ExceptionResponse response = handler.handle(ex);
 
-        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getMessage()).isEqualTo("Internal server error while creating CSV file.");
         assertThat(response.getTimestamp()).isNotNull();
     }
 

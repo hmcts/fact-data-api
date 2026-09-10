@@ -31,6 +31,8 @@ import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
 
 import java.util.Map;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -335,7 +337,11 @@ public class CourtService {
 
         if (shouldNotify) {
             try {
-                log.info("Notifying CaTH {}", court.getMrdId());
+                log.debug(writeLog(
+                    "Notifying CaTH",
+                    "courtId=" + court.getId(),
+                    "mrdId=" + court.getMrdId()
+                ));
                 cathClient.notifyCourtStatusChange(
                     court.getMrdId(),
                     Map.of("isOpen", Boolean.TRUE.equals(court.getOpen()))
@@ -357,7 +363,11 @@ public class CourtService {
                     HttpStatus.resolve(ex.status()),
                     ex.getMessage()
                 ));
-                log.error("Error notifying CaTH. MRD ID: {}, Error: {}", court.getMrdId(), ex.getMessage());
+                log.error(writeLog(
+                    "Error notifying CaTH",
+                    "courtId=" + court.getId(),
+                    "mrdId=" + court.getMrdId()
+                ), ex);
             }
         }
     }

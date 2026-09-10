@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +25,9 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
 
 import java.util.List;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
+@Slf4j
 @SecuredFactRestController(
     name = "Search Court",
     description = "Operations related to searching courts and service centres"
@@ -69,7 +73,13 @@ public class SearchCourtController {
         @Min(1)
         @Max(50)
         final Integer limit) {
-
+        log.debug(writeLog(
+            "Court postcode search",
+            "hasServiceArea=" + (serviceArea != null && !serviceArea.isBlank()),
+            "action=" + action,
+            "limit=" + limit,
+            "postcodeLength=" + (postcode == null ? 0 : postcode.length())
+        ));
         return ResponseEntity.ok(
             searchCourtService.getCourtsBySearchParameters(postcode, serviceArea, action, limit));
     }

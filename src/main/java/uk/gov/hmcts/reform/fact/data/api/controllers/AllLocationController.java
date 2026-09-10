@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,11 +21,14 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
 import java.util.List;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @SecuredFactRestController(
     name = "All Locations",
     description = "Operations related to combined courts and service centres"
 )
 @RequiredArgsConstructor
+@Slf4j
 public class AllLocationController {
 
     private final AllLocationService allLocationService;
@@ -53,6 +57,18 @@ public class AllLocationController {
         String partialCourtName,
         @RequestParam(name = "sortBy", required = false) String sortBy,
         @RequestParam(name = "sortOrder", required = false) String sortOrder) {
+        log.debug(writeLog(
+            "All-location query",
+            "regionId=" + (regionId == null || regionId.isBlank() ? "none" : regionId),
+            "pageNumber=" + pageNumber,
+            "pageSize=" + pageSize,
+            "includeClosed=" + includeClosed,
+            "onlyServiceCentres=" + onlyServiceCentres,
+            "hasPartialCourtName=" + (partialCourtName != null && !partialCourtName.isBlank()),
+            "partialCourtNameLength=" + (partialCourtName == null ? 0 : partialCourtName.length()),
+            "sortBy=" + sortBy,
+            "sortOrder=" + sortOrder
+        ));
         return ResponseEntity.ok(allLocationService.getFilteredAndPaginatedLocations(
             pageNumber,
             pageSize,

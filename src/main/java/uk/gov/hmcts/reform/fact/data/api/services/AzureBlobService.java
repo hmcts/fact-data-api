@@ -10,6 +10,8 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadExc
 
 import java.io.IOException;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Slf4j
 @RequiredArgsConstructor
 public class AzureBlobService {
@@ -29,7 +31,13 @@ public class AzureBlobService {
         BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
         uploadToBlob(blobClient, file);
 
-        log.info("Uploaded file {} to {}", file.getOriginalFilename(), blobClient.getBlobUrl());
+        log.debug(writeLog(
+            "Uploaded file to Azure blob",
+            "blobName=" + blobName,
+            "hasOriginalFilename=" + (file.getOriginalFilename() != null && !file.getOriginalFilename().isBlank()),
+            "fileSize=" + file.getSize(),
+            "hasBlobUrl=" + (blobClient.getBlobUrl() != null && !blobClient.getBlobUrl().isBlank())
+        ));
 
         return blobClient.getBlobUrl();
     }
