@@ -403,7 +403,7 @@ class GlobalExceptionHandlerTest {
 
         ExceptionResponse response = handler.handle(ex);
 
-        assertThat(response.getMessage()).isEqualTo("An internal server error occurred.");
+        assertThat(response.getMessage()).isEqualTo("Internal server error while creating CSV file.");
         assertThat(response.getTimestamp()).isNotNull();
     }
 

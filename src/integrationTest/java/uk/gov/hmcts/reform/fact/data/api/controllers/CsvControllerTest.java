@@ -69,7 +69,8 @@ class CsvControllerTest {
 
         mvc.perform(post("/csv/"))
             .andExpect(status().isBadGateway())
-            .andExpect(jsonPath("$.message").value("Failed to upload CSV file to Azure Blob Storage"));
+            .andExpect(jsonPath("$.message").value(
+                "Unable to complete the request due to an upstream service error."));
     }
 
     @Test
@@ -79,6 +80,6 @@ class CsvControllerTest {
 
         mvc.perform(post("/csv/"))
             .andExpect(status().isInternalServerError())
-            .andExpect(jsonPath("$.message").value("Failed to create CSV file"));
+            .andExpect(jsonPath("$.message").value("Internal server error while creating CSV file."));
     }
 }

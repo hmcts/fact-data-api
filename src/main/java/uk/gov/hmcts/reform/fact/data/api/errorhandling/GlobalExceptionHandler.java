@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
     private static final String UNKNOWN = "unknown";
     private static final String ACCESS_DENIED_MESSAGE =
         "Access denied: You do not have permission to access this resource.";
-    private static final String INTERNAL_SERVER_ERROR_MESSAGE = "An internal server error occurred.";
+    private static final String CSV_CREATION_ERROR_MESSAGE = "Internal server error while creating CSV file.";
     private static final String BAD_GATEWAY_MESSAGE =
         "Unable to complete the request due to an upstream service error.";
 
@@ -273,7 +273,7 @@ public class GlobalExceptionHandler {
             "500, error while creating CSV file",
             "ExceptionType=" + ex.getClass().getSimpleName()
         ), ex);
-        return generateExceptionResponse(INTERNAL_SERVER_ERROR_MESSAGE);
+        return generateExceptionResponse(CSV_CREATION_ERROR_MESSAGE);
     }
 
     private ExceptionResponse generateExceptionResponse(String message) {
