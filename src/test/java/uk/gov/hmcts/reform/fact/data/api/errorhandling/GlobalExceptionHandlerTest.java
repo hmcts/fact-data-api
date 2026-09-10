@@ -392,7 +392,8 @@ class GlobalExceptionHandlerTest {
 
         ExceptionResponse response = handler.handle(ex);
 
-        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getMessage())
+            .isEqualTo("Unable to complete the request due to an upstream service error.");
         assertThat(response.getTimestamp()).isNotNull();
     }
 
@@ -402,7 +403,7 @@ class GlobalExceptionHandlerTest {
 
         ExceptionResponse response = handler.handle(ex);
 
-        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getMessage()).isEqualTo("An internal server error occurred.");
         assertThat(response.getTimestamp()).isNotNull();
     }
 

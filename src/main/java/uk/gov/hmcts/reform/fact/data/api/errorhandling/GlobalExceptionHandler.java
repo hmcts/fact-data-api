@@ -40,6 +40,11 @@ import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 public class GlobalExceptionHandler {
 
     private static final String UNKNOWN = "unknown";
+    private static final String ACCESS_DENIED_MESSAGE =
+        "Access denied: You do not have permission to access this resource.";
+    private static final String INTERNAL_SERVER_ERROR_MESSAGE = "An internal server error occurred.";
+    private static final String BAD_GATEWAY_MESSAGE =
+        "Unable to complete the request due to an upstream service error.";
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -200,7 +205,7 @@ public class GlobalExceptionHandler {
         log.warn(writeLog(
             "403, access denied"
         ));
-        return generateExceptionResponse("Access denied: You do not have permission to access this resource.");
+        return generateExceptionResponse(ACCESS_DENIED_MESSAGE);
     }
 
     @ExceptionHandler(InvalidDateRangeException.class)
@@ -255,18 +260,20 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_GATEWAY)
     public ExceptionResponse handle(AzureUploadException ex) {
         log.error(writeLog(
-            "502, error while uploading CSV to Azure", ex.getMessage()
-        ));
-        return generateExceptionResponse(ex.getMessage());
+            "502, error while uploading CSV to Azure",
+            "ExceptionType=" + ex.getClass().getSimpleName()
+        ), ex);
+        return generateExceptionResponse(BAD_GATEWAY_MESSAGE);
     }
 
     @ExceptionHandler(CsvCreationException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ExceptionResponse handle(CsvCreationException ex) {
         log.error(writeLog(
-            "500, error while creating CSV file", ex.getMessage()
-        ));
-        return generateExceptionResponse(ex.getMessage());
+            "500, error while creating CSV file",
+            "ExceptionType=" + ex.getClass().getSimpleName()
+        ), ex);
+        return generateExceptionResponse(INTERNAL_SERVER_ERROR_MESSAGE);
     }
 
     private ExceptionResponse generateExceptionResponse(String message) {
