@@ -198,9 +198,9 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ExceptionResponse handle(AccessDeniedException ex) {
         log.warn(writeLog(
-            "403 Forbidden", ex.getMessage()
+            "403, access denied"
         ));
-        return generateExceptionResponse(ex.getMessage());
+        return generateExceptionResponse("Access denied: You do not have permission to access this resource.");
     }
 
     @ExceptionHandler(InvalidDateRangeException.class)

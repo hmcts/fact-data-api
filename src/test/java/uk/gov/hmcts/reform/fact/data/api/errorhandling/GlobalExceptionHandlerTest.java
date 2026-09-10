@@ -212,7 +212,8 @@ class GlobalExceptionHandlerTest {
 
         ExceptionResponse response = handler.handle(ex);
 
-        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getMessage()).isEqualTo(
+            "Access denied: You do not have permission to access this resource.");
         assertThat(response.getTimestamp()).isNotNull();
     }
 
