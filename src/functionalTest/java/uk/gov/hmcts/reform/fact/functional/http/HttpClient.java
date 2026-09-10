@@ -68,8 +68,10 @@ public final class HttpClient {
                 final String clientSecret = getRequiredEnv(clientSecretEnvVar);
 
                 log.info(writeLog(
-                    String.format("All authentication env variables set for %s using %s",
-                                  clientAppRegEnvVar, clientSecretEnvVar)
+                    "Authentication env variables resolved",
+                    "hasClientAppRegId=" + !clientAppRegId.isBlank(),
+                    "hasClientSecret=" + !clientSecret.isBlank(),
+                    "hasTenantId=" + !tenantId.isBlank()
                 ));
 
                 // set the scope up for the destination app

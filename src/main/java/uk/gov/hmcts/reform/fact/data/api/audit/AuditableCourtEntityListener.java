@@ -114,7 +114,11 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
                 : findPreviousEntity(entity);
             writeAuditRecord(entity, previousEntity, auditActionType);
         } else {
-            log.error(writeLog("No entity manager available during an audit operation"));
+            log.error(writeLog(
+                "No entity manager available during audit operation",
+                "entityId=" + (entity.getId() == null ? "none" : entity.getId()),
+                "actionTypeName=" + (auditActionType == null ? "none" : auditActionType.name())
+            ));
             throw new IllegalStateException("No entity manager available during an audit operation");
         }
     }
@@ -149,7 +153,13 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
     private void writeAuditRecord(AuditableEntity entity, AuditableEntity previous,
                                   AuditActionType operationType) {
         if (auditUserContextRef.get() == null && !ensureAuditUserContext()) {
-            log.error(writeLog("No audit user context available during an audit operation"));
+            log.error(writeLog(
+                "No audit user context available during an audit operation",
+                "operationType=" + (operationType == null ? "none" : operationType.name()),
+                "subjectId=" + (entity == null || entity.getAuditSubjectId() == null
+                    ? "none"
+                    : entity.getAuditSubjectId())
+            ));
             throw new IllegalStateException("No audit user context available during an audit operation");
         }
 

@@ -34,7 +34,7 @@ public class SlackClient {
                 );
             }
         } catch (IOException | SlackApiException ex) {
-            log.error(writeLog("Exception occurred while calling Slack API"), ex.getMessage());
+            log.error(writeLog("Exception occurred while calling Slack API"), ex);
         }
     }
 }

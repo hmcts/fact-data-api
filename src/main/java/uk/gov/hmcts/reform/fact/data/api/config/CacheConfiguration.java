@@ -47,7 +47,9 @@ public class CacheConfiguration {
 
         executorService.scheduleWithFixedDelay(
             () -> log.info(writeLog(
-                String.format("OsData Cache stats: %s", cache.stats()))),
+                "OsData Cache stats",
+                "stats=" + cache.stats()
+            )),
             0, 5, TimeUnit.MINUTES
         );
 
