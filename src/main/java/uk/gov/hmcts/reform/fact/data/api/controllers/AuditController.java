@@ -77,18 +77,18 @@ public class AuditController {
         @Parameter(name = "toDate", description = "'To' date (end of day) for result filtering")
         @RequestParam(name = "toDate", required = false) LocalDate toDate) {
         log.debug(writeLog(
-            String.format("Audit query: pageNumber=%s, pageSize=%s, fromDate=%s, hasToDate=%s, subjectType=%s, "
-                              + "hasCourtId=%s, hasServiceCentreId=%s, hasEmailMatch=%s, emailMatchLength=%s",
-                          pageNumber,
-                          pageSize,
-                          fromDate,
-                          toDate != null,
-                          subjectType,
-                          courtId != null && !courtId.isBlank(),
-                          serviceCentreId != null && !serviceCentreId.isBlank(),
-                          emailMatch != null && !emailMatch.isBlank(),
-                          emailMatch == null ? 0 : emailMatch.length())
+            "Audit query",
+            "courtId=" + (courtId == null || courtId.isBlank() ? "none" : courtId),
+            "serviceCentreId=" + (serviceCentreId == null || serviceCentreId.isBlank() ? "none" : serviceCentreId),
+            "pageNumber=" + pageNumber,
+            "pageSize=" + pageSize,
+            "fromDate=" + fromDate,
+            "toDate=" + toDate,
+            "subjectType=" + subjectType,
+            "hasEmailMatch=" + (emailMatch != null && !emailMatch.isBlank()),
+            "emailMatchLength=" + (emailMatch == null ? 0 : emailMatch.length())
         ));
+
         if (toDate != null && toDate.isBefore(fromDate)) {
             throw new InvalidDateRangeException("toDate must not be before fromDate");
         }

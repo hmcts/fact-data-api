@@ -54,9 +54,9 @@ public class LockController {
         @Parameter(description = "The subject type", required = true) @PathVariable SubjectType subjectType,
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId) {
         log.debug(writeLog(
-            String.format("Get subject locks request: subjectType=%s, hasSubjectId=%s",
-                          subjectType,
-                          subjectId != null && !subjectId.isBlank())
+            "Get subject locks request",
+            "subjectId=" + subjectId,
+            "subjectType=" + subjectType
         ));
         return ResponseEntity.ok(lockService.getAllSubjectLocks(subjectType, UUID.fromString(subjectId)));
     }
@@ -75,11 +75,11 @@ public class LockController {
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to check lock status", required = true) @PathVariable Page page) {
         log.debug(writeLog(
-            String.format("Get lock status request: subjectType=%s, page=%s, hasSubjectId=%s",
-                          subjectType,
-                          page,
-                          subjectId != null && !subjectId.isBlank())
-        ));
+            "Get lock status request",
+            "subjectId=" + subjectId,
+            "subjectType=" + subjectType,
+            "page=" + page
+            ));
         return lockService.getPageLock(subjectType, UUID.fromString(subjectId), page)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.noContent().build());
@@ -100,13 +100,12 @@ public class LockController {
         @Parameter(description = "Page to lock", required = true) @PathVariable Page page,
         @Parameter(description = "User ID creating the lock", required = true) @Valid @RequestBody UUID userId) {
         log.debug(writeLog(
-            String.format("Create/update lock request: subjectType=%s, page=%s, hasSubjectId=%s, hasUserId=%s",
-                          subjectType,
-                          page,
-                          subjectId != null && !subjectId.isBlank(),
-                          userId != null)
+            "Create/update lock request",
+            "subjectId=" + subjectId,
+            "userId=" + userId,
+            "subjectType=" + subjectType,
+            "page=" + page
         ));
-
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(lockService.createOrUpdateLock(subjectType, UUID.fromString(subjectId), page, userId));
     }
@@ -123,10 +122,10 @@ public class LockController {
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to delete lock", required = true) @PathVariable Page page) {
         log.debug(writeLog(
-            String.format("Delete lock request: subjectType=%s, page=%s, hasSubjectId=%s",
-                          subjectType,
-                          page,
-                          subjectId != null && !subjectId.isBlank())
+            "Delete lock request",
+            "subjectId=" + subjectId,
+            "subjectType=" + subjectType,
+            "page=" + page
         ));
         lockService.deleteLock(subjectType, UUID.fromString(subjectId), page);
         return ResponseEntity.noContent().build();

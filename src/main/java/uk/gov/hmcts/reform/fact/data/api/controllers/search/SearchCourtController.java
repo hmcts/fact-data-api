@@ -74,11 +74,11 @@ public class SearchCourtController {
         @Max(50)
         final Integer limit) {
         log.debug(writeLog(
-            String.format("Court postcode search: hasServiceArea=%s, action=%s, limit=%s, postcodeLength=%s",
-                          serviceArea != null && !serviceArea.isBlank(),
-                          action,
-                          limit,
-                          postcode == null ? 0 : postcode.length())
+            "Court postcode search",
+            "hasServiceArea=" + (serviceArea != null && !serviceArea.isBlank()),
+            "action=" + action,
+            "limit=" + limit,
+            "postcodeLength=" + (postcode == null ? 0 : postcode.length())
         ));
         return ResponseEntity.ok(
             searchCourtService.getCourtsBySearchParameters(postcode, serviceArea, action, limit));

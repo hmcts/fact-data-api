@@ -58,18 +58,16 @@ public class AllLocationController {
         @RequestParam(name = "sortBy", required = false) String sortBy,
         @RequestParam(name = "sortOrder", required = false) String sortOrder) {
         log.debug(writeLog(
-            String.format("All-location query: pageNumber=%s, pageSize=%s, includeClosed=%s, onlyServiceCentres=%s, "
-                              + "hasRegionId=%s, hasPartialCourtName=%s, partialCourtNameLength=%s, sortBy=%s,"
-                              + " sortOrder=%s",
-                          pageNumber,
-                          pageSize,
-                          includeClosed,
-                          onlyServiceCentres,
-                          regionId != null && !regionId.isBlank(),
-                          partialCourtName != null && !partialCourtName.isBlank(),
-                          partialCourtName == null ? 0 : partialCourtName.length(),
-                          sortBy,
-                          sortOrder)
+            "All-location query",
+            "regionId=" + (regionId == null || regionId.isBlank() ? "none" : regionId),
+            "pageNumber=" + pageNumber,
+            "pageSize=" + pageSize,
+            "includeClosed=" + includeClosed,
+            "onlyServiceCentres=" + onlyServiceCentres,
+            "hasPartialCourtName=" + (partialCourtName != null && !partialCourtName.isBlank()),
+            "partialCourtNameLength=" + (partialCourtName == null ? 0 : partialCourtName.length()),
+            "sortBy=" + sortBy,
+            "sortOrder=" + sortOrder
         ));
         return ResponseEntity.ok(allLocationService.getFilteredAndPaginatedLocations(
             pageNumber,
