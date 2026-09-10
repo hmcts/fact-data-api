@@ -77,14 +77,14 @@ public class CourtAccessibilityOptions implements AuditableCourtEntity {
 
     @Schema(description = "Details of available accessible toilets")
     @Size(max = 255, message = "Accessible toilet description must not exceed 255 characters")
-    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
-        message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
+    @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE)
     private String accessibleToiletDescription;
 
     @Schema(description = "Welsh language details of available accessible toilets")
     @Size(max = 255, message = "Welsh accessible toilet description must not exceed 255 characters")
-    @Pattern(regexp = ValidationConstants.WELSH_DESCRIPTION_REGEX,
-        message = ValidationConstants.WELSH_DESCRIPTION_REGEX_MESSAGE)
+    @Pattern(regexp = ValidationConstants.WELSH_TEXT_REGEX,
+        message = ValidationConstants.WELSH_TEXT_REGEX_MESSAGE)
     private String accessibleToiletDescriptionCy;
 
     @Schema(description = "The accessible entrance status")

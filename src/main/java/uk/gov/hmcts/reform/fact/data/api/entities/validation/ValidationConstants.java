@@ -23,13 +23,11 @@ public class ValidationConstants {
     public static final int PHONE_NO_MAX_LENGTH = 20;
     public static final String PHONE_NO_MAX_LENGTH_MESSAGE = "Phone number should be no more than {max} characters";
 
-    public static final String GENERIC_DESCRIPTION_REGEX = "^[A-Za-z0-9 ()':,\\-;.]+$";
-    public static final String GENERIC_DESCRIPTION_REGEX_MESSAGE = "Value contains invalid characters";
+    public static final String ENGLISH_TEXT_REGEX = "^[A-Za-z0-9 ()':,\\-;.]+$";
+    public static final String ENGLISH_TEXT_REGEX_MESSAGE = "Value contains invalid characters";
 
-    public static final String GENERIC_DESCRIPTION_REGEX_WELSH = "^[\\p{L}\\p{M}0-9 ()':,\\-;.]+$";
-
-    public static final String WELSH_DESCRIPTION_REGEX = "^[\\p{L}\\p{M}\\p{N} ()':,\\-;.]+$";
-    public static final String WELSH_DESCRIPTION_REGEX_MESSAGE =
+    public static final String WELSH_TEXT_REGEX = "^[\\p{L}\\p{M}0-9 ()':,\\-;.]+$";
+    public static final String WELSH_TEXT_REGEX_MESSAGE =
         "Description in Welsh must only include letters, spaces, apostrophes, hyphens, ampersands, and parentheses";
 
     public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 ()':,.-]+$)$";

@@ -65,15 +65,15 @@ public class CourtFax implements AuditableCourtEntity {
 
     @Schema(description = "Description")
     @Size(max = 250, message = "Fax description must be {max} characters or fewer")
-    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
-        message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
+    @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE)
     @Column(name = "description", length = 250)
     private String description;
 
     @Schema(description = "Welsh language description")
     @Size(max = 250, message = "Welsh fax description must be {max} characters or fewer")
-    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX_WELSH,
-        message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
+    @Pattern(regexp = ValidationConstants.WELSH_TEXT_REGEX,
+        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE)
     @Column(name = "description_cy", length = 250)
     private String descriptionCy;
 
