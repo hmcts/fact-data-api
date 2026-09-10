@@ -37,11 +37,11 @@ public class Region {
 
     @Schema(description = "The name of the Region")
     @NotBlank(message = "The name of the Region must be specified")
-    @Size(min = 5, max = 250, message = "Name should be less than 255 chars")
+    @Size(min = 5, max = 250, message = "Region name should be between {min} and {max} characters")
     private String name;
 
     @Schema(description = "The Region's country")
-    @Size(min = 5, max = 250, message = "Country should be less than 255 chars")
+    @Size(min = 5, max = 250, message = "Country name should be between {min} and {max} characters")
     private String country;
 
 }
