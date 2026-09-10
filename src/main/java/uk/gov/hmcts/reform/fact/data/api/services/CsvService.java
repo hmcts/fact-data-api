@@ -57,7 +57,10 @@ public class CsvService {
             azureBlobService
                 .uploadFile(CSV_FILE_NAME, stringMultipartFile);
         } catch (Exception e) {
-            log.error(writeLog("Error while uploading CSV"), e);
+            log.error(writeLog(
+                "Error while uploading CSV",
+                "fileName=" + CSV_FILE_NAME
+            ), e);
             actions.add("Failed to upload CSV file to Azure Blob Storage. Check App insights.");
             throw new AzureUploadException("Failed to upload CSV file to Azure Blob Storage", e);
         }
@@ -80,7 +83,10 @@ public class CsvService {
                         objectMapper.valueToTree(allLocationDetails))
             );
         } catch (Exception e) {
-            log.error(writeLog("Error while creating CSV file"), e);
+            log.error(writeLog(
+                "Error while creating CSV file",
+                "fileName=" + CSV_FILE_NAME
+            ), e);
             actions.add("Failed to create CSV file. Check App insights.");
             throw new CsvCreationException("Failed to create CSV file", e);
         }

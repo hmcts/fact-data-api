@@ -183,8 +183,9 @@ public class CourtOpeningHoursService {
     @Transactional
     public void deleteCourtOpeningHours(UUID courtId, UUID openingHoursId) {
         log.debug(writeLog(
-            String.format("Deleting court opening hours for court ID: %s and opening hours ID: %s",
-                          courtId, openingHoursId)
+            "Deleting court opening hours",
+            "courtId=" + courtId,
+            "openingHoursId=" + openingHoursId
         ));
         // will generate required 404 if not found
         getOpeningHoursById(courtId, openingHoursId);
@@ -198,9 +199,11 @@ public class CourtOpeningHoursService {
     @Transactional
     public void deleteCourtCounterServiceOpeningHours(final UUID courtId, final UUID counterServiceId) {
         log.debug(writeLog(
-            String.format("Deleting court counter service opening hours for court ID: %s and counter service ID: %s",
-                          courtId, counterServiceId)
+            "Deleting court counter service opening hours",
+            "courtId=" + courtId,
+            "counterServiceId=" + counterServiceId
         ));
+
         // will generate required 404 if not found
         getCounterServiceOpeningHoursById(courtId, counterServiceId);
         courtCounterServiceOpeningHoursRepository.deleteByCourtIdAndId(courtId, counterServiceId);

@@ -76,7 +76,8 @@ public class CourtContactDetailsService {
         request.setCourtContactDescription(description.orElse(null));
 
         log.debug(writeLog(
-            String.format("Creating contact detail for court %s", courtId)
+            "Creating contact detail",
+            "courtId=" + courtId
         ));
         return courtContactDetailsRepository.save(request);
     }
@@ -104,7 +105,9 @@ public class CourtContactDetailsService {
         existing.setPhoneNumber(request.getPhoneNumber());
 
         log.debug(writeLog(
-            String.format("Updating contact detail %s for court %s", contactId, courtId)
+            "Updating contact detail",
+            "contactId=" + contactId,
+            "courtId=" + courtId
         ));
         return courtContactDetailsRepository.save(existing);
     }
@@ -126,7 +129,9 @@ public class CourtContactDetailsService {
         }
 
         log.debug(writeLog(
-            String.format("Deleting contact detail %s for court %s", contactId, courtId)
+            "Deleting contact detail",
+            "contactId=" + contactId,
+            "courtId=" + courtId
         ));
         courtContactDetailsRepository.deleteByIdAndCourtId(contactId, courtId);
     }

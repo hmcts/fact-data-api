@@ -43,7 +43,8 @@ public class CourtFacilitiesService {
      */
     public CourtFacilities setFacilities(UUID courtId, CourtFacilities courtFacilities) {
         log.debug(writeLog(
-            String.format("Setting facilities for court id: %s", courtId)
+            "Setting facilities",
+            "courtId=" + courtId
         ));
         Court foundCourt = courtService.getCourtById(courtId);
         courtFacilities.setCourt(foundCourt);

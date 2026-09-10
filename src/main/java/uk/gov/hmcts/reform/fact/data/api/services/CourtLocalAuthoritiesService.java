@@ -121,9 +121,13 @@ public class CourtLocalAuthoritiesService {
             this.courtLocalAuthoritiesRepository.deleteByCourtIdAndAreaOfLawIdNotIn(courtId, validUUIDs);
 
         } catch (Exception ex) {
-            log.error(writeLog(
-                String.format("Error performing housekeeping for court local authorities, court id: %s", courtId)
-            ), ex);
+            log.error(
+                writeLog(
+                    "Error performing housekeeping for court local authorities",
+                    "courtId=" + courtId
+                ),
+                ex
+            );
         }
     }
 

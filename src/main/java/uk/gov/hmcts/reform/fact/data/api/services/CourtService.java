@@ -338,7 +338,9 @@ public class CourtService {
         if (shouldNotify) {
             try {
                 log.debug(writeLog(
-                    String.format("Notifying CaTH %s", court.getMrdId())
+                    "Notifying CaTH",
+                    "courtId=" + court.getId(),
+                    "mrdId=" + court.getMrdId()
                 ));
                 cathClient.notifyCourtStatusChange(
                     court.getMrdId(),
@@ -362,7 +364,9 @@ public class CourtService {
                     ex.getMessage()
                 ));
                 log.error(writeLog(
-                    String.format("Error notifying CaTH. MRD ID: %s", court.getMrdId())
+                    "Error notifying CaTH",
+                    "courtId=" + court.getId(),
+                    "mrdId=" + court.getMrdId()
                 ), ex);
             }
         }

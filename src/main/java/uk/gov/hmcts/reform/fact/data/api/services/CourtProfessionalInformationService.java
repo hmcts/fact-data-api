@@ -77,7 +77,8 @@ public class CourtProfessionalInformationService {
         CourtProfessionalInformationDetailsDto professionalInformationDetails
     ) {
         log.debug(writeLog(
-            String.format("Setting professional information for court id: %s", courtId)
+            "Setting professional information",
+            "courtId=" + courtId
         ));
         Court court = courtService.getCourtById(courtId);
 

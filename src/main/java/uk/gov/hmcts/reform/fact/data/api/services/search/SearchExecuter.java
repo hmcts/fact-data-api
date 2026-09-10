@@ -65,8 +65,12 @@ public class SearchExecuter {
                 );
                 if (results.isEmpty()) {
                     log.debug(writeLog(
-                        String.format("Default fallback search (if no results found for determined search strategy) "
-                            + "for %s, %s, %s", searchStrategy, action, osLocationData.getPostcode())
+                        "Default fallback search (if no results found for determined search strategy)",
+                        "searchStrategy=" + searchStrategy,
+                        "action=" + action,
+                        "hasPostcode="
+                            + (osLocationData.getPostcode() != null
+                            && !osLocationData.getPostcode().isBlank())
                     ));
                 }
                 yield results.isEmpty()
@@ -94,7 +98,10 @@ public class SearchExecuter {
                                                                UUID serviceAreaId, int limit, UUID aolId) {
         PostcodeLadder ladder = PostcodeLadder.fromPartialPostcode(postcode);
         log.debug(writeLog(
-            String.format("Postcode ladder provided for CIVIl search: %s", ladder)
+            "Postcode ladder provided for CIVIL search",
+            "serviceAreaId=" + serviceAreaId,
+            "areaOfLawId=" + aolId,
+            "ladder=" + ladder
         ));
         List<CourtWithDistance> results = courtAddressRepository.findCivilByPartialPostcodeBestTier(
             serviceAreaId,
@@ -130,8 +137,15 @@ public class SearchExecuter {
             .map(LocalAuthorityType::getId)
             .map(localAuthorityId -> {
                 log.debug(writeLog(
-                    String.format("Searching for family non-regional by local authority (%s) for %s",
-                    serviceArea.getAreaOfLaw().getName(), osLocationData.getPostcode())
+                    "Searching for family non-regional by local authority",
+                    "areaOfLawId=" + aolId,
+                    "serviceAreaId=" + serviceArea.getId(),
+                    "localAuthorityId=" + localAuthorityId,
+                    "areaOfLawName="
+                        + (serviceArea.getAreaOfLaw() != null
+                        ? serviceArea.getAreaOfLaw().getName()
+                        : "null"),
+                    "hasPostcode=" + (osLocationData.getPostcode() != null && !osLocationData.getPostcode().isBlank())
                 ));
                 return courtAddressRepository.findFamilyNonRegionalByLocalAuthority(
                     lat,
@@ -147,7 +161,9 @@ public class SearchExecuter {
             return byLaOpt.get();
         }
         log.debug(writeLog(
-            String.format("Searching for family regional returned no results: %s", serviceArea)
+            "Searching for family regional returned no results",
+            "serviceAreaId=" + serviceArea.getId(),
+            "areaOfLawId=" + aolId
         ));
         return List.of();
     }

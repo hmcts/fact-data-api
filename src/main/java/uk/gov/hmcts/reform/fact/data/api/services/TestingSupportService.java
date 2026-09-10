@@ -338,7 +338,12 @@ public class TestingSupportService {
             // return the unique slug for the created court
             return court.getSlug();
         } catch (Exception e) {
-            log.error(writeLog("Error while creating court"), e);
+            log.error(writeLog(
+                "Error while creating court",
+                "regionId=" + regionId,
+                "courtName=" + courtName,
+                "seed=" + seed
+            ), e);
             throw e;
         }
     }
@@ -398,7 +403,12 @@ public class TestingSupportService {
 
             return serviceCentre;
         } catch (Exception e) {
-            log.error(writeLog("error while creating service centre"), e);
+            log.error(writeLog(
+                "Error while creating service centre",
+                "serviceCentreName=" + serviceCentreName,
+                "regionId=" + (regionId == null ? "none" : regionId),
+                "seed=" + seed
+            ), e);
             throw e;
         }
     }
@@ -743,7 +753,11 @@ public class TestingSupportService {
             );
             courtPhotoService.setCourtPhoto(courtId, file);
         } catch (Exception e) {
-            log.warn(writeLog("Error while uploading test image"), e);
+            log.error(writeLog(
+                "Error while uploading test image",
+                "courtId=" + courtId,
+                "courtName=" + courtName
+            ), e);
             actualUpload = false;
         }
 

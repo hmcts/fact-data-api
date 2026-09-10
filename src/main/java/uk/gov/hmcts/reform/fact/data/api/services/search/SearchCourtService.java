@@ -175,8 +175,11 @@ public class SearchCourtService {
             ) ? FAMILY_REGIONAL : FAMILY_NON_REGIONAL;
         }
         log.debug(writeLog(
-            String.format("Setting search strategy to default for %s, %s, %s",
-                          action, serviceArea, authorityName)
+            "Setting search strategy to default",
+            "action=" + action,
+            "serviceAreaId=" + serviceArea.getId(),
+            "hasAuthorityName=" + (authorityName != null && !authorityName.isBlank()),
+            "authorityNameLength=" + (authorityName == null ? 0 : authorityName.length())
         ));
         return FAMILY_NON_REGIONAL;
     }

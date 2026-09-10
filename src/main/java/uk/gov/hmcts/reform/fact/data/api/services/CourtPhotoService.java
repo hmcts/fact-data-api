@@ -86,7 +86,8 @@ public class CourtPhotoService {
         courtService.getCourtById(courtId);
 
         log.debug(writeLog(
-            String.format("Deleting court photo for court ID: %s", courtId)
+            "Deleting court photo",
+            "courtId=" + courtId
         ));
         CourtPhoto courtPhoto = getCourtPhotoByCourtId(courtId);
 

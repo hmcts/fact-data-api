@@ -177,8 +177,9 @@ public class UserService {
         final ZonedDateTime cutoffDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(retentionPeriod);
         List<User> inactiveUsers = userRepository.deleteAllByLastLoginBefore(cutoffDate);
         log.debug(writeLog(
-            String.format("Deleted %s inactive users who haven't logged in since %s",
-                          inactiveUsers.size(), cutoffDate)
+            "Deleted inactive users before cutoff date",
+            "numberOfUsersDeleted=" + inactiveUsers.size(),
+            "cutoffDate=" + cutoffDate
         ));
         return inactiveUsers.size();
     }

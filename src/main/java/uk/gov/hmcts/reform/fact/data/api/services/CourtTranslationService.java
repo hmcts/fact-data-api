@@ -43,7 +43,8 @@ public class CourtTranslationService {
      */
     public CourtTranslation setTranslation(UUID courtId, CourtTranslation courtTranslation) {
         log.debug(writeLog(
-            String.format("Setting translation for court id: %s", courtId)
+            "Setting translation",
+            "courtId=" + courtId
         ));
         Court foundCourt = courtService.getCourtById(courtId);
         courtTranslation.setCourt(foundCourt);

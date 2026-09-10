@@ -32,7 +32,11 @@ public class AzureBlobService {
         uploadToBlob(blobClient, file);
 
         log.debug(writeLog(
-            String.format("Uploaded file %s to %s", file.getOriginalFilename(), blobClient.getBlobUrl())
+            "Uploaded file to Azure blob",
+            "blobName=" + blobName,
+            "hasOriginalFilename=" + (file.getOriginalFilename() != null && !file.getOriginalFilename().isBlank()),
+            "fileSize=" + file.getSize(),
+            "hasBlobUrl=" + (blobClient.getBlobUrl() != null && !blobClient.getBlobUrl().isBlank())
         ));
 
         return blobClient.getBlobUrl();
