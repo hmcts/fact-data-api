@@ -32,7 +32,7 @@ public class ValidationConstants {
     public static final String PHONE_NO_MAX_LENGTH_MESSAGE = "Phone number should be no more than {max} characters";
 
     public static final String ENGLISH_TEXT_REGEX = "^[A-Za-z0-9 ()':,\\-;.]+$";
-    public static final String ENGLISH_TEXT_REGEX_MESSAGE = "Value contains invalid characters";
+    public static final String TEXT_REGEX_MESSAGE = "Value contains invalid characters";
 
     public static final String WELSH_TEXT_REGEX = "^[\\p{L}\\p{M}0-9 ()':,\\-;.]+$";
     public static final String WELSH_TEXT_REGEX_MESSAGE =
@@ -102,6 +102,9 @@ public class ValidationConstants {
     public static final String EXPLANATION_MAX_LENGTH_MESSAGE = "Explanation must be {max} characters or fewer";
     public static final String WELSH_EXPLANATION_MAX_LENGTH_MESSAGE =
         "Welsh translation must be {max} characters or fewer";
+    public static final String FAX_DESCRIPTION_MAX_LENGTH_MESSAGE = "Fax description must be {max} characters or fewer";
+    public static final String WELSH_FAX_DESCRIPTION_MAX_LENGTH_MESSAGE =
+        "Welsh fax description must be {max} characters or fewer";
 
     public static final String EXPLANATION_REGEX = "^[A-Za-z0-9 '\\-()&+]*$";
     public static final String EXPLANATION_REGEX_MESSAGE =
@@ -123,4 +126,10 @@ public class ValidationConstants {
         "Service centre name should be between {min} and {max} characters";
     public static final String SERVICE_CENTRE_NAME_REGEX_MESSAGE = "Service centre name may only contain letters, "
         + "spaces, apostrophes, hyphens, ampersands, and parentheses";
+
+    public static final String INTERVIEW_ROOM_COUNT_MESSAGE =
+        "Interview room count must be between 1 and 150 when interview rooms are available; otherwise omit or set to 0";
+
+    public static final int FAVOURITE_SUBJECTS_MAX_SIZE = 1000 ;
+    public static final String FAVOURITE_SUBJECTS_MAX_SIZE_MESSAGE = "subjects must contain no more than 1000 items";
 }

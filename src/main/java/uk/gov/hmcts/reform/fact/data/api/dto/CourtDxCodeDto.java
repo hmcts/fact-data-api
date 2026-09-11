@@ -24,19 +24,19 @@ public class CourtDxCodeDto {
     @NotBlank
     @Size(max = 200, message = "DX code must be {max} characters or fewer")
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
-        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE)
+        message = ValidationConstants.TEXT_REGEX_MESSAGE)
     private String dxCode;
 
     @Schema(description = "Explanation of the DX code")
     @Size(max = 250, message = "DX explanation must be {max} characters or fewer")
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
-        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE)
+        message = ValidationConstants.TEXT_REGEX_MESSAGE)
     private String explanation;
 
     @Schema(description = "Welsh language explanation of the DX code")
     @Size(max = 250, message = "DX Welsh explanation must be {max} characters or fewer")
     @Pattern(regexp = ValidationConstants.WELSH_TEXT_REGEX,
-        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE)
+        message = ValidationConstants.TEXT_REGEX_MESSAGE)
     private String explanationCy;
 
     @AssertTrue(message = "DX explanation and Welsh explanation must be provided together")

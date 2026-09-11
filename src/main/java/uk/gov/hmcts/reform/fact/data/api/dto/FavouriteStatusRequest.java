@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 import java.util.List;
 
@@ -18,6 +19,8 @@ import java.util.List;
 public class FavouriteStatusRequest {
 
     @NotEmpty(message = "subjects must contain at least one item")
-    @Size(max = 1000, message = "subjects must contain no more than 1000 items")
+    @Size(max = ValidationConstants.FAVOURITE_SUBJECTS_MAX_SIZE,
+        message = ValidationConstants.FAVOURITE_SUBJECTS_MAX_SIZE_MESSAGE
+    )
     private List<@Valid FavouriteReference> subjects;
 }

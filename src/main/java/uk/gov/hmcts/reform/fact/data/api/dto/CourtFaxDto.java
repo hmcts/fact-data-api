@@ -27,15 +27,17 @@ public class CourtFaxDto {
     private String faxNumber;
 
     @Schema(description = "Fax description")
-    @Size(max = 250, message = "Fax description must be {max} characters or fewer")
+    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+        message = ValidationConstants.FAX_DESCRIPTION_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
-        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE)
+        message = ValidationConstants.TEXT_REGEX_MESSAGE)
     private String description;
 
     @Schema(description = "Welsh language fax description")
-    @Size(max = 250, message = "Welsh fax description must be {max} characters or fewer")
+    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+        message = ValidationConstants.WELSH_FAX_DESCRIPTION_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.WELSH_TEXT_REGEX,
-        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE)
+        message = ValidationConstants.TEXT_REGEX_MESSAGE)
     private String descriptionCy;
 
     @AssertTrue(message = "Fax description and Welsh fax description must be provided together")

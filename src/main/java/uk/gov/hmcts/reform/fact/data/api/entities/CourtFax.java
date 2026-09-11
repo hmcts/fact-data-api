@@ -72,7 +72,7 @@ public class CourtFax implements AuditableCourtEntity {
         message = "Fax description must be {max} characters or fewer"
     )
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
-        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE
+        message = ValidationConstants.TEXT_REGEX_MESSAGE
     )
     @Column(name = "description", length = ValidationConstants.COMMON_TEXT_MAX_LENGTH)
     private String description;
@@ -82,7 +82,7 @@ public class CourtFax implements AuditableCourtEntity {
         message = "Welsh fax description must be {max} characters or fewer"
     )
     @Pattern(regexp = ValidationConstants.WELSH_TEXT_REGEX,
-        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE
+        message = ValidationConstants.TEXT_REGEX_MESSAGE
     )
     @Column(name = "description_cy",
         length = ValidationConstants.COMMON_TEXT_MAX_LENGTH

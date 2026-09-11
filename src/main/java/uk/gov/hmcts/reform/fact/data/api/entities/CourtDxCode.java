@@ -61,7 +61,7 @@ public class CourtDxCode implements AuditableCourtEntity {
     @NotBlank
     @Size(max = 200)
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
-        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE
+        message = ValidationConstants.TEXT_REGEX_MESSAGE
     )
     @Column(length = 200)
     private String dxCode;
@@ -69,7 +69,7 @@ public class CourtDxCode implements AuditableCourtEntity {
     @Schema(description = "The explanation")
     @Size(max = 250)
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
-        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE
+        message = ValidationConstants.TEXT_REGEX_MESSAGE
     )
     @Column(length = 250)
     private String explanation;
@@ -77,7 +77,7 @@ public class CourtDxCode implements AuditableCourtEntity {
     @Schema(description = "The Welsh language explanation")
     @Size(max = 250)
     @Pattern(regexp = ValidationConstants.WELSH_TEXT_REGEX,
-        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE
+        message = ValidationConstants.TEXT_REGEX_MESSAGE
     )
     @Column(name = "explanation_cy", length = 250)
     private String explanationCy;

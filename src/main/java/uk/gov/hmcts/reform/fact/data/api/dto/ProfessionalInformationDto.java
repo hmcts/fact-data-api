@@ -13,14 +13,13 @@ import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
+import static uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants.INTERVIEW_ROOM_COUNT_MESSAGE;
+
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @Builder
 public class ProfessionalInformationDto {
-
-    private static final String INTERVIEW_ROOM_COUNT_MESSAGE =
-        "Interview room count must be between 1 and 150 when interview rooms are available; otherwise omit or set to 0";
 
     @Schema(description = "Interview room availability status", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
