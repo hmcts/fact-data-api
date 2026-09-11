@@ -81,9 +81,11 @@ public class CourtContactDetails implements AuditableCourtEntity {
     }
 
     @Schema(description = "The explanation")
-    @Column(name = "explanation", length = ValidationConstants.COMMON_TEXT_MAX_LENGTH)
+    @Column(name = "explanation", length = ValidationConstants.COMMON_TEXT_MAX_LENGTH
+    )
     @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
-        message = ValidationConstants.EXPLANATION_MAX_LENGTH_MESSAGE)
+        message = ValidationConstants.EXPLANATION_MAX_LENGTH_MESSAGE
+    )
     @Pattern(
         regexp = ValidationConstants.EXPLANATION_REGEX,
         message = ValidationConstants.EXPLANATION_REGEX_MESSAGE
@@ -91,9 +93,12 @@ public class CourtContactDetails implements AuditableCourtEntity {
     private String explanation;
 
     @Schema(description = "The Welsh language explanation")
-    @Column(name = "explanation_cy", length = ValidationConstants.COMMON_TEXT_MAX_LENGTH)
+    @Column(name = "explanation_cy",
+        length = ValidationConstants.COMMON_TEXT_MAX_LENGTH
+    )
     @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
-        message = ValidationConstants.WELSH_EXPLANATION_MAX_LENGTH_MESSAGE)
+        message = ValidationConstants.WELSH_EXPLANATION_MAX_LENGTH_MESSAGE
+    )
     @Pattern(
         regexp = ValidationConstants.WELSH_EXPLANATION_REGEX,
         message = ValidationConstants.WELSH_EXPLANATION_REGEX_MESSAGE
@@ -101,13 +106,21 @@ public class CourtContactDetails implements AuditableCourtEntity {
     private String explanationCy;
 
     @Schema(description = "The associated email address")
-    @Size(max = ValidationConstants.EMAIL_MAX_LENGTH, message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.EMAIL_REGEX, message = ValidationConstants.EMAIL_REGEX_MESSAGE)
+    @Size(max = ValidationConstants.EMAIL_MAX_LENGTH,
+        message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE
+    )
+    @Pattern(regexp = ValidationConstants.EMAIL_REGEX,
+        message = ValidationConstants.EMAIL_REGEX_MESSAGE
+    )
     private String email;
 
     @Schema(description = "The associated phone number")
-    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH,
+        message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE
+    )
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX,
+        message = ValidationConstants.PHONE_NO_REGEX_MESSAGE
+    )
     private String phoneNumber;
 
 }

@@ -40,12 +40,14 @@ public class Region {
     @NotBlank(message = "The name of the Region must be specified")
     @Size(min = ValidationConstants.REGION_NAME_MIN_LENGTH,
         max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
-        message = ValidationConstants.REGION_NAME_LENGTH_MESSAGE)
+        message = ValidationConstants.REGION_NAME_LENGTH_MESSAGE
+    )
     private String name;
 
     @Schema(description = "The Region's country")
     @Size(min = ValidationConstants.REGION_NAME_MIN_LENGTH,
         max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
-        message = ValidationConstants.REGION_COUNTRY_LENGTH_MESSAGE)
+        message = ValidationConstants.REGION_COUNTRY_LENGTH_MESSAGE
+    )
     private String country;
 }

@@ -71,22 +71,30 @@ public class CourtAccessibilityOptions implements AuditableCourtEntity {
     private Boolean accessibleParking;
 
     @Schema(description = "The contact phone number for accessible parking enquiries")
-    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH,
+        message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE
+    )
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX,
+        message = ValidationConstants.PHONE_NO_REGEX_MESSAGE
+    )
     private String accessibleParkingPhoneNumber;
 
     @Schema(description = "Details of available accessible toilets")
     @Size(max = ValidationConstants.ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH,
         message = ValidationConstants.ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE)
+
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
-        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE)
+        message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE
+    )
     private String accessibleToiletDescription;
 
     @Schema(description = "Welsh language details of available accessible toilets")
     @Size(max = ValidationConstants.ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH,
-        message = ValidationConstants.WELSH_ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE)
+        message = ValidationConstants.WELSH_ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE
+    )
     @Pattern(regexp = ValidationConstants.WELSH_TEXT_REGEX,
-        message = ValidationConstants.WELSH_TEXT_REGEX_MESSAGE)
+        message = ValidationConstants.WELSH_TEXT_REGEX_MESSAGE
+    )
     private String accessibleToiletDescriptionCy;
 
     @Schema(description = "The accessible entrance status")
@@ -94,8 +102,12 @@ public class CourtAccessibilityOptions implements AuditableCourtEntity {
     private Boolean accessibleEntrance;
 
     @Schema(description = "The contact phone number for accessible entrance enquiries")
-    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH,
+        message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE
+    )
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX,
+        message = ValidationConstants.PHONE_NO_REGEX_MESSAGE
+    )
     private String accessibleEntrancePhoneNumber;
 
     @Schema(description = "Details of available hearing enhancement equipment")
@@ -107,20 +119,32 @@ public class CourtAccessibilityOptions implements AuditableCourtEntity {
     private Boolean lift;
 
     @Schema(description = "Lift door width (in cm)")
-    @Min(value = ValidationConstants.LIFT_DOOR_WIDTH_MIN, message = ValidationConstants.LIFT_DOOR_WIDTH_MIN_MESSAGE)
-    @Max(value = ValidationConstants.LIFT_DOOR_WIDTH_MAX, message = ValidationConstants.LIFT_DOOR_WIDTH_MAX_MESSAGE)
+    @Min(value = ValidationConstants.LIFT_DOOR_WIDTH_MIN,
+        message = ValidationConstants.LIFT_DOOR_WIDTH_MIN_MESSAGE
+    )
+    @Max(value = ValidationConstants.LIFT_DOOR_WIDTH_MAX,
+        message = ValidationConstants.LIFT_DOOR_WIDTH_MAX_MESSAGE
+    )
     private Integer liftDoorWidth;
 
     @Schema(description = "Lift weight limit (in kg)")
-    @Min(value = ValidationConstants.LIFT_WEIGHT_LIMIT_MIN, message = ValidationConstants.LIFT_WEIGHT_LIMIT_MIN_MESSAGE)
-    @Max(value = ValidationConstants.LIFT_WEIGHT_LIMIT_MAX, message = ValidationConstants.LIFT_WEIGHT_LIMIT_MAX_MESSAGE)
+    @Min(value = ValidationConstants.LIFT_WEIGHT_LIMIT_MIN,
+        message = ValidationConstants.LIFT_WEIGHT_LIMIT_MIN_MESSAGE
+    )
+    @Max(value = ValidationConstants.LIFT_WEIGHT_LIMIT_MAX,
+        message = ValidationConstants.LIFT_WEIGHT_LIMIT_MAX_MESSAGE
+    )
     private Integer liftDoorLimit;
 
     @Schema(
         description = "Telephone number for organising support at court when there is no lift"
     )
-    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH,
+        message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE
+    )
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX,
+        message = ValidationConstants.PHONE_NO_REGEX_MESSAGE
+    )
     @Column(name = "lift_support_phone_number")
     private String liftSupportPhoneNumber;
 

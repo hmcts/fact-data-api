@@ -57,7 +57,8 @@ public class ServiceCentre implements AuditableEntity {
     @NotBlank(message = "Service centre name must be specified")
     @Size(min = ValidationConstants.COURT_SERVICE_CENTRE_NAME_MIN_LENGTH,
         max = ValidationConstants.COURT_SERVICE_CENTRE_NAME_MAX_LENGTH,
-        message = ValidationConstants.SERVICE_CENTRE_NAME_LENGTH_MESSAGE)
+        message = ValidationConstants.SERVICE_CENTRE_NAME_LENGTH_MESSAGE
+    )
     @Pattern(
         regexp = ValidationConstants.COURT_SERVICE_CENTRE_NAME_REGEX,
         message = ValidationConstants.SERVICE_CENTRE_NAME_REGEX_MESSAGE
@@ -75,7 +76,8 @@ public class ServiceCentre implements AuditableEntity {
 
     @Schema(description = "Any warning notices attached to the Service Centre")
     @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
-        message = ValidationConstants.WARNING_NOTICE_MAX_LENGTH_MESSAGE)
+        message = ValidationConstants.WARNING_NOTICE_MAX_LENGTH_MESSAGE
+    )
     @Pattern(
         regexp = ValidationConstants.WARNING_NOTICE_REGEX,
         message = ValidationConstants.WARNING_NOTICE_REGEX_MESSAGE
@@ -85,7 +87,8 @@ public class ServiceCentre implements AuditableEntity {
 
     @Schema(description = "Any Welsh warning notices attached to the Service Centre")
     @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
-        message = ValidationConstants.WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE)
+        message = ValidationConstants.WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE
+    )
     @Pattern(
         regexp = ValidationConstants.WELSH_WARNING_NOTICE_REGEX,
         message = ValidationConstants.WELSH_WARNING_NOTICE_REGEX_MESSAGE
