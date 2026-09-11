@@ -108,7 +108,6 @@ public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
     private Boolean appointmentNeeded;
 
     @Schema(description = "Appointment arrangement contact details")
-    @Size(max = 255, message = "Appointment contact details can be at most {max} characters")
     @Size(max = ValidationConstants.EMAIL_MAX_LENGTH, message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.EMAIL_REGEX, message = ValidationConstants.EMAIL_REGEX_MESSAGE)
     private String appointmentContact;
