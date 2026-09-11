@@ -29,6 +29,7 @@ import org.hibernate.type.SqlTypes;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
 
 import java.time.ZonedDateTime;
@@ -54,11 +55,12 @@ public class ServiceCentre implements AuditableEntity {
 
     @Schema(description = "The name of the Service Centre")
     @NotBlank(message = "Service centre name must be specified")
-    @Size(min = 5, max = 200, message = "Service centre name should be between 5 and 200 chars")
+    @Size(min = ValidationConstants.COURT_SERVICE_CENTRE_NAME_MIN_LENGTH,
+        max = ValidationConstants.COURT_SERVICE_CENTRE_NAME_MAX_LENGTH,
+        message = ValidationConstants.SERVICE_CENTRE_NAME_LENGTH_MESSAGE)
     @Pattern(
-        regexp = "^[A-Za-z&'()\\- ]+$",
-        message = "Service centre name may only contain letters, spaces, apostrophes, hyphens, ampersands, "
-            + "and parentheses"
+        regexp = ValidationConstants.COURT_SERVICE_CENTRE_NAME_REGEX,
+        message = ValidationConstants.SERVICE_CENTRE_NAME_REGEX_MESSAGE
     )
     private String name;
 
@@ -72,20 +74,21 @@ public class ServiceCentre implements AuditableEntity {
     private Boolean open;
 
     @Schema(description = "Any warning notices attached to the Service Centre")
-    @Size(max = 250, message = "Warning notice must be less than 250 characters")
+    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+        message = ValidationConstants.WARNING_NOTICE_MAX_LENGTH_MESSAGE)
     @Pattern(
-        regexp = "^[A-Za-z0-9.,!?:;'\"()\\-/&@+\\s]+$",
-        message = "Warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)"
+        regexp = ValidationConstants.WARNING_NOTICE_REGEX,
+        message = ValidationConstants.WARNING_NOTICE_REGEX_MESSAGE
     )
     @Column(name = "warning_notice")
     private String warningNotice;
 
     @Schema(description = "Any Welsh warning notices attached to the Service Centre")
-    @Size(max = 250, message = "Welsh warning notice must be less than 250 characters")
+    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+        message = ValidationConstants.WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE)
     @Pattern(
-        regexp = "^[\\p{L}0-9.,!?:;'\"()\\-/&@+\\s]+$",
-        message = "Welsh warning notice may only contain letters, numbers, spaces, and standard punctuation or "
-            + "symbols (@, +)"
+        regexp = ValidationConstants.WELSH_WARNING_NOTICE_REGEX,
+        message = ValidationConstants.WELSH_WARNING_NOTICE_REGEX_MESSAGE
     )
     @Column(name = "warning_notice_cy")
     private String warningNoticeCy;

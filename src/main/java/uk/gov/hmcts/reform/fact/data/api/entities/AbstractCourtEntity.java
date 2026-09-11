@@ -47,10 +47,11 @@ public abstract class AbstractCourtEntity {
 
     @Schema(description = "The name of the Court")
     @NotBlank(message = "Court name must be specified")
-    @Size(min = ValidationConstants.COURT_NAME_MIN_LENGTH, max = ValidationConstants.COURT_NAME_MAX_LENGTH,
+    @Size(min = ValidationConstants.COURT_SERVICE_CENTRE_NAME_MIN_LENGTH,
+        max = ValidationConstants.COURT_SERVICE_CENTRE_NAME_MAX_LENGTH,
         message = ValidationConstants.COURT_NAME_LENGTH_MESSAGE)
     @Pattern(
-        regexp = ValidationConstants.COURT_NAME_REGEX,
+        regexp = ValidationConstants.COURT_SERVICE_CENTRE_NAME_REGEX,
         message = ValidationConstants.COURT_NAME_REGEX_MESSAGE
     )
     private String name;

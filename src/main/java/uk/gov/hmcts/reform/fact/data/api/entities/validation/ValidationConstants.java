@@ -1,15 +1,16 @@
 package uk.gov.hmcts.reform.fact.data.api.entities.validation;
 
+import jakarta.validation.constraints.Pattern;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ValidationConstants {
 
-    public static final int COURT_NAME_MIN_LENGTH = 5;
-    public static final int COURT_NAME_MAX_LENGTH = 200;
+    public static final int COURT_SERVICE_CENTRE_NAME_MIN_LENGTH = 5;
+    public static final int COURT_SERVICE_CENTRE_NAME_MAX_LENGTH = 200;
     public static final String COURT_NAME_LENGTH_MESSAGE =
         "Court name should be between {min} and {max} chars";
-    public static final String COURT_NAME_REGEX = "^[A-Za-z&'()\\- ]+$";
+    public static final String COURT_SERVICE_CENTRE_NAME_REGEX = "^[A-Za-z&'()\\- ]+$";
     public static final String COURT_NAME_REGEX_MESSAGE =
         "Court or tribunal name must only include letters, spaces, brackets, apostrophes, hyphens and ampersands";
 
@@ -56,12 +57,9 @@ public class ValidationConstants {
         "Warning notice must be less than {max} characters";
     public static final String WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE =
         "Welsh warning notice must be less than {max} characters";
-
-    public static final int WARNING_NOTICE_MAX_LENGTH = 250;
     public static final String WARNING_NOTICE_REGEX = "^[A-Za-z0-9.,!?:;'\"()\\-/&@+\\s]+$";
     public static final String WARNING_NOTICE_REGEX_MESSAGE =
         "Warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)";
-
     public static final String WELSH_WARNING_NOTICE_REGEX = "^[\\p{L}0-9.,!?:;'\"()\\-/&@+\\s]+$";
     public static final String WELSH_WARNING_NOTICE_REGEX_MESSAGE =
         "Welsh warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)";
@@ -115,4 +113,15 @@ public class ValidationConstants {
     public static final String WELSH_EXPLANATION_REGEX_MESSAGE =
         "Welsh explanation must only include letters, numbers, spaces, apostrophes, hyphens, "
             + "parentheses, ampersands, and plus signs";
+
+    public static final int REGION_NAME_MIN_LENGTH = 5;
+    public static final String REGION_NAME_LENGTH_MESSAGE =
+        "Region name should be between {min} and {max} characters";
+    public static final String REGION_COUNTRY_LENGTH_MESSAGE =
+        "Region country should be between {min} and {max} characters";
+
+    public static final String SERVICE_CENTRE_NAME_LENGTH_MESSAGE =
+        "Service centre name should be between {min} and {max} characters";
+    public static final String SERVICE_CENTRE_NAME_REGEX_MESSAGE = "Service centre name may only contain letters, "
+        + "spaces, apostrophes, hyphens, ampersands, and parentheses";
 }

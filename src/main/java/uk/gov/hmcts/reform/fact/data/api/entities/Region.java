@@ -17,6 +17,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -37,11 +38,14 @@ public class Region {
 
     @Schema(description = "The name of the Region")
     @NotBlank(message = "The name of the Region must be specified")
-    @Size(min = 5, max = 250, message = "Region name should be between {min} and {max} characters")
+    @Size(min = ValidationConstants.REGION_NAME_MIN_LENGTH,
+        max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+        message = ValidationConstants.REGION_NAME_LENGTH_MESSAGE)
     private String name;
 
     @Schema(description = "The Region's country")
-    @Size(min = 5, max = 250, message = "Country name should be between {min} and {max} characters")
+    @Size(min = ValidationConstants.REGION_NAME_MIN_LENGTH,
+        max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+        message = ValidationConstants.REGION_COUNTRY_LENGTH_MESSAGE)
     private String country;
-
 }
