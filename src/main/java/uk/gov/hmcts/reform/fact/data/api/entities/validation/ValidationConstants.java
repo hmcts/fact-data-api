@@ -66,4 +66,20 @@ public class ValidationConstants {
     public static final String WELSH_WARNING_NOTICE_REGEX = "^[\\p{L}0-9.,!?:;'\"()\\-/&@+\\s]+$";
     public static final String WELSH_WARNING_NOTICE_REGEX_MESSAGE =
         "Welsh warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)";
+
+    public static final int ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH = 255;
+    public static final String ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE =
+        "Accessible toilet description must not exceed {max} characters";
+    public static final String WELSH_ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE =
+        "Welsh accessible toilet description must not exceed {max} characters";
+
+    public static final long LIFT_DOOR_WIDTH_MIN = 1;
+    public static final long LIFT_DOOR_WIDTH_MAX = 1000;
+    public static final String LIFT_DOOR_WIDTH_MIN_MESSAGE = "Lift door width needs to be over {value}cm";
+    public static final String LIFT_DOOR_WIDTH_MAX_MESSAGE = "Lift door width needs to be under {value}cm";
+
+    public static final long LIFT_WEIGHT_LIMIT_MIN = 1;
+    public static final long LIFT_WEIGHT_LIMIT_MAX = 10000;
+    public static final String LIFT_WEIGHT_LIMIT_MIN_MESSAGE = "Lift weight limit should be at least {value}kg";
+    public static final String LIFT_WEIGHT_LIMIT_MAX_MESSAGE = "Lift weight limit should be at most {value}kg";
 }

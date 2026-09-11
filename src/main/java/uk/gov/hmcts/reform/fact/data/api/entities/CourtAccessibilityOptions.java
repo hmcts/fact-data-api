@@ -76,13 +76,15 @@ public class CourtAccessibilityOptions implements AuditableCourtEntity {
     private String accessibleParkingPhoneNumber;
 
     @Schema(description = "Details of available accessible toilets")
-    @Size(max = 255, message = "Accessible toilet description must not exceed 255 characters")
+    @Size(max = ValidationConstants.ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH,
+        message = ValidationConstants.ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
         message = ValidationConstants.ENGLISH_TEXT_REGEX_MESSAGE)
     private String accessibleToiletDescription;
 
     @Schema(description = "Welsh language details of available accessible toilets")
-    @Size(max = 255, message = "Welsh accessible toilet description must not exceed 255 characters")
+    @Size(max = ValidationConstants.ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH,
+        message = ValidationConstants.WELSH_ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.WELSH_TEXT_REGEX,
         message = ValidationConstants.WELSH_TEXT_REGEX_MESSAGE)
     private String accessibleToiletDescriptionCy;
@@ -105,13 +107,13 @@ public class CourtAccessibilityOptions implements AuditableCourtEntity {
     private Boolean lift;
 
     @Schema(description = "Lift door width (in cm)")
-    @Min(value = 1, message = "Lift door width needs to be over 1cm")
-    @Max(value = 1000, message = "Lift door width needs to be under 1000cm")
+    @Min(value = ValidationConstants.LIFT_DOOR_WIDTH_MIN, message = ValidationConstants.LIFT_DOOR_WIDTH_MIN_MESSAGE)
+    @Max(value = ValidationConstants.LIFT_DOOR_WIDTH_MAX, message = ValidationConstants.LIFT_DOOR_WIDTH_MAX_MESSAGE)
     private Integer liftDoorWidth;
 
     @Schema(description = "Lift weight limit (in kg)")
-    @Min(value = 1, message = "Lift weight limit should be at least 1kg")
-    @Max(value = 10000, message = "Lift weight limit should be at most 10000kg")
+    @Min(value = ValidationConstants.LIFT_WEIGHT_LIMIT_MIN, message = ValidationConstants.LIFT_WEIGHT_LIMIT_MIN_MESSAGE)
+    @Max(value = ValidationConstants.LIFT_WEIGHT_LIMIT_MAX, message = ValidationConstants.LIFT_WEIGHT_LIMIT_MAX_MESSAGE)
     private Integer liftDoorLimit;
 
     @Schema(
