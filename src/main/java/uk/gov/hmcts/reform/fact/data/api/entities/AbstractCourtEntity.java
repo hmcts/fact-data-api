@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.entities;
 
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidCourtSlug;
 
 import java.time.ZonedDateTime;
@@ -46,10 +47,11 @@ public abstract class AbstractCourtEntity {
 
     @Schema(description = "The name of the Court")
     @NotBlank(message = "Court name must be specified")
-    @Size(min = 5, max = 200, message = "Court name should be between 5 and 200 chars")
+    @Size(min = ValidationConstants.COURT_NAME_MIN_LENGTH, max = ValidationConstants.COURT_NAME_MAX_LENGTH,
+        message = ValidationConstants.COURT_NAME_LENGTH_MESSAGE)
     @Pattern(
-        regexp = "^[A-Za-z&'()\\- ]+$",
-        message = "Court name may only contain letters, spaces, apostrophes, hyphens, ampersands, and parentheses"
+        regexp = ValidationConstants.COURT_NAME_REGEX,
+        message = ValidationConstants.COURT_NAME_REGEX_MESSAGE
     )
     private String name;
 
@@ -63,19 +65,20 @@ public abstract class AbstractCourtEntity {
     private Boolean open;
 
     @Schema(description = "Any warning notices attached to the Court")
-    @Size(max = 250, message = "Warning notice must be less than {max} characters")
+    @Size(max = ValidationConstants.WARNING_NOTICE_MAX_LENGTH,
+        message = ValidationConstants.WARNING_NOTICE_MAX_LENGTH_MESSAGE)
     @Pattern(
-        regexp = "^[A-Za-z0-9.,!?:;'\"()\\-/&@+\\s]+$",
-        message = "Warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)"
+        regexp = ValidationConstants.WARNING_NOTICE_REGEX,
+        message = ValidationConstants.WARNING_NOTICE_REGEX_MESSAGE
     )
     private String warningNotice;
 
     @Schema(description = "Any Welsh warning notices attached to the Court")
-    @Size(max = 250, message = "Welsh warning notice must be less than {max} characters")
+    @Size(max = ValidationConstants.WARNING_NOTICE_MAX_LENGTH,
+        message = ValidationConstants.WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE)
     @Pattern(
-        regexp = "^[\\p{L}0-9.,!?:;'\"()\\-/&@+\\s]+$",
-        message = "Welsh warning notice may only contain letters, numbers, spaces, and standard punctuation or "
-            + "symbols (@, +)"
+        regexp = ValidationConstants.WELSH_WARNING_NOTICE_REGEX,
+        message = ValidationConstants.WELSH_WARNING_NOTICE_REGEX_MESSAGE
     )
     private String warningNoticeCy;
 
