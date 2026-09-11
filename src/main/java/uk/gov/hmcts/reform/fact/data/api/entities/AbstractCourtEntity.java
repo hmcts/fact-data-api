@@ -65,7 +65,7 @@ public abstract class AbstractCourtEntity {
     private Boolean open;
 
     @Schema(description = "Any warning notices attached to the Court")
-    @Size(max = ValidationConstants.WARNING_NOTICE_MAX_LENGTH,
+    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
         message = ValidationConstants.WARNING_NOTICE_MAX_LENGTH_MESSAGE)
     @Pattern(
         regexp = ValidationConstants.WARNING_NOTICE_REGEX,
@@ -74,7 +74,7 @@ public abstract class AbstractCourtEntity {
     private String warningNotice;
 
     @Schema(description = "Any Welsh warning notices attached to the Court")
-    @Size(max = ValidationConstants.WARNING_NOTICE_MAX_LENGTH,
+    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
         message = ValidationConstants.WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE)
     @Pattern(
         regexp = ValidationConstants.WELSH_WARNING_NOTICE_REGEX,

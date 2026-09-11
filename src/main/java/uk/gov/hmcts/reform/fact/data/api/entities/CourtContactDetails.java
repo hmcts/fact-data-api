@@ -81,21 +81,22 @@ public class CourtContactDetails implements AuditableCourtEntity {
     }
 
     @Schema(description = "The explanation")
-    @Column(name = "explanation", length = 250)
-    @Size(max = 250, message = "Explanation should be no more than {max} characters")
+    @Column(name = "explanation", length = ValidationConstants.COMMON_TEXT_MAX_LENGTH)
+    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+        message = ValidationConstants.EXPLANATION_MAX_LENGTH_MESSAGE)
     @Pattern(
-        regexp = "^[A-Za-z0-9 '\\-()&+]*$",
-        message = "Explanation contains invalid characters. Allowed: letters, numbers, spaces, apostrophes, - ( ) & +"
+        regexp = ValidationConstants.EXPLANATION_REGEX,
+        message = ValidationConstants.EXPLANATION_REGEX_MESSAGE
     )
     private String explanation;
 
     @Schema(description = "The Welsh language explanation")
-    @Column(name = "explanation_cy", length = 250)
-    @Size(max = 250, message = "Explanation should be no more than {max} characters")
+    @Column(name = "explanation_cy", length = ValidationConstants.COMMON_TEXT_MAX_LENGTH)
+    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+        message = ValidationConstants.WELSH_EXPLANATION_MAX_LENGTH_MESSAGE)
     @Pattern(
-        regexp = "^[\\p{L}0-9 '\\-()&+]*$",
-        message = "Welsh explanation contains invalid characters. Allowed: letters (with accents), numbers, spaces, "
-            + "apostrophes, - ( ) & +"
+        regexp = ValidationConstants.WELSH_EXPLANATION_REGEX,
+        message = ValidationConstants.WELSH_EXPLANATION_REGEX_MESSAGE
     )
     private String explanationCy;
 

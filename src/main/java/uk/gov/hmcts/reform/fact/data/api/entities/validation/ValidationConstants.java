@@ -50,15 +50,14 @@ public class ValidationConstants {
         "Slug must match the regex '^[a-z0-9-]+$'";
 
     public static final int COURT_SLUG_MIN_LENGTH = 1;
-    public static final int COURT_SLUG_MAX_LENGTH = 250;
     public static final String COURT_SLUG_LENGTH_MESSAGE = "Court slug should be between 1 and 250 characters";
 
-    public static final int WARNING_NOTICE_MAX_LENGTH = 250;
     public static final String WARNING_NOTICE_MAX_LENGTH_MESSAGE =
         "Warning notice must be less than {max} characters";
     public static final String WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE =
         "Welsh warning notice must be less than {max} characters";
 
+    public static final int WARNING_NOTICE_MAX_LENGTH = 250;
     public static final String WARNING_NOTICE_REGEX = "^[A-Za-z0-9.,!?:;'\"()\\-/&@+\\s]+$";
     public static final String WARNING_NOTICE_REGEX_MESSAGE =
         "Warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)";
@@ -101,4 +100,19 @@ public class ValidationConstants {
     public static final String GBS_CODE_MAX_LENGTH_MESSAGE = "GBS code must be {max} characters or fewer";
     public static final String GBS_CODE_REGEX = "^[A-Za-z0-9 ]*$";
     public static final String GBS_CODE_REGEX_MESSAGE = "GBS code contains invalid characters";
+
+    public static final int COMMON_TEXT_MAX_LENGTH = 250;
+    public static final String EXPLANATION_MAX_LENGTH_MESSAGE = "Explanation must be {max} characters or fewer";
+    public static final String WELSH_EXPLANATION_MAX_LENGTH_MESSAGE =
+        "Welsh translation must be {max} characters or fewer";
+
+    public static final String EXPLANATION_REGEX = "^[A-Za-z0-9 '\\-()&+]*$";
+    public static final String EXPLANATION_REGEX_MESSAGE =
+        "Explanation must only include letters, numbers, spaces, apostrophes, hyphens, "
+            + "parentheses, ampersands, and plus signs";
+
+    public static final String WELSH_EXPLANATION_REGEX = "^[\\p{L}\\p{M}0-9 '\\-()&+]*$";
+    public static final String WELSH_EXPLANATION_REGEX_MESSAGE =
+        "Welsh explanation must only include letters, numbers, spaces, apostrophes, hyphens, "
+            + "parentheses, ampersands, and plus signs";
 }
