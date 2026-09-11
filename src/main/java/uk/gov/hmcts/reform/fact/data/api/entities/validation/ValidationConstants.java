@@ -1,6 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.entities.validation;
 
-import jakarta.validation.constraints.Pattern;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -80,12 +79,12 @@ public class ValidationConstants {
     public static final String LIFT_WEIGHT_LIMIT_MIN_MESSAGE = "Lift weight limit should be at least {value}kg";
     public static final String LIFT_WEIGHT_LIMIT_MAX_MESSAGE = "Lift weight limit should be at most {value}kg";
 
-    public static final int COURT_ADDRESS_LINE_MAX_LENGTH = 255;
-    public static final int COURT_COUNTRY_TOWN_CITY_MAX_LENGTH = 100;
+    public static final int ADDRESS_LINE_MAX_LENGTH = 255;
+    public static final int COUNTRY_TOWN_CITY_MAX_LENGTH = 100;
     public static final int COURT_EPIM_ID_MAX_LENGTH = 10;
-    public static final  String COURT_ADDRESS_LINE_MAX_LENGTH_MESSAGE =
+    public static final  String ADDRESS_LINE_MAX_LENGTH_MESSAGE =
         "Address line should be {max} characters or less";
-    public static final String COURT_COUNTRY_TOWN_CITY_MAX_LENGTH_MESSAGE =
+    public static final String COUNTRY_TOWN_CITY_MAX_LENGTH_MESSAGE =
         "County/Town/City name should be {max} characters or less";
     public static final String COURT_EPIM_ID_MAX_LENGTH_MESSAGE = "EPIM ID should be {max} characters or less";
 

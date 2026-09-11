@@ -71,16 +71,16 @@ public class CourtAddress implements AuditableCourtEntity {
 
     @Schema(description = "The first address line")
     @NotNull
-    @Size(max =ValidationConstants.COURT_ADDRESS_LINE_MAX_LENGTH,
-        message = ValidationConstants.COURT_ADDRESS_LINE_MAX_LENGTH_MESSAGE)
+    @Size(max =ValidationConstants.ADDRESS_LINE_MAX_LENGTH,
+        message = ValidationConstants.ADDRESS_LINE_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.REQUIRED_ADDRESS_LINE_REGEX,
         message = "Address Line 1: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE)
     @Column(name = "address_line_1")
     private String addressLine1;
 
     @Schema(description = "The second address line")
-    @Size(max = ValidationConstants.COURT_ADDRESS_LINE_MAX_LENGTH,
-        message = ValidationConstants.COURT_ADDRESS_LINE_MAX_LENGTH_MESSAGE)
+    @Size(max = ValidationConstants.ADDRESS_LINE_MAX_LENGTH,
+        message = ValidationConstants.ADDRESS_LINE_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.OPTIONAL_ADDRESS_LINE_REGEX,
         message = "Address Line 2: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE)
     @Column(name = "address_line_2")
@@ -88,15 +88,15 @@ public class CourtAddress implements AuditableCourtEntity {
 
     @Schema(description = "The town/city")
     @NotNull
-    @Size(max = ValidationConstants.COURT_COUNTRY_TOWN_CITY_MAX_LENGTH,
-        message = ValidationConstants.COURT_COUNTRY_TOWN_CITY_MAX_LENGTH_MESSAGE)
+    @Size(max = ValidationConstants.COUNTRY_TOWN_CITY_MAX_LENGTH,
+        message = ValidationConstants.COUNTRY_TOWN_CITY_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.REQUIRED_ADDRESS_LINE_REGEX,
         message = "Town/City: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE)
     private String townCity;
 
     @Schema(description = "The county")
-    @Size(max = ValidationConstants.COURT_COUNTRY_TOWN_CITY_MAX_LENGTH,
-        message = ValidationConstants.COURT_COUNTRY_TOWN_CITY_MAX_LENGTH_MESSAGE)
+    @Size(max = ValidationConstants.COUNTRY_TOWN_CITY_MAX_LENGTH,
+        message = ValidationConstants.COUNTRY_TOWN_CITY_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.OPTIONAL_ADDRESS_LINE_REGEX,
         message = "County: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE)
     private String county;
