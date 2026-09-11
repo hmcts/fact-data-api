@@ -27,6 +27,7 @@ import lombok.NoArgsConstructor;
 
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
+import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -57,29 +58,39 @@ public class CourtCodes implements AuditableCourtEntity {
     private Court court;
 
     @Schema(description = "The Magistrate Court code")
-    @Digits(integer = 6, fraction = 0, message = "Magistrates' court code must be at most {integer} digits")
+    @Digits(integer = ValidationConstants.COURT_CODE_MAX_DIGITS,
+        fraction = ValidationConstants.COURT_CODE_FRACTION_DIGITS,
+        message = "The magistrate " + ValidationConstants.COURT_CODE_DIGITS_MESSAGE)
     private Integer magistrateCourtCode;
 
     @Schema(description = "The Family Court code")
-    @Digits(integer = 6, fraction = 0, message = "Family court code must be at most {integer} digits")
+    @Digits(integer = ValidationConstants.COURT_CODE_MAX_DIGITS,
+        fraction = ValidationConstants.COURT_CODE_FRACTION_DIGITS,
+        message = "The Family " + ValidationConstants.COURT_CODE_DIGITS_MESSAGE)
     private Integer familyCourtCode;
 
     @Schema(description = "The Tribunal Court code")
-    @Digits(integer = 6, fraction = 0, message = "Tribunal court code must be at most {integer} digits")
+    @Digits(integer = ValidationConstants.COURT_CODE_MAX_DIGITS,
+        fraction = ValidationConstants.COURT_CODE_FRACTION_DIGITS,
+        message = "The Tribunal " + ValidationConstants.COURT_CODE_DIGITS_MESSAGE)
     private Integer tribunalCode;
 
     @Schema(description = "The County Court code")
-    @Digits(integer = 6, fraction = 0, message = "County court code must be at most {integer} digits")
+    @Digits(integer = ValidationConstants.COURT_CODE_MAX_DIGITS,
+        fraction = ValidationConstants.COURT_CODE_FRACTION_DIGITS,
+        message = "The County " + ValidationConstants.COURT_CODE_DIGITS_MESSAGE)
     private Integer countyCourtCode;
 
     @Schema(description = "The Crown Court code")
-    @Digits(integer = 6, fraction = 0, message = "Crown court code must be at most {integer} digits")
+    @Digits(integer = ValidationConstants.COURT_CODE_MAX_DIGITS,
+        fraction = ValidationConstants.COURT_CODE_FRACTION_DIGITS,
+        message = "The Crown " + ValidationConstants.COURT_CODE_DIGITS_MESSAGE)
     private Integer crownCourtCode;
 
     @Schema(description = "The GBS code")
-    @Size(max = 10)
-    @Pattern(regexp = "^[A-Za-z0-9 ]*$", message = "GBS code contains invalid characters")
-    @Column(length = 10)
+    @Size(max = ValidationConstants.GBS_CODE_MAX_LENGTH, message = ValidationConstants.GBS_CODE_MAX_LENGTH_MESSAGE)
+    @Pattern(regexp = ValidationConstants.GBS_CODE_REGEX, message = ValidationConstants.GBS_CODE_REGEX_MESSAGE)
+    @Column(length = ValidationConstants.GBS_CODE_MAX_LENGTH)
     private String gbs;
 
 }

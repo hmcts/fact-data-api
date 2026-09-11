@@ -82,4 +82,23 @@ public class ValidationConstants {
     public static final long LIFT_WEIGHT_LIMIT_MAX = 10000;
     public static final String LIFT_WEIGHT_LIMIT_MIN_MESSAGE = "Lift weight limit should be at least {value}kg";
     public static final String LIFT_WEIGHT_LIMIT_MAX_MESSAGE = "Lift weight limit should be at most {value}kg";
+
+    public static final int COURT_ADDRESS_LINE_MAX_LENGTH = 255;
+    public static final int COURT_COUNTRY_TOWN_CITY_MAX_LENGTH = 100;
+    public static final int COURT_EPIM_ID_MAX_LENGTH = 10;
+    public static final  String COURT_ADDRESS_LINE_MAX_LENGTH_MESSAGE =
+        "Address line should be {max} characters or less";
+    public static final String COURT_COUNTRY_TOWN_CITY_MAX_LENGTH_MESSAGE =
+        "County/Town/City name should be {max} characters or less";
+    public static final String COURT_EPIM_ID_MAX_LENGTH_MESSAGE = "EPIM ID should be {max} characters or less";
+
+    public static final int COURT_CODE_MAX_DIGITS = 6;
+    public static final int COURT_CODE_FRACTION_DIGITS = 0;
+    public static final String COURT_CODE_DIGITS_MESSAGE =
+        "court code must be at most {integer} digits";
+
+    public static final int GBS_CODE_MAX_LENGTH = 10;
+    public static final String GBS_CODE_MAX_LENGTH_MESSAGE = "GBS code must be {max} characters or fewer";
+    public static final String GBS_CODE_REGEX = "^[A-Za-z0-9 ]*$";
+    public static final String GBS_CODE_REGEX_MESSAGE = "GBS code contains invalid characters";
 }
