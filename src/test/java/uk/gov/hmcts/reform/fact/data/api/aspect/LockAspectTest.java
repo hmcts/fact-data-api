@@ -204,9 +204,27 @@ class LockAspectTest {
     }
 
     @Test
+    @DisplayName("Should handle subjectType as String and convert to enum")
+    void shouldHandleSubjectTypeAsString() {
+        setupJoinPointWithStringSubjectType("court", courtId, page, userId);
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
+
+        assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
+    }
+
+    @Test
     @DisplayName("Should handle page as String and convert to enum")
     void shouldHandlePageAsString() {
         setupJoinPointWithStringPage(courtId, "GENERAL", userId);
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
+
+        assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
+    }
+
+    @Test
+    @DisplayName("Should resolve parameters when annotation name attributes are used")
+    void shouldResolveNamedAnnotationAttributes() {
+        setupJoinPointWithNamedAnnotationAttributes(courtId, page, userId);
         when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
 
         assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
@@ -267,10 +285,34 @@ class LockAspectTest {
         }
     }
 
+    private void setupJoinPointWithStringSubjectType(String subjectType, UUID courtId, Page page, UUID userId) {
+        try {
+            Method method = TestController.class.getMethod(
+                "testMethodWithStringSubjectType", String.class, UUID.class, Page.class, UUID.class);
+            when(joinPoint.getSignature()).thenReturn(methodSignature);
+            when(methodSignature.getMethod()).thenReturn(method);
+            when(joinPoint.getArgs()).thenReturn(new Object[]{subjectType, courtId, page, userId});
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void setupJoinPointWithStringPage(UUID courtId, String page, UUID userId) {
         try {
             Method method = TestController.class.getMethod(
                 "testMethodWithStringPage", SubjectType.class, UUID.class, String.class, UUID.class);
+            when(joinPoint.getSignature()).thenReturn(methodSignature);
+            when(methodSignature.getMethod()).thenReturn(method);
+            when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, page, userId});
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void setupJoinPointWithNamedAnnotationAttributes(UUID courtId, Page page, UUID userId) {
+        try {
+            Method method = TestController.class.getMethod(
+                "testMethodWithNamedAnnotationAttributes", SubjectType.class, UUID.class, Page.class, UUID.class);
             when(joinPoint.getSignature()).thenReturn(methodSignature);
             when(methodSignature.getMethod()).thenReturn(method);
             when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, page, userId});
@@ -315,7 +357,6 @@ class LockAspectTest {
     }
 
     // Test controller class to provide methods with proper annotations
-    @SuppressWarnings("unused")
     static class TestController {
         public void testMethod(
             @PathVariable("subjectType") SubjectType subjectType,
@@ -333,11 +374,27 @@ class LockAspectTest {
             // empty
         }
 
+        public void testMethodWithStringSubjectType(
+            @PathVariable("subjectType") String subjectType,
+            @PathVariable("subjectId") UUID subjectId,
+            @PathVariable("page") Page page,
+            @RequestParam("userId") UUID userId) {
+            // empty
+        }
+
         public void testMethodWithStringPage(
             @PathVariable("subjectType") SubjectType subjectType,
             @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") String page,
             @RequestParam("userId") UUID userId) {
+            // empty
+        }
+
+        public void testMethodWithNamedAnnotationAttributes(
+            @PathVariable(name = "subjectType") SubjectType subjectType,
+            @PathVariable(name = "subjectId") UUID subjectId,
+            @PathVariable(name = "page") Page page,
+            @RequestParam(name = "userId") UUID userId) {
             // empty
         }
 

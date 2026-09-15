@@ -62,16 +62,16 @@ public class ServiceAreaService {
      */
     private ServiceArea enrichServiceArea(ServiceArea serviceArea) {
         serviceArea.setHasLocal(
-            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(
                 serviceArea.getId(), List.of(CatchmentType.LOCAL))
                 || courtLocalAuthoritiesRepository.existsByAreaOfLawId(serviceArea.getAreaOfLawId())
         );
         serviceArea.setHasNational(
-            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(
                 serviceArea.getId(), List.of(CatchmentType.NATIONAL))
         );
         serviceArea.setHasRegional(
-            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+            serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(
                 serviceArea.getId(), List.of(CatchmentType.REGIONAL))
         );
         return serviceArea;

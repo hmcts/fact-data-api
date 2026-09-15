@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -98,6 +99,46 @@ class ApprovalServiceTest {
     }
 
     @Test
+    void getAllApprovalStatusesKeepsFirstApprovalWhenDuplicateSubjectsExist() {
+        User firstUser = User.builder().id(USER_ID).email(USER_EMAIL).build();
+        User secondUser = User.builder().id(UUID.randomUUID()).email("replacement@justice.gov.uk").build();
+
+        Approval firstApproval = Approval.builder()
+            .id(APPROVAL_ID)
+            .subjectId(SUBJECT_ID)
+            .subjectType(SubjectType.COURT)
+            .userId(USER_ID)
+            .user(firstUser)
+            .lastUpdatedAt(LAST_UPDATED_AT)
+            .build();
+        Approval replacementApproval = Approval.builder()
+            .id(UUID.randomUUID())
+            .subjectId(SUBJECT_ID)
+            .subjectType(SubjectType.COURT)
+            .userId(secondUser.getId())
+            .user(secondUser)
+            .lastUpdatedAt(LAST_UPDATED_AT.plusDays(1))
+            .build();
+
+        when(approvalRepository.findAll()).thenReturn(List.of(firstApproval, replacementApproval));
+        when(courtService.getAllCourtNameAndIds()).thenReturn(List.of(new NameAndId("Test Court", SUBJECT_ID)));
+        when(serviceCentreService.getAllServiceCentreNameAndIds()).thenReturn(List.of());
+
+        List<ApprovalStatus> result = approvalService.getAllApprovalStatuses();
+
+        assertThat(result).containsExactly(new ApprovalStatus(
+            SUBJECT_ID,
+            SubjectType.COURT,
+            "Test Court",
+            true,
+            APPROVAL_ID,
+            USER_ID,
+            firstUser,
+            LAST_UPDATED_AT
+        ));
+    }
+
+    @Test
     void createApprovalValidatesCourtAndUserBeforeSaving() {
         Approval approval = createApproval(SubjectType.COURT);
         approval.setId(APPROVAL_ID);
@@ -127,6 +168,20 @@ class ApprovalServiceTest {
         approvalService.createApproval(approval);
 
         verify(serviceCentreService).getServiceCentreById(SUBJECT_ID);
+    }
+
+    @Test
+    void createApprovalWithNullSubjectTypeSkipsSubjectLookup() {
+        Approval approval = createApproval(null);
+        when(userService.getUserById(USER_ID)).thenReturn(new User());
+        when(approvalRepository.findBySubjectIdAndSubjectType(SUBJECT_ID, null)).thenReturn(Optional.empty());
+        when(approvalRepository.save(any(Approval.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Approval result = approvalService.createApproval(approval);
+
+        assertThat(result.getSubjectType()).isNull();
+        verify(courtService, never()).getCourtById(any());
+        verify(serviceCentreService, never()).getServiceCentreById(any());
     }
 
     @Test

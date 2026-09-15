@@ -14,5 +14,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class OsData {
+    private OsHeader header;
     private List<OsResult> results;
 }

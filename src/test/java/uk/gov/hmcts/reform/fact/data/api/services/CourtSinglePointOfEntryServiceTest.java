@@ -9,6 +9,7 @@ import uk.gov.hmcts.reform.fact.data.api.dto.CourtWithDistance;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtSinglePointsOfEntryRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -38,5 +39,32 @@ class CourtSinglePointOfEntryServiceTest {
 
         assertThat(response).isEqualTo(results);
         verify(courtSinglePointsOfEntryRepository).findNearestCourtBySpoeAndChildrenAreaOfLaw(51.5, -0.1, "Children");
+    }
+
+    @Test
+    void getCourtsSpoeWithLocalAuthorityShouldReturnResults() {
+        UUID localAuthorityId = UUID.randomUUID();
+        List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
+        when(courtSinglePointsOfEntryRepository.findNearestCourtBySpoeAndChildrenAreaOfLawAndLocalAuthorityId(
+            51.5,
+            -0.1,
+            "Children",
+            localAuthorityId
+        )).thenReturn(results);
+
+        List<CourtWithDistance> response = courtSinglePointOfEntryService.getCourtsSpoe(
+            51.5,
+            -0.1,
+            "Children",
+            localAuthorityId
+        );
+
+        assertThat(response).isEqualTo(results);
+        verify(courtSinglePointsOfEntryRepository).findNearestCourtBySpoeAndChildrenAreaOfLawAndLocalAuthorityId(
+            51.5,
+            -0.1,
+            "Children",
+            localAuthorityId
+        );
     }
 }

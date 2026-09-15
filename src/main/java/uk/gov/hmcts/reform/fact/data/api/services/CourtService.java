@@ -255,18 +255,16 @@ public class CourtService {
         List<Map<String, Object>> matchedLocations = new ArrayList<>();
         List<String> unmatchedIds = new ArrayList<>();
 
-        mrdIds.forEach(mrdId -> {
-            courtRepository.findByMrdId(mrdId).ifPresentOrElse(
-                court -> {
-                    court.setOpenOnCath(true);
-                    courtRepository.save(court);
-                    matchedLocations.add(Map.of(
-                        "mrdId", mrdId,
-                        "isOpen", court.getOpen()
-                    ));
-                }, () -> unmatchedIds.add(mrdId)
-            );
-        });
+        mrdIds.forEach(mrdId -> courtRepository.findByMrdId(mrdId).ifPresentOrElse(
+            court -> {
+                court.setOpenOnCath(true);
+                courtRepository.save(court);
+                matchedLocations.add(Map.of(
+                    "mrdId", mrdId,
+                    "isOpen", court.getOpen()
+                ));
+            }, () -> unmatchedIds.add(mrdId)
+        ));
 
         return Map.of(
             "matchedLocations", matchedLocations,

@@ -92,7 +92,7 @@ public class CsvService {
         ZonedDateTime nowUk = ZonedDateTime.now(ZoneId.of("Europe/London"));
         String timestamp = nowUk.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         StringBuilder sb = new StringBuilder(
-            String.format("*:mag: CSV creation and upload check (%s)*\n", timestamp)
+            String.format("*:mag: CSV creation and upload check (%s)*%n", timestamp)
         );
         if (!actions.isEmpty()) {
             sb.append("> ❗ Issue found:\n");

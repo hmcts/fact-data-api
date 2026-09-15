@@ -129,6 +129,36 @@ public class CourtAddress implements AuditableCourtEntity {
     @Schema(description = "The longitude coordinate")
     private BigDecimal lon;
 
+    /*
+     * The admin sends these values so the API can find the selected OS record again.
+     * Transient lets the existing entity carry them as request data without adding a
+     * separate request model or storing them. JsonProperty keeps them out of responses,
+     * and Schema documents that contract.
+     */
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(
+        description = "Request-only OS dataset used to verify the selected admin address",
+        accessMode = Schema.AccessMode.WRITE_ONLY
+    )
+    private String osAddressDataset;
+
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(
+        description = "Request-only OS UPRN used to verify the selected admin address",
+        accessMode = Schema.AccessMode.WRITE_ONLY
+    )
+    private String osAddressUprn;
+
+    @jakarta.persistence.Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Schema(
+        description = "Request-only OS LPI key used to verify the selected admin address",
+        accessMode = Schema.AccessMode.WRITE_ONLY
+    )
+    private String osAddressLpiKey;
+
     @Schema(description = "The address type")
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -154,14 +184,18 @@ public class CourtAddress implements AuditableCourtEntity {
 
     @JsonView(CourtDetailsView.class)
     @JsonProperty("areasOfLaw")
-    public List<?> getAreasOfLawForView() {
-        return areasOfLawDetails != null ? areasOfLawDetails : areasOfLaw;
+    public List<Object> getAreasOfLawForView() {
+        return areasOfLawDetails != null ? asViewList(areasOfLawDetails) : asViewList(areasOfLaw);
     }
 
     @JsonView(CourtDetailsView.class)
     @JsonProperty("courtTypes")
-    public List<?> getCourtTypesForView() {
-        return courtTypeDetails != null ? courtTypeDetails : courtTypes;
+    public List<Object> getCourtTypesForView() {
+        return courtTypeDetails != null ? asViewList(courtTypeDetails) : asViewList(courtTypes);
+    }
+
+    private static <T> List<Object> asViewList(List<T> values) {
+        return values == null ? null : values.stream().map(Object.class::cast).toList();
     }
 
     @JsonIgnore

@@ -169,8 +169,9 @@ class CourtServiceTest {
 
         List<Court> result = courtService.getAllCourtsByIds(courtIds);
 
-        assertThat(result).hasSize(2);
-        assertThat(result).containsExactlyElementsOf(expectedCourts);
+        assertThat(result)
+            .hasSize(2)
+            .containsExactlyElementsOf(expectedCourts);
     }
 
     @Test
@@ -189,8 +190,9 @@ class CourtServiceTest {
 
         List<Court> result = courtService.getAllCourtsByIds(courtIds);
 
-        assertThat(result).hasSize(1);
-        assertThat(result).containsExactly(court1);
+        assertThat(result)
+            .hasSize(1)
+            .containsExactly(court1);
     }
 
     @Test
@@ -327,6 +329,25 @@ class CourtServiceTest {
     }
 
     @Test
+    void getFilteredAndPaginatedCourtsShouldSortByNameAscendingWhenExplicitlyRequested() {
+        Region region = new Region();
+        region.setId(UUID.randomUUID());
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+        when(regionService.getAllRegions()).thenReturn(List.of(region));
+        when(courtRepository.findByRegionIdInAndOpenTrueAndNameContainingIgnoreCase(
+            anyList(), anyString(), pageableCaptor.capture())
+        ).thenReturn(Page.empty());
+
+        courtService.getFilteredAndPaginatedCourts(0, 25, null, null, "Name", "name", "asc");
+
+        assertThat(pageableCaptor.getValue().getSort()).isEqualTo(Sort.by(
+            Sort.Order.asc("name"),
+            Sort.Order.asc("id")
+        ));
+    }
+
+    @Test
     void getFilteredAndPaginatedCourtsShouldSortByLastUpdatedWhenRequested() {
         Region region = new Region();
         region.setId(UUID.randomUUID());
@@ -354,6 +375,26 @@ class CourtServiceTest {
         );
 
         assertThat(exception.getMessage()).isEqualTo("sortOrder cannot be provided without sortBy");
+    }
+
+    @Test
+    void getFilteredAndPaginatedCourtsShouldRejectInvalidSortOrder() {
+        InvalidParameterCombinationException exception = assertThrows(
+            InvalidParameterCombinationException.class,
+            () -> courtService.getFilteredAndPaginatedCourts(0, 25, null, null, "Name", "name", "sideways")
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("sortOrder must be one of: asc, desc");
+    }
+
+    @Test
+    void getFilteredAndPaginatedCourtsShouldRejectInvalidSortBy() {
+        InvalidParameterCombinationException exception = assertThrows(
+            InvalidParameterCombinationException.class,
+            () -> courtService.getFilteredAndPaginatedCourts(0, 25, null, null, "Name", "createdAt", "asc")
+        );
+
+        assertThat(exception.getMessage()).isEqualTo("sortBy must be one of: name, lastUpdated");
     }
 
     @Test
@@ -777,6 +818,20 @@ class CourtServiceTest {
         verify(courtRepository).findByNameStartingWithIgnoreCase("Example");
         verify(userRepository).removeCourtFromAllFavourites(courtId);
         verify(courtRepository).deleteAllInBatch(courts);
+    }
+
+    @Test
+    void deleteCourtsByNamePrefixShouldSkipAuditDeletionWhenDisabled() {
+        UUID courtId = UUID.randomUUID();
+        Court court = Court.builder().id(courtId).build();
+        when(courtRepository.findByNameStartingWithIgnoreCase("Example")).thenReturn(List.of(court));
+
+        long deleted = courtService.deleteCourtsByNamePrefix("Example", false);
+
+        assertThat(deleted).isEqualTo(1);
+        verify(userRepository).removeCourtFromAllFavourites(courtId);
+        verify(courtRepository).deleteAllInBatch(List.of(court));
+        verify(auditRepository, never()).deleteBySubjectIdIn(anyList());
     }
 
     @Test

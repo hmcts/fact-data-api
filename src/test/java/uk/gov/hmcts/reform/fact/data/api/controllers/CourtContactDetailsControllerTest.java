@@ -66,8 +66,9 @@ class CourtContactDetailsControllerTest {
 
     @Test
     void getContactDetailThrowsIllegalArgumentExceptionForInvalidUUID() {
+        String contactId = CONTACT_ID.toString();
         assertThrows(IllegalArgumentException.class, () ->
-            courtContactDetailsController.getContactDetail(INVALID_UUID, CONTACT_ID.toString())
+            courtContactDetailsController.getContactDetail(INVALID_UUID, contactId)
         );
     }
 
@@ -111,9 +112,10 @@ class CourtContactDetailsControllerTest {
     @Test
     void updateContactDetailThrowsIllegalArgumentExceptionForInvalidUUID() {
         CourtContactDetails contactDetail = new CourtContactDetails();
+        String contactId = CONTACT_ID.toString();
 
         assertThrows(IllegalArgumentException.class, () ->
-            courtContactDetailsController.updateContactDetail(INVALID_UUID, CONTACT_ID.toString(), contactDetail)
+            courtContactDetailsController.updateContactDetail(INVALID_UUID, contactId, contactDetail)
         );
     }
 
@@ -130,8 +132,9 @@ class CourtContactDetailsControllerTest {
 
     @Test
     void deleteContactDetailThrowsIllegalArgumentExceptionForInvalidUUID() {
+        String contactId = CONTACT_ID.toString();
         assertThrows(IllegalArgumentException.class, () ->
-            courtContactDetailsController.deleteContactDetail(INVALID_UUID, CONTACT_ID.toString())
+            courtContactDetailsController.deleteContactDetail(INVALID_UUID, contactId)
         );
     }
 }

@@ -13,6 +13,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -207,5 +208,49 @@ class ServiceCentreDetailsViewServiceTest {
         assertThat(contactDetails2.getServiceCentreContactDescriptionDetails()).isSameAs(descriptionType);
         assertThat(areasOfLaw1.getAreasOfLawDetails()).containsExactly(areaOfLawType);
         assertThat(areasOfLaw2.getAreasOfLawDetails()).containsExactly(areaOfLawType);
+    }
+
+    @Test
+    void prepareDetailsViewHandlesNullChildIdsWithoutTypeLookups() {
+        List<UUID> serviceAreaIds = Arrays.asList((UUID) null);
+        ServiceCentreContactDetails contactDetails = ServiceCentreContactDetails.builder()
+            .serviceCentreContactDescriptionId(null)
+            .build();
+        ServiceCentreAreasOfLaw areasOfLaw = ServiceCentreAreasOfLaw.builder()
+            .areasOfLaw(null)
+            .build();
+
+        when(serviceAreaRepository.findAllById(serviceAreaIds)).thenReturn(List.of());
+
+        ServiceCentreDetails serviceCentreDetails = ServiceCentreDetails.builder()
+            .serviceAreaIds(serviceAreaIds)
+            .serviceCentreContactDetails(List.of(contactDetails))
+            .serviceCentreAreasOfLaw(List.of(areasOfLaw))
+            .build();
+
+        serviceCentreDetailsViewService.prepareDetailsView(serviceCentreDetails);
+
+        assertThat(serviceCentreDetails.getServiceAreaDetails()).containsExactly((ServiceArea) null);
+        assertThat(contactDetails.getServiceCentreContactDescriptionDetails()).isNull();
+        assertThat(areasOfLaw.getAreasOfLawDetails()).isEmpty();
+        verifyNoInteractions(typesService);
+    }
+
+    @Test
+    void prepareDetailsViewMapsNullAreaOfLawIdsToNullDetails() {
+        List<UUID> areaIds = Arrays.asList((UUID) null);
+        ServiceCentreAreasOfLaw areasOfLaw = ServiceCentreAreasOfLaw.builder()
+            .areasOfLaw(areaIds)
+            .build();
+
+        when(typesService.getAllAreasOfLawTypesByIds(areaIds)).thenReturn(List.of());
+
+        ServiceCentreDetails serviceCentreDetails = ServiceCentreDetails.builder()
+            .serviceCentreAreasOfLaw(List.of(areasOfLaw))
+            .build();
+
+        serviceCentreDetailsViewService.prepareDetailsView(serviceCentreDetails);
+
+        assertThat(areasOfLaw.getAreasOfLawDetails()).containsExactly((AreaOfLawType) null);
     }
 }

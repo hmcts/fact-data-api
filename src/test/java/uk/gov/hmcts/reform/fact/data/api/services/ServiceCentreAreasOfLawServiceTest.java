@@ -57,8 +57,9 @@ class ServiceCentreAreasOfLawServiceTest {
         Map<AreaOfLawType, Boolean> result =
             serviceCentreAreasOfLawService.getAreasOfLawStatusByServiceCentreId(serviceCentreId);
 
-        assertThat(result).containsEntry(selectedArea, true);
-        assertThat(result).containsEntry(unselectedArea, false);
+        assertThat(result)
+            .containsEntry(selectedArea, true)
+            .containsEntry(unselectedArea, false);
     }
 
     @Test

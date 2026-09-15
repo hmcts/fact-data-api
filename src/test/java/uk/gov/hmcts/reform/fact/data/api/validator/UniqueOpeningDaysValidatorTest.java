@@ -6,6 +6,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.validation.validator.UniqueOpeningDaysValidator;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -62,5 +63,16 @@ class UniqueOpeningDaysValidatorTest {
             entry(DayOfTheWeek.TUESDAY),
             entry(DayOfTheWeek.WEDNESDAY)
         ), null));
+    }
+
+    @Test
+    void shouldIgnoreNullEntriesAndNullDays() {
+        OpeningTimesDetail nullDay = new OpeningTimesDetail();
+        List<OpeningTimesDetail> details = new ArrayList<>();
+        details.add(null);
+        details.add(nullDay);
+        details.add(entry(DayOfTheWeek.THURSDAY));
+
+        assertTrue(validator.isValid(details, null));
     }
 }

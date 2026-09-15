@@ -24,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -70,13 +69,13 @@ class SearchExecuterTest {
         List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
 
         when(courtAddressRepository.findCivilByPartialPostcodeBestTier(
-            eq(area.getId()),
-            eq(51.5),
-            eq(-0.1),
-            eq("SW1A1"),
-            eq("SW1A"),
-            eq("SW"),
-            eq(5)
+            area.getId(),
+            51.5,
+            -0.1,
+            "SW1A1",
+            "SW1A",
+            "SW",
+            5
         )).thenReturn(results);
 
         List<CourtWithDistance> response = searchExecuter.executeSearchStrategy(
@@ -98,13 +97,13 @@ class SearchExecuterTest {
         List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
 
         when(courtAddressRepository.findCivilByPartialPostcodeBestTier(
-            eq(area.getId()),
-            eq(51.5),
-            eq(-0.1),
-            eq("SW1A1"),
-            eq("SW1A"),
-            eq("SW"),
-            eq(5)
+            area.getId(),
+            51.5,
+            -0.1,
+            "SW1A1",
+            "SW1A",
+            "SW",
+            5
         )).thenReturn(List.of());
         when(courtAddressRepository.findNearestByAreaOfLaw(51.5, -0.1, area.getAreaOfLawId(), 5))
             .thenReturn(results);
@@ -187,6 +186,36 @@ class SearchExecuterTest {
         );
 
         assertThat(response).isEqualTo(results);
+    }
+
+    @Test
+    void executeSearchStrategyShouldFallbackToNearestWhenLocalAuthoritySearchReturnsNoRows() {
+        ServiceArea area = serviceArea(ServiceAreaType.FAMILY);
+        OsLocationData locationData = osLocationData("Authority", "SW1A 1AA");
+        LocalAuthorityType authorityType = localAuthorityType(UUID.randomUUID());
+        List<CourtWithDistance> nearestResults = List.of(mock(CourtWithDistance.class));
+
+        when(localAuthorityTypeRepository.findIdByNameIgnoreCase("Authority"))
+            .thenReturn(Optional.of(authorityType));
+        when(courtAddressRepository.findFamilyNonRegionalByLocalAuthority(
+            51.5,
+            -0.1,
+            area.getAreaOfLawId(),
+            authorityType.getId(),
+            10
+        )).thenReturn(List.of());
+        when(courtAddressRepository.findNearestByAreaOfLaw(51.5, -0.1, area.getAreaOfLawId(), 10))
+            .thenReturn(nearestResults);
+
+        List<CourtWithDistance> response = searchExecuter.executeSearchStrategy(
+            locationData,
+            area,
+            SearchStrategy.FAMILY_NON_REGIONAL,
+            SearchAction.DOCUMENTS,
+            10
+        );
+
+        assertThat(response).isEqualTo(nearestResults);
     }
 
     @Test

@@ -145,6 +145,17 @@ class CourtOpeningHoursServiceTest {
     }
 
     @Test
+    void getOpeningHoursByCourtIdThrowsExceptionWhenRepositoryReturnsEmptyList() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtOpeningHoursRepository.findByCourtId(courtId)).thenReturn(Optional.of(List.of()));
+
+        assertThrows(
+            CourtResourceNotFoundException.class,
+            () -> courtOpeningHoursService.getOpeningHoursByCourtId(courtId)
+        );
+    }
+
+    @Test
     void getOpeningHoursThrowsExceptionWhenCourtDoesNotExist() {
         when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
 
@@ -170,31 +181,21 @@ class CourtOpeningHoursServiceTest {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, openingHours.getId()))
             .thenReturn(Optional.empty());
+        UUID openingHoursId = openingHours.getId();
 
         assertThrows(
             NotFoundException.class,
-            () -> courtOpeningHoursService.getOpeningHoursById(courtId, openingHours.getId())
+            () -> courtOpeningHoursService.getOpeningHoursById(courtId, openingHoursId)
         );
     }
 
     @Test
     void getOpeningHoursByTypeIdThrowsExceptionWhenCourtDoesNotExist() {
         when(courtService.getCourtById(courtId)).thenThrow(new NotFoundException(COURT_NOT_FOUND_MESSAGE));
+        UUID openingHoursId = openingHours.getId();
 
         assertThrows(NotFoundException.class, () ->
-            courtOpeningHoursService.getOpeningHoursById(courtId, openingHours.getId())
-        );
-    }
-
-    @Test
-    void getOpeningHoursThrowsExceptionWhenOpeningHourTypeDoesNotExist() {
-        when(courtService.getCourtById(courtId)).thenReturn(court);
-        when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, openingHours.getId()))
-            .thenReturn(Optional.empty());
-
-        assertThrows(
-            NotFoundException.class, () ->
-                courtOpeningHoursService.getOpeningHoursById(courtId, openingHours.getId())
+            courtOpeningHoursService.getOpeningHoursById(courtId, openingHoursId)
         );
     }
 
@@ -334,6 +335,40 @@ class CourtOpeningHoursServiceTest {
     }
 
     @Test
+    void setOpeningHoursRemovesNullEntriesWhenEverydayPresent() {
+        OpeningTimesDetail everyday = OpeningTimesDetail.builder()
+            .dayOfWeek(DayOfTheWeek.EVERYDAY)
+            .openingTime(LocalTime.of(9, 0))
+            .closingTime(LocalTime.of(17, 0))
+            .build();
+        OpeningTimesDetail monday = OpeningTimesDetail.builder()
+            .dayOfWeek(DayOfTheWeek.MONDAY)
+            .openingTime(LocalTime.of(10, 0))
+            .closingTime(LocalTime.of(16, 0))
+            .build();
+
+        List<OpeningTimesDetail> details = new java.util.ArrayList<>();
+        details.add(null);
+        details.add(everyday);
+        details.add(monday);
+
+        CourtOpeningHours hours = CourtOpeningHours.builder()
+            .courtId(courtId)
+            .openingHourTypeId(openingHourTypeId)
+            .openingTimesDetails(details)
+            .build();
+
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(openingHoursTypeService.getOpeningHourTypeById(openingHourTypeId)).thenReturn(openingHourType);
+        when(courtOpeningHoursRepository.save(any(CourtOpeningHours.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        CourtOpeningHours result = courtOpeningHoursService.setOpeningHours(courtId, hours);
+
+        assertThat(result.getOpeningTimesDetails()).containsExactly(everyday);
+    }
+
+    @Test
     void setOpeningHoursSuccessfullyUpdatesExistingOpeningHours() {
         CourtOpeningHours updatedHours =
             CourtOpeningHours.builder()
@@ -357,6 +392,33 @@ class CourtOpeningHoursServiceTest {
 
         assertThat(result).isEqualTo(updatedHours);
         verify(courtOpeningHoursRepository).save(updatedHours);
+    }
+
+    @Test
+    void setOpeningHoursWithExistingIdUsesPersistedId() {
+        UUID requestId = UUID.randomUUID();
+        UUID persistedId = UUID.randomUUID();
+
+        CourtOpeningHours hours = CourtOpeningHours.builder()
+            .id(requestId)
+            .courtId(courtId)
+            .openingHourTypeId(openingHourType.getId())
+            .openingTimesDetails(openingTimesDetails)
+            .build();
+        CourtOpeningHours existing = CourtOpeningHours.builder()
+            .id(persistedId)
+            .courtId(courtId)
+            .build();
+
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtOpeningHoursRepository.findByCourtIdAndId(courtId, requestId)).thenReturn(Optional.of(existing));
+        when(openingHoursTypeService.getOpeningHourTypeById(openingHourType.getId())).thenReturn(openingHourType);
+        when(courtOpeningHoursRepository.save(any(CourtOpeningHours.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        CourtOpeningHours result = courtOpeningHoursService.setOpeningHours(courtId, hours);
+
+        assertThat(result.getId()).isEqualTo(persistedId);
     }
 
     @Test

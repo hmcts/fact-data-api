@@ -9,12 +9,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CsvCreationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.JsonConvertException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CourtResourceNotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.DuplicatedListItemException;
@@ -22,6 +25,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidAreaOfL
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidDateRangeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
@@ -99,12 +103,8 @@ class GlobalExceptionHandlerTest {
         ConstraintViolation<?> violation = mock(ConstraintViolation.class);
         ConstraintDescriptor<?> descriptor = mock(ConstraintDescriptor.class);
         doReturn(descriptor).when(violation).getConstraintDescriptor();
-        doReturn(new Annotation() {
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return Annotation.class;
-            }
-        }).when(descriptor).getAnnotation();
+        Annotation nonUuidAnnotation = () -> Annotation.class;
+        doReturn(nonUuidAnnotation).when(descriptor).getAnnotation();
         when(violation.getMessage()).thenReturn("Bad request");
         when(violation.getInvalidValue()).thenReturn("oops");
 
@@ -141,9 +141,10 @@ class GlobalExceptionHandlerTest {
 
         Map<String, String> response = handler.handle(methodArgumentNotValidException);
 
-        assertThat(response).isNotNull();
-        assertThat(response).containsEntry("field", TEST_MESSAGE);
-        assertThat(response).containsKey("timestamp");
+        assertThat(response)
+            .isNotNull()
+            .containsEntry("field", TEST_MESSAGE)
+            .containsKey("timestamp");
     }
 
     @Test
@@ -157,7 +158,7 @@ class GlobalExceptionHandlerTest {
 
         Map<String, String> response = handler.handle(ex);
 
-        assertThat(response.get("field")).isEqualTo("first");
+        assertThat(response).containsEntry("field", "first");
     }
 
     @Test
@@ -181,6 +182,36 @@ class GlobalExceptionHandlerTest {
         ExceptionResponse response = handler.handle(ex);
 
         assertThat(response).isNotNull();
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleIllegalArgumentException() {
+        IllegalArgumentException ex = new IllegalArgumentException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleInvalidPostcodeException() {
+        InvalidPostcodeException ex = new InvalidPostcodeException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleAccessDeniedException() {
+        AccessDeniedException ex = new AccessDeniedException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex);
+
         assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
         assertThat(response.getTimestamp()).isNotNull();
     }
@@ -306,6 +337,20 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void testHandleMultipartExceptionWithNullRequest() {
+        MultipartException ex = new MultipartException("Missing multipart boundary");
+
+        ExceptionResponse response = handler.handle(ex, null);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage())
+            .contains("Unsupported or malformed Content-Type 'unknown'")
+            .contains("use 'multipart/form-data'")
+            .contains("use 'application/json'");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
     void testHandleDuplicatedListItemException() {
         DuplicatedListItemException ex = new DuplicatedListItemException("Duplicated list item");
 
@@ -340,6 +385,26 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getTimestamp()).isNotNull();
     }
 
+    @Test
+    void testHandleAzureUploadException() {
+        AzureUploadException ex = new AzureUploadException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
+    void testHandleCsvCreationException() {
+        CsvCreationException ex = new CsvCreationException(TEST_MESSAGE);
+
+        ExceptionResponse response = handler.handle(ex);
+
+        assertThat(response.getMessage()).isEqualTo(TEST_MESSAGE);
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
     private ConstraintViolation<?> createConstraintViolation(
         Annotation annotation,
         Object invalidValue,
@@ -368,9 +433,7 @@ class GlobalExceptionHandlerTest {
 
             @Override
             public Class<? extends Payload>[] payload() {
-                @SuppressWarnings("unchecked")
-                Class<? extends Payload>[] payload = (Class<? extends Payload>[]) new Class<?>[0];
-                return payload;
+                return emptyPayload();
             }
 
             @Override
@@ -383,5 +446,10 @@ class GlobalExceptionHandlerTest {
                 return ValidUUID.class;
             }
         };
+    }
+
+    @SafeVarargs
+    private static Class<? extends Payload>[] emptyPayload(Class<? extends Payload>... payload) {
+        return payload;
     }
 }

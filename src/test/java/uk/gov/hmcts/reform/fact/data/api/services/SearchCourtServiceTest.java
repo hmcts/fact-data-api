@@ -113,6 +113,37 @@ class SearchCourtServiceTest {
     }
 
     @Test
+    void getCourtsBySearchParametersShouldSearchWithServiceAreaWhenProvided() {
+        OsLocationData locationData = OsLocationData.builder()
+            .latitude(51.5)
+            .longitude(-0.1)
+            .authorityName("Authority")
+            .postcode("SW1A 1")
+            .build();
+        ServiceArea area = serviceAreaWithType(ServiceAreaType.OTHER);
+        List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
+
+        when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+        when(serviceAreaService.getServiceAreaByName("Other Service")).thenReturn(area);
+        when(searchExecuter.executeSearchStrategy(
+            locationData,
+            area,
+            SearchStrategy.DEFAULT_AOL_DISTANCE,
+            SearchAction.DOCUMENTS,
+            5
+        )).thenReturn(results);
+
+        List<CourtWithDistance> response = searchCourtService.getCourtsBySearchParameters(
+            "SW1A 1AA",
+            "Other Service",
+            SearchAction.DOCUMENTS,
+            5
+        );
+
+        assertThat(response).isEqualTo(results);
+    }
+
+    @Test
     void searchWithServiceAreaShouldUseSelectedStrategy() {
         OsLocationData locationData = OsLocationData.builder()
             .latitude(51.5)
@@ -177,11 +208,24 @@ class SearchCourtServiceTest {
     }
 
     @Test
-    void selectSearchStrategyShouldReturnFamilyRegionalWhenRegionalServiceCentreExists() {
+    void selectSearchStrategyShouldReturnDefaultForOtherAreaType() {
+        ServiceArea area = serviceAreaWithType(ServiceAreaType.OTHER);
+
+        SearchStrategy strategy = searchCourtService.selectSearchStrategy(
+            SearchAction.DOCUMENTS,
+            "Authority",
+            area
+        );
+
+        assertThat(strategy).isEqualTo(SearchStrategy.DEFAULT_AOL_DISTANCE);
+    }
+
+    @Test
+    void selectSearchStrategyShouldReturnFamilyRegionalWhenOpenRegionalServiceCentreExists() {
         ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
         area.setCatchmentMethod(CatchmentMethod.LOCAL_AUTHORITY);
 
-        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeIn(
+        when(serviceCentreRepository.existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(
             area.getId(),
             List.of(CatchmentType.REGIONAL)
         )).thenReturn(true);
@@ -196,7 +240,7 @@ class SearchCourtServiceTest {
     }
 
     @Test
-    void selectSearchStrategyShouldReturnFamilyNonRegionalWhenRegionalServiceCentreDoesNotExist() {
+    void selectSearchStrategyShouldReturnFamilyNonRegionalWhenOpenRegionalServiceCentreDoesNotExist() {
         ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
         area.setCatchmentMethod(CatchmentMethod.LOCAL_AUTHORITY);
 
@@ -221,6 +265,21 @@ class SearchCourtServiceTest {
         );
 
         assertThat(strategy).isEqualTo(SearchStrategy.FAMILY_NON_REGIONAL);
+    }
+
+    @Test
+    void selectSearchStrategyShouldReturnFamilyNonRegionalWhenCatchmentMethodIsNotLocalAuthority() {
+        ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
+        area.setCatchmentMethod(null);
+
+        SearchStrategy strategy = searchCourtService.selectSearchStrategy(
+            SearchAction.DOCUMENTS,
+            "Authority",
+            area
+        );
+
+        assertThat(strategy).isEqualTo(SearchStrategy.FAMILY_NON_REGIONAL);
+        verify(serviceCentreRepository, never()).existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(any(), any());
     }
 
     @Nested

@@ -26,6 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -189,6 +190,28 @@ class ServiceCentreServiceTest {
     }
 
     @Test
+    void createServiceCentreDefaultsNullServiceAreaIdsToEmptyList() {
+        UUID regionId = UUID.randomUUID();
+        ServiceCentre request = ServiceCentre.builder()
+            .name("National Support Centre")
+            .regionId(regionId)
+            .serviceAreaIds(null)
+            .catchmentType(null)
+            .build();
+
+        when(regionService.getRegionById(regionId)).thenReturn(Region.builder().id(regionId).build());
+        when(serviceCentreRepository.existsBySlug("national-support-centre")).thenReturn(false);
+        when(serviceCentreRepository.save(any(ServiceCentre.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ServiceCentre result = serviceCentreService.createServiceCentre(request);
+
+        assertThat(result.getServiceAreaIds()).isEmpty();
+        assertThat(result.getCatchmentType()).isEqualTo(CatchmentType.NATIONAL);
+        verify(serviceAreaRepository, never()).findAllById(any());
+    }
+
+    @Test
     void updateServiceCentreRegeneratesSlugWhenNameChanges() {
         UUID serviceCentreId = UUID.randomUUID();
         UUID regionId = UUID.randomUUID();
@@ -226,6 +249,35 @@ class ServiceCentreServiceTest {
     }
 
     @Test
+    void updateServiceCentreKeepsSlugWhenNameIsUnchanged() {
+        UUID serviceCentreId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
+        ServiceCentre existing = ServiceCentre.builder()
+            .id(serviceCentreId)
+            .name("Existing Service Centre")
+            .slug("existing-service-centre")
+            .open(false)
+            .build();
+        ServiceCentre request = ServiceCentre.builder()
+            .name("Existing Service Centre")
+            .open(true)
+            .serviceAreaIds(List.of())
+            .regionId(regionId)
+            .catchmentType(CatchmentType.NATIONAL)
+            .build();
+
+        when(serviceCentreRepository.findById(serviceCentreId)).thenReturn(Optional.of(existing));
+        when(serviceAreaRepository.findAllById(List.of())).thenReturn(List.of());
+        when(regionService.getRegionById(regionId)).thenReturn(Region.builder().id(regionId).build());
+        when(serviceCentreRepository.save(existing)).thenReturn(existing);
+
+        ServiceCentre result = serviceCentreService.updateServiceCentre(serviceCentreId, request);
+
+        assertThat(result.getSlug()).isEqualTo("existing-service-centre");
+        verify(serviceCentreRepository, never()).existsBySlug(any());
+    }
+
+    @Test
     void deleteServiceCentresByNamePrefixDeletesMatchingRowsForTestingSupport() {
         ServiceCentre first = ServiceCentre.builder().id(UUID.randomUUID()).name("SC Delete One").build();
         ServiceCentre second = ServiceCentre.builder().id(UUID.randomUUID()).name("SC Delete Two").build();
@@ -239,6 +291,41 @@ class ServiceCentreServiceTest {
         verify(userRepository).removeServiceCentreFromAllFavourites(first.getId());
         verify(userRepository).removeServiceCentreFromAllFavourites(second.getId());
         verify(serviceCentreRepository).deleteAllInBatch(serviceCentres);
+    }
+
+    @Test
+    void deleteServiceCentresByNamePrefixCanSkipAuditPurge() {
+        ServiceCentre serviceCentre = ServiceCentre.builder().id(UUID.randomUUID()).name("SC Keep Audit").build();
+        when(serviceCentreRepository.findByNameStartingWithIgnoreCase("SC Keep")).thenReturn(List.of(serviceCentre));
+
+        long deleted = serviceCentreService.deleteServiceCentresByNamePrefix("SC Keep", false);
+
+        assertThat(deleted).isEqualTo(1);
+        verify(auditRepository, never()).deleteBySubjectIdIn(any());
+        verify(userRepository).removeServiceCentreFromAllFavourites(serviceCentre.getId());
+        verify(serviceCentreRepository).deleteAllInBatch(List.of(serviceCentre));
+    }
+
+    @Test
+    void deleteServiceCentresByNamePrefixReturnsZeroWhenNoRowsMatch() {
+        when(serviceCentreRepository.findByNameStartingWithIgnoreCase("Missing")).thenReturn(List.of());
+
+        long deleted = serviceCentreService.deleteServiceCentresByNamePrefix("Missing", true);
+
+        assertThat(deleted).isZero();
+        verify(serviceCentreRepository, never()).deleteAllInBatch(any());
+    }
+
+    @Test
+    void getAllServiceCentreDetailsReturnsRepositoryResults() {
+        ServiceCentreDetails first = ServiceCentreDetails.builder().id(UUID.randomUUID()).name("A").build();
+        ServiceCentreDetails second = ServiceCentreDetails.builder().id(UUID.randomUUID()).name("B").build();
+        when(serviceCentreDetailsRepository.findAll()).thenReturn(List.of(first, second));
+
+        List<ServiceCentreDetails> result = serviceCentreService.getAllServiceCentreDetails();
+
+        assertThat(result).containsExactly(first, second);
+        verify(serviceCentreDetailsRepository).findAll();
     }
 
     @Test
@@ -265,3 +352,4 @@ class ServiceCentreServiceTest {
         verify(serviceCentreRepository).findAllNameAndId();
     }
 }
+

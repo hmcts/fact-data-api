@@ -54,9 +54,10 @@ class CourtPhotoControllerTest {
     void getCourtPhotoThrowsNotFoundException() {
         when(courtPhotoService.getCourtPhotoByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new NotFoundException("Court photo not found"));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(NotFoundException.class, () ->
-            courtPhotoController.getCourtPhotoByCourtId(UNKNOWN_COURT_ID.toString())
+            courtPhotoController.getCourtPhotoByCourtId(unknownCourtId)
         );
     }
 
@@ -89,9 +90,10 @@ class CourtPhotoControllerTest {
 
         when(courtPhotoService.setCourtPhoto(UNKNOWN_COURT_ID, file))
             .thenThrow(new NotFoundException("Court not found"));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(NotFoundException.class, () ->
-            courtPhotoController.setCourtPhotoByCourtId(UNKNOWN_COURT_ID.toString(), file)
+            courtPhotoController.setCourtPhotoByCourtId(unknownCourtId, file)
         );
     }
 
@@ -116,9 +118,10 @@ class CourtPhotoControllerTest {
     void deleteCourtPhotoThrowsNotFoundException() {
         doThrow(new NotFoundException("Court photo not found"))
             .when(courtPhotoService).deleteCourtPhotoByCourtId(UNKNOWN_COURT_ID);
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(NotFoundException.class, () ->
-            courtPhotoController.deleteCourtPhotoByCourtId(UNKNOWN_COURT_ID.toString())
+            courtPhotoController.deleteCourtPhotoByCourtId(unknownCourtId)
         );
     }
 

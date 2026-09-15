@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.utils;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.dataformat.csv.CsvMapper;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.JsonConvertException;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -265,8 +268,7 @@ class CsvUtilTest {
         String csv = csvUtil.convertJsonToCsv(root);
 
         assertThat(csv)
-            .contains("name,lat,lon,number,cci_code,magistrate_code,slug,types,open,dx_number,areas_of_law,addresses");
-        assertThat(csv)
+            .contains("name,lat,lon,number,cci_code,magistrate_code,slug,types,open,dx_number,areas_of_law,addresses")
             .contains("Test Court")
             .contains("test-court");
     }
@@ -331,8 +333,9 @@ class CsvUtilTest {
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
 
-        assertThat(result).containsEntry("lat", 53.8);
-        assertThat(result).containsEntry("lon", -1.55);
+        assertThat(result)
+            .containsEntry("lat", 53.8)
+            .containsEntry("lon", -1.55);
         assertThat(result.get("addresses").toString())
             .contains("Address: 2 Service Road")
             .contains("Town: Leeds");
@@ -366,12 +369,13 @@ class CsvUtilTest {
         address.put("lon", -0.1);
 
         Map<String, Object> result = csvUtil.flattenCourtNode(root);
-        assertThat(result).containsEntry("open",true);
-        assertThat(result).containsEntry("number", 123);
-        assertThat(result).containsEntry("cci_code", 456);
-        assertThat(result).containsEntry("magistrate_code", 789);
-        assertThat(result).containsEntry("lat", 51.5);
-        assertThat(result).containsEntry("lon", -0.1);
+        assertThat(result)
+            .containsEntry("open", true)
+            .containsEntry("number", 123)
+            .containsEntry("cci_code", 456)
+            .containsEntry("magistrate_code", 789)
+            .containsEntry("lat", 51.5)
+            .containsEntry("lon", -0.1);
     }
 
     @Test
@@ -385,7 +389,7 @@ class CsvUtilTest {
     }
 
     @Test
-    void shouldThrowJsonConvertExceptionWhenCsvWritingFails() throws Exception {
+    void shouldThrowJsonConvertExceptionWhenCsvWritingFails() {
         CsvMapper mockCsvMapper = mock(CsvMapper.class);
         CsvUtil utilWithMock = new CsvUtil(mockCsvMapper);
 
@@ -490,6 +494,213 @@ class CsvUtilTest {
             new String[]{"first", "second"}
         );
         assertThat(missingInteger).isNull();
+    }
+
+    @Test
+    void shouldCoverRemainingBranchOutcomesAcrossPrivateHelpers() throws Exception {
+        ObjectNode emptyAreasRoot = mapper.createObjectNode();
+        emptyAreasRoot.putArray("courtAreasOfLaw");
+        assertThat(csvUtil.flattenCourtNode(emptyAreasRoot).get("areas_of_law"))
+            .hasToString("No areas of law available");
+
+        ObjectNode objectAddressesRoot = mapper.createObjectNode();
+        objectAddressesRoot.putObject("addresses").put("townCity", "Leeds");
+        assertThat(csvUtil.flattenCourtNode(objectAddressesRoot).get("addresses"))
+            .hasToString("No address available");
+
+        assertThat(invokePrivate(
+            "flattenAddressLines",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{}
+        )).isEqualTo("No address lines");
+
+        assertThat(invokePrivate(
+            "flattenAddressLines",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{mapper.createObjectNode()}
+        )).isEqualTo("No address lines");
+
+        JsonNode stringNode = mapper.createArrayNode().add("not-array").get(0);
+        assertThat(invokePrivate(
+            "flattenAddressLines",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{stringNode}
+        )).isEqualTo("No address lines");
+
+        assertThat(invokePrivate(
+            "flattenAddressLines",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{mapper.createArrayNode()}
+        )).isEqualTo("No address lines");
+
+        ObjectNode emptyFieldsNode = mapper.createObjectNode();
+        emptyFieldsNode.putArray("areasOfLaw");
+        emptyFieldsNode.putArray("courts");
+        assertThat(invokePrivate(
+            "flattenFieldsOfLaw",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{emptyFieldsNode}
+        )).isEqualTo("N/A");
+
+        assertThat(invokePrivate(
+            "flattenFieldsOfLawFromAddress",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{stringNode}
+        )).isEqualTo("N/A");
+
+        ObjectNode emptyDxCodesRoot = mapper.createObjectNode();
+        emptyDxCodesRoot.put("dx_number", "DX fallback");
+        emptyDxCodesRoot.putArray("courtDxCodes");
+        assertThat(csvUtil.flattenCourtNode(emptyDxCodesRoot)).containsEntry("dx_number", "DX fallback");
+
+        ObjectNode emptyServiceAreasRoot = mapper.createObjectNode();
+        emptyServiceAreasRoot.putArray("serviceAreas");
+        assertThat(csvUtil.flattenCourtNode(emptyServiceAreasRoot).get("types")).hasToString("");
+
+        ObjectNode counterServiceRoot = mapper.createObjectNode();
+        ArrayNode counterServices = counterServiceRoot.putArray("courtCounterServiceOpeningHours");
+        counterServices.addObject().put("courtTypes", "invalid");
+        counterServices.addObject().putArray("courtTypes").addObject();
+        assertThat(csvUtil.flattenCourtNode(counterServiceRoot).get("types")).hasToString("");
+
+        assertThat(invokePrivate(
+            "getFirstArrayCandidate",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{null, mapper.createObjectNode()}
+        )).isNull();
+
+        assertThat(invokePrivate(
+            "getFirstObjectCandidate",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{null, mapper.createArrayNode()}
+        )).isNull();
+
+        assertThat(invokePrivate(
+            "stringifyArray",
+            new Class<?>[]{JsonNode.class},
+            mapper.createObjectNode()
+        )).isEqualTo("");
+
+        assertThat(invokePrivate(
+            "stringifyNamedArray",
+            new Class<?>[]{JsonNode.class},
+            mapper.createObjectNode()
+        )).isEqualTo("");
+
+        ObjectNode nullNameNode = mapper.createObjectNode();
+        nullNameNode.putNull("name");
+        assertThat(invokePrivate(
+            "safeText",
+            new Class<?>[]{JsonNode.class, String[].class},
+            nullNameNode,
+            new String[]{"name"}
+        )).isEqualTo("N/A");
+
+        List<String> values = new ArrayList<>();
+        invokePrivate("addIfPresent", new Class<?>[]{List.class, String.class}, values, " ");
+        invokePrivate("addIfPresent", new Class<?>[]{List.class, String.class}, values, "N/A");
+        invokePrivate("addIfPresent", new Class<?>[]{List.class, String.class}, values, null);
+        assertThat(values).isEmpty();
+
+        List<String> parts = new ArrayList<>();
+        invokePrivate(
+            "addNamesFromArray",
+            new Class<?>[]{List.class, JsonNode.class, String.class},
+            parts,
+            mapper.createObjectNode(),
+            "Label"
+        );
+        ArrayNode unnamedEntries = mapper.createArrayNode();
+        unnamedEntries.addObject();
+        invokePrivate(
+            "addNamesFromArray",
+            new Class<?>[]{List.class, JsonNode.class, String.class},
+            parts,
+            unnamedEntries,
+            "Label"
+        );
+        assertThat(parts).isEmpty();
+
+        JsonNode numericNode = mapper.createArrayNode().add(123).get(0);
+        assertThat(invokePrivate("isStringNode", new Class<?>[]{JsonNode.class}, numericNode)).isEqualTo(false);
+
+        assertThat(invokePrivate(
+            "asNodeText",
+            new Class<?>[]{JsonNode.class, String.class},
+            mapper.getNodeFactory().nullNode(),
+            "default"
+        )).isEqualTo("default");
+
+        assertThat(invokePrivate(
+            "asNodeText",
+            new Class<?>[]{JsonNode.class, String.class},
+            mapper.createObjectNode().path("missing"),
+            "default"
+        )).isEqualTo("default");
+    }
+
+    @Test
+    void shouldCoverDefensiveBranchesThatRequireStatefulOrEdgeNodes() throws Exception {
+        JsonNode statefulArrayNode = mock(JsonNode.class);
+        when(statefulArrayNode.isArray()).thenReturn(true, false);
+        assertThat(invokePrivate(
+            "flattenAddresses",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{statefulArrayNode}
+        )).isEqualTo("No address available");
+
+        JsonNode statefulAddressLinesNode = mock(JsonNode.class);
+        when(statefulAddressLinesNode.isArray()).thenReturn(true, false, false);
+        assertThat(invokePrivate(
+            "flattenAddressLines",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{statefulAddressLinesNode}
+        )).isEqualTo("No address lines");
+
+        JsonNode statefulFieldsOfLawNode = mock(JsonNode.class);
+        when(statefulFieldsOfLawNode.isObject()).thenReturn(true, false);
+        assertThat(invokePrivate(
+            "flattenFieldsOfLaw",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{statefulFieldsOfLawNode}
+        )).isEqualTo("N/A");
+
+        assertThat(invokePrivate(
+            "flattenFieldsOfLawFromAddress",
+            new Class<?>[]{JsonNode[].class},
+            (Object) new JsonNode[]{mapper.createObjectNode()}
+        )).isEqualTo("N/A");
+
+        List<String> parts = new ArrayList<>();
+        invokePrivate(
+            "addNamesFromArray",
+            new Class<?>[]{List.class, JsonNode.class, String.class},
+            parts,
+            mapper.createArrayNode(),
+            "Label"
+        );
+        assertThat(parts).isEmpty();
+
+        assertThat(invokePrivate(
+            "isStringNode",
+            new Class<?>[]{JsonNode.class},
+            (Object) null
+        )).isEqualTo(false);
+
+        assertThat(invokePrivate(
+            "asNodeText",
+            new Class<?>[]{JsonNode.class, String.class},
+            (Object) null,
+            "default"
+        )).isEqualTo("default");
+
+        ArrayNode unnamedItems = mapper.createArrayNode();
+        unnamedItems.addObject();
+        assertThat(invokePrivate(
+            "stringifyNamedArray",
+            new Class<?>[]{JsonNode.class},
+            unnamedItems
+        )).isEqualTo("");
     }
 
     private Object invokePrivate(String methodName, Class<?>[] parameterTypes, Object... args) throws Exception {

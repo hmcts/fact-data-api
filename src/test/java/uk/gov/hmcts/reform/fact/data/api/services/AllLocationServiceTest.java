@@ -229,6 +229,24 @@ class AllLocationServiceTest {
     }
 
     @Test
+    void getFilteredAndPaginatedLocationsExcludesServiceCentresWhenNameDoesNotMatch() {
+        when(serviceCentreRepository.findAll()).thenReturn(List.of(buildServiceCentre("Alpha Service Centre", true)));
+
+        Page<AllLocation> result = allLocationService.getFilteredAndPaginatedLocations(
+            0,
+            25,
+            false,
+            true,
+            null,
+            "zzz",
+            null,
+            null
+        );
+
+        assertThat(result.getContent()).isEmpty();
+    }
+
+    @Test
     void getOpenLocationsByPrefixReturnsCourtsAndServiceCentresOrderedByName() {
         when(courtRepository.findCourtByNameStartingWithIgnoreCaseAndOpenOrderByNameAsc("A", true))
             .thenReturn(List.of(
@@ -303,6 +321,46 @@ class AllLocationServiceTest {
             .thenReturn(List.of(closedServiceCentre));
 
         List<AllLocation> result = allLocationService.searchOpenLocationsByNameOrAddress("Closed");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void searchOpenLocationsByNameOrAddressIgnoresUnknownLocationTypes() {
+        AllLocationSearchResult unknownResult = new AllLocationSearchResult() {
+            @Override
+            public UUID getId() {
+                return UUID.randomUUID();
+            }
+
+            @Override
+            public String getLocationType() {
+                return "UNKNOWN";
+            }
+        };
+
+        when(allLocationSearchRepository.searchOpenByNameOrAddress("Example")).thenReturn(List.of(unknownResult));
+        when(courtRepository.findAllById(List.of())).thenReturn(List.of());
+        when(serviceCentreRepository.findAllById(List.of())).thenReturn(List.of());
+
+        List<AllLocation> result = allLocationService.searchOpenLocationsByNameOrAddress("Example");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void searchOpenLocationsByNameOrAddressSkipsRankedRowsWhenEntitiesAreMissing() {
+        UUID missingCourtId = UUID.randomUUID();
+        UUID missingServiceCentreId = UUID.randomUUID();
+        AllLocationSearchResult courtResult = searchResult(missingCourtId, "COURT");
+        AllLocationSearchResult serviceCentreResult = searchResult(missingServiceCentreId, "SERVICE_CENTRE");
+
+        when(allLocationSearchRepository.searchOpenByNameOrAddress("Missing"))
+            .thenReturn(List.of(courtResult, serviceCentreResult));
+        when(courtRepository.findAllById(List.of(missingCourtId))).thenReturn(List.of());
+        when(serviceCentreRepository.findAllById(List.of(missingServiceCentreId))).thenReturn(List.of());
+
+        List<AllLocation> result = allLocationService.searchOpenLocationsByNameOrAddress("Missing");
 
         assertThat(result).isEmpty();
     }

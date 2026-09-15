@@ -54,9 +54,10 @@ class CourtFacilitiesControllerTest {
     void getBuildingFacilitiesThrowsFacilitiesNotFound() {
         when(courtFacilitiesService.getFacilitiesByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new CourtResourceNotFoundException("No facilities found"));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(CourtResourceNotFoundException.class, () ->
-            courtFacilitiesController.getBuildingFacilitiesByCourtId(UNKNOWN_COURT_ID.toString())
+            courtFacilitiesController.getBuildingFacilitiesByCourtId(unknownCourtId)
         );
     }
 
@@ -64,9 +65,10 @@ class CourtFacilitiesControllerTest {
     void getBuildingFacilitiesThrowsNotFoundException() {
         when(courtFacilitiesService.getFacilitiesByCourtId(UNKNOWN_COURT_ID))
             .thenThrow(new NotFoundException("Court not found"));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(NotFoundException.class, () ->
-            courtFacilitiesController.getBuildingFacilitiesByCourtId(UNKNOWN_COURT_ID.toString())
+            courtFacilitiesController.getBuildingFacilitiesByCourtId(unknownCourtId)
         );
     }
 
@@ -100,9 +102,10 @@ class CourtFacilitiesControllerTest {
 
         when(courtFacilitiesService.setFacilities(UNKNOWN_COURT_ID, facilities))
             .thenThrow(new NotFoundException("Court not found"));
+        String unknownCourtId = UNKNOWN_COURT_ID.toString();
 
         assertThrows(NotFoundException.class, () ->
-            courtFacilitiesController.setBuildingFacilities(UNKNOWN_COURT_ID.toString(), facilities)
+            courtFacilitiesController.setBuildingFacilities(unknownCourtId, facilities)
         );
     }
 

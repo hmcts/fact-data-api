@@ -165,7 +165,7 @@ public class CourtController {
         @ApiResponse(responseCode = "200", description = "Response of matched and unmatched courts"),
         @ApiResponse(responseCode = "400", description = "Invalid linking data supplied")
     })
-    @PreAuthorize("@authService.isAdmin()") //TODO: CaTH role
+    @PreAuthorize("@authService.isAdmin()") // Uses admin role until dedicated CaTH role is introduced.
     public ResponseEntity<Map<String, Object>> linkCaTHCourtsToFaCT(
         @RequestBody @NotEmpty(message = "mrdIds cannot be empty")
         List<@NotBlank(message = "mrdId cannot be blank") String> mrdIds) {
@@ -182,7 +182,7 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid MRD ID supplied"),
         @ApiResponse(responseCode = "404", description = "Court with given MRD ID not found")
     })
-    @PreAuthorize("@authService.isAdmin()") //TODO: CaTH role
+    @PreAuthorize("@authService.isAdmin()") // Uses admin role until dedicated CaTH role is introduced.
     public ResponseEntity<Void> handleCaTHCourtDeletion(
         @Parameter(description = "MRD ID of the deleted court", required = true)
         @NotBlank(message = "mrdId cannot be blank") @PathVariable String mrdId

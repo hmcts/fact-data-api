@@ -56,6 +56,21 @@ class SearchServiceCentreServiceTest {
     }
 
     @Test
+    void getServiceCentresBySearchParametersReturnsEmptyWhenServiceAreaIsBlank() {
+        List<ServiceCentreWithDistance> result = searchServiceCentreService.getServiceCentresBySearchParameters(
+            "SW1A 1AA",
+            "   ",
+            null,
+            10
+        );
+
+        assertThat(result).isEmpty();
+        verifyNoInteractions(osService);
+        verifyNoInteractions(serviceAreaService);
+        verifyNoInteractions(serviceCentreRepository);
+    }
+
+    @Test
     void getServiceCentresBySearchParametersThrowsWhenOnlyServiceAreaProvided() {
         assertThatThrownBy(() -> searchServiceCentreService.getServiceCentresBySearchParameters(
             "SW1A 1AA",

@@ -106,19 +106,56 @@ class AuditControllerTest {
 
     @Test
     void getFilteredAndPaginatedAuditsThrowsInvalidParameterCombinationForBothSubjectIds() {
+        String courtId = COURT_ID.toString();
+        String serviceCentreId = SERVICE_CENTRE_ID.toString();
+        LocalDate fromDate = LocalDate.now().minusDays(1);
+        LocalDate toDate = LocalDate.now();
+
         assertThrows(
             InvalidParameterCombinationException.class, () ->
                 auditController.getFilteredAndPaginatedAudits(
                     PAGE_NUMBER,
                     PAGE_SIZE,
                     null,
-                    COURT_ID.toString(),
-                    SERVICE_CENTRE_ID.toString(),
+                    courtId,
+                    serviceCentreId,
                     null,
-                    LocalDate.now().minusDays(1),
-                    LocalDate.now()
+                    fromDate,
+                    toDate
                 )
         );
+    }
+
+    @Test
+    void getFilteredAndPaginatedAuditsAllowsSingleCourtIdWhenToDateIsMissing() {
+        String courtId = COURT_ID.toString();
+        LocalDate fromDate = LocalDate.now().minusDays(2);
+        Page<Audit> auditPage = new PageImpl<>(List.of(createAudit()));
+
+        when(auditService.getFilteredAndPaginatedAudits(
+            PAGE_NUMBER,
+            PAGE_SIZE,
+            fromDate,
+            null,
+            null,
+            courtId,
+            null,
+            null
+        )).thenReturn(auditPage);
+
+        ResponseEntity<Page<Audit>> response = auditController.getFilteredAndPaginatedAudits(
+            PAGE_NUMBER,
+            PAGE_SIZE,
+            null,
+            courtId,
+            null,
+            null,
+            fromDate,
+            null
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode(), RESPONSE_STATUS_MISMATCH);
+        assertEquals(auditPage, response.getBody(), RESPONSE_BODY_MISMATCH);
     }
 
     @Test
@@ -177,6 +214,14 @@ class AuditControllerTest {
             IllegalArgumentException.class,
             () -> auditController.getAuditById("not-a-valid-uuid")
         );
+    }
+
+    @Test
+    void removeExpiredAuditEntriesReturns204() {
+        ResponseEntity<Void> response = auditController.removeExpiredAuditEntries();
+
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode(), RESPONSE_STATUS_MISMATCH);
+        verify(auditService).removeExpiredAuditEntries();
     }
 
     private Audit createAudit() {

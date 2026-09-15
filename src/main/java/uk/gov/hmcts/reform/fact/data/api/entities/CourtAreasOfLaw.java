@@ -70,8 +70,12 @@ public class CourtAreasOfLaw implements AuditableCourtEntity {
 
     @JsonView(CourtDetailsView.class)
     @JsonProperty("areasOfLaw")
-    public List<?> getAreasOfLawForView() {
-        return areasOfLawDetails != null ? areasOfLawDetails : areasOfLaw;
+    public List<Object> getAreasOfLawForView() {
+        return areasOfLawDetails != null ? asViewList(areasOfLawDetails) : asViewList(areasOfLaw);
+    }
+
+    private static <T> List<Object> asViewList(List<T> values) {
+        return values == null ? null : values.stream().map(Object.class::cast).toList();
     }
 
     @JsonIgnore

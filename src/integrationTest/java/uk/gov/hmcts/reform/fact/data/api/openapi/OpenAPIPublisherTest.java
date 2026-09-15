@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.openapi;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -35,17 +36,19 @@ class OpenAPIPublisherTest {
 
     @DisplayName("Generate swagger documentation")
     @Test
-    @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
     void generateDocs() throws Exception {
         byte[] specs = mvc.perform(get("/v3/api-docs"))
             .andExpect(status().isOk())
             .andReturn()
             .getResponse()
             .getContentAsByteArray();
+        assertTrue(specs.length > 0, "Generated OpenAPI spec should not be empty");
 
         try (OutputStream outputStream = Files.newOutputStream(Paths.get("/tmp/openapi-specs.json"))) {
             outputStream.write(specs);
         }
+
+        assertTrue(Files.exists(Paths.get("/tmp/openapi-specs.json")), "OpenAPI spec file should be created");
 
     }
 }

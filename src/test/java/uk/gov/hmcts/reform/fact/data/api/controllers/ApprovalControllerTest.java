@@ -74,10 +74,11 @@ class ApprovalControllerTest {
     @Test
     void deleteApprovalPropagatesNotFoundException() {
         doThrow(new NotFoundException("Approval not found")).when(approvalService).deleteApproval(APPROVAL_ID);
+        String approvalId = APPROVAL_ID.toString();
 
         assertThrows(
             NotFoundException.class,
-            () -> approvalController.deleteApproval(APPROVAL_ID.toString())
+            () -> approvalController.deleteApproval(approvalId)
         );
     }
 

@@ -6,8 +6,11 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
 @EnableFeignClients(basePackages = "uk.gov.hmcts.reform.fact.data.api")
-@SuppressWarnings("HideUtilityClassConstructor") // Spring needs a constructor, its not a utility class
 public class Application {
+
+    private Application() {
+        // Utility holder for application entry point.
+    }
 
     public static void main(final String[] args) {
         SpringApplication.run(Application.class, args);

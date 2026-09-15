@@ -76,20 +76,28 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
     }
 
     private boolean ensureEntityManager() {
-        synchronized (entityManagerRef) {
-            if (entityManagerRef.get() == null && applicationContext != null) {
-                entityManagerRef.set(applicationContext.getBean(EntityManager.class));
-            }
+        if (entityManagerRef.get() != null) {
+            return true;
         }
+
+        if (applicationContext == null) {
+            return false;
+        }
+
+        entityManagerRef.compareAndSet(null, applicationContext.getBean(EntityManager.class));
         return entityManagerRef.get() != null;
     }
 
     private boolean ensureAuditUserContext() {
-        synchronized (auditUserContextRef) {
-            if (auditUserContextRef.get() == null && applicationContext != null) {
-                auditUserContextRef.set(applicationContext.getBean(AuditUserContext.class));
-            }
+        if (auditUserContextRef.get() != null) {
+            return true;
         }
+
+        if (applicationContext == null) {
+            return false;
+        }
+
+        auditUserContextRef.compareAndSet(null, applicationContext.getBean(AuditUserContext.class));
         return auditUserContextRef.get() != null;
     }
 
@@ -163,9 +171,9 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
             String previousString = previous != null ? objectMapper.writeValueAsString(previous) : "{}";
             String currentString = objectMapper.writeValueAsString(current);
             Map<String, Serializable> previousMap = objectMapper.readValue(
-                previousString, new TypeReference<Map<String,Serializable>>(){});
+                previousString, new TypeReference<>() {});
             Map<String, Serializable> currentMap = objectMapper.readValue(
-                currentString, new TypeReference<Map<String,Serializable>>(){});
+                currentString, new TypeReference<>() {});
             // diff the maps
             currentMap.forEach((key, value) -> {
                 if (!previousMap.containsKey(key)) {

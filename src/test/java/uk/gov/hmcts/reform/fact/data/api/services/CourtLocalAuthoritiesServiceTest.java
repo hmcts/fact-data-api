@@ -112,8 +112,9 @@ class CourtLocalAuthoritiesServiceTest {
 
         CourtLocalAuthorityDto childrenResult = findResultByAreaId(result, CHILDREN_ID);
         List<LocalAuthoritySelectionDto> childrenAuthorities = childrenResult.getLocalAuthorities();
-        assertThat(childrenAuthorities).isNotEmpty();
-        assertThat(childrenAuthorities).allMatch(la -> Boolean.FALSE.equals(la.getSelected()));
+        assertThat(childrenAuthorities)
+            .isNotEmpty()
+            .allMatch(la -> Boolean.FALSE.equals(la.getSelected()));
         verify(localAuthorityTypeRepository).findAllParents();
         verify(localAuthorityTypeRepository, never()).findAll();
     }
@@ -134,6 +135,20 @@ class CourtLocalAuthoritiesServiceTest {
     @Test
     void shouldReturnEmptyListWhenAreasOfLawConfiguredAsNullForCourt() {
         courtAreasOfLaw.setAreasOfLaw(null);
+        when(courtService.getCourtById(COURT_ID)).thenReturn(court);
+        when(courtAreasOfLawRepository.findByCourtId(COURT_ID)).thenReturn(Optional.of(courtAreasOfLaw));
+
+        List<CourtLocalAuthorityDto> result = courtLocalAuthoritiesService.getCourtLocalAuthorities(COURT_ID);
+
+        assertThat(result).isEmpty();
+        verify(localAuthorityTypeRepository, never()).findAllParents();
+        verify(areaOfLawTypeRepository, never()).findByNameIn(AllowedLocalAuthorityAreasOfLaw.displayNames());
+        verify(areaOfLawTypeRepository, never()).findAllById(List.of());
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenAreasOfLawConfiguredAsEmptyForCourt() {
+        courtAreasOfLaw.setAreasOfLaw(List.of());
         when(courtService.getCourtById(COURT_ID)).thenReturn(court);
         when(courtAreasOfLawRepository.findByCourtId(COURT_ID)).thenReturn(Optional.of(courtAreasOfLaw));
 

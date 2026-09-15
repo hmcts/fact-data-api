@@ -111,10 +111,11 @@ class UserControllerTest {
     void clearUserLocksThrowsNotFoundExceptionWhenUserNotFound() {
         doThrow(new NotFoundException("User not found"))
             .when(lockService).clearUserLocks(UNKNOWN_USER_ID);
+        String unknownUserId = UNKNOWN_USER_ID.toString();
 
         assertThrows(
             NotFoundException.class, () ->
-                userController.clearUserLocks(UNKNOWN_USER_ID.toString())
+                userController.clearUserLocks(unknownUserId)
         );
     }
 
@@ -148,6 +149,21 @@ class UserControllerTest {
             DeleteInactiveUsersResponse.builder()
                 .deletedUsers(1)
                 .message("Deleted 1 inactive user")
+                .build()
+        );
+    }
+
+    @Test
+    void deleteInactiveUsersReturnsNoUsersFoundMessageWhenNoneDeleted() {
+        when(userService.deleteInactiveUsers()).thenReturn(0);
+
+        ResponseEntity<DeleteInactiveUsersResponse> response = userController.deleteInactiveUsers();
+
+        assertThat(response.getStatusCode()).as(RESPONSE_STATUS_MESSAGE).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).as(RESPONSE_BODY_MESSAGE).isEqualTo(
+            DeleteInactiveUsersResponse.builder()
+                .deletedUsers(0)
+                .message("No inactive users found for deletion")
                 .build()
         );
     }

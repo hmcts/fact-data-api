@@ -67,9 +67,10 @@ class CourtAddressControllerTest {
 
     @Test
     void getAddressThrowsIllegalArgumentExceptionForInvalidUUID() {
+        String addressId = ADDRESS_ID.toString();
         assertThrows(
             IllegalArgumentException.class, () ->
-                courtAddressController.getAddress(INVALID_UUID, ADDRESS_ID.toString())
+                courtAddressController.getAddress(INVALID_UUID, addressId)
         );
     }
 
@@ -114,10 +115,11 @@ class CourtAddressControllerTest {
     @Test
     void updateCourtAddressThrowsIllegalArgumentExceptionForInvalidUUID() {
         CourtAddress address = new CourtAddress();
+        String addressId = ADDRESS_ID.toString();
 
         assertThrows(
             IllegalArgumentException.class, () ->
-                courtAddressController.updateCourtAddress(INVALID_UUID, ADDRESS_ID.toString(), address)
+                courtAddressController.updateCourtAddress(INVALID_UUID, addressId, address)
         );
     }
 
@@ -134,9 +136,10 @@ class CourtAddressControllerTest {
 
     @Test
     void deleteCourtAddressThrowsIllegalArgumentExceptionForInvalidUUID() {
+        String addressId = ADDRESS_ID.toString();
         assertThrows(
             IllegalArgumentException.class, () ->
-                courtAddressController.deleteCourtAddress(INVALID_UUID, ADDRESS_ID.toString())
+                courtAddressController.deleteCourtAddress(INVALID_UUID, addressId)
         );
     }
 }

@@ -13,6 +13,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
@@ -22,9 +23,11 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -127,7 +130,7 @@ class TypesServiceTest {
 
     @Test
     void getAllAreasOfLawTypesByIdsReturnsAreasOfLawTypesWhenFound() {
-        List<UUID> ids = List.of(areaOfLawTypes.get(0).getId());
+        List<UUID> ids = List.of(areaOfLawTypes.getFirst().getId());
         when(areaOfLawTypeRepository.findAllById(ids)).thenReturn(areaOfLawTypes);
 
         List<AreaOfLawType> result = typesService.getAllAreasOfLawTypesByIds(ids);
@@ -164,6 +167,47 @@ class TypesServiceTest {
     }
 
     @Test
+    void getCourtTypeByIdReturnsCourtTypeWhenFound() {
+        UUID courtTypeId = courtTypes.getFirst().getId();
+        CourtType courtType = courtTypes.getFirst();
+        when(courtTypeRepository.findById(courtTypeId)).thenReturn(Optional.of(courtType));
+
+        CourtType result = typesService.getCourtTypeById(courtTypeId);
+
+        assertThat(result).isEqualTo(courtType);
+    }
+
+    @Test
+    void getCourtTypeByIdThrowsNotFoundWhenMissing() {
+        UUID courtTypeId = UUID.randomUUID();
+        when(courtTypeRepository.findById(courtTypeId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> typesService.getCourtTypeById(courtTypeId))
+            .isInstanceOf(NotFoundException.class)
+            .hasMessage("Court type with ID " + courtTypeId + " not found");
+    }
+
+    @Test
+    void getAllCourtTypesByIdsReturnsCourtTypesWhenFound() {
+        List<UUID> courtTypeIds = List.of(courtTypes.getFirst().getId());
+        when(courtTypeRepository.findAllById(courtTypeIds)).thenReturn(courtTypes);
+
+        List<CourtType> result = typesService.getAllCourtTypesByIds(courtTypeIds);
+
+        assertThat(result).isEqualTo(courtTypes);
+    }
+
+    @Test
+    void getAllCourtTypesByIdsReturnsEmptyListWhenNoneFound() {
+        List<UUID> courtTypeIds = List.of(UUID.randomUUID());
+        when(courtTypeRepository.findAllById(courtTypeIds)).thenReturn(List.of());
+
+        List<CourtType> result = typesService.getAllCourtTypesByIds(courtTypeIds);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void getOpeningHoursTypesReturnsOpeningHoursTypesWhenFound() {
         when(openingHoursTypeRepository.findAll()).thenReturn(openingHourTypes);
 
@@ -182,6 +226,26 @@ class TypesServiceTest {
     }
 
     @Test
+    void getOpeningHourTypesByIdsReturnsOpeningHoursTypesWhenFound() {
+        List<UUID> openingHourTypeIds = List.of(openingHourTypes.getFirst().getId());
+        when(openingHoursTypeRepository.findAllById(openingHourTypeIds)).thenReturn(openingHourTypes);
+
+        List<OpeningHourType> result = typesService.getOpeningHourTypesByIds(openingHourTypeIds);
+
+        assertThat(result).isEqualTo(openingHourTypes);
+    }
+
+    @Test
+    void getOpeningHourTypesByIdsReturnsEmptyListWhenNoneFound() {
+        List<UUID> openingHourTypeIds = List.of(UUID.randomUUID());
+        when(openingHoursTypeRepository.findAllById(openingHourTypeIds)).thenReturn(List.of());
+
+        List<OpeningHourType> result = typesService.getOpeningHourTypesByIds(openingHourTypeIds);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void getContactDescriptionTypesReturnsContactDescriptionTypesWhenFound() {
         when(contactDescriptionTypeRepository.findAll()).thenReturn(contactDescriptionTypes);
 
@@ -195,6 +259,26 @@ class TypesServiceTest {
         when(contactDescriptionTypeRepository.findAll()).thenReturn(List.of());
 
         List<ContactDescriptionType> result = typesService.getContactDescriptionTypes();
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getContactDescriptionTypesByIdsReturnsContactDescriptionTypesWhenFound() {
+        List<UUID> contactTypeIds = List.of(contactDescriptionTypes.getFirst().getId());
+        when(contactDescriptionTypeRepository.findAllById(contactTypeIds)).thenReturn(contactDescriptionTypes);
+
+        List<ContactDescriptionType> result = typesService.getContactDescriptionTypesByIds(contactTypeIds);
+
+        assertThat(result).isEqualTo(contactDescriptionTypes);
+    }
+
+    @Test
+    void getContactDescriptionTypesByIdsReturnsEmptyListWhenNoneFound() {
+        List<UUID> contactTypeIds = List.of(UUID.randomUUID());
+        when(contactDescriptionTypeRepository.findAllById(contactTypeIds)).thenReturn(List.of());
+
+        List<ContactDescriptionType> result = typesService.getContactDescriptionTypesByIds(contactTypeIds);
 
         assertThat(result).isEmpty();
     }

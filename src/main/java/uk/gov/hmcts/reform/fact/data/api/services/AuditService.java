@@ -46,6 +46,7 @@ public class AuditService {
      * @param toDate     The "to" date for auditing. Filtering assumes end of day. can e {@code null}.
      * @return a {@link Page} of {@link Audit} results.
      */
+    @SuppressWarnings("java:S107")
     public Page<Audit> getFilteredAndPaginatedAudits(int pageNumber, int pageSize, @NonNull LocalDate fromDate,
                                                      LocalDate toDate, SubjectType subjectType, String courtId,
                                                      String serviceCentreId, String email) {

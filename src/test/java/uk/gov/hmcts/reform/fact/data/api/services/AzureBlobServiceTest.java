@@ -110,20 +110,22 @@ class AzureBlobServiceTest {
     }
 
     @Test
-    void uploadFileWithContainerShouldCreateContainerWhenMissing() throws IOException {
+    void uploadFileWithContainerShouldAllowNullContentType() throws IOException {
         byte[] fileBytes = "dummy payload".getBytes(StandardCharsets.UTF_8);
         InputStream inputStream = new ByteArrayInputStream(fileBytes);
 
         when(multipartFile.getInputStream()).thenReturn(inputStream);
         when(multipartFile.getSize()).thenReturn((long) fileBytes.length);
-        when(multipartFile.getContentType()).thenReturn(CONTENT_TYPE);
+        when(multipartFile.getContentType()).thenReturn(null);
         when(blobClient.getBlobUrl()).thenReturn(BLOB_URL);
 
         String result = azureBlobService.uploadFile(IMAGE_ID, multipartFile);
 
         assertThat(result).isEqualTo(BLOB_URL);
         verify(blobClient).upload(inputStream, fileBytes.length, true);
-        verify(blobClient).setHttpHeaders(org.mockito.ArgumentMatchers.any(BlobHttpHeaders.class));
+        ArgumentCaptor<BlobHttpHeaders> headersCaptor = ArgumentCaptor.forClass(BlobHttpHeaders.class);
+        verify(blobClient).setHttpHeaders(headersCaptor.capture());
+        assertThat(headersCaptor.getValue().getContentType()).isNull();
     }
 
     @Test

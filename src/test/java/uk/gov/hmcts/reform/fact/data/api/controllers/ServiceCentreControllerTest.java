@@ -45,6 +45,20 @@ class ServiceCentreControllerTest {
     }
 
     @Test
+    void getServiceCentreDetailsBySlugReturns200() {
+        ServiceCentreDetails serviceCentreDetails = createServiceCentreDetails();
+        when(serviceCentreService.getServiceCentreDetailsBySlug("test-service-centre"))
+            .thenReturn(serviceCentreDetails);
+        when(serviceCentreDetailsViewService.prepareDetailsView(serviceCentreDetails)).thenReturn(serviceCentreDetails);
+
+        ResponseEntity<ServiceCentreDetails> response =
+            serviceCentreController.getServiceCentreDetailsBySlug("test-service-centre");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(serviceCentreDetails);
+    }
+
+    @Test
     void getServiceCentreEntityByIdReturns200() {
         ServiceCentre serviceCentre = createServiceCentre();
         when(serviceCentreService.getServiceCentreById(SERVICE_CENTRE_ID)).thenReturn(serviceCentre);

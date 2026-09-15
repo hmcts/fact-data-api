@@ -26,7 +26,7 @@ public class SearchServiceAreaService {
      */
     public List<ServiceAreaSearchResult> findByServiceAreaName(String serviceAreaName) {
         ServiceArea serviceArea = serviceAreaService.getServiceAreaByName(serviceAreaName);
-        return serviceCentreRepository.findByServiceAreaId(serviceArea.getId()).stream()
+        return serviceCentreRepository.findByServiceAreaIdAndOpenTrue(serviceArea.getId()).stream()
             .map(this::toSearchResult)
             .toList();
     }

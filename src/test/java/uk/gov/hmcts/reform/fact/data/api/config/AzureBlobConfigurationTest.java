@@ -4,7 +4,9 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.gov.hmcts.reform.fact.data.api.services.AzureBlobService;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -49,5 +51,19 @@ class AzureBlobConfigurationTest {
         assertEquals(mockBlobContainerClient, client);
         verify(mockBlobServiceClient, times(1))
             .getBlobContainerClient(containerName);
+    }
+
+    @Test
+    void testPhotoAzureBlobServiceBean() {
+        AzureBlobService service = azureBlobConfiguration.photoAzureBlobService(mockBlobContainerClient);
+
+        assertThat(service).isNotNull();
+    }
+
+    @Test
+    void testCsvAzureBlobServiceBean() {
+        AzureBlobService service = azureBlobConfiguration.csvAzureBlobService(mockBlobContainerClient);
+
+        assertThat(service).isNotNull();
     }
 }
