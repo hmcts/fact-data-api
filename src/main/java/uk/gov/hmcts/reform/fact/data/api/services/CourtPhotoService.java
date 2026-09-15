@@ -12,10 +12,15 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Locale;
 import java.util.UUID;
 import javax.imageio.ImageIO;
 
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.models.BlobStorageException;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -31,10 +36,14 @@ public class CourtPhotoService {
     private static final String JPG = "jpg";
     private static final String JPEG = "jpeg";
 
+    public record PhotoStreamDetails(InputStream inputStream, String contentType) {}
+
     private final CourtPhotoRepository courtPhotoRepository;
     private final CourtService courtService;
     @Qualifier("photoAzureBlobService")
     private final AzureBlobService azureBlobService;
+    @Qualifier("photoBlobContainerClient")
+    private final BlobContainerClient blobContainerClient;
     private final AuditUserContext auditUserContext;
     private final PhotoConfigurationProperties photoConfigurationProperties;
 
@@ -155,5 +164,15 @@ public class CourtPhotoService {
 
         // Defensive fallback as upstream validation should already ensure png/jpg.
         return JPG;
+    }
+
+    public PhotoStreamDetails getPhotoStreamDetails(@NonNull String fileLink) {
+        String blobName = fileLink.substring(fileLink.lastIndexOf('/') + 1);
+        BlobClient client = this.blobContainerClient.getBlobClient(blobName);
+        try {
+            return new PhotoStreamDetails(client.openInputStream(), client.getProperties().getContentType());
+        } catch (BlobStorageException e) {
+            throw new NotFoundException("Photo not found for blob name: " + blobName, e);
+        }
     }
 }
