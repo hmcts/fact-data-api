@@ -71,7 +71,7 @@ public class CourtAddress implements AuditableCourtEntity {
 
     @Schema(description = "The first address line")
     @NotNull
-    @Size(max =ValidationConstants.ADDRESS_LINE_MAX_LENGTH,
+    @Size(max = ValidationConstants.ADDRESS_LINE_MAX_LENGTH,
         message = ValidationConstants.ADDRESS_LINE_MAX_LENGTH_MESSAGE
     )
     @Pattern(regexp = ValidationConstants.REQUIRED_ADDRESS_LINE_REGEX,

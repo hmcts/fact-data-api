@@ -130,6 +130,6 @@ public class ValidationConstants {
     public static final String INTERVIEW_ROOM_COUNT_MESSAGE =
         "Interview room count must be between 1 and 150 when interview rooms are available; otherwise omit or set to 0";
 
-    public static final int FAVOURITE_SUBJECTS_MAX_SIZE = 1000 ;
+    public static final int FAVOURITE_SUBJECTS_MAX_SIZE = 1000;
     public static final String FAVOURITE_SUBJECTS_MAX_SIZE_MESSAGE = "subjects must contain no more than 1000 items";
 }
