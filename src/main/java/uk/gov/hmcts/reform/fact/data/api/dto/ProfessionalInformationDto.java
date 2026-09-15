@@ -13,8 +13,6 @@ import lombok.NoArgsConstructor;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtProfessionalInformation;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
-import static uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants.INTERVIEW_ROOM_COUNT_MESSAGE;
-
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
@@ -45,7 +43,7 @@ public class ProfessionalInformationDto {
     @NotNull
     private Boolean accessScheme;
 
-    @AssertTrue(message = INTERVIEW_ROOM_COUNT_MESSAGE)
+    @AssertTrue(message = ValidationConstants.INTERVIEW_ROOM_COUNT_MESSAGE)
     public boolean isInterviewRoomCountConsistent() {
         if (Boolean.TRUE.equals(interviewRooms)) {
             return interviewRoomCount != null && interviewRoomCount > 0 && interviewRoomCount <= 150;
