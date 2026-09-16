@@ -64,6 +64,7 @@ public class ServiceCentreAddress implements AuditableEntity {
     private ServiceCentre serviceCentre;
 
     @Schema(description = "The first address line")
+    @NotBlank(message = "The first address line must be specified")
     @Size(max = ValidationConstants.ADDRESS_LINE_MAX_LENGTH,
         message = ValidationConstants.ADDRESS_LINE_MAX_LENGTH_MESSAGE
     )
