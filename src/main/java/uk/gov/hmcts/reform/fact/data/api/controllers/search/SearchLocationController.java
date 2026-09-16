@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,12 +21,15 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidPostcode;
 
 import java.util.List;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @SecuredFactRestController(
     name = "Search Location",
     description = "Operations related to searching courts and service centres"
 )
 @RequestMapping("/search/locations")
 @RequiredArgsConstructor
+@Slf4j
 public class SearchLocationController {
 
     private final SearchLocationService searchLocationService;
@@ -60,7 +64,13 @@ public class SearchLocationController {
         @Min(1)
         @Max(50)
         final Integer limit) {
-
+        log.debug(writeLog(
+            "Location search request received",
+            "postcodeLength=" + (postcode == null ? 0 : postcode.length()),
+            "hasServiceArea=" + (serviceArea != null && !serviceArea.isBlank()),
+            "action=" + action,
+            "limit=" + limit
+        ));
         return ResponseEntity.ok(
             searchLocationService.getLocationsBySearchParameters(postcode, serviceArea, action, limit)
         );

@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.reform.fact.data.api.aspect.annotations.LockCleanupCheck;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
@@ -26,7 +27,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 
+
+@Slf4j
 @SecuredFactRestController(
     name = "Lock",
     description = "Operations related to lock services",
@@ -49,6 +53,11 @@ public class LockController {
     public ResponseEntity<List<Lock>> getSubjectLocks(
         @Parameter(description = "The subject type", required = true) @PathVariable SubjectType subjectType,
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId) {
+        log.debug(writeLog(
+            "Get subject locks request",
+            "subjectId=" + subjectId,
+            "subjectType=" + subjectType
+        ));
         return ResponseEntity.ok(lockService.getAllSubjectLocks(subjectType, UUID.fromString(subjectId)));
     }
 
@@ -65,6 +74,12 @@ public class LockController {
         @Parameter(description = "The subject type", required = true) @PathVariable SubjectType subjectType,
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to check lock status", required = true) @PathVariable Page page) {
+        log.debug(writeLog(
+            "Get lock status request",
+            "subjectId=" + subjectId,
+            "subjectType=" + subjectType,
+            "page=" + page
+            ));
         return lockService.getPageLock(subjectType, UUID.fromString(subjectId), page)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.noContent().build());
@@ -84,6 +99,13 @@ public class LockController {
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to lock", required = true) @PathVariable Page page,
         @Parameter(description = "User ID creating the lock", required = true) @Valid @RequestBody UUID userId) {
+        log.debug(writeLog(
+            "Create/update lock request",
+            "subjectId=" + subjectId,
+            "userId=" + userId,
+            "subjectType=" + subjectType,
+            "page=" + page
+        ));
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(lockService.createOrUpdateLock(subjectType, UUID.fromString(subjectId), page, userId));
     }
@@ -99,6 +121,12 @@ public class LockController {
         @Parameter(description = "The subject type", required = true) @PathVariable SubjectType subjectType,
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId,
         @Parameter(description = "Page to delete lock", required = true) @PathVariable Page page) {
+        log.debug(writeLog(
+            "Delete lock request",
+            "subjectId=" + subjectId,
+            "subjectType=" + subjectType,
+            "page=" + page
+        ));
         lockService.deleteLock(subjectType, UUID.fromString(subjectId), page);
         return ResponseEntity.noContent().build();
     }

@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.functional.http;
 
 import static io.restassured.RestAssured.given;
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 
 import java.io.File;
 import java.util.Map;
@@ -66,8 +67,12 @@ public final class HttpClient {
                     .orElseThrow(() -> new IllegalStateException("No AZURE_TENANT_ID environment set"));
                 final String clientSecret = getRequiredEnv(clientSecretEnvVar);
 
-                log.info("All authentication env variables set for {} using {}", clientAppRegEnvVar,
-                         clientSecretEnvVar);
+                log.info(writeLog(
+                    "Authentication env variables resolved",
+                    "hasClientAppRegId=" + !clientAppRegId.isBlank(),
+                    "hasClientSecret=" + !clientSecret.isBlank(),
+                    "hasTenantId=" + !tenantId.isBlank()
+                ));
 
                 // set the scope up for the destination app
                 TokenRequestContext requestContext = new TokenRequestContext();
