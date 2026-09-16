@@ -16,6 +16,8 @@ import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Configuration
 @EnableCaching
 @ConditionalOnProperty(prefix = "testingSupport", name = "enableCache", havingValue = "true")
@@ -43,8 +45,13 @@ public class CacheConfiguration {
             .scheduler(Scheduler.systemScheduler())
             .build();
 
-        executorService.scheduleWithFixedDelay(() -> log.info("OsData Cache stats: {}", cache.stats()),
-                                               0, 5, TimeUnit.MINUTES);
+        executorService.scheduleWithFixedDelay(
+            () -> log.info(writeLog(
+                "OsData Cache stats",
+                "stats=" + cache.stats()
+            )),
+            0, 5, TimeUnit.MINUTES
+        );
 
         return cache;
     }

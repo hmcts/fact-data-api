@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.NameAndId;
@@ -30,7 +31,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 
+
+@Slf4j
 @SecuredFactRestController(
     name = "Audit",
     description = "Operations related to audits",
@@ -72,6 +76,18 @@ public class AuditController {
         LocalDate fromDate,
         @Parameter(name = "toDate", description = "'To' date (end of day) for result filtering")
         @RequestParam(name = "toDate", required = false) LocalDate toDate) {
+        log.debug(writeLog(
+            "Audit query",
+            "courtId=" + (courtId == null || courtId.isBlank() ? "none" : courtId),
+            "serviceCentreId=" + (serviceCentreId == null || serviceCentreId.isBlank() ? "none" : serviceCentreId),
+            "pageNumber=" + pageNumber,
+            "pageSize=" + pageSize,
+            "fromDate=" + fromDate,
+            "toDate=" + toDate,
+            "subjectType=" + subjectType,
+            "hasEmailMatch=" + (emailMatch != null && !emailMatch.isBlank()),
+            "emailMatchLength=" + (emailMatch == null ? 0 : emailMatch.length())
+        ));
 
         if (toDate != null && toDate.isBefore(fromDate)) {
             throw new InvalidDateRangeException("toDate must not be before fromDate");
