@@ -10,6 +10,8 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtFacilitiesRepository;
 
 import java.util.UUID;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -40,7 +42,10 @@ public class CourtFacilitiesService {
      * @return The created facilities entity.
      */
     public CourtFacilities setFacilities(UUID courtId, CourtFacilities courtFacilities) {
-        log.info("Setting facilities for court id: {}", courtId);
+        log.debug(writeLog(
+            "Setting facilities",
+            "courtId=" + courtId
+        ));
         Court foundCourt = courtService.getCourtById(courtId);
         courtFacilities.setCourt(foundCourt);
         courtFacilities.setCourtId(courtId);

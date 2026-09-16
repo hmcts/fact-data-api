@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -180,7 +182,11 @@ public class CourtOpeningHoursService {
      */
     @Transactional
     public void deleteCourtOpeningHours(UUID courtId, UUID openingHoursId) {
-        log.info("Deleting court opening hours for court ID: {} and opening hours ID: {}", courtId, openingHoursId);
+        log.debug(writeLog(
+            "Deleting court opening hours",
+            "courtId=" + courtId,
+            "openingHoursId=" + openingHoursId
+        ));
         // will generate required 404 if not found
         getOpeningHoursById(courtId, openingHoursId);
         courtOpeningHoursRepository.deleteByCourtIdAndId(courtId, openingHoursId);
@@ -192,8 +198,12 @@ public class CourtOpeningHoursService {
      */
     @Transactional
     public void deleteCourtCounterServiceOpeningHours(final UUID courtId, final UUID counterServiceId) {
-        log.info("Deleting court counter service opening hours for court ID: {} and counter service ID: {}",
-                 courtId, counterServiceId);
+        log.debug(writeLog(
+            "Deleting court counter service opening hours",
+            "courtId=" + courtId,
+            "counterServiceId=" + counterServiceId
+        ));
+
         // will generate required 404 if not found
         getCounterServiceOpeningHoursById(courtId, counterServiceId);
         courtCounterServiceOpeningHoursRepository.deleteByCourtIdAndId(courtId, counterServiceId);
