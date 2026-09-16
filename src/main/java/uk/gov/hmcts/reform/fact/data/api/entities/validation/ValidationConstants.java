@@ -11,7 +11,7 @@ public class ValidationConstants {
         "Court name should be between {min} and {max} chars";
     public static final String COURT_SERVICE_CENTRE_NAME_REGEX = "^[A-Za-z&'()\\- ]+$";
     public static final String COURT_NAME_REGEX_MESSAGE =
-        "Court or tribunal name must only include letters, spaces, brackets, apostrophes, hyphens and ampersands";
+        "Court name may only contain letters, spaces, apostrophes, hyphens, ampersands, and parentheses";
 
     public static final String EMAIL_REGEX = "^(|[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,})$";
     public static final String EMAIL_REGEX_MESSAGE =
@@ -84,8 +84,10 @@ public class ValidationConstants {
     public static final int COURT_EPIM_ID_MAX_LENGTH = 10;
     public static final  String ADDRESS_LINE_MAX_LENGTH_MESSAGE =
         "Address line should be {max} characters or less";
-    public static final String COUNTRY_TOWN_CITY_MAX_LENGTH_MESSAGE =
-        "County/Town/City name should be {max} characters or less";
+    public static final String TOWN_CITY_MAX_LENGTH_MESSAGE =
+        "Town/City name should be {max} characters or less";
+    public static final String COUNTRY_MAX_LENGTH_MESSAGE =
+        "County name should be {max} characters or less";
     public static final String COURT_EPIM_ID_MAX_LENGTH_MESSAGE = "EPIM ID should be {max} characters or less";
 
     public static final int COURT_CODE_MAX_DIGITS = 6;

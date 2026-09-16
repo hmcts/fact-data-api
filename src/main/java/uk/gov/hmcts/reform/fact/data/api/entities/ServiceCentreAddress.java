@@ -86,7 +86,7 @@ public class ServiceCentreAddress implements AuditableEntity {
 
     @Schema(description = "The town/city")
     @Size(max = ValidationConstants.COUNTRY_TOWN_CITY_MAX_LENGTH,
-        message = ValidationConstants.COUNTRY_TOWN_CITY_MAX_LENGTH_MESSAGE
+        message = ValidationConstants.TOWN_CITY_MAX_LENGTH_MESSAGE
     )
     @Pattern(regexp = ValidationConstants.REQUIRED_ADDRESS_LINE_REGEX,
         message = "Town/City: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE
@@ -95,7 +95,7 @@ public class ServiceCentreAddress implements AuditableEntity {
 
     @Schema(description = "The county")
     @Size(max = ValidationConstants.COUNTRY_TOWN_CITY_MAX_LENGTH,
-        message = ValidationConstants.COUNTRY_TOWN_CITY_MAX_LENGTH_MESSAGE
+        message = ValidationConstants.COUNTRY_MAX_LENGTH_MESSAGE
     )
     @Pattern(regexp = ValidationConstants.OPTIONAL_ADDRESS_LINE_REGEX,
         message = "County: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE
