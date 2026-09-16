@@ -34,5 +34,13 @@ class CourtAddressTest {
         assertThat(address.getAreasOfLawForView()).containsExactly(areaId);
         assertThat(address.getCourtTypesForView()).containsExactly(courtTypeId);
     }
+
+    @Test
+    void viewAccessorsReturnNullWhenNeitherExpandedDetailsNorIdsExist() {
+        CourtAddress address = new CourtAddress();
+
+        assertThat(address.getAreasOfLawForView()).isNull();
+        assertThat(address.getCourtTypesForView()).isNull();
+    }
 }
 

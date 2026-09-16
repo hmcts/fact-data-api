@@ -28,6 +28,22 @@ class ProfessionalInformationDtoTest {
     }
 
     @Test
+    void interviewRoomCountCannotBeMissingOrTooHighWhenInterviewRoomsAreAvailable() {
+        ProfessionalInformationDto withNullCount = ProfessionalInformationDto.builder()
+            .interviewRooms(true)
+            .interviewRoomCount(null)
+            .build();
+
+        ProfessionalInformationDto withTooHighCount = ProfessionalInformationDto.builder()
+            .interviewRooms(true)
+            .interviewRoomCount(151)
+            .build();
+
+        assertThat(withNullCount.isInterviewRoomCountConsistent()).isFalse();
+        assertThat(withTooHighCount.isInterviewRoomCountConsistent()).isFalse();
+    }
+
+    @Test
     void interviewRoomCountMustBeMissingOrZeroWhenInterviewRoomsAreNotAvailable() {
         ProfessionalInformationDto withNullCount = ProfessionalInformationDto.builder()
             .interviewRooms(false)
@@ -41,6 +57,16 @@ class ProfessionalInformationDtoTest {
 
         assertThat(withNullCount.isInterviewRoomCountConsistent()).isTrue();
         assertThat(withPositiveCount.isInterviewRoomCountConsistent()).isFalse();
+    }
+
+    @Test
+    void interviewRoomCountCanBeZeroWhenInterviewRoomsAreNotAvailable() {
+        ProfessionalInformationDto withZeroCount = ProfessionalInformationDto.builder()
+            .interviewRooms(false)
+            .interviewRoomCount(0)
+            .build();
+
+        assertThat(withZeroCount.isInterviewRoomCountConsistent()).isTrue();
     }
 
     @Test

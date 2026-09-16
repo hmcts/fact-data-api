@@ -26,5 +26,12 @@ class CourtCounterServiceOpeningHoursTest {
 
         assertThat(openingHours.getCourtTypesForView()).containsExactly(courtTypeId);
     }
+
+    @Test
+    void getCourtTypesForViewReturnsNullWhenNeitherDetailsNorIdsAreSet() {
+        CourtCounterServiceOpeningHours openingHours = new CourtCounterServiceOpeningHours();
+
+        assertThat(openingHours.getCourtTypesForView()).isNull();
+    }
 }
 

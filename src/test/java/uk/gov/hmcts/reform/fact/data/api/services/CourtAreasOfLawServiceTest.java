@@ -136,6 +136,21 @@ class CourtAreasOfLawServiceTest {
     }
 
     @Test
+    void getAreasOfLawStatusByCourtIdReturnsAllAreasAsUnselectedWhenConfigHasEmptyAreasOfLaw() {
+        courtAreasOfLaw.setAreasOfLaw(List.of());
+
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtAreasOfLawRepository.findByCourtId(courtId)).thenReturn(Optional.of(courtAreasOfLaw));
+        when(typesService.getAreaOfLawTypes()).thenReturn(areaOfLawTypes);
+
+        Map<AreaOfLawType, Boolean> result = courtAreasOfLawService.getAreasOfLawStatusByCourtId(courtId);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.keySet()).containsExactlyInAnyOrderElementsOf(areaOfLawTypes);
+        assertThat(result.values()).containsOnly(false);
+    }
+
+    @Test
     void setCourtAreasOfLawCreatesNewRecord() {
         when(courtService.getCourtById(courtId)).thenReturn(court);
         when(courtAreasOfLawRepository.findByCourtId(courtId)).thenReturn(Optional.empty());

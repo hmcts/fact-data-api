@@ -337,6 +337,20 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void testHandleMultipartExceptionWithNullRequest() {
+        MultipartException ex = new MultipartException("Missing multipart boundary");
+
+        ExceptionResponse response = handler.handle(ex, null);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getMessage())
+            .contains("Unsupported or malformed Content-Type 'unknown'")
+            .contains("use 'multipart/form-data'")
+            .contains("use 'application/json'");
+        assertThat(response.getTimestamp()).isNotNull();
+    }
+
+    @Test
     void testHandleDuplicatedListItemException() {
         DuplicatedListItemException ex = new DuplicatedListItemException("Duplicated list item");
 

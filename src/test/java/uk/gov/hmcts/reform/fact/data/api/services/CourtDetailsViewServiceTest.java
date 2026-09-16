@@ -43,6 +43,21 @@ class CourtDetailsViewServiceTest {
     }
 
     @Test
+    void prepareDetailsViewSkipsLookupsWhenCollectionsAreEmpty() {
+        CourtDetails courtDetails = new CourtDetails();
+        courtDetails.setCourtOpeningHours(List.of());
+        courtDetails.setCourtContactDetails(List.of());
+        courtDetails.setCourtAddresses(List.of());
+        courtDetails.setCourtCounterServiceOpeningHours(List.of());
+        courtDetails.setCourtAreasOfLaw(List.of());
+
+        CourtDetails result = courtDetailsViewService.prepareDetailsView(courtDetails);
+
+        assertThat(result).isSameAs(courtDetails);
+        verifyNoInteractions(typesService);
+    }
+
+    @Test
     void prepareDetailsViewPopulatesOpeningHourTypes() {
         UUID openingHourTypeId = UUID.randomUUID();
         CourtOpeningHours openingHours = new CourtOpeningHours();

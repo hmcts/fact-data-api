@@ -82,6 +82,12 @@ class TimeOrderValidatorTest {
         assertTrue(validator.isValid(testObject, context));
     }
 
+    @Test
+    void shouldReturnTrueWhenOnlyEndPropertyIsNotLocalTime() {
+        MixedTimeTestObject testObject = new MixedTimeTestObject(LocalTime.of(9, 0), "17:00");
+        assertTrue(validator.isValid(testObject, context));
+    }
+
     @Getter
     @Setter
     private static class TestObject {
@@ -101,6 +107,18 @@ class TimeOrderValidatorTest {
         private String closingHour;
 
         NonTimeTestObject(String openingHour, String closingHour) {
+            this.openingHour = openingHour;
+            this.closingHour = closingHour;
+        }
+    }
+
+    @Getter
+    @Setter
+    private static class MixedTimeTestObject {
+        private LocalTime openingHour;
+        private String closingHour;
+
+        MixedTimeTestObject(LocalTime openingHour, String closingHour) {
             this.openingHour = openingHour;
             this.closingHour = closingHour;
         }

@@ -81,7 +81,7 @@ public class OsService {
         sync = true
     )
     public OsData getOsAddressByFullPostcode(String postcode) {
-        return getOsAddressData(validateAndFormatPostcode(postcode), false);
+        return getOsAddressByFullPostcodeInternal(postcode);
     }
 
     /**
@@ -97,6 +97,14 @@ public class OsService {
         sync = true
     )
     public OsData getOsAdminAddressByFullPostcode(String postcode) {
+        return getOsAdminAddressByFullPostcodeInternal(postcode);
+    }
+
+    private OsData getOsAddressByFullPostcodeInternal(String postcode) {
+        return getOsAddressData(validateAndFormatPostcode(postcode), false);
+    }
+
+    private OsData getOsAdminAddressByFullPostcodeInternal(String postcode) {
         String formattedPostcode = validateAndFormatPostcode(postcode);
         List<OsResult> combinedResults = new ArrayList<>();
         int offset = 0;

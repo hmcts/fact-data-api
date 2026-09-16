@@ -267,6 +267,21 @@ class SearchCourtServiceTest {
         assertThat(strategy).isEqualTo(SearchStrategy.FAMILY_NON_REGIONAL);
     }
 
+    @Test
+    void selectSearchStrategyShouldReturnFamilyNonRegionalWhenCatchmentMethodIsNotLocalAuthority() {
+        ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
+        area.setCatchmentMethod(null);
+
+        SearchStrategy strategy = searchCourtService.selectSearchStrategy(
+            SearchAction.DOCUMENTS,
+            "Authority",
+            area
+        );
+
+        assertThat(strategy).isEqualTo(SearchStrategy.FAMILY_NON_REGIONAL);
+        verify(serviceCentreRepository, never()).existsByServiceAreaIdAndCatchmentTypeInAndOpenTrue(any(), any());
+    }
+
     @Nested
     @DisplayName("SPoE Service Area search tests")
     class SpoeTests {

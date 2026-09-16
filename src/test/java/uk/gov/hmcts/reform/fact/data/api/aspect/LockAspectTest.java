@@ -222,6 +222,15 @@ class LockAspectTest {
     }
 
     @Test
+    @DisplayName("Should resolve parameters when annotation name attributes are used")
+    void shouldResolveNamedAnnotationAttributes() {
+        setupJoinPointWithNamedAnnotationAttributes(courtId, page, userId);
+        when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.empty());
+
+        assertDoesNotThrow(() -> validator.validateLockTimeout(joinPoint));
+    }
+
+    @Test
     @DisplayName("Should call deleteExpiredLocks when LockCleanupCheck advice runs")
     void shouldCleanupExpiredLocks() {
         assertDoesNotThrow(() -> validator.lockCleanup(joinPoint));
@@ -300,6 +309,18 @@ class LockAspectTest {
         }
     }
 
+    private void setupJoinPointWithNamedAnnotationAttributes(UUID courtId, Page page, UUID userId) {
+        try {
+            Method method = TestController.class.getMethod(
+                "testMethodWithNamedAnnotationAttributes", SubjectType.class, UUID.class, Page.class, UUID.class);
+            when(joinPoint.getSignature()).thenReturn(methodSignature);
+            when(methodSignature.getMethod()).thenReturn(method);
+            when(joinPoint.getArgs()).thenReturn(new Object[]{SubjectType.COURT, courtId, page, userId});
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void setupJoinPointWithoutCourtId(Page page, UUID userId) {
         try {
             Method method = TestController.class.getMethod("testMethodWithoutSubject", Page.class, UUID.class);
@@ -366,6 +387,14 @@ class LockAspectTest {
             @PathVariable("subjectId") UUID subjectId,
             @PathVariable("page") String page,
             @RequestParam("userId") UUID userId) {
+            // empty
+        }
+
+        public void testMethodWithNamedAnnotationAttributes(
+            @PathVariable(name = "subjectType") SubjectType subjectType,
+            @PathVariable(name = "subjectId") UUID subjectId,
+            @PathVariable(name = "page") Page page,
+            @RequestParam(name = "userId") UUID userId) {
             // empty
         }
 

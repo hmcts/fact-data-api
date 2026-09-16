@@ -128,10 +128,11 @@ class AuditableCourtEntityListenerTest {
     @Test
     void shouldThrowWhenNoApplicationContextIsConfigured() {
         AuditableCourtEntityListener localListener = new AuditableCourtEntityListener(objectMapper);
+        Court court = createCourt();
 
         IllegalStateException exception = assertThrows(
             IllegalStateException.class,
-            () -> localListener.beforePersist(createCourt())
+            () -> localListener.beforePersist(court)
         );
 
         assertEquals("No entity manager available during an audit operation", exception.getMessage());
@@ -140,14 +141,25 @@ class AuditableCourtEntityListenerTest {
     @Test
     void shouldThrowWhenAuditUserContextBeanIsUnavailable() {
         when(applicationContext.getBean(AuditUserContext.class)).thenReturn(null);
+        Court court = createCourt();
 
         IllegalStateException exception = assertThrows(
             IllegalStateException.class,
-            () -> listener.beforePersist(createCourt())
+            () -> listener.beforePersist(court)
         );
 
         assertEquals("No audit user context available during an audit operation", exception.getMessage());
         verify(entityManager, times(0)).persist(any(Audit.class));
+    }
+
+    @Test
+    void shouldPersistAuditWhenAuditContextBecomesAvailableBeforeRecordWrite() {
+        when(applicationContext.getBean(AuditUserContext.class)).thenReturn(null, auditUserContext);
+
+        listener.beforePersist(createCourt());
+
+        verify(applicationContext, times(2)).getBean(AuditUserContext.class);
+        verify(entityManager, times(1)).persist(any(Audit.class));
     }
 
     @Test

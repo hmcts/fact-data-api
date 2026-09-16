@@ -253,6 +253,28 @@ class CourtPhotoServiceTest {
     }
 
     @Test
+    void setCourtPhotoShouldFallbackToDefaultJpgWhenFormatIsUnknown() throws IOException {
+        UUID courtId = UUID.randomUUID();
+
+        when(courtService.getCourtById(courtId)).thenReturn(null);
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.empty());
+        when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class))).thenReturn("new-link");
+        when(auditUserContext.requireUserId()).thenReturn(USER_ID);
+        when(courtPhotoRepository.save(any(CourtPhoto.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(multipartFile.getInputStream())
+            .thenReturn(new ByteArrayInputStream(createImageBytes("png", 1, 1)));
+        when(multipartFile.getContentType()).thenReturn("application/octet-stream");
+        when(multipartFile.getOriginalFilename()).thenReturn("unknown-format.bin");
+        when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
+
+        CourtPhoto result = courtPhotoService.setCourtPhoto(courtId, multipartFile);
+
+        assertThat(result.getFileLink()).isEqualTo("new-link");
+        verify(azureBlobService).uploadFile(eq(courtId.toString()), any(MultipartFile.class));
+        verify(courtPhotoRepository).save(result);
+    }
+
+    @Test
     void setCourtPhotoShouldThrowIllegalArgumentWhenImageIOFailsToReadFile() throws IOException {
         UUID courtId = UUID.randomUUID();
 
