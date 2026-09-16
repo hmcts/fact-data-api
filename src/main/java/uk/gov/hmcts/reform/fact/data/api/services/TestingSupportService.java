@@ -81,6 +81,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Service
 @ConditionalOnProperty(prefix = "testingSupport", name = "enableApi", havingValue = "true")
 @RequiredArgsConstructor
@@ -336,7 +338,12 @@ public class TestingSupportService {
             // return the unique slug for the created court
             return court.getSlug();
         } catch (Exception e) {
-            log.error("error while creating court", e);
+            log.error(writeLog(
+                "Error while creating court",
+                "regionId=" + regionId,
+                "courtName=" + courtName,
+                "seed=" + seed
+            ), e);
             throw e;
         }
     }
@@ -396,7 +403,12 @@ public class TestingSupportService {
 
             return serviceCentre;
         } catch (Exception e) {
-            log.error("error while creating service centre", e);
+            log.error(writeLog(
+                "Error while creating service centre",
+                "serviceCentreName=" + serviceCentreName,
+                "regionId=" + (regionId == null ? "none" : regionId),
+                "seed=" + seed
+            ), e);
             throw e;
         }
     }
@@ -741,7 +753,11 @@ public class TestingSupportService {
             );
             courtPhotoService.setCourtPhoto(courtId, file);
         } catch (Exception e) {
-            log.warn("Error while uploading test image", e);
+            log.error(writeLog(
+                "Error while uploading test image",
+                "courtId=" + courtId,
+                "courtName=" + courtName
+            ), e);
             actualUpload = false;
         }
 

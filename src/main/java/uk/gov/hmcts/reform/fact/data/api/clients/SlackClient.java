@@ -10,6 +10,8 @@ import uk.gov.hmcts.reform.fact.data.api.config.SlackProperties;
 
 import java.io.IOException;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Slf4j
 @RequiredArgsConstructor
 @Component
@@ -32,7 +34,7 @@ public class SlackClient {
                 );
             }
         } catch (IOException | SlackApiException ex) {
-            log.error("Exception occurred while calling Slack API: {}", ex.getMessage());
+            log.error(writeLog("Exception occurred while calling Slack API"), ex);
         }
     }
 }
