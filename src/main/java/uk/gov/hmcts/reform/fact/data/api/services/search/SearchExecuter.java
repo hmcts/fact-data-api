@@ -17,6 +17,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -62,13 +64,14 @@ public class SearchExecuter {
                     aolId
                 );
                 if (results.isEmpty()) {
-                    log.debug(
-                        "Default fallback search (if no results found for determined search strategy) "
-                            + "for {}, {}, {}",
-                        searchStrategy,
-                        action,
-                        osLocationData.getPostcode()
-                    );
+                    log.debug(writeLog(
+                        "Default fallback search (if no results found for determined search strategy)",
+                        "searchStrategy=" + searchStrategy,
+                        "action=" + action,
+                        "hasPostcode="
+                            + (osLocationData.getPostcode() != null
+                            && !osLocationData.getPostcode().isBlank())
+                    ));
                 }
                 yield results.isEmpty()
                     ? courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit)
@@ -94,7 +97,12 @@ public class SearchExecuter {
     private List<CourtWithDistance> executeCivilSearchStrategy(String postcode, double lat, double lon,
                                                                UUID serviceAreaId, int limit, UUID aolId) {
         PostcodeLadder ladder = PostcodeLadder.fromPartialPostcode(postcode);
-        log.debug("Postcode ladder provided for CIVIl search: {}", ladder);
+        log.debug(writeLog(
+            "Postcode ladder provided for CIVIL search",
+            "serviceAreaId=" + serviceAreaId,
+            "areaOfLawId=" + aolId,
+            "ladder=" + ladder
+        ));
         List<CourtWithDistance> results = courtAddressRepository.findCivilByPartialPostcodeBestTier(
             serviceAreaId,
             lat,
@@ -128,11 +136,17 @@ public class SearchExecuter {
         Optional<List<CourtWithDistance>> byLaOpt = getAuthorityID(osLocationData)
             .map(LocalAuthorityType::getId)
             .map(localAuthorityId -> {
-                log.debug(
-                    "Searching for family non-regional by local authority ({}) for {}",
-                    serviceArea.getAreaOfLaw().getName(),
-                    osLocationData.getPostcode()
-                );
+                log.debug(writeLog(
+                    "Searching for family non-regional by local authority",
+                    "areaOfLawId=" + aolId,
+                    "serviceAreaId=" + serviceArea.getId(),
+                    "localAuthorityId=" + localAuthorityId,
+                    "areaOfLawName="
+                        + (serviceArea.getAreaOfLaw() != null
+                        ? serviceArea.getAreaOfLaw().getName()
+                        : "null"),
+                    "hasPostcode=" + (osLocationData.getPostcode() != null && !osLocationData.getPostcode().isBlank())
+                ));
                 return courtAddressRepository.findFamilyNonRegionalByLocalAuthority(
                     lat,
                     lon,
@@ -146,7 +160,11 @@ public class SearchExecuter {
         if (byLaOpt.isPresent()) {
             return byLaOpt.get();
         }
-        log.debug("Searching for family regional returned no results: {}", serviceArea);
+        log.debug(writeLog(
+            "Searching for family regional returned no results",
+            "serviceAreaId=" + serviceArea.getId(),
+            "areaOfLawId=" + aolId
+        ));
         return List.of();
     }
 
