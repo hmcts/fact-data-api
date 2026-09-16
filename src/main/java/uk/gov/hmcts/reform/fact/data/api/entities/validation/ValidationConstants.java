@@ -101,28 +101,27 @@ public class ValidationConstants {
     public static final String GBS_CODE_REGEX_MESSAGE = "GBS code contains invalid characters";
 
     public static final int COMMON_TEXT_MAX_LENGTH = 250;
-    public static final String EXPLANATION_MAX_LENGTH_MESSAGE = "Explanation must be {max} characters or fewer";
+    public static final String EXPLANATION_MAX_LENGTH_MESSAGE = "Explanation should be no more than {max} characters";
     public static final String WELSH_EXPLANATION_MAX_LENGTH_MESSAGE =
-        "Welsh translation must be {max} characters or fewer";
+        "Explanation should be no more than {max} characters";
     public static final String FAX_DESCRIPTION_MAX_LENGTH_MESSAGE = "Fax description must be {max} characters or fewer";
     public static final String WELSH_FAX_DESCRIPTION_MAX_LENGTH_MESSAGE =
         "Welsh fax description must be {max} characters or fewer";
 
     public static final String EXPLANATION_REGEX = "^[A-Za-z0-9 '\\-()&+]*$";
     public static final String EXPLANATION_REGEX_MESSAGE =
-        "Explanation must only include letters, numbers, spaces, apostrophes, hyphens, "
-            + "parentheses, ampersands, and plus signs";
+        "Explanation contains invalid characters. Allowed: letters, numbers, spaces, apostrophes, - ( ) & +";
 
     public static final String WELSH_EXPLANATION_REGEX = "^[\\p{L}\\p{M}0-9 '\\-()&+]*$";
     public static final String WELSH_EXPLANATION_REGEX_MESSAGE =
-        "Welsh explanation must only include letters, numbers, spaces, apostrophes, hyphens, "
-            + "parentheses, ampersands, and plus signs";
+        "Welsh explanation contains invalid characters. Allowed: letters (with accents), numbers, spaces, "
+            + "apostrophes, - ( ) & +";
 
     public static final int REGION_NAME_MIN_LENGTH = 5;
     public static final String REGION_NAME_LENGTH_MESSAGE =
-        "Region name should be between {min} and {max} characters";
+        "Name should be less than 255 chars";
     public static final String REGION_COUNTRY_LENGTH_MESSAGE =
-        "Region country should be between {min} and {max} characters";
+        "Country should be less than 255 chars";
 
     public static final String SERVICE_CENTRE_NAME_LENGTH_MESSAGE =
         "Service centre name should be between {min} and {max} characters";
