@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -41,6 +42,7 @@ public class SearchCourtController {
     private final AllLocationService allLocationService;
 
     @GetMapping("/v1/postcode")
+    @PreAuthorize("@authService.canView() || @authService.isPrl()")
     @Operation(
         summary = "Search courts by postcode, plus optional fields based on various business rules.",
         description = "Retrieve courts based on postcode, service area and action."

@@ -100,6 +100,17 @@ class AuthServiceTest {
     }
 
     @Test
+    void isViewerReturnsFalseWhenPrlRoleIsPresent() {
+        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(
+            "test",
+            "test",
+            AuthService.PREFIX + AuthService.ROLE_PRL
+        ));
+
+        assertThat(authService.canView()).isFalse();
+    }
+
+    @Test
     void isAdminReturnsTrueWhenAdminRoleIsPresent() {
         SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(
             "test",
@@ -119,6 +130,28 @@ class AuthServiceTest {
         ));
 
         assertThat(authService.isAdmin()).isTrue();
+    }
+
+    @Test
+    void isPrlReturnsTrueWhenPrlRoleIsPresent() {
+        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(
+            "test",
+            "test",
+            AuthService.PREFIX + AuthService.ROLE_PRL
+        ));
+
+        assertThat(authService.isPrl()).isTrue();
+    }
+
+    @Test
+    void isPrlReturnsFalseWhenPrlRoleIsNotPresent() {
+        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(
+            "test",
+            "test",
+            AuthService.PREFIX + AuthService.ROLE_VIEWER
+        ));
+
+        assertThat(authService.isPrl()).isFalse();
     }
 
     @Test

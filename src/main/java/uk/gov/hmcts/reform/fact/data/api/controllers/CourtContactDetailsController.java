@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +37,7 @@ public class CourtContactDetailsController {
     private final CourtContactDetailsService courtContactDetailsService;
 
     @GetMapping("/v1/contact-details")
+    @PreAuthorize("@authService.isAdmin() || @authService.isPrl()")
     @Operation(
         summary = "Get contact details for a court",
         description = "Fetch all contact details associated with the supplied court ID."
