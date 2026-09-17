@@ -30,41 +30,35 @@ Optional but recommended:
 
 - IntelliJ IDEA with Lombok support enabled
 
-## Quick start (host app + Docker database)
+## Quick start (host app + Docker dependencies)
 
 This is the most common workflow for local development.
 
-1. Start PostgreSQL container:
+1. Create a local `.env` file in the repository root with the values below:
+
+| Variable | Required | Example | Purpose |
+| --- | --- | --- | --- |
+| `DB_HOST` | yes | `localhost` | Host app to Docker Postgres connection host |
+| `DB_PORT` | yes | `5999` | Host app to Docker Postgres port |
+| `DB_NAME` | yes | `fact` | Database name |
+| `DB_USER` | yes | `fact` | Database username |
+| `DB_PASSWORD` | yes | `fact` | Database password |
+| `AZURE_TENANT_ID` | yes | `<tenant-id>` | Azure AD tenant for token validation |
+| `AZURE_CLIENT_ID` | yes | `<client-id>` | Azure AD client ID |
+| `APP_REG_ID` | yes | `<app-registration-id>` | Azure AD app ID URI |
+| `AZURE_STORAGE_ACCOUNT_NAME` | yes | `devstoreaccount1` | Blob storage account |
+| `AZURE_STORAGE_CONNECTION_STRING` | yes | `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=;BlobEndpoint=http://localhost:10000/devstoreaccount1;` | Blob storage connection for host-run app |
+| `OS_KEY` | yes | `<ordnance-survey-key>` | Ordnance Survey API key |
+| `AZURE_MANAGED_IDENTITY_ENABLED` | no | `false` | Disable managed identity locally |
+| `TESTING_SUPPORT_ENABLE_API` | no | `true` | Enable `/testing-support/**` endpoints |
+| `RUN_DB_MIGRATION_ON_STARTUP` | no | `true` | Run Flyway migrations on startup |
+| `AZURITE_ACCOUNTS` | yes | `devstoreaccount1:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=` | Local Azurite account and key |
+| `DOCKER_AZURE_STORAGE_CONNECTION_STRING` | yes | `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=;BlobEndpoint=http://fact-storage:10000/devstoreaccount1;` | Blob storage connection used by Docker services |
+
+2. Start PostgreSQL, local blob storage, and the storage bootstrap container:
 
 ```bash
-docker compose up -d fact-database
-```
-
-2. Create a local `.env` file in the repository root. Example:
-
-```bash
-DB_HOST=localhost
-DB_PORT=5999
-DB_NAME=fact
-DB_USER=fact
-DB_PASSWORD=fact
-
-AZURE_TENANT_ID=<tenant-id>
-AZURE_CLIENT_ID=<client-id>
-APP_REG_ID=<app-registration-id>
-
-AZURE_STORAGE_ACCOUNT_NAME=<storage-account-name>
-AZURE_STORAGE_CONNECTION_STRING=<storage-connection-string>
-
-OS_KEY=<ordnance-survey-key>
-
-# Optional local overrides
-AZURE_MANAGED_IDENTITY_ENABLED=false
-CATH_API_URL=<cath-api-url>
-SLACK_TOKEN=
-SLACK_CHANNEL_ID=
-TESTING_SUPPORT_ENABLE_API=true
-RUN_DB_MIGRATION_ON_STARTUP=true
+docker compose up -d fact-database fact-storage fact-storage-init
 ```
 
 3. Load the env file and run the app:
@@ -89,19 +83,17 @@ The service listens on `http://localhost:8989`.
 Use this if you want app + DB both in containers.
 
 ```bash
-set -a
-source .env
-set +a
 ./deploy_local_docker.sh
 ```
 
-`deploy_local_docker.sh` runs `./gradlew clean build` first, then `docker compose up --build -d`.
+`deploy_local_docker.sh` requires a `.env` file, runs `./gradlew clean build` first, then starts Docker with `docker compose --env-file .env up --build -d`.
+It expects `DOCKER_AZURE_STORAGE_CONNECTION_STRING` and `AZURITE_ACCOUNTS` in `.env`, and runs `fact-storage-init` to create `photos` and `csv` containers during startup.
 
 ## Running from IntelliJ
 
 1. Open the project.
 2. Ensure env vars from `.env` are applied to the run configuration.
-3. Start `fact-database` with Docker as shown above.
+3. Start `fact-database`, `fact-storage`, and `fact-storage-init` with Docker as shown above.
 4. Run `uk.gov.hmcts.reform.fact.data.api.Application`.
 
 ## Authentication and API usage notes
