@@ -270,6 +270,11 @@ wrapper {
 }
 
 dependencyManagement {
+  imports {
+    // CVE-2026-89044
+    mavenBom 'io.netty:netty-bom:4.2.18.Final'
+  }
+
   dependencies {
     // CVE-2026-33117
     dependency group: 'com.azure', name: 'azure-core', version: '1.59.1'
