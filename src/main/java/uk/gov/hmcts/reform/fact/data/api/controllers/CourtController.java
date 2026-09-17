@@ -53,6 +53,7 @@ public class CourtController {
     private final CourtDetailsViewService courtDetailsViewService;
 
     @GetMapping(value = {"/{courtId}/v1", "/{courtId}.json"})
+    @PreAuthorize("@authService.canView() || @authService.isPrl()")
     @Operation(
         summary = "Get court details by ID",
         description = "Fetch detailed court information for a given court ID."
@@ -105,6 +106,7 @@ public class CourtController {
     }
 
     @GetMapping(value = {"/slug/{courtSlug}/v1", "/slug/{courtSlug}.json"})
+    @PreAuthorize("@authService.canView() || @authService.isPrl()")
     @JsonView(CourtDetailsView.class)
     @Operation(
         summary = "Get court details by slug",
