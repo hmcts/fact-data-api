@@ -6,7 +6,6 @@ import uk.gov.hmcts.reform.fact.data.api.services.CourtPhotoService;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidImage;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
-import java.io.InputStream;
 import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,9 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,7 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @SecuredFactRestController(
     name = "Court Photo",
@@ -84,32 +80,5 @@ public class CourtPhotoController {
         @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
         courtPhotoService.deleteCourtPhotoByCourtId(UUID.fromString(courtId));
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping(value = "/v1/photo/image", produces = {"img/jpg", "img/jpeg", "img/png"})
-    @Operation(
-        summary = "Download a stored photo for a court",
-        description = "Downloads the stored photo for a court."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Photo successfully downloaded"),
-        @ApiResponse(responseCode = "404", description = "Failed to locate a Photo")
-    })
-    @PreAuthorize("@authService.canView()")
-    public ResponseEntity<StreamingResponseBody> downloadPhoto(
-        @Parameter(description = "UUID of the court", required = true) @ValidUUID @PathVariable String courtId) {
-        CourtPhoto courtPhoto = courtPhotoService.getCourtPhotoByCourtId(UUID.fromString(courtId));
-        CourtPhotoService.PhotoStreamDetails details =
-            courtPhotoService.getPhotoStreamDetails(courtPhoto.getFileLink());
-
-        StreamingResponseBody body = outputStream -> {
-            try (InputStream in = details.inputStream()) {
-                in.transferTo(outputStream);
-            }
-        };
-
-        return ResponseEntity.ok()
-            .contentType(MediaType.parseMediaType(details.contentType()))
-            .body(body);
     }
 }

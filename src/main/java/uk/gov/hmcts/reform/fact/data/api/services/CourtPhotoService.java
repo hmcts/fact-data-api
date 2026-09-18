@@ -14,6 +14,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import javax.imageio.ImageIO;
 
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 
@@ -38,7 +40,7 @@ public class CourtPhotoService {
     private static final String JPG = "jpg";
     private static final String JPEG = "jpeg";
 
-    public record PhotoStreamDetails(InputStream inputStream, String contentType) {}
+    public record PhotoStreamDetails(String contentType, StreamingResponseBody body) {}
 
     private final CourtPhotoRepository courtPhotoRepository;
     private final CourtService courtService;
@@ -102,6 +104,36 @@ public class CourtPhotoService {
 
         azureBlobService.deleteBlob(courtPhoto.getCourtId().toString());
         courtPhotoRepository.deleteById(courtPhoto.getId());
+    }
+
+    /**
+     * Get a photo stream for a court by court id.
+     *
+     * @param courtId The id of the court.
+     * @return The photo stream details.
+     * @throws NotFoundException if no court found with the given id or no photo found for the court.
+     */
+    public PhotoStreamDetails getPhotoStream(@NonNull UUID courtId) {
+        // will 404 if no court found with the given id or no photo found for the court
+        String fileLink = Optional.ofNullable(getCourtPhotoByCourtId(courtId)).map(CourtPhoto::getFileLink).orElseThrow(
+            () -> new NotFoundException("No photo found for court ID: " + courtId)
+        );
+        String blobName = fileLink.substring(fileLink.lastIndexOf('/') + 1);
+        BlobClient client = this.blobContainerClient.getBlobClient(blobName);
+        try {
+            // we need to keep the input stream open until the transfer is complete, so we return
+            // a StreamingResponseBody that will close it after the transfer. We also need to get
+            // the input stream prior to the transfer, as it may throw a BlobStorageException if
+            // the blob does not exist, which we want to catch and handle.
+            InputStream blobInputStream = client.openInputStream(); // NOSONAR
+            return new PhotoStreamDetails(client.getProperties().getContentType(), out -> {
+                try (InputStream in = blobInputStream) {
+                    in.transferTo(out);
+                }
+            });
+        } catch (BlobStorageException e) {
+            throw new NotFoundException("Photo not found for blob name: " + blobName, e);
+        }
     }
 
     private MultipartFile resizeIfNeeded(MultipartFile file) {
@@ -169,15 +201,5 @@ public class CourtPhotoService {
 
         // Defensive fallback as upstream validation should already ensure png/jpg.
         return JPG;
-    }
-
-    public PhotoStreamDetails getPhotoStreamDetails(@NonNull String fileLink) {
-        String blobName = fileLink.substring(fileLink.lastIndexOf('/') + 1);
-        BlobClient client = this.blobContainerClient.getBlobClient(blobName);
-        try {
-            return new PhotoStreamDetails(client.openInputStream(), client.getProperties().getContentType());
-        } catch (BlobStorageException e) {
-            throw new NotFoundException("Photo not found for blob name: " + blobName, e);
-        }
     }
 }

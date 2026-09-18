@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobStorageException;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -117,9 +118,14 @@ public class CsvService {
         }
     }
 
-    public InputStream getCsvStreamInputStream() {
+    public StreamingResponseBody getCsvStreamInputStream() {
         try {
-            return this.blobContainerClient.getBlobClient(CSV_FILE_NAME).openInputStream();
+            InputStream csvInputStream = this.blobContainerClient.getBlobClient(CSV_FILE_NAME).openInputStream();
+            return out -> {
+                try (InputStream in = csvInputStream) {
+                    in.transferTo(out);
+                }
+            };
         } catch (BlobStorageException e) {
             log.error("Error while retrieving CSV file from Azure Blob Storage", e);
             // treat as a not found exception, since the blob may not exist

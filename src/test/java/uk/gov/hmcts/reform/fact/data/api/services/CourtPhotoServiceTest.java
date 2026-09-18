@@ -1,11 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
-import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.models.BlobProperties;
-import com.azure.storage.blob.models.BlobStorageException;
-import com.azure.storage.blob.specialized.BlobInputStream;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,7 +35,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,13 +56,13 @@ class CourtPhotoServiceTest {
     private AzureBlobService azureBlobService;
 
     @Mock
+    private BlobContainerClient blobContainerClient;
+
+    @Mock
     private MultipartFile multipartFile;
 
     @Mock
     private AuditUserContext auditUserContext;
-
-    @Mock
-    private BlobContainerClient blobContainerClient;
 
     @Mock
     private PhotoConfigurationProperties photoConfigurationProperties;
@@ -389,46 +383,6 @@ class CourtPhotoServiceTest {
         );
 
         assertThat(exception.getMessage()).isEqualTo("Court photo not found for court ID: " + courtId);
-    }
-
-    @Test
-    void getPhotoStreamDetailsShouldReturnInputStreamAndContentType() {
-        String fileLink = "https://blob.example.net/photos/court-photo-123";
-        String blobName = "court-photo-123";
-        BlobInputStream expectedInputStream = mock(BlobInputStream.class);
-
-        BlobClient blobClient = mock(BlobClient.class);
-        BlobProperties blobProperties = mock(BlobProperties.class);
-
-        when(blobContainerClient.getBlobClient(blobName)).thenReturn(blobClient);
-        when(blobClient.openInputStream()).thenReturn(expectedInputStream);
-        when(blobClient.getProperties()).thenReturn(blobProperties);
-        when(blobProperties.getContentType()).thenReturn("image/png");
-
-        CourtPhotoService.PhotoStreamDetails details = courtPhotoService.getPhotoStreamDetails(fileLink);
-
-        assertThat(details.inputStream()).isSameAs(expectedInputStream);
-        assertThat(details.contentType()).isEqualTo("image/png");
-        verify(blobContainerClient).getBlobClient(blobName);
-        verify(blobClient).getProperties();
-    }
-
-    @Test
-    void getPhotoStreamDetailsShouldThrowNotFoundWhenBlobStorageThrows() {
-        String fileLink = "https://blob.example.net/photos/court-photo-123";
-        String blobName = "court-photo-123";
-        BlobClient blobClient = mock(BlobClient.class);
-        BlobStorageException blobStorageException = mock(BlobStorageException.class);
-        when(blobContainerClient.getBlobClient(blobName)).thenReturn(blobClient);
-        when(blobClient.openInputStream()).thenThrow(blobStorageException);
-
-        NotFoundException exception = assertThrows(NotFoundException.class, () ->
-            courtPhotoService.getPhotoStreamDetails(fileLink)
-        );
-
-        assertThat(exception.getMessage()).isEqualTo("Photo not found for blob name: " + blobName);
-        assertThat(exception.getCause()).isSameAs(blobStorageException);
-        verify(blobContainerClient).getBlobClient(blobName);
     }
 
     private byte[] createImageBytes(String format, int width, int height) throws IOException {

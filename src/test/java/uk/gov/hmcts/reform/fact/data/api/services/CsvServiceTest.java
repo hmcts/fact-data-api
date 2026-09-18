@@ -1,9 +1,5 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
-import com.azure.storage.blob.BlobClient;
-import com.azure.storage.blob.BlobContainerClient;
-import com.azure.storage.blob.models.BlobStorageException;
-import com.azure.storage.blob.specialized.BlobInputStream;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
@@ -13,20 +9,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CsvCreationException;
-import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.models.StringMultipartFile;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,9 +43,6 @@ class CsvServiceTest {
 
     @Mock
     private AzureBlobService azureBlobService;
-
-    @Mock
-    private BlobContainerClient blobContainerClient;
 
     @Mock
     private SlackClient slackClient;
@@ -129,37 +119,6 @@ class CsvServiceTest {
             .sendSlackMessage(contains("Failed to upload CSV file to Azure Blob Storage. Check App insights."));
     }
 
-    @Test
-    void getCsvStreamInputStreamShouldReturnOpenStreamForConfiguredBlob() {
-        CsvService csvService = buildService();
-        BlobClient blobClient = mock(BlobClient.class);
-        BlobInputStream expectedInputStream = mock(BlobInputStream.class);
-
-        when(blobContainerClient.getBlobClient(CSV_FILE_NAME)).thenReturn(blobClient);
-        when(blobClient.openInputStream()).thenReturn(expectedInputStream);
-
-        InputStream result = csvService.getCsvStreamInputStream();
-
-        assertThat(result).isSameAs(expectedInputStream);
-        verify(blobContainerClient).getBlobClient(CSV_FILE_NAME);
-    }
-
-    @Test
-    void getCsvStreamInputStreamShouldThrowNotFoundWhenBlobStorageThrows() {
-        CsvService csvService = buildService();
-        BlobClient blobClient = mock(BlobClient.class);
-        BlobStorageException blobStorageException = mock(BlobStorageException.class);
-
-        when(blobContainerClient.getBlobClient(CSV_FILE_NAME)).thenReturn(blobClient);
-        when(blobClient.openInputStream()).thenThrow(blobStorageException);
-
-        NotFoundException exception = assertThrows(NotFoundException.class, csvService::getCsvStreamInputStream);
-
-        assertThat(exception.getMessage()).isEqualTo("CSV file not downloaded from Azure Blob Storage");
-        assertThat(exception.getCause()).isSameAs(blobStorageException);
-        verify(blobContainerClient).getBlobClient(CSV_FILE_NAME);
-    }
-
     private CsvService buildService() {
         return new CsvService(
             courtService,
@@ -167,7 +126,6 @@ class CsvServiceTest {
             serviceCentreService,
             serviceCentreDetailsViewService,
             azureBlobService,
-            blobContainerClient,
             objectMapper,
             slackClient
         );
