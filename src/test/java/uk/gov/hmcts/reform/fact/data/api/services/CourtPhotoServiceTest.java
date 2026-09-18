@@ -1,6 +1,10 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.models.BlobStorageException;
+import com.azure.storage.blob.models.BlobProperties;
+import com.azure.storage.blob.specialized.BlobInputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,6 +39,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -383,6 +389,111 @@ class CourtPhotoServiceTest {
         );
 
         assertThat(exception.getMessage()).isEqualTo("Court photo not found for court ID: " + courtId);
+    }
+
+    @Test
+    void getPhotoStreamShouldStreamContentAndCloseInputStream() throws IOException {
+        UUID courtId = UUID.randomUUID();
+        CourtPhoto photo = new CourtPhoto();
+        photo.setFileLink("https://example.com/photos/court-photo.png");
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(photo));
+        BlobClient blobClient = mock(BlobClient.class);
+        BlobInputStream inputStream = mock(BlobInputStream.class);
+        byte[] content = {1, 2, 3};
+        when(blobContainerClient.getBlobClient("court-photo.png")).thenReturn(blobClient);
+        when(blobClient.openInputStream()).thenReturn(inputStream);
+        BlobProperties properties = mock(BlobProperties.class);
+        when(blobClient.getProperties()).thenReturn(properties);
+        when(properties.getContentType()).thenReturn("image/png");
+        when(inputStream.transferTo(any(OutputStream.class))).thenAnswer(invocation -> {
+            OutputStream outputStream = invocation.getArgument(0);
+            outputStream.write(content);
+            return (long) content.length;
+        });
+
+        CourtPhotoService.PhotoStreamDetails details = courtPhotoService.getPhotoStream(courtId);
+
+        assertThat(details.contentType()).isEqualTo("image/png");
+        verify(courtService).getCourtById(courtId);
+        verify(inputStream, never()).close();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        details.body().writeTo(outputStream);
+
+        assertThat(outputStream.toByteArray()).isEqualTo(content);
+        verify(inputStream).close();
+    }
+
+    @Test
+    void getPhotoStreamShouldCloseInputStreamWhenTransferFails() throws IOException {
+        UUID courtId = UUID.randomUUID();
+        CourtPhoto photo = new CourtPhoto();
+        photo.setFileLink("https://example.com/photos/court-photo.png");
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(photo));
+        BlobClient blobClient = mock(BlobClient.class);
+        BlobInputStream inputStream = mock(BlobInputStream.class);
+        BlobProperties blobProperties = mock(BlobProperties.class);
+        IOException failure = new IOException("transfer failed");
+        when(blobContainerClient.getBlobClient("court-photo.png")).thenReturn(blobClient);
+        when(blobClient.openInputStream()).thenReturn(inputStream);
+        when(blobClient.getProperties()).thenReturn(blobProperties);
+        when(inputStream.transferTo(any(OutputStream.class))).thenThrow(failure);
+
+        CourtPhotoService.PhotoStreamDetails details = courtPhotoService.getPhotoStream(courtId);
+
+        assertThat(assertThrows(IOException.class, () -> details.body().writeTo(new ByteArrayOutputStream())))
+            .isSameAs(failure);
+        verify(inputStream).close();
+    }
+
+    @Test
+    void getPhotoStreamShouldThrowNotFoundWhenBlobCannotBeOpened() {
+        UUID courtId = UUID.randomUUID();
+        CourtPhoto photo = new CourtPhoto();
+        photo.setFileLink("https://example.com/photos/court-photo.png");
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(photo));
+        BlobClient blobClient = mock(BlobClient.class);
+        BlobStorageException failure = mock(BlobStorageException.class);
+        when(blobContainerClient.getBlobClient("court-photo.png")).thenReturn(blobClient);
+        when(blobClient.openInputStream()).thenThrow(failure);
+
+        NotFoundException exception = assertThrows(NotFoundException.class, () ->
+            courtPhotoService.getPhotoStream(courtId));
+
+        assertThat(exception.getMessage()).isEqualTo("Photo not found for blob name: court-photo.png");
+        assertThat(exception.getCause()).isSameAs(failure);
+    }
+
+    @Test
+    void getPhotoStreamShouldThrowWhenCourtNotFound() {
+        UUID courtId = UUID.randomUUID();
+        NotFoundException failure = new NotFoundException("Court not found");
+        when(courtService.getCourtById(courtId)).thenThrow(failure);
+
+        assertThat(assertThrows(NotFoundException.class, () -> courtPhotoService.getPhotoStream(courtId)))
+            .isSameAs(failure);
+        verify(courtPhotoRepository, never()).findCourtPhotoByCourtId(courtId);
+    }
+
+    @Test
+    void getPhotoStreamShouldThrowWhenPhotoNotFound() {
+        UUID courtId = UUID.randomUUID();
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(NotFoundException.class, () ->
+            courtPhotoService.getPhotoStream(courtId));
+
+        assertThat(exception.getMessage()).isEqualTo("Court photo not found for court ID: " + courtId);
+    }
+
+    @Test
+    void getPhotoStreamShouldThrowWhenFileLinkIsMissing() {
+        UUID courtId = UUID.randomUUID();
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(new CourtPhoto()));
+
+        NotFoundException exception = assertThrows(NotFoundException.class, () ->
+            courtPhotoService.getPhotoStream(courtId));
+
+        assertThat(exception.getMessage()).isEqualTo("No photo found for court ID: " + courtId);
     }
 
     private byte[] createImageBytes(String format, int width, int height) throws IOException {
