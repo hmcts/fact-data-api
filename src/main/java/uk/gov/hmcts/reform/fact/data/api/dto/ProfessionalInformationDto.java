@@ -19,9 +19,6 @@ import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants
 @Builder
 public class ProfessionalInformationDto {
 
-    private static final String INTERVIEW_ROOM_COUNT_MESSAGE =
-        "Interview room count must be between 1 and 150 when interview rooms are available; otherwise omit or set to 0";
-
     @Schema(description = "Interview room availability status", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
     private Boolean interviewRooms;
@@ -46,7 +43,7 @@ public class ProfessionalInformationDto {
     @NotNull
     private Boolean accessScheme;
 
-    @AssertTrue(message = INTERVIEW_ROOM_COUNT_MESSAGE)
+    @AssertTrue(message = ValidationConstants.INTERVIEW_ROOM_COUNT_MESSAGE)
     public boolean isInterviewRoomCountConsistent() {
         if (Boolean.TRUE.equals(interviewRooms)) {
             return interviewRoomCount != null && interviewRoomCount > 0 && interviewRoomCount <= 150;
