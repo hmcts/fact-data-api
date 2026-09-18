@@ -17,7 +17,7 @@ plugins {
   id 'uk.gov.hmcts.java' version '0.12.70'
   id 'io.freefair.lombok' version '9.5.0'
   id 'org.flywaydb.flyway' version '13.7.0'
-  id 'io.qameta.allure' version '4.2.0'
+  id 'io.qameta.allure' version '4.3.0'
 }
 
 application {
