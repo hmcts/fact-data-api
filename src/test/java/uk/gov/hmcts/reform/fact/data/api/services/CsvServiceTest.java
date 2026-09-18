@@ -178,7 +178,7 @@ class CsvServiceTest {
         BlobStorageException failure = mock(BlobStorageException.class);
         when(blobContainerClient.getBlobClient(CSV_FILE_NAME)).thenReturn(blobClient);
         when(blobClient.openInputStream()).thenThrow(failure);
-        
+
         NotFoundException exception = assertThrows(NotFoundException.class, svc::getCsvStreamInputStream);
 
         assertThat(exception.getMessage()).isEqualTo("CSV file not downloaded from Azure Blob Storage");
