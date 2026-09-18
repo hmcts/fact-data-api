@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import com.azure.storage.blob.BlobContainerClient;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,9 @@ class CsvServiceTest {
 
     @Mock
     private AzureBlobService azureBlobService;
+
+    @Mock
+    private BlobContainerClient blobContainerClient;
 
     @Mock
     private SlackClient slackClient;
@@ -126,6 +130,7 @@ class CsvServiceTest {
             serviceCentreService,
             serviceCentreDetailsViewService,
             azureBlobService,
+            blobContainerClient,
             objectMapper,
             slackClient
         );
