@@ -180,9 +180,10 @@ repositories {
   }
 }
 
-ext['snakeyaml.version'] = '2.0'
+ext['snakeyaml.version'] = '2.5' // CVE-2025-7962
 ext['log4j2.version'] = '2.25.5' // CVE-2025-68161, CVE-2026-49844
-ext['tomcat.version'] = '11.0.25' // CVE-2026-65182, CVE-2026-65905, CVE-2026-68525
+ext['tomcat.version'] = '11.0.26' // CVE-2026-65182, CVE-2026-65905, CVE-2026-68525
+ext['netty.version'] = '4.2.18.Final' // CVE-2026-89044
 
 dependencies {
   implementation group: 'org.springframework.boot', name: 'spring-boot-starter-webmvc'
