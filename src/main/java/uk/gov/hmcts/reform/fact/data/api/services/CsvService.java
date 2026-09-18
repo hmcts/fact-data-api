@@ -1,5 +1,8 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.models.BlobStorageException;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,9 +11,11 @@ import org.springframework.stereotype.Service;
 import uk.gov.hmcts.reform.fact.data.api.clients.SlackClient;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.CsvCreationException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.models.StringMultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.utils.CsvUtil;
 
+import java.io.InputStream;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -39,6 +44,8 @@ public class CsvService {
     private final ServiceCentreDetailsViewService serviceCentreDetailsViewService;
     @Qualifier("csvAzureBlobService")
     private final AzureBlobService azureBlobService;
+    @Qualifier("csvBlobContainerClient")
+    private final BlobContainerClient blobContainerClient;
     private final ObjectMapper objectMapper;
     private final SlackClient slackClient;
 
@@ -108,6 +115,21 @@ public class CsvService {
                 sb.append("• ").append(action).append("\n");
             }
             slackClient.sendSlackMessage(sb.toString());
+        }
+    }
+
+    public StreamingResponseBody getCsvStreamInputStream() {
+        try {
+            InputStream csvInputStream = this.blobContainerClient.getBlobClient(CSV_FILE_NAME).openInputStream();
+            return out -> {
+                try (InputStream in = csvInputStream) {
+                    in.transferTo(out);
+                }
+            };
+        } catch (BlobStorageException e) {
+            log.error("Error while retrieving CSV file from Azure Blob Storage", e);
+            // treat as a not found exception, since the blob may not exist
+            throw new NotFoundException("CSV file not downloaded from Azure Blob Storage", e);
         }
     }
 }
