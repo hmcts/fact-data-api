@@ -18,3 +18,15 @@ provider "azurerm" {
   alias           = "postgres_network"
   subscription_id = var.aks_subscription_id
 }
+
+provider "azurerm" {
+  features {}
+  alias           = "aks-infra"
+  subscription_id = var.aks_subscription_id
+}
+
+provider "azurerm" {
+  features {}
+  alias           = "aks-preview"
+  subscription_id = var.aks_preview_subscription_id
+}
