@@ -317,6 +317,24 @@ class CourtControllerTest {
     }
 
     @Test
+    @DisplayName("POST /courts/v1 returns 400 when name has no letters")
+    void createCourtReturnsBadRequestWhenNameHasNoLetters() throws Exception {
+        Court invalidCourt = buildCourt(null);
+        invalidCourt.setName("-----");
+
+        mockMvc.perform(post("/courts/v1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidCourt)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.name").value(
+                org.hamcrest.Matchers.containsString(
+                    "Court name must include at least one letter and only include letters, spaces, "
+                        + "apostrophes, hyphens, ampersands, and parentheses"
+                )
+            ));
+    }
+
+    @Test
     @DisplayName("POST /courts/v1 returns 400 for invalid slug pattern")
     void createCourtReturnsBadRequestForInvalidSlug() throws Exception {
         Court invalidCourt = buildCourt(null);
