@@ -37,6 +37,7 @@ public class CsvService {
 
     private static final String CSV_FILE_NAME = "courts-and-tribunals-data.csv";
     private static final String CSV_CONTENT_TYPE = "text/csv";
+    public static final String FILE_NAME_VALUE = "fileName=";
 
     private final CourtService courtService;
     private final CourtDetailsViewService courtDetailsViewService;
@@ -66,7 +67,7 @@ public class CsvService {
         } catch (Exception e) {
             log.error(writeLog(
                 "Error while uploading CSV",
-                "fileName=" + CSV_FILE_NAME
+                FILE_NAME_VALUE + CSV_FILE_NAME
             ), e);
             actions.add("Failed to upload CSV file to Azure Blob Storage. Check App insights.");
             throw new AzureUploadException("Failed to upload CSV file to Azure Blob Storage", e);
@@ -92,7 +93,7 @@ public class CsvService {
         } catch (Exception e) {
             log.error(writeLog(
                 "Error while creating CSV file",
-                "fileName=" + CSV_FILE_NAME
+                FILE_NAME_VALUE + CSV_FILE_NAME
             ), e);
             actions.add("Failed to create CSV file. Check App insights.");
             throw new CsvCreationException("Failed to create CSV file", e);
@@ -127,7 +128,10 @@ public class CsvService {
                 }
             };
         } catch (BlobStorageException e) {
-            log.error("Error while retrieving CSV file from Azure Blob Storage", e);
+            log.warn(writeLog(
+                "Error while retrieving CSV file from Azure Blob Storage",
+                FILE_NAME_VALUE + CSV_FILE_NAME
+            ), e);
             // treat as a not found exception, since the blob may not exist
             throw new NotFoundException("CSV file not downloaded from Azure Blob Storage", e);
         }
