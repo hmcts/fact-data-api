@@ -63,7 +63,7 @@ public class ValidationConstants {
     public static final String WELSH_WARNING_NOTICE_REGEX_MESSAGE =
         "Welsh warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)";
 
-    public static final int ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH = 255;
+    public static final int ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH = 250;
     public static final String ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE =
         "Accessible toilet description must not exceed {max} characters";
     public static final String WELSH_ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE =
@@ -79,7 +79,7 @@ public class ValidationConstants {
     public static final String LIFT_WEIGHT_LIMIT_MIN_MESSAGE = "Lift weight limit should be at least {value}kg";
     public static final String LIFT_WEIGHT_LIMIT_MAX_MESSAGE = "Lift weight limit should be at most {value}kg";
 
-    public static final int ADDRESS_LINE_MAX_LENGTH = 255;
+    public static final int ADDRESS_LINE_MAX_LENGTH = 250;
     public static final int COUNTRY_TOWN_CITY_MAX_LENGTH = 100;
     public static final int COURT_EPIM_ID_MAX_LENGTH = 10;
     public static final  String ADDRESS_LINE_MAX_LENGTH_MESSAGE =
@@ -119,9 +119,9 @@ public class ValidationConstants {
 
     public static final int REGION_NAME_MIN_LENGTH = 5;
     public static final String REGION_NAME_LENGTH_MESSAGE =
-        "Name should be less than 255 chars";
+        "Name should be less than {max} chars";
     public static final String REGION_COUNTRY_LENGTH_MESSAGE =
-        "Country should be less than 255 chars";
+        "Country should be less than {max} chars";
 
     public static final String SERVICE_CENTRE_NAME_LENGTH_MESSAGE =
         "Service centre name should be between {min} and {max} characters";
