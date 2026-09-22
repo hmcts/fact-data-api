@@ -25,18 +25,22 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
      */
     @Query(
         value = """
-            SELECT
-                c.id as courtId,
-                c.name as courtName,
-                c.slug as courtSlug,
-                (point(ca.lon, ca.lat) <@> point(:lon, :lat)) as distance
-            FROM court_address ca
-            JOIN court c ON c.id = ca.court_id
-            WHERE ca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
-              AND ca.lat IS NOT NULL
-              AND ca.lon IS NOT NULL
-              AND c.open = true
-            ORDER BY distance
+            SELECT *
+            FROM (
+              SELECT DISTINCT ON (c.id)
+                  c.id as courtId,
+                  c.name as courtName,
+                  c.slug as courtSlug,
+                  (point(ca.lon, ca.lat) <@> point(:lon, :lat)) as distance
+              FROM court_address ca
+              JOIN court c ON c.id = ca.court_id
+              WHERE ca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
+                AND ca.lat IS NOT NULL
+                AND ca.lon IS NOT NULL
+                AND c.open = true
+              ORDER BY c.id, distance
+            ) x
+            ORDER BY x.distance, x.courtName
             LIMIT :limit
             """,
         nativeQuery = true

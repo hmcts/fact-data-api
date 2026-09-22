@@ -16,6 +16,7 @@ import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,6 +41,33 @@ class SearchExecuterTest {
 
     @InjectMocks
     private SearchExecuter searchExecuter;
+
+    @Test
+    void executeSearchStrategyShouldReturnEachCourtOnceUsingNearestResult() {
+        ServiceArea area = serviceArea(ServiceAreaType.CIVIL);
+        OsLocationData locationData = osLocationData("Authority", "SW1A 1AA");
+        UUID firstCourtId = UUID.randomUUID();
+        UUID secondCourtId = UUID.randomUUID();
+        UUID thirdCourtId = UUID.randomUUID();
+        CourtWithDistance distantDuplicate = courtWithDistance(firstCourtId, "10");
+        CourtWithDistance secondCourt = courtWithDistance(secondCourtId, "2");
+        CourtWithDistance thirdCourt = courtWithDistance(thirdCourtId, "3");
+        CourtWithDistance nearestDuplicate = courtWithDistance(firstCourtId, "1");
+        CourtWithDistance laterDistantDuplicate = courtWithDistance(firstCourtId, "20");
+
+        when(courtAddressRepository.findNearestByAreaOfLaw(51.5, -0.1, area.getAreaOfLawId(), 2))
+            .thenReturn(List.of(distantDuplicate, secondCourt, thirdCourt, nearestDuplicate, laterDistantDuplicate));
+
+        List<CourtWithDistance> response = searchExecuter.executeSearchStrategy(
+            locationData,
+            area,
+            SearchStrategy.DEFAULT_AOL_DISTANCE,
+            SearchAction.NEAREST,
+            2
+        );
+
+        assertThat(response).containsExactly(nearestDuplicate, secondCourt);
+    }
 
     @Test
     void executeSearchStrategyShouldReturnNearestByAreaOfLawForDefault() {
@@ -273,5 +301,12 @@ class SearchExecuterTest {
         authorityType.setId(id);
         authorityType.setName("Authority");
         return authorityType;
+    }
+
+    private CourtWithDistance courtWithDistance(UUID courtId, String distance) {
+        CourtWithDistance result = mock(CourtWithDistance.class);
+        when(result.getCourtId()).thenReturn(courtId);
+        when(result.getDistance()).thenReturn(new BigDecimal(distance));
+        return result;
     }
 }
