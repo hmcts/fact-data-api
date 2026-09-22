@@ -66,6 +66,25 @@ class CourtAddressRepositoryTest {
     }
 
     @Test
+    void findNearestCourtsReturnsEachCourtOnceUsingItsNearestQualifyingAddress() {
+        Court multipleAddressCourt = saveCourt("Multiple Address Court", "multiple-address-court");
+        Court secondCourt = saveCourt("Second Court", "second-court");
+
+        saveAddress(multipleAddressCourt, "0.05", "0.05", AddressType.VISIT_US);
+        saveAddress(multipleAddressCourt, "0", "0", AddressType.VISIT_OR_CONTACT_US);
+        saveAddress(secondCourt, "0", "0", AddressType.WRITE_TO_US);
+        saveAddress(secondCourt, "0.1", "0.1", AddressType.VISIT_US);
+
+        List<CourtWithDistance> results = courtAddressRepository.findNearestCourts(0, 0, 2);
+
+        assertThat(results)
+            .extracting(CourtWithDistance::getCourtId)
+            .containsExactly(multipleAddressCourt.getId(), secondCourt.getId());
+        assertThat(results.getFirst().getDistance()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(results.get(1).getDistance()).isGreaterThan(BigDecimal.ZERO);
+    }
+
+    @Test
     void findFamilyNonRegionalByLocalAuthorityLimitsResultsAfterOrderingByDistance() {
         UUID areaOfLawId = areaOfLawTypeRepository.findAll().getFirst().getId();
         UUID localAuthorityId = UUID.randomUUID();
@@ -106,6 +125,10 @@ class CourtAddressRepositoryTest {
     }
 
     private void saveAddress(Court court, String lat, String lon) {
+        saveAddress(court, lat, lon, AddressType.VISIT_US);
+    }
+
+    private void saveAddress(Court court, String lat, String lon, AddressType addressType) {
         courtAddressRepository.saveAndFlush(CourtAddress.builder()
             .courtId(court.getId())
             .addressLine1("Test address")
@@ -113,7 +136,7 @@ class CourtAddressRepositoryTest {
             .postcode("SW1A 1AA")
             .lat(new BigDecimal(lat))
             .lon(new BigDecimal(lon))
-            .addressType(AddressType.VISIT_US)
+            .addressType(addressType)
             .build());
     }
 

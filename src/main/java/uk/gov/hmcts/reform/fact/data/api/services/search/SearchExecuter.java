@@ -12,10 +12,14 @@ import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAddressRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 
@@ -43,7 +47,7 @@ public class SearchExecuter {
         final double lat = osLocationData.getLatitude();
         final double lon = osLocationData.getLongitude();
         final UUID aolId = serviceArea.getAreaOfLawId();
-        return switch (searchStrategy) {
+        List<CourtWithDistance> strategyResults = switch (searchStrategy) {
             case DEFAULT_AOL_DISTANCE -> courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
             case CIVIL_POSTCODE_PREFERENCE -> executeCivilSearchStrategy(
                 osLocationData.getPostcode(),
@@ -55,7 +59,7 @@ public class SearchExecuter {
             );
             case FAMILY_REGIONAL -> List.of();
             case FAMILY_NON_REGIONAL -> {
-                List<CourtWithDistance> results = executeFamilyNonRegionalSearchStrategy(
+                List<CourtWithDistance> familyResults = executeFamilyNonRegionalSearchStrategy(
                     osLocationData,
                     serviceArea,
                     lat,
@@ -63,7 +67,7 @@ public class SearchExecuter {
                     limit,
                     aolId
                 );
-                if (results.isEmpty()) {
+                if (familyResults.isEmpty()) {
                     log.debug(writeLog(
                         "Default fallback search (if no results found for determined search strategy)",
                         "searchStrategy=" + searchStrategy,
@@ -73,11 +77,42 @@ public class SearchExecuter {
                             && !osLocationData.getPostcode().isBlank())
                     ));
                 }
-                yield results.isEmpty()
+                yield familyResults.isEmpty()
                     ? courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit)
-                    : results;
+                    : familyResults;
             }
         };
+        // A strategy may return multiple address rows for one court; normalise them in memory without another query.
+        return selectNearestResultPerCourt(strategyResults, limit);
+    }
+
+    /**
+     * Ensures search results contain at most one row per court, using the nearest qualifying address.
+     * Repository queries apply the same rule before their limit so duplicate addresses cannot consume result slots;
+     * this final normalisation keeps result handling consistent across every search strategy.
+     *
+     * @param results search results to normalise
+     * @param limit maximum number of courts to return
+     * @return distinct courts ordered by distance
+     */
+    private List<CourtWithDistance> selectNearestResultPerCourt(List<CourtWithDistance> results, int limit) {
+        Comparator<CourtWithDistance> nearestFirst = Comparator
+            .comparing(CourtWithDistance::getDistance)
+            .thenComparing(CourtWithDistance::getCourtName)
+            .thenComparing(CourtWithDistance::getCourtId);
+
+        return results.stream()
+            .collect(Collectors.toMap(
+                CourtWithDistance::getCourtId,
+                Function.identity(),
+                (first, second) -> nearestFirst.compare(first, second) <= 0 ? first : second,
+                LinkedHashMap::new
+            ))
+            .values()
+            .stream()
+            .sorted(nearestFirst)
+            .limit(limit)
+            .toList();
     }
 
     /**
