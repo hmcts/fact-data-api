@@ -153,6 +153,11 @@ public class OsService {
      * @param lpiKey selected LPI key, when applicable
      * @return usable OS coordinates, or empty when no address option has usable coordinates
      */
+    @Cacheable(
+        cacheNames = CacheConfiguration.OSADMIN_CACHE_NAME,
+        key = "{#postcode.trim().replaceAll('\\s+', '').toUpperCase(), #dataset, #uprn, #lpiKey}",
+        sync = true
+    )
     public Optional<OsAddressCoordinates> getOsAdminAddressCoordinates(
         String postcode,
         String dataset,

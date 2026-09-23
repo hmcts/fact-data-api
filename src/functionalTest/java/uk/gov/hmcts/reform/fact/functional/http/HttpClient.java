@@ -16,9 +16,12 @@ import com.azure.core.util.ConfigurationBuilder;
 import com.azure.identity.DefaultAzureCredential;
 import com.azure.identity.DefaultAzureCredentialBuilder;
 import io.qameta.allure.restassured.AllureRestAssured;
+import io.restassured.config.LogConfig;
+import io.restassured.config.RestAssuredConfig;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
@@ -36,6 +39,7 @@ public final class HttpClient {
     private static final String VIEWER_AZURE_CLIENT_SECRET = "VIEWER_AZURE_CLIENT_SECRET";
 
     private final String baseUrl;
+    private final RestAssuredConfig restAssuredConfig;
     private static final AtomicReference<String> factAdminBearerToken = new AtomicReference<>();
     private static final AtomicReference<String> factViewerBearerToken = new AtomicReference<>();
     private static final AtomicReference<String> factAdminUserId = new AtomicReference<>();
@@ -43,6 +47,13 @@ public final class HttpClient {
 
     public HttpClient() {
         this.baseUrl = System.getenv().getOrDefault("TEST_URL", "http://localhost:8989");
+
+        this.restAssuredConfig = RestAssuredConfig.config()
+            .logConfig(
+                LogConfig.logConfig()
+                    .blacklistHeader("Authorization")
+                    .blacklistHeader(USER_ID_HEADER)
+            );
     }
 
     public static String getAdminBearerToken() {
@@ -53,52 +64,51 @@ public final class HttpClient {
         return getBearerToken(VIEWER_CLIENT_APP_REG_ID, VIEWER_AZURE_CLIENT_SECRET, factViewerBearerToken);
     }
 
+    @Synchronized
     private static String getBearerToken(final String clientAppRegEnvVar,
                                          final String clientSecretEnvVar,
                                          final AtomicReference<String> tokenCache) {
-        synchronized (tokenCache) {
-            if (tokenCache.get() == null) {
-                // Load the custom properties from the environment.
-                // AZURE_TENANT_ID and the role-specific client secret are used from the environment.
-                final String clientAppRegId = getRequiredEnv(clientAppRegEnvVar);
-                final String appRegId = Optional.ofNullable(System.getenv("APP_REG_ID"))
-                    .orElseThrow(() -> new IllegalStateException("No APP_REG_ID environment set"));
-                final String tenantId = Optional.ofNullable(System.getenv("AZURE_TENANT_ID"))
-                    .orElseThrow(() -> new IllegalStateException("No AZURE_TENANT_ID environment set"));
-                final String clientSecret = getRequiredEnv(clientSecretEnvVar);
+        if (tokenCache.get() == null) {
+            // Load the custom properties from the environment.
+            // AZURE_TENANT_ID and the role-specific client secret are used from the environment.
+            final String clientAppRegId = getRequiredEnv(clientAppRegEnvVar);
+            final String appRegId = Optional.ofNullable(System.getenv("APP_REG_ID"))
+                .orElseThrow(() -> new IllegalStateException("No APP_REG_ID environment set"));
+            final String tenantId = Optional.ofNullable(System.getenv("AZURE_TENANT_ID"))
+                .orElseThrow(() -> new IllegalStateException("No AZURE_TENANT_ID environment set"));
+            final String clientSecret = getRequiredEnv(clientSecretEnvVar);
 
-                log.info(writeLog(
-                    "Authentication env variables resolved",
-                    "hasClientAppRegId=" + !clientAppRegId.isBlank(),
-                    "hasClientSecret=" + !clientSecret.isBlank(),
-                    "hasTenantId=" + !tenantId.isBlank()
-                ));
+            log.info(writeLog(
+                "Authentication env variables resolved",
+                "hasClientAppRegId=" + !clientAppRegId.isBlank(),
+                "hasClientSecret=" + !clientSecret.isBlank(),
+                "hasTenantId=" + !tenantId.isBlank()
+            ));
 
-                // set the scope up for the destination app
-                TokenRequestContext requestContext = new TokenRequestContext();
-                requestContext.addScopes(String.format("api://%s/.default", appRegId));
+            // set the scope up for the destination app
+            TokenRequestContext requestContext = new TokenRequestContext();
+            requestContext.addScopes(String.format("api://%s/.default", appRegId));
 
-                // Create config override for the azure client id
-                Configuration configuration = new ConfigurationBuilder()
-                    .putProperty(Configuration.PROPERTY_AZURE_CLIENT_ID, clientAppRegId)
-                    .putProperty(Configuration.PROPERTY_AZURE_CLIENT_SECRET, clientSecret)
-                    .putProperty(Configuration.PROPERTY_AZURE_TENANT_ID, tenantId)
-                    .build();
+            // Create config override for the azure client id
+            Configuration configuration = new ConfigurationBuilder()
+                .putProperty(Configuration.PROPERTY_AZURE_CLIENT_ID, clientAppRegId)
+                .putProperty(Configuration.PROPERTY_AZURE_CLIENT_SECRET, clientSecret)
+                .putProperty(Configuration.PROPERTY_AZURE_TENANT_ID, tenantId)
+                .build();
 
-                // Create the credential object and request the token
-                DefaultAzureCredential credentials = new DefaultAzureCredentialBuilder()
-                    .managedIdentityClientId(clientAppRegId)
-                    .configuration(configuration)
-                    .build();
+            // Create the credential object and request the token
+            DefaultAzureCredential credentials = new DefaultAzureCredentialBuilder()
+                .managedIdentityClientId(clientAppRegId)
+                .configuration(configuration)
+                .build();
 
-                tokenCache.set(
-                    Optional.ofNullable(credentials.getTokenSync(requestContext))
-                        .map(AccessToken::getToken)
-                        .orElseThrow(() -> new IllegalStateException("Failed to get token"))
-                );
-            }
-            return tokenCache.get();
+            tokenCache.set(
+                Optional.ofNullable(credentials.getTokenSync(requestContext))
+                    .map(AccessToken::getToken)
+                    .orElseThrow(() -> new IllegalStateException("Failed to get token"))
+            );
         }
+        return tokenCache.get();
     }
 
     private static String getRequiredEnv(final String varName) {
@@ -117,6 +127,7 @@ public final class HttpClient {
     private RequestSpecification requestWithOptionalAuthorization(final String bearerToken,
                                                                  final boolean includeUserIdHeader) {
         RequestSpecification request = given()
+            .config(restAssuredConfig)
             .filter(new AllureRestAssured())
             .baseUri(baseUrl);
 
@@ -131,6 +142,7 @@ public final class HttpClient {
         return request;
     }
 
+    @SuppressWarnings("java:S2442")
     private String getFactAdminUserId() {
         synchronized (factAdminUserId) {
             if (factAdminUserId.get() == null) {
@@ -160,6 +172,7 @@ public final class HttpClient {
         }
     }
 
+    @SuppressWarnings("java:S2442")
     public String getFactViewerUserId() {
         synchronized (factViewerUserId) {
             if (factViewerUserId.get() == null) {

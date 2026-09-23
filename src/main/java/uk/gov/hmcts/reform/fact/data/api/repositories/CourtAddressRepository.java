@@ -25,18 +25,22 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
      */
     @Query(
         value = """
-            SELECT
-                c.id as courtId,
-                c.name as courtName,
-                c.slug as courtSlug,
-                (point(ca.lon, ca.lat) <@> point(:lon, :lat)) as distance
-            FROM court_address ca
-            JOIN court c ON c.id = ca.court_id
-            WHERE ca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
-              AND ca.lat IS NOT NULL
-              AND ca.lon IS NOT NULL
-              AND c.open = true
-            ORDER BY distance
+            SELECT *
+            FROM (
+              SELECT DISTINCT ON (c.id)
+                  c.id as courtId,
+                  c.name as courtName,
+                  c.slug as courtSlug,
+                  (point(ca.lon, ca.lat) <@> point(:lon, :lat)) as distance
+              FROM court_address ca
+              JOIN court c ON c.id = ca.court_id
+              WHERE ca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
+                AND ca.lat IS NOT NULL
+                AND ca.lon IS NOT NULL
+                AND c.open = true
+              ORDER BY c.id, distance
+            ) x
+            ORDER BY x.distance, x.courtName
             LIMIT :limit
             """,
         nativeQuery = true
@@ -204,25 +208,29 @@ public interface CourtAddressRepository extends JpaRepository<CourtAddress, UUID
      */
     @Query(
         value = """
-            SELECT DISTINCT ON (c.id)
-                c.id as courtId,
-                c.name as courtName,
-                c.slug as courtSlug,
-                (
-                  point(CAST(ca.lon AS float8), CAST(ca.lat AS float8))
-                  <@>
-                  point(CAST(:lon AS float8), CAST(:lat AS float8))
-                ) AS distance
-            FROM court c
-            JOIN court_address ca ON ca.court_id = c.id
-            JOIN court_local_authorities cla ON cla.court_id = c.id
-            WHERE c.open = true
-              AND cla.area_of_law_id = CAST(:aolId AS uuid)
-              AND CAST(:localAuthorityId AS uuid) = ANY(cla.local_authority_ids)
-              AND ca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
-              AND ca.lat IS NOT NULL
-              AND ca.lon IS NOT NULL
-            ORDER BY c.id, distance
+            SELECT *
+            FROM (
+              SELECT DISTINCT ON (c.id)
+                  c.id as courtId,
+                  c.name as courtName,
+                  c.slug as courtSlug,
+                  (
+                    point(CAST(ca.lon AS float8), CAST(ca.lat AS float8))
+                    <@>
+                    point(CAST(:lon AS float8), CAST(:lat AS float8))
+                  ) AS distance
+              FROM court c
+              JOIN court_address ca ON ca.court_id = c.id
+              JOIN court_local_authorities cla ON cla.court_id = c.id
+              WHERE c.open = true
+                AND cla.area_of_law_id = CAST(:aolId AS uuid)
+                AND CAST(:localAuthorityId AS uuid) = ANY(cla.local_authority_ids)
+                AND ca.address_type IN ('VISIT_US', 'VISIT_OR_CONTACT_US')
+                AND ca.lat IS NOT NULL
+                AND ca.lon IS NOT NULL
+              ORDER BY c.id, distance
+            ) x
+            ORDER BY x.distance, x.courtName
             LIMIT :limit
             """,
         nativeQuery = true

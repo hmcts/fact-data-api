@@ -9,7 +9,7 @@ public class ValidationConstants {
     public static final int COURT_SERVICE_CENTRE_NAME_MAX_LENGTH = 200;
     public static final String COURT_NAME_LENGTH_MESSAGE =
         "Court name should be between {min} and {max} chars";
-    public static final String COURT_SERVICE_CENTRE_NAME_REGEX = "^[A-Za-z&'()\\- ]+$";
+    public static final String COURT_SERVICE_CENTRE_NAME_REGEX = "^(?=.*[A-Za-z])[A-Za-z&'()\\- ]+$";
     public static final String COURT_NAME_REGEX_MESSAGE =
         "Court name may only contain letters, spaces, apostrophes, hyphens, ampersands, and parentheses";
 
