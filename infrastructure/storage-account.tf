@@ -1,49 +1,3 @@
-locals {
-  aks_env                 = var.env == "sandbox" ? "sbox" : var.env
-
-  app_aks_network_name    = "cft-${local.aks_env}-vnet"
-  app_aks_network_rg_name = "cft-${local.aks_env}-network-rg"
-
-  preview_vnet_name           = "cft-preview-vnet"
-  preview_vnet_resource_group = "cft-preview-network-rg"
-
-  standard_subnets = [
-    data.azurerm_subnet.app_aks_00_subnet.id,
-    data.azurerm_subnet.app_aks_01_subnet.id
-  ]
-
-  preview_subnets = var.env == "aat" ? [data.azurerm_subnet.preview_aks_00_subnet.id, data.azurerm_subnet.preview_aks_01_subnet.id] : []
-  valid_subnets   = concat(local.standard_subnets, local.preview_subnets)
-}
-
-data "azurerm_subnet" "preview_aks_00_subnet" {
-  provider             = azurerm.aks-preview
-  name                 = "aks-00"
-  virtual_network_name = local.preview_vnet_name
-  resource_group_name  = local.preview_vnet_resource_group
-}
-
-data "azurerm_subnet" "preview_aks_01_subnet" {
-  provider             = azurerm.aks-preview
-  name                 = "aks-01"
-  virtual_network_name = local.preview_vnet_name
-  resource_group_name  = local.preview_vnet_resource_group
-}
-
-data "azurerm_subnet" "app_aks_00_subnet" {
-  provider             = azurerm.aks-infra
-  name                 = "aks-00"
-  virtual_network_name = local.app_aks_network_name
-  resource_group_name  = local.app_aks_network_rg_name
-}
-
-data "azurerm_subnet" "app_aks_01_subnet" {
-  provider             = azurerm.aks-infra
-  name                 = "aks-01"
-  virtual_network_name = local.app_aks_network_name
-  resource_group_name  = local.app_aks_network_rg_name
-}
-
 module "storage_account" {
   source                          = "git@github.com:hmcts/cnp-module-storage-account?ref=4.x"
   env                             = var.env
@@ -52,20 +6,20 @@ module "storage_account" {
   location                        = var.location
   account_kind                    = "StorageV2"
   account_replication_type        = "ZRS"
+  default_action                  = "Allow"
+  allow_nested_items_to_be_public = "true"
+  public_network_access_enabled   = true
   enable_data_protection          = true
   retention_period                = 14
   common_tags                     = var.common_tags
-
-  sa_subnets = local.valid_subnets
-
   containers = [
     {
       name        = "photos",
-      access_type = "private"
+      access_type = "container"
     },
     {
       name        = "csv",
-      access_type = "private"
+      access_type = "container"
     }
   ]
 
