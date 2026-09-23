@@ -11,7 +11,8 @@ public class ValidationConstants {
         "Court name should be between {min} and {max} chars";
     public static final String COURT_SERVICE_CENTRE_NAME_REGEX = "^(?=.*[A-Za-z])[A-Za-z&'()\\- ]+$";
     public static final String COURT_NAME_REGEX_MESSAGE =
-        "Court name may only contain letters, spaces, apostrophes, hyphens, ampersands, and parentheses";
+        "Court name must include at least one letter and only include letters, spaces, apostrophes, "
+            + "hyphens, ampersands, and parentheses";
 
     public static final String EMAIL_REGEX = "^(|[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,})$";
     public static final String EMAIL_REGEX_MESSAGE =
