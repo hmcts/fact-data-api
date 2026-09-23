@@ -7,13 +7,18 @@ locals {
   preview_vnet_name           = "cft-preview-vnet"
   preview_vnet_resource_group = "cft-preview-network-rg"
 
-  standard_subnets = [
+  standard_subnets = var.env == "prod" ? [] : [
     data.azurerm_subnet.app_aks_00_subnet.id,
     data.azurerm_subnet.app_aks_01_subnet.id
   ]
 
   preview_subnets = var.env == "aat" ? [data.azurerm_subnet.preview_aks_00_subnet.id, data.azurerm_subnet.preview_aks_01_subnet.id] : []
   valid_subnets   = concat(local.standard_subnets, local.preview_subnets)
+
+  access_type                     = var.env == "prod" ? "container" : "private"
+  default_action                  = var.env == "prod" ? "Allow" : "Deny"
+  allow_nested_items_to_be_public = var.env == "prod" ? "true" : "false"
+  public_network_access_enabled   = var.env == "prod" ? true : false
 }
 
 data "azurerm_subnet" "preview_aks_00_subnet" {
@@ -52,6 +57,9 @@ module "storage_account" {
   location                        = var.location
   account_kind                    = "StorageV2"
   account_replication_type        = "ZRS"
+  default_action                  = local.default_action
+  allow_nested_items_to_be_public = local.allow_nested_items_to_be_public
+  public_network_access_enabled   = local.public_network_access_enabled
   enable_data_protection          = true
   retention_period                = 14
   common_tags                     = var.common_tags
@@ -61,11 +69,11 @@ module "storage_account" {
   containers = [
     {
       name        = "photos",
-      access_type = "private"
+      access_type = local.access_type
     },
     {
       name        = "csv",
-      access_type = "private"
+      access_type = local.access_type
     }
   ]
 
