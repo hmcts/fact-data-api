@@ -119,9 +119,9 @@ public class ValidationConstants {
 
     public static final int REGION_NAME_MIN_LENGTH = 5;
     public static final String REGION_NAME_LENGTH_MESSAGE =
-        "Name should be less than 255 chars";
+        "Name should be less than {max} chars";
     public static final String REGION_COUNTRY_LENGTH_MESSAGE =
-        "Country should be less than 255 chars";
+        "Country should be less than {max} chars";
 
     public static final String SERVICE_CENTRE_NAME_LENGTH_MESSAGE =
         "Service centre name should be between {min} and {max} characters";
