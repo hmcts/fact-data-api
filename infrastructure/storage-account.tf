@@ -17,22 +17,34 @@ locals {
     data.azurerm_subnet.app_aks_01_subnet.id
   ]
 
-  preview_subnets = var.env == "aat" ? [data.azurerm_subnet.preview_aks_00_subnet.id, data.azurerm_subnet.preview_aks_01_subnet.id] : []
+  preview_subnets = var.env == "aat" ? [data.azurerm_subnet.aks-00-preview[0].id, data.azurerm_subnet.aks-01-preview[0].id] : []
   valid_subnets   = concat(local.standard_subnets, local.preview_subnets)
 }
 
-data "azurerm_subnet" "preview_aks_00_subnet" {
-  provider             = azurerm.aks-preview
-  name                 = "aks-00"
-  virtual_network_name = local.preview_vnet_name
-  resource_group_name  = local.preview_vnet_resource_group
+data "azurerm_virtual_network" "aks_preview_vnet" {
+  count = var.env == "aat" ? 1 : 0
+
+  provider            = azurerm.aks-preview
+  name                = "cft-preview-vnet"
+  resource_group_name = "cft-preview-network-rg"
 }
 
-data "azurerm_subnet" "preview_aks_01_subnet" {
+data "azurerm_subnet" "aks-00-preview" {
+  count = var.env == "aat" ? 1 : 0
+
+  provider             = azurerm.aks-preview
+  name                 = "aks-00"
+  virtual_network_name = data.azurerm_virtual_network.aks_preview_vnet[0].name
+  resource_group_name  = data.azurerm_virtual_network.aks_preview_vnet[0].resource_group_name
+}
+
+data "azurerm_subnet" "aks-01-preview" {
+  count = var.env == "aat" ? 1 : 0
+
   provider             = azurerm.aks-preview
   name                 = "aks-01"
-  virtual_network_name = local.preview_vnet_name
-  resource_group_name  = local.preview_vnet_resource_group
+  virtual_network_name = data.azurerm_virtual_network.aks_preview_vnet[0].name
+  resource_group_name  = data.azurerm_virtual_network.aks_preview_vnet[0].resource_group_name
 }
 
 data "azurerm_subnet" "jenkins_subnet" {
