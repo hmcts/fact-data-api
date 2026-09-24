@@ -1,13 +1,16 @@
 locals {
-  aks_env                 = var.env == "sandbox" ? "sbox" : var.env
-
-  app_aks_network_name    = "cft-${local.aks_env}-vnet"
-  app_aks_network_rg_name = "cft-${local.aks_env}-network-rg"
-
+  aks_env                     = var.env == "sandbox" ? "sbox" : var.env
+  mgmt_network_name           = "cft-ptl-vnet"
+  mgmt_network_rg_name        = "cft-ptl-network-rg"
+  app_aks_network_name        = "cft-${local.aks_env}-vnet"
+  app_aks_network_rg_name     = "cft-${local.aks_env}-network-rg"
   preview_vnet_name           = "cft-preview-vnet"
   preview_vnet_resource_group = "cft-preview-network-rg"
 
   standard_subnets = var.env == "prod" ? [] : [
+    data.azurerm_subnet.jenkins_subnet.id,
+    data.azurerm_subnet.jenkins_aks_00.id,
+    data.azurerm_subnet.jenkins_aks_01.id,
     data.azurerm_subnet.app_aks_00_subnet.id,
     data.azurerm_subnet.app_aks_01_subnet.id
   ]
@@ -19,6 +22,27 @@ locals {
   default_action                  = var.env == "prod" ? "Allow" : "Deny"
   allow_nested_items_to_be_public = var.env == "prod" ? "true" : "false"
   public_network_access_enabled   = var.env == "prod" ? true : false
+}
+
+data "azurerm_subnet" "jenkins_subnet" {
+  provider             = azurerm.mgmt
+  name                 = "iaas"
+  virtual_network_name = local.mgmt_network_name
+  resource_group_name  = local.mgmt_network_rg_name
+}
+
+data "azurerm_subnet" "jenkins_aks_00" {
+  provider             = azurerm.mgmt
+  name                 = "aks-00"
+  virtual_network_name = local.mgmt_network_name
+  resource_group_name  = local.mgmt_network_rg_name
+}
+
+data "azurerm_subnet" "jenkins_aks_01" {
+  provider             = azurerm.mgmt
+  name                 = "aks-01"
+  virtual_network_name = local.mgmt_network_name
+  resource_group_name  = local.mgmt_network_rg_name
 }
 
 data "azurerm_subnet" "preview_aks_00_subnet" {
