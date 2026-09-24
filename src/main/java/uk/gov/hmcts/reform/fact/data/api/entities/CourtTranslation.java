@@ -59,13 +59,21 @@ public class CourtTranslation implements AuditableCourtEntity {
     private Court court;
 
     @Schema(description = "The email address for Translation services")
-    @Size(max = ValidationConstants.EMAIL_MAX_LENGTH, message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.EMAIL_REGEX, message = ValidationConstants.EMAIL_REGEX_MESSAGE)
+    @Size(max = ValidationConstants.EMAIL_MAX_LENGTH,
+        message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE
+    )
+    @Pattern(regexp = ValidationConstants.EMAIL_REGEX,
+        message = ValidationConstants.EMAIL_REGEX_MESSAGE
+    )
     private String email;
 
     @Schema(description = "The phone number for Translation services")
-    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH,
+        message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE
+    )
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX,
+        message = ValidationConstants.PHONE_NO_REGEX_MESSAGE
+    )
     private String phoneNumber;
 
 }
