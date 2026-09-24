@@ -93,11 +93,11 @@ module "storage_account" {
   containers = [
     {
       name        = "photos",
-      access_type = local.access_type
+      access_type = "container"
     },
     {
       name        = "csv",
-      access_type = local.access_type
+      access_type = "container"
     }
   ]
 
