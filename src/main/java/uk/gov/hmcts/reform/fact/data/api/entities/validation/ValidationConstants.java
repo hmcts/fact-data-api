@@ -5,6 +5,15 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class ValidationConstants {
 
+    public static final int COURT_SERVICE_CENTRE_NAME_MIN_LENGTH = 5;
+    public static final int COURT_SERVICE_CENTRE_NAME_MAX_LENGTH = 200;
+    public static final String COURT_NAME_LENGTH_MESSAGE =
+        "Court name should be between {min} and {max} chars";
+    public static final String COURT_SERVICE_CENTRE_NAME_REGEX = "^(?=.*[A-Za-z])[A-Za-z&'()\\- ]+$";
+    public static final String COURT_NAME_REGEX_MESSAGE =
+        "Court name must include at least one letter and only include letters, spaces, apostrophes, "
+            + "hyphens, ampersands, and parentheses";
+
     public static final String EMAIL_REGEX = "^(|[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,})$";
     public static final String EMAIL_REGEX_MESSAGE =
         "Email address must match the regex '^(|[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,})$'";
@@ -16,20 +25,18 @@ public class ValidationConstants {
     public static final int EMAIL_MAX_LENGTH = 254;
     public static final String EMAIL_MAX_LENGTH_MESSAGE = "Email address should be no more than {max} characters";
 
-    public static final String PHONE_NO_REGEX = "^(|(\\+44|)[0-9 ]{10,20})$";
+    public static final String PHONE_NO_REGEX = "^(|(\\+44)?[0-9 ()-]{10,20})$";
     public static final String PHONE_NO_REGEX_MESSAGE =
-        "Phone Number must match the regex '^(|(\\+44|)[0-9 ]{10,20})$'";
+        "Phone Number must match the regex '^(|(\\+44)?[0-9 ()-]{10,20})$'";
 
     public static final int PHONE_NO_MAX_LENGTH = 20;
     public static final String PHONE_NO_MAX_LENGTH_MESSAGE = "Phone number should be no more than {max} characters";
 
-    public static final String GENERIC_DESCRIPTION_REGEX = "^[A-Za-z0-9 ()':,\\-;.]+$";
-    public static final String GENERIC_DESCRIPTION_REGEX_MESSAGE = "Value contains invalid characters";
+    public static final String ENGLISH_TEXT_REGEX = "^[A-Za-z0-9 ()':,\\-;.]+$";
+    public static final String TEXT_REGEX_MESSAGE = "Value contains invalid characters";
 
-    public static final String GENERIC_DESCRIPTION_REGEX_WELSH = "^[\\p{L}\\p{M}0-9 ()':,\\-;.]+$";
-
-    public static final String WELSH_DESCRIPTION_REGEX = "^[\\p{L}\\p{M}\\p{N} ()':,\\-;.]+$";
-    public static final String WELSH_DESCRIPTION_REGEX_MESSAGE =
+    public static final String WELSH_TEXT_REGEX = "^[\\p{L}\\p{M}0-9 ()':,\\-;.]+$";
+    public static final String WELSH_TEXT_REGEX_MESSAGE =
         "Description in Welsh must only include letters, spaces, apostrophes, hyphens, ampersands, and parentheses";
 
     public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 ()':,.-]+$)$";
@@ -44,6 +51,87 @@ public class ValidationConstants {
         "Slug must match the regex '^[a-z0-9-]+$'";
 
     public static final int COURT_SLUG_MIN_LENGTH = 1;
-    public static final int COURT_SLUG_MAX_LENGTH = 250;
     public static final String COURT_SLUG_LENGTH_MESSAGE = "Court slug should be between 1 and 250 characters";
+
+    public static final String WARNING_NOTICE_MAX_LENGTH_MESSAGE =
+        "Warning notice must be less than {max} characters";
+    public static final String WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE =
+        "Welsh warning notice must be less than {max} characters";
+    public static final String WARNING_NOTICE_REGEX = "^[A-Za-z0-9.,!?:;'\"()\\-/&@+\\s]+$";
+    public static final String WARNING_NOTICE_REGEX_MESSAGE =
+        "Warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)";
+    public static final String WELSH_WARNING_NOTICE_REGEX = "^[\\p{L}0-9.,!?:;'\"()\\-/&@+\\s]+$";
+    public static final String WELSH_WARNING_NOTICE_REGEX_MESSAGE =
+        "Welsh warning notice may only contain letters, numbers, spaces, and standard punctuation or symbols (@, +)";
+
+    public static final int ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH = 250;
+    public static final String ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE =
+        "Accessible toilet description must not exceed {max} characters";
+    public static final String WELSH_ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE =
+        "Welsh accessible toilet description must not exceed {max} characters";
+
+    public static final long LIFT_DOOR_WIDTH_MIN = 1;
+    public static final long LIFT_DOOR_WIDTH_MAX = 1000;
+    public static final String LIFT_DOOR_WIDTH_MIN_MESSAGE = "Lift door width needs to be over {value}cm";
+    public static final String LIFT_DOOR_WIDTH_MAX_MESSAGE = "Lift door width needs to be under {value}cm";
+
+    public static final long LIFT_WEIGHT_LIMIT_MIN = 1;
+    public static final long LIFT_WEIGHT_LIMIT_MAX = 10000;
+    public static final String LIFT_WEIGHT_LIMIT_MIN_MESSAGE = "Lift weight limit should be at least {value}kg";
+    public static final String LIFT_WEIGHT_LIMIT_MAX_MESSAGE = "Lift weight limit should be at most {value}kg";
+
+    public static final int ADDRESS_LINE_MAX_LENGTH = 250;
+    public static final int COUNTRY_TOWN_CITY_MAX_LENGTH = 100;
+    public static final int COURT_EPIM_ID_MAX_LENGTH = 10;
+    public static final  String ADDRESS_LINE_MAX_LENGTH_MESSAGE =
+        "Address line should be {max} characters or less";
+    public static final String TOWN_CITY_MAX_LENGTH_MESSAGE =
+        "Town/City name should be {max} characters or less";
+    public static final String COUNTRY_MAX_LENGTH_MESSAGE =
+        "County name should be {max} characters or less";
+    public static final String COURT_EPIM_ID_MAX_LENGTH_MESSAGE = "EPIM ID should be {max} characters or less";
+
+    public static final int COURT_CODE_MAX_DIGITS = 6;
+    public static final int COURT_CODE_FRACTION_DIGITS = 0;
+    public static final String COURT_CODE_DIGITS_MESSAGE =
+        "court code must be at most {integer} digits";
+
+    public static final int GBS_CODE_MAX_LENGTH = 10;
+    public static final String GBS_CODE_MAX_LENGTH_MESSAGE = "GBS code must be {max} characters or fewer";
+    public static final String GBS_CODE_REGEX = "^[A-Za-z0-9 ]*$";
+    public static final String GBS_CODE_REGEX_MESSAGE = "GBS code contains invalid characters";
+
+    public static final int COMMON_TEXT_MAX_LENGTH = 250;
+    public static final String EXPLANATION_MAX_LENGTH_MESSAGE = "Explanation should be no more than {max} characters";
+    public static final String WELSH_EXPLANATION_MAX_LENGTH_MESSAGE =
+        "Explanation should be no more than {max} characters";
+    public static final String FAX_DESCRIPTION_MAX_LENGTH_MESSAGE = "Fax description must be {max} characters or fewer";
+    public static final String WELSH_FAX_DESCRIPTION_MAX_LENGTH_MESSAGE =
+        "Welsh fax description must be {max} characters or fewer";
+
+    public static final String EXPLANATION_REGEX = "^[A-Za-z0-9 '\\-()&+]*$";
+    public static final String EXPLANATION_REGEX_MESSAGE =
+        "Explanation contains invalid characters. Allowed: letters, numbers, spaces, apostrophes, - ( ) & +";
+
+    public static final String WELSH_EXPLANATION_REGEX = "^[\\p{L}\\p{M}0-9 '\\-()&+]*$";
+    public static final String WELSH_EXPLANATION_REGEX_MESSAGE =
+        "Welsh explanation contains invalid characters. Allowed: letters (with accents), numbers, spaces, "
+            + "apostrophes, - ( ) & +";
+
+    public static final int REGION_NAME_MIN_LENGTH = 5;
+    public static final String REGION_NAME_LENGTH_MESSAGE =
+        "Name should be less than {max} chars";
+    public static final String REGION_COUNTRY_LENGTH_MESSAGE =
+        "Country should be less than {max} chars";
+
+    public static final String SERVICE_CENTRE_NAME_LENGTH_MESSAGE =
+        "Service centre name should be between {min} and {max} characters";
+    public static final String SERVICE_CENTRE_NAME_REGEX_MESSAGE = "Service centre name may only contain letters, "
+        + "spaces, apostrophes, hyphens, ampersands, and parentheses";
+
+    public static final String INTERVIEW_ROOM_COUNT_MESSAGE =
+        "Interview room count must be between 1 and 150 when interview rooms are available; otherwise omit or set to 0";
+
+    public static final int FAVOURITE_SUBJECTS_MAX_SIZE = 1000;
+    public static final String FAVOURITE_SUBJECTS_MAX_SIZE_MESSAGE = "subjects must contain no more than 1000 items";
 }

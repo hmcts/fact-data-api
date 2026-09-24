@@ -71,8 +71,12 @@ public class CourtProfessionalInformation implements AuditableCourtEntity {
     private Integer interviewRoomCount;
 
     @Column(name = "interview_phone_number", length = Integer.MAX_VALUE)
-    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH,
+        message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE
+    )
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX,
+        message = ValidationConstants.PHONE_NO_REGEX_MESSAGE
+    )
     private String interviewPhoneNumber;
 
     @Schema(description = "Video hearing capability status")
