@@ -18,6 +18,10 @@ variable "aks_subscription_id" {
   default = ""
 }
 
+variable "mgmt_subscription_id" {
+  default = ""
+}
+
 variable "jenkins_AAD_objectId" {
   default = ""
 }
