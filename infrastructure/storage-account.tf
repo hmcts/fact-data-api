@@ -1,85 +1,9 @@
-locals {
-  mgmt_network_name    = "cft-ptl-vnet"
-  mgmt_network_rg_name = "cft-ptl-network-rg"
+data "azurerm_subnet" "private_endpoints" {
+  resource_group_name  = "cft-${var.env}-network-rg"
+  virtual_network_name = "cft-${var.env}-vnet"
+  name                 = "private-endpoints"
 
-  preview_vnet_name           = "cft-preview-vnet"
-  preview_vnet_resource_group = "cft-preview-network-rg"
-  aks_env                     = var.env == "sandbox" ? "sbox" : var.env
-
-  app_aks_network_name    = "cft-${local.aks_env}-vnet"
-  app_aks_network_rg_name = "cft-${local.aks_env}-network-rg"
-
-  standard_subnets = [
-    data.azurerm_subnet.jenkins_subnet.id,
-    data.azurerm_subnet.jenkins_aks_00.id,
-    data.azurerm_subnet.jenkins_aks_01.id,
-    data.azurerm_subnet.app_aks_00_subnet.id,
-    data.azurerm_subnet.app_aks_01_subnet.id
-  ]
-
-  preview_subnets = var.env == "aat" ? [data.azurerm_subnet.aks-00-preview[0].id, data.azurerm_subnet.aks-01-preview[0].id] : []
-  valid_subnets   = concat(local.standard_subnets, local.preview_subnets)
-}
-
-data "azurerm_virtual_network" "aks_preview_vnet" {
-  count = var.env == "aat" ? 1 : 0
-
-  provider            = azurerm.aks-preview
-  name                = "cft-preview-vnet"
-  resource_group_name = "cft-preview-network-rg"
-}
-
-data "azurerm_subnet" "aks-00-preview" {
-  count = var.env == "aat" ? 1 : 0
-
-  provider             = azurerm.aks-preview
-  name                 = "aks-00"
-  virtual_network_name = data.azurerm_virtual_network.aks_preview_vnet[0].name
-  resource_group_name  = data.azurerm_virtual_network.aks_preview_vnet[0].resource_group_name
-}
-
-data "azurerm_subnet" "aks-01-preview" {
-  count = var.env == "aat" ? 1 : 0
-
-  provider             = azurerm.aks-preview
-  name                 = "aks-01"
-  virtual_network_name = data.azurerm_virtual_network.aks_preview_vnet[0].name
-  resource_group_name  = data.azurerm_virtual_network.aks_preview_vnet[0].resource_group_name
-}
-
-data "azurerm_subnet" "jenkins_subnet" {
-  provider             = azurerm.mgmt
-  name                 = "iaas"
-  virtual_network_name = local.mgmt_network_name
-  resource_group_name  = local.mgmt_network_rg_name
-}
-
-data "azurerm_subnet" "jenkins_aks_00" {
-  provider             = azurerm.mgmt
-  name                 = "aks-00"
-  virtual_network_name = local.mgmt_network_name
-  resource_group_name  = local.mgmt_network_rg_name
-}
-
-data "azurerm_subnet" "jenkins_aks_01" {
-  provider             = azurerm.mgmt
-  name                 = "aks-01"
-  virtual_network_name = local.mgmt_network_name
-  resource_group_name  = local.mgmt_network_rg_name
-}
-
-data "azurerm_subnet" "app_aks_00_subnet" {
-  provider             = azurerm.aks-infra
-  name                 = "aks-00"
-  virtual_network_name = local.app_aks_network_name
-  resource_group_name  = local.app_aks_network_rg_name
-}
-
-data "azurerm_subnet" "app_aks_01_subnet" {
-  provider             = azurerm.aks-infra
-  name                 = "aks-01"
-  virtual_network_name = local.app_aks_network_name
-  resource_group_name  = local.app_aks_network_rg_name
+  provider = azurerm.private_endpoints
 }
 
 module "storage_account" {
@@ -90,29 +14,23 @@ module "storage_account" {
   location                        = var.location
   account_kind                    = "StorageV2"
   account_replication_type        = "ZRS"
-  default_action                  = "Allow"
-  allow_nested_items_to_be_public = "true"
-  public_network_access_enabled   = true
   enable_data_protection          = true
   retention_period                = 14
   common_tags                     = var.common_tags
 
-  sa_subnets = local.valid_subnets
-
   containers = [
     {
       name        = "photos",
-      access_type = "container"
+      access_type = "private"
     },
     {
       name        = "csv",
-      access_type = "container"
-    },
-    {
-      name        = "temp",
-      access_type = "container"
+      access_type = "private"
     }
   ]
+
+  public_network_access_enabled = false
+  private_endpoint_subnet_id    = data.azurerm_subnet.private_endpoints.id
 
   managed_identity_object_id = data.azurerm_user_assigned_identity.fact_mi.principal_id
   role_assignments = [

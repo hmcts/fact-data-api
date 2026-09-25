@@ -21,18 +21,6 @@ provider "azurerm" {
 
 provider "azurerm" {
   features {}
-  alias           = "aks-infra"
+  alias           = "private_endpoints"
   subscription_id = var.aks_subscription_id
-}
-
-provider "azurerm" {
-  features {}
-  alias           = "aks-preview"
-  subscription_id = var.aks_preview_subscription_id
-}
-
-provider "azurerm" {
-  features {}
-  alias           = "mgmt"
-  subscription_id = var.mgmt_subscription_id
 }
