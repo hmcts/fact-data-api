@@ -98,7 +98,7 @@ public class ValidationConstants {
 
     public static final int GBS_CODE_MAX_LENGTH = 10;
     public static final String GBS_CODE_MAX_LENGTH_MESSAGE = "GBS code must be {max} characters or fewer";
-    public static final String GBS_CODE_REGEX = "^[A-Za-z0-9 ]*$";
+    public static final String GBS_CODE_REGEX = "^[A-Za-z0-9]*$";
     public static final String GBS_CODE_REGEX_MESSAGE = "GBS code must only include letters and numbers";
 
     public static final int COMMON_TEXT_MAX_LENGTH = 250;
