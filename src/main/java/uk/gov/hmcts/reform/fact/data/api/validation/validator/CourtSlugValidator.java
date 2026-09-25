@@ -22,7 +22,7 @@ public class CourtSlugValidator implements ConstraintValidator<ValidCourtSlug, S
         }
 
         if (value.length() < ValidationConstants.COURT_SLUG_MIN_LENGTH
-            || value.length() > ValidationConstants.COURT_SLUG_MAX_LENGTH
+            || value.length() > ValidationConstants.COMMON_TEXT_MAX_LENGTH
             || value.isBlank()) {
             return fail(context, ValidationConstants.COURT_SLUG_LENGTH_MESSAGE);
         }
