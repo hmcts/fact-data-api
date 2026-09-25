@@ -90,9 +90,9 @@ module "storage_account" {
   location                        = var.location
   account_kind                    = "StorageV2"
   account_replication_type        = "ZRS"
-  default_action                  = "Allow"
-  allow_nested_items_to_be_public = "true"
-  public_network_access_enabled   = true
+  default_action                  = "Deny"
+  allow_nested_items_to_be_public = "false"
+  public_network_access_enabled   = false
   enable_data_protection          = true
   retention_period                = 14
   common_tags                     = var.common_tags
@@ -102,10 +102,14 @@ module "storage_account" {
   containers = [
     {
       name        = "photos",
-      access_type = "container"
+      access_type = "private"
     },
     {
       name        = "csv",
+      access_type = "private"
+    },
+    {
+      name        = "temp",
       access_type = "container"
     },
     {
