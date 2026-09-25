@@ -1,3 +1,11 @@
+data "azurerm_subnet" "private_endpoints" {
+  provider = azurerm.private_endpoints
+
+  resource_group_name  = "cft-${var.env}-network-rg"
+  virtual_network_name = "cft-${var.env}-vnet"
+  name                 = "private-endpoints"
+}
+
 module "storage_account" {
   source                          = "git@github.com:hmcts/cnp-module-storage-account?ref=4.x"
   env                             = var.env
@@ -8,10 +16,10 @@ module "storage_account" {
   account_replication_type        = "ZRS"
   default_action                  = "Allow"
   allow_nested_items_to_be_public = "true"
-  public_network_access_enabled   = true
   enable_data_protection          = true
   retention_period                = 14
   common_tags                     = var.common_tags
+
   containers = [
     {
       name        = "photos",
@@ -22,6 +30,9 @@ module "storage_account" {
       access_type = "container"
     }
   ]
+
+  public_network_access_enabled = true
+  private_endpoint_subnet_id    = data.azurerm_subnet.private_endpoints.id
 
   managed_identity_object_id = data.azurerm_user_assigned_identity.fact_mi.principal_id
   role_assignments = [
