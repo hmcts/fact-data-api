@@ -21,7 +21,3 @@ variable "aks_subscription_id" {
 variable "jenkins_AAD_objectId" {
   default = ""
 }
-
-variable "cft_subscription_id" {
-  default = ""
-}

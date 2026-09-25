@@ -18,9 +18,3 @@ provider "azurerm" {
   alias           = "postgres_network"
   subscription_id = var.aks_subscription_id
 }
-
-provider "azurerm" {
-  features {}
-  alias           = "private_endpoints"
-  subscription_id = var.cft_subscription_id
-}
