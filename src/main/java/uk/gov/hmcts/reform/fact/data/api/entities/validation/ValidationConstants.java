@@ -32,15 +32,15 @@ public class ValidationConstants {
     public static final int PHONE_NO_MAX_LENGTH = 20;
     public static final String PHONE_NO_MAX_LENGTH_MESSAGE = "Phone number should be no more than {max} characters";
 
-    public static final String ENGLISH_TEXT_REGEX = "^[A-Za-z0-9 ()':,\\-;.]+$";
+    public static final String ENGLISH_TEXT_REGEX = "^[A-Za-z0-9 ()':,\\-;.&]+$";
     public static final String TEXT_REGEX_MESSAGE = "Value contains invalid characters";
 
-    public static final String WELSH_TEXT_REGEX = "^[\\p{L}\\p{M}0-9 ()':,\\-;.]+$";
+    public static final String WELSH_TEXT_REGEX = "^[\\p{L}\\p{M}0-9 ()':,\\-;.&]+$";
     public static final String WELSH_TEXT_REGEX_MESSAGE =
         "Description in Welsh must only include letters, spaces, apostrophes, hyphens, ampersands, and parentheses";
 
-    public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 ()':,.-]+$)$";
-    public static final String REQUIRED_ADDRESS_LINE_REGEX = "^[A-Za-z0-9 ()':,.-]+$";
+    public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 ()':,.&-]+$)$";
+    public static final String REQUIRED_ADDRESS_LINE_REGEX = "^[A-Za-z0-9 ()':,.&-]+$";
     public static final String ADDRESS_LINE_REGEX_MESSAGE = "Address line contains invalid characters";
 
     public static final String EPIM_ID_REGEX = "^[A-Za-z0-9 -]+$";
@@ -98,8 +98,8 @@ public class ValidationConstants {
 
     public static final int GBS_CODE_MAX_LENGTH = 10;
     public static final String GBS_CODE_MAX_LENGTH_MESSAGE = "GBS code must be {max} characters or fewer";
-    public static final String GBS_CODE_REGEX = "^[A-Za-z0-9 ]*$";
-    public static final String GBS_CODE_REGEX_MESSAGE = "GBS code contains invalid characters";
+    public static final String GBS_CODE_REGEX = "^[A-Za-z0-9]*$";
+    public static final String GBS_CODE_REGEX_MESSAGE = "GBS code must only include letters and numbers";
 
     public static final int COMMON_TEXT_MAX_LENGTH = 250;
     public static final String EXPLANATION_MAX_LENGTH_MESSAGE = "Explanation should be no more than {max} characters";
