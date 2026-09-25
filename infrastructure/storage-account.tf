@@ -14,6 +14,8 @@ module "storage_account" {
   location                        = var.location
   account_kind                    = "StorageV2"
   account_replication_type        = "ZRS"
+  default_action                  = "Allow"
+  allow_nested_items_to_be_public = "true"
   enable_data_protection          = true
   retention_period                = 14
   common_tags                     = var.common_tags
@@ -21,15 +23,15 @@ module "storage_account" {
   containers = [
     {
       name        = "photos",
-      access_type = "private"
+      access_type = "container"
     },
     {
       name        = "csv",
-      access_type = "private"
+      access_type = "container"
     }
   ]
 
-  public_network_access_enabled = false
+  public_network_access_enabled = true
   private_endpoint_subnet_id    = data.azurerm_subnet.private_endpoints.id
 
   managed_identity_object_id = data.azurerm_user_assigned_identity.fact_mi.principal_id
