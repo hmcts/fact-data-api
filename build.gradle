@@ -209,7 +209,7 @@ dependencies {
 
   implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.4.0'
 
-  implementation group: 'tools.jackson.dataformat', name: 'jackson-dataformat-csv', version: '3.2.2'
+  implementation group: 'tools.jackson.dataformat', name: 'jackson-dataformat-csv', version: '3.2.3'
 
   implementation group: 'com.github.hmcts.java-logging', name: 'logging', version: '8.0.0'
 
