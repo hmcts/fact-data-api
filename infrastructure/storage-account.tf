@@ -107,6 +107,10 @@ module "storage_account" {
     {
       name        = "csv",
       access_type = "container"
+    },
+    {
+      name        = "temp",
+      access_type = "container"
     }
   ]
 

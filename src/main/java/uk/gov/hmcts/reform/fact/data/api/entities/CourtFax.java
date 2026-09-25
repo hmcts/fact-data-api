@@ -59,22 +59,33 @@ public class CourtFax implements AuditableCourtEntity {
 
     @Schema(description = "Contact fax number", minLength = 1)
     @NotBlank(message = "The contact fax number must be specified")
-    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH,
+        message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE
+    )
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX,
+        message = ValidationConstants.PHONE_NO_REGEX_MESSAGE
+    )
     private String faxNumber;
 
     @Schema(description = "Description")
-    @Size(max = 250, message = "Fax description must be {max} characters or fewer")
-    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX,
-        message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
-    @Column(name = "description", length = 250)
+    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+        message = "Fax description must be {max} characters or fewer"
+    )
+    @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = ValidationConstants.TEXT_REGEX_MESSAGE
+    )
+    @Column(name = "description", length = ValidationConstants.COMMON_TEXT_MAX_LENGTH)
     private String description;
 
     @Schema(description = "Welsh language description")
-    @Size(max = 250, message = "Welsh fax description must be {max} characters or fewer")
-    @Pattern(regexp = ValidationConstants.GENERIC_DESCRIPTION_REGEX_WELSH,
-        message = ValidationConstants.GENERIC_DESCRIPTION_REGEX_MESSAGE)
-    @Column(name = "description_cy", length = 250)
+    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+        message = "Welsh fax description must be {max} characters or fewer"
+    )
+    @Pattern(regexp = ValidationConstants.WELSH_TEXT_REGEX,
+        message = ValidationConstants.TEXT_REGEX_MESSAGE
+    )
+    @Column(name = "description_cy",
+        length = ValidationConstants.COMMON_TEXT_MAX_LENGTH
+    )
     private String descriptionCy;
-
 }
