@@ -1,9 +1,9 @@
 data "azurerm_subnet" "private_endpoints" {
+  provider = azurerm.private_endpoints
+
   resource_group_name  = "cft-${var.env}-network-rg"
   virtual_network_name = "cft-${var.env}-vnet"
   name                 = "private-endpoints"
-
-  provider = azurerm.private_endpoints
 }
 
 module "storage_account" {
