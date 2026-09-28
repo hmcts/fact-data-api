@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Configuration;
 public class CacheConfiguration {
 
     public static final String OSDATA_CACHE_NAME = "osdata";
-    public static final String OSADMIN_CACHE_NAME = "osadmin";
 
     private final long maximumSize;
     private final long timeToLiveMillis;
@@ -36,12 +35,11 @@ public class CacheConfiguration {
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new
             CaffeineCacheManager();
-        cacheManager.registerCustomCache(OSDATA_CACHE_NAME, buildCache());
-        cacheManager.registerCustomCache(OSADMIN_CACHE_NAME, buildCache());
+        cacheManager.registerCustomCache(OSDATA_CACHE_NAME, buildOsDataCache());
         return cacheManager;
     }
 
-    private Cache<Object, Object> buildCache() {
+    private Cache<Object, Object> buildOsDataCache() {
         return Caffeine.newBuilder()
             .initialCapacity(10)
             .maximumSize(maximumSize)
