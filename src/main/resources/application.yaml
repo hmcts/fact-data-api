@@ -21,6 +21,8 @@ springdoc:
   packagesToScan:
     - uk.gov.hmcts.reform.fact.data.api.controllers
   writer-with-order-by-keys: true
+  swagger-ui:
+    urls-primary-name: default
 
 spring:
   config:

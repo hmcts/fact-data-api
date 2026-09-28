@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -54,6 +55,7 @@ public class CourtController {
 
     @GetMapping(value = {"/{courtId}/v1", "/{courtId}.json"})
     @PreAuthorize("@authService.canView() || @authService.isPrl()")
+    @Tag(name = "apim")
     @Operation(
         summary = "Get court details by ID",
         description = "Fetch detailed court information for a given court ID."
@@ -107,6 +109,7 @@ public class CourtController {
 
     @GetMapping(value = {"/slug/{courtSlug}/v1", "/slug/{courtSlug}.json"})
     @PreAuthorize("@authService.canView() || @authService.isPrl()")
+    @Tag(name = "apim")
     @JsonView(CourtDetailsView.class)
     @Operation(
         summary = "Get court details by slug",
