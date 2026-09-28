@@ -15,11 +15,11 @@ module "storage_account" {
   containers = [
     {
       name        = "photos",
-      access_type = "container"
+      access_type = "private"
     },
     {
       name        = "csv",
-      access_type = "container"
+      access_type = "private"
     }
   ]
 
