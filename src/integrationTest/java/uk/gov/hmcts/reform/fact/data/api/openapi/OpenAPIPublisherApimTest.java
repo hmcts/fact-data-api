@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.openapi;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.stream.StreamSupport;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -35,6 +39,9 @@ class OpenAPIPublisherApimTest {
     @Autowired
     private MockMvc mvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @DisplayName("Generate swagger documentation for APIM")
     @Test
     void generateDocs() throws Exception {
@@ -44,6 +51,13 @@ class OpenAPIPublisherApimTest {
             .getResponse()
             .getContentAsByteArray();
         assertTrue(specs.length > 0, "Generated OpenAPI spec should not be empty");
+
+        JsonNode paths = objectMapper.readTree(specs).path("paths");
+        assertFalse(paths.isEmpty(), "Generated OpenAPI spec should contain APIM paths");
+        assertTrue(
+            StreamSupport.stream(paths.spliterator(), false).noneMatch(JsonNode::isEmpty),
+            "Generated OpenAPI spec should not contain paths without operations"
+        );
 
         try (OutputStream outputStream = Files.newOutputStream(Paths.get("/tmp/openapi-specs.json"))) {
             outputStream.write(specs);
