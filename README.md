@@ -32,7 +32,7 @@ Optional but recommended:
 
 ## IntelliJ Dev Container
 
-The repository includes an IntelliJ-first [Dev Container](https://containers.dev/) with Java 21, Gradle, Docker for Testcontainers, Terraform formatting support, PostgreSQL 17, and Azurite. Docker must be running and the local `.env` file described below must exist before the container is created.
+The repository includes an IntelliJ-first [Dev Container](https://containers.dev/) with Java 21, Gradle, Docker for Testcontainers, Terraform formatting support, GitHub Copilot CLI, PostgreSQL 17, and Azurite. Docker must be running and the local `.env` file described below must exist before the container is created.
 
 To open the existing checkout in the container:
 
@@ -51,6 +51,8 @@ The Gradle wrapper and Java 21 toolchain run inside the container. PostgreSQL an
 ./gradlew integration
 ./gradlew bootRun
 ```
+
+GitHub Copilot is available both as the IntelliJ plugin and as the `copilot` terminal command. Run `copilot` and use `/login` when prompted to authenticate the CLI.
 
 The ignored `.env` file is loaded into the development container. Its Docker storage connection is mapped to `AZURE_STORAGE_CONNECTION_STRING` inside the IntelliJ backend, while the host-run connection remains available for development outside the container. Only use Terraform locally for formatting:
 
