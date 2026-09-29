@@ -85,6 +85,9 @@ public class OpenAPIConfiguration {
                 ? operation
                 : null)
             .addOpenApiCustomizer(openApi -> {
+                openApi.getPaths().entrySet()
+                    .removeIf(entry -> entry.getValue().readOperations().isEmpty());
+
                 openApi.getPaths().values()
                     .forEach(path -> path.readOperations()
                         .forEach(op -> op.setTags(List.of("apim"))));
