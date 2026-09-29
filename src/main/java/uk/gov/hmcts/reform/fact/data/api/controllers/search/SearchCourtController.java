@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -43,6 +44,7 @@ public class SearchCourtController {
 
     @GetMapping("/v1/postcode")
     @PreAuthorize("@authService.canView() || @authService.isPrl()")
+    @Tag(name = "apim")
     @Operation(
         summary = "Search courts by postcode, plus optional fields based on various business rules.",
         description = "Retrieve courts based on postcode, service area and action."
