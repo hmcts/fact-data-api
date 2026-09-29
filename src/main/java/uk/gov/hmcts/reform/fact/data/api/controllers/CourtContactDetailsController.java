@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.CourtContactDetailsService;
@@ -42,6 +43,7 @@ public class CourtContactDetailsController {
         summary = "Get contact details for a court",
         description = "Fetch all contact details associated with the supplied court ID."
     )
+    @Tag(name = "apim")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved contact details"),
         @ApiResponse(responseCode = "400", description = "Invalid court ID supplied"),
