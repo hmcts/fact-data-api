@@ -14,3 +14,15 @@ jobs:
     with:
       test_to_run: 'uk.gov.hmcts.reform.fact.data.api.openapi.OpenAPIPublisherTest'
       java_version: 21
+      api_name: 'fact-data-api'
+  publish-openapi-apim:
+    needs: publish-openapi
+    permissions:
+      contents: read
+    uses: hmcts/workflow-publish-openapi-spec/.github/workflows/publish-openapi.yml@caa170cb8dd959f12c1c0374f80021336daacfa2 # v1
+    secrets:
+      SWAGGER_PUBLISHER_API_TOKEN: ${{ secrets.SWAGGER_PUBLISHER_API_TOKEN }}
+    with:
+      test_to_run: 'uk.gov.hmcts.reform.fact.data.api.openapi.OpenAPIPublisherApimTest'
+      java_version: 21
+      api_name: 'fact-data-api-apim'
