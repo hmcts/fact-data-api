@@ -26,7 +26,7 @@
       "onAutoForward": "notify"
     }
   },
-  "postCreateCommand": "./gradlew --version",
+  "postCreateCommand": "bash -o pipefail -c './gradlew --version && curl -fsSL https://gh.io/copilot-install | sudo bash'",
   "hostRequirements": {
     "cpus": 4,
     "memory": "8gb",
