@@ -1,0 +1,28 @@
+<policies>
+  <inbound>
+    <base />
+    <validate-azure-ad-token
+      header-name="Authorization"
+      tenant-id="${tenant_id}"
+      failed-validation-httpcode="401"
+      failed-validation-error-message="Unauthorized. Access token is missing, invalid, or does not contain the required role.">
+      <audiences>
+        <audience>${audience}</audience>
+      </audiences>
+      <required-claims>
+        <claim name="roles" match="any">
+          <value>Role.Fact.Admin</value>
+        </claim>
+      </required-claims>
+    </validate-azure-ad-token>
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>
