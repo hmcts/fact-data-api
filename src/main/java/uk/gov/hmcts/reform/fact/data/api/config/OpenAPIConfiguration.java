@@ -93,6 +93,15 @@ public class OpenAPIConfiguration {
                     new Tag().name("apim")
                         .description("Operations available to the Azure API Management gateway")
                 ));
+
+                openApi.setInfo(
+                    new Info()
+                        .title("Fact Data API - APIM")
+                        .description("API for operations relating to the Find a Court or Tribunal Service exposed "
+                            + "through Azure API Management")
+                        .version("v0.0.1")
+                        .license(new License().name("MIT").url("https://opensource.org/licenses/MIT"))
+                );
             })
             .build();
     }
