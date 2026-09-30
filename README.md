@@ -154,6 +154,24 @@ Useful links when running locally:
 - Swagger UI: `http://localhost:8989/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8989/v3/api-docs`
 
+## Azure API Management
+
+Terraform deploys the APIM-facing operations under `/fact` in the shared CFT API Management instances for AAT, demo, ITHC, perftest, and production. The public endpoint has the form:
+
+```text
+https://cft-api-mgmt.<environment>.platform.hmcts.net/fact
+```
+
+APIM requires a valid Microsoft Entra ID bearer token for the FACT API audience with the `Role.Fact.Admin` app role. It validates the token and forwards the original `Authorization` header to `fact-data-api`, where Spring Security validates the same token again. APIM subscription keys are not required.
+
+The API definition is published to [cnp-api-docs](https://hmcts.github.io/cnp-api-docs/specs/fact-data-api-apim.json). Terraform downloads the document content during each Jenkins deployment, so a changed published specification updates APIM on the next Terraform run. The OpenAPI publication and Jenkins deployment run independently; if publication finishes after the merge deployment, the following Jenkins run reconciles APIM.
+
+The app registration is managed outside this repository. Each environment must provide:
+
+- `api-app-reg-id` in `fact-kv-<environment>`, containing the FACT API audience.
+- The `Role.Fact.Admin` app role and the required role assignments.
+- Jenkins access to the environment's shared CFT APIM subscription.
+
 ## Test commands
 
 Run from repository root.
