@@ -21,3 +21,15 @@ variable "aks_subscription_id" {
 variable "jenkins_AAD_objectId" {
   default = ""
 }
+
+variable "cft_subscription_id" {
+  type        = string
+  description = "Subscription containing the shared CFT API Management instance."
+  default     = ""
+}
+
+variable "apim_suffix" {
+  type        = string
+  description = "Optional shared API Management name suffix override."
+  default     = ""
+}
