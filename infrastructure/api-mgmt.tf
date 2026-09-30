@@ -36,7 +36,7 @@ data "http" "openapi" {
 }
 
 module "api_mgmt_product" {
-  source = "git@github.com:hmcts/cnp-module-api-mgmt-product?ref=8386f8e7c34e75dd45b166594cee93e33e930e37"
+  source = "git@github.com:hmcts/cnp-module-api-mgmt-product?ref=master"
 
   api_mgmt_name                 = local.apim_name
   api_mgmt_rg                   = local.apim_rg
@@ -51,7 +51,7 @@ module "api_mgmt_product" {
 }
 
 module "api_mgmt" {
-  source = "git@github.com:hmcts/cnp-module-api-mgmt-api?ref=bddcd1bf78c3e292e01784c4ed4e4c7dfaada03c"
+  source = "git@github.com:hmcts/cnp-module-api-mgmt-api?ref=master"
 
   api_mgmt_name = local.apim_name
   api_mgmt_rg   = local.apim_rg
@@ -76,7 +76,7 @@ module "api_mgmt" {
 }
 
 module "api_mgmt_policy" {
-  source = "git@github.com:hmcts/cnp-module-api-mgmt-api-policy?ref=aa63fec56fc818343e26b6858538f10f29b9f608"
+  source = "git@github.com:hmcts/cnp-module-api-mgmt-api-policy?ref=master"
 
   api_mgmt_name          = local.apim_name
   api_mgmt_rg            = local.apim_rg
