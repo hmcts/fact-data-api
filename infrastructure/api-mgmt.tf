@@ -53,15 +53,19 @@ module "api_mgmt_product" {
 module "api_mgmt" {
   source = "git@github.com:hmcts/cnp-module-api-mgmt-api?ref=bddcd1bf78c3e292e01784c4ed4e4c7dfaada03c"
 
-  api_mgmt_name         = local.apim_name
-  api_mgmt_rg           = local.apim_rg
-  name                  = "fact-data-api"
-  revision              = "1"
-  product_id            = module.api_mgmt_product.product_id
-  display_name          = "FACT Data API"
-  path                  = "fact"
-  protocols             = ["https"]
-  service_url           = "http://${var.product}-${var.component}-${var.env}.service.core-compute-${var.env}.internal"
+  api_mgmt_name = local.apim_name
+  api_mgmt_rg   = local.apim_rg
+  name          = "fact-data-api"
+  revision      = "1"
+  product_id    = module.api_mgmt_product.product_id
+  display_name  = "FACT Data API"
+  path          = "fact"
+  protocols     = ["https"]
+  service_url = var.env == "prod" ? (
+    "https://${var.product}-${var.component}.platform.hmcts.net"
+    ) : (
+    "https://${var.product}-${var.component}.${var.env}.platform.hmcts.net"
+  )
   swagger_url           = data.http.openapi.response_body
   content_format        = "openapi+json"
   subscription_required = false
