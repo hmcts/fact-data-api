@@ -30,6 +30,38 @@ Optional but recommended:
 
 - IntelliJ IDEA with Lombok support enabled
 
+## IntelliJ Dev Container
+
+The repository includes an IntelliJ-first [Dev Container](https://containers.dev/) with Java 21, Gradle, Docker for Testcontainers, Terraform formatting support, GitHub Copilot CLI, PostgreSQL 17, and Azurite. Docker must be running and the local `.env` file described below must exist before the container is created.
+
+To open the existing checkout in the container:
+
+1. Open the repository in IntelliJ IDEA.
+2. Open `.devcontainer/devcontainer.json`.
+3. Click the Dev Container gutter action and select **Create Dev Container and Mount Sources**.
+4. Select the `fact-data-api` configuration, then choose **Build Container and Continue**.
+5. Wait for IntelliJ to start its backend in the container and reconnect through JetBrains Client.
+
+Use **Mount Sources** for normal development so changes remain in the existing local checkout. The **Clone Sources** option creates a separate checkout and is not needed for this configuration.
+
+The Gradle wrapper and Java 21 toolchain run inside the container. PostgreSQL and Azurite start automatically and are available to the application at `fact-database:5432` and `fact-storage:10000`. Common commands can be run from IntelliJ's terminal or Gradle tool window:
+
+```bash
+./gradlew test
+./gradlew integration
+./gradlew bootRun
+```
+
+GitHub Copilot is available both as the IntelliJ plugin and as the `copilot` terminal command. Run `copilot` and use `/login` when prompted to authenticate the CLI.
+
+The ignored `.env` file is loaded into the development container. Its Docker storage connection is mapped to `AZURE_STORAGE_CONNECTION_STRING` inside the IntelliJ backend, while the host-run connection remains available for development outside the container. Only use Terraform locally for formatting:
+
+```bash
+terraform -chdir=infrastructure fmt -recursive
+```
+
+Run Terraform initialization, validation, and planning through Jenkins. After changing either file under `.devcontainer`, use IntelliJ's **Rebuild Dev Container** action.
+
 ## Quick start (host app + Docker dependencies)
 
 This is the most common workflow for local development.
@@ -47,13 +79,24 @@ This is the most common workflow for local development.
 | `AZURE_CLIENT_ID` | yes | `<client-id>` | Azure AD client ID |
 | `APP_REG_ID` | yes | `<app-registration-id>` | Azure AD app ID URI |
 | `AZURE_STORAGE_ACCOUNT_NAME` | yes | `devstoreaccount1` | Blob storage account |
-| `AZURE_STORAGE_CONNECTION_STRING` | yes | `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=;BlobEndpoint=http://localhost:10000/devstoreaccount1;` | Blob storage connection for host-run app |
+| `AZURE_STORAGE_CONNECTION_STRING` | yes | `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=<local-azurite-key>;BlobEndpoint=http://localhost:10000/devstoreaccount1;` | Blob storage connection for host-run app |
 | `OS_KEY` | yes | `<ordnance-survey-key>` | Ordnance Survey API key |
 | `AZURE_MANAGED_IDENTITY_ENABLED` | no | `false` | Disable managed identity locally |
 | `TESTING_SUPPORT_ENABLE_API` | no | `true` | Enable `/testing-support/**` endpoints |
 | `RUN_DB_MIGRATION_ON_STARTUP` | no | `true` | Run Flyway migrations on startup |
-| `AZURITE_ACCOUNTS` | yes | `devstoreaccount1:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=` | Local Azurite account and key |
-| `DOCKER_AZURE_STORAGE_CONNECTION_STRING` | yes | `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=;BlobEndpoint=http://fact-storage:10000/devstoreaccount1;` | Blob storage connection used by Docker services |
+| `AZURITE_ACCOUNTS` | yes | `devstoreaccount1:<local-azurite-key>` | Local Azurite account and key |
+| `DOCKER_AZURE_STORAGE_CONNECTION_STRING` | yes | `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=<local-azurite-key>;BlobEndpoint=http://fact-storage:10000/devstoreaccount1;` | Blob storage connection used by Docker services |
+
+Generate an emulator-only key and add the matching storage values to `.env`:
+
+```bash
+AZURITE_KEY="$(openssl rand -base64 32)"
+cat >> .env <<EOF
+AZURITE_ACCOUNTS=devstoreaccount1:${AZURITE_KEY}
+AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=${AZURITE_KEY};BlobEndpoint=http://localhost:10000/devstoreaccount1;
+DOCKER_AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=${AZURITE_KEY};BlobEndpoint=http://fact-storage:10000/devstoreaccount1;
+EOF
+```
 
 2. Start PostgreSQL, local blob storage, and the storage bootstrap container:
 

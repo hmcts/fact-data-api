@@ -1,0 +1,72 @@
+services:
+  devcontainer:
+    image: mcr.microsoft.com/devcontainers/base:bookworm
+    command: sleep infinity
+    volumes:
+      - ..:/workspaces/fact-data-api:cached
+    env_file:
+      - ../.env
+    environment:
+      DB_HOST: fact-database
+      DB_PORT: 5432
+      DB_NAME: fact
+      DB_USER: fact
+      DB_PASSWORD: fact
+      AZURE_STORAGE_ACCOUNT_NAME: devstoreaccount1
+      AZURE_MANAGED_IDENTITY_ENABLED: "false"
+      TESTING_SUPPORT_ENABLE_API: "true"
+      RUN_DB_MIGRATION_ON_STARTUP: "true"
+    depends_on:
+      fact-database:
+        condition: service_healthy
+      fact-storage-init:
+        condition: service_completed_successfully
+
+  fact-database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: fact
+      POSTGRES_USER: fact
+      POSTGRES_PASSWORD: fact
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fact -d fact"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  fact-storage:
+    image: mcr.microsoft.com/azure-storage/azurite:3.37.0
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data
+    env_file:
+      - ../.env
+    volumes:
+      - azurite-data:/data
+
+  fact-storage-init:
+    image: mcr.microsoft.com/azure-cli
+    depends_on:
+      fact-storage:
+        condition: service_started
+    env_file:
+      - ../.env
+    command:
+      - /bin/sh
+      - -c
+      - |
+        for i in $$(seq 1 30); do
+          if az storage container create --name photos --connection-string "$$DOCKER_AZURE_STORAGE_CONNECTION_STRING" --only-show-errors --output none \
+            && az storage container create --name csv --connection-string "$$DOCKER_AZURE_STORAGE_CONNECTION_STRING" --only-show-errors --output none; then
+            echo "Created Azurite containers: photos, csv"
+            exit 0
+          fi
+          echo "Waiting for Azurite to become ready..."
+          sleep 2
+        done
+        echo "Failed to create Azurite containers"
+        exit 1
+
+volumes:
+  db-data:
+  azurite-data:
