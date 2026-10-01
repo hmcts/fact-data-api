@@ -281,7 +281,7 @@ dependencyManagement {
     dependency group: 'com.azure', name: 'azure-core', version: '1.59.1'
     dependency group: 'com.azure', name: 'azure-core-amqp', version: '2.12.1'
     dependency group: 'com.azure', name: 'azure-core-http-netty', version: '1.16.7'
-    dependency group: 'com.azure', name: 'azure-core-management', version: '1.19.7'
+    dependency group: 'com.azure', name: 'azure-core-management', version: '1.19.8'
     dependency group: 'com.azure', name: 'azure-identity', version: '1.18.6'
     dependency group: 'com.microsoft.azure', name: 'msal4j', version: '1.26.0'
 
