@@ -1,11 +1,17 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.Synchronized;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Service;
+import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtCodesDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtDxCodeDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtFaxDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtProfessionalInformationDetailsDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.ProfessionalInformationDto;
-import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.entities.AreaOfLawType;
 import uk.gov.hmcts.reform.fact.data.api.entities.ContactDescriptionType;
 import uk.gov.hmcts.reform.fact.data.api.entities.Court;
@@ -28,10 +34,17 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.*;
-import uk.gov.hmcts.reform.fact.data.api.models.InMemoryMultipartFile;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.FoodAndDrinkOptions;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
+import uk.gov.hmcts.reform.fact.data.api.models.InMemoryMultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.models.LocalAuthoritySelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.repositories.AreaOfLawTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ContactDescriptionTypeRepository;
@@ -42,9 +55,10 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
-import java.awt.AlphaComposite;
+import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.font.FontRenderContext;
@@ -65,15 +79,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import javax.imageio.ImageIO;
-
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Synchronized;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Service;
 
 import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 

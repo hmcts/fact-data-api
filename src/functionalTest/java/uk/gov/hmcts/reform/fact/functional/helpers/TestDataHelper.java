@@ -9,10 +9,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.*;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
@@ -255,10 +252,12 @@ public class TestDataHelper {
         final CourtFacilities facilities = new CourtFacilities();
         facilities.setCourtId(courtId);
         facilities.setParking(true);
-        facilities.getFoodAndDrink().setFreeWaterDispensers(true);
-        facilities.getFoodAndDrink().setSnackVendingMachines(true);
-        facilities.getFoodAndDrink().setDrinkVendingMachines(true);
-        facilities.getFoodAndDrink().setCafeteria(true);
+        facilities.setFoodAndDrink(FoodAndDrinkOptions.builder()
+                                       .freeWaterDispensers(true)
+                                        .snackVendingMachines(true)
+                                        .drinkVendingMachines(true)
+                                        .cafeteria(true)
+                                       .build());
         facilities.setWaitingArea(true);
         facilities.setWaitingAreaChildren(true);
         facilities.setQuietRoom(true);

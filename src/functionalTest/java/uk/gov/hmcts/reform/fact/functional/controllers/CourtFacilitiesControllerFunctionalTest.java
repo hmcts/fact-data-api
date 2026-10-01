@@ -9,6 +9,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.FoodAndDrinkOptions;
 import uk.gov.hmcts.reform.fact.functional.helpers.AssertionHelper;
 import uk.gov.hmcts.reform.fact.functional.helpers.TestDataHelper;
 import uk.gov.hmcts.reform.fact.functional.http.HttpClient;
@@ -40,8 +41,12 @@ public final class CourtFacilitiesControllerFunctionalTest {
         final ZonedDateTime timestampBeforeCreate = AssertionHelper.getCourtLastUpdatedAt(http, courtId);
 
         final CourtFacilities facilities = TestDataHelper.buildFacilities(courtId);
-        facilities.getFoodAndDrink().setFreeWaterDispensers(false);
-        facilities.getFoodAndDrink().setDrinkVendingMachines(false);
+        facilities.setFoodAndDrink(FoodAndDrinkOptions.builder()
+                                       .freeWaterDispensers(false)
+                                       .snackVendingMachines(false)
+                                       .drinkVendingMachines(false)
+                                       .cafeteria(false)
+                                       .build());
         facilities.setWaitingAreaChildren(false);
         facilities.setBabyChanging(false);
 
@@ -52,6 +57,7 @@ public final class CourtFacilitiesControllerFunctionalTest {
         assertThat(createdFacilities.getId()).isNotNull();
         assertThat(createdFacilities.getCourtId()).isEqualTo(courtId);
         assertThat(createdFacilities.getParking()).isTrue();
+        assertThat(createdFacilities.getFoodAndDrink()).isNotNull();
         assertThat(createdFacilities.getFoodAndDrink().getFreeWaterDispensers()).isFalse();
         assertThat(createdFacilities.getWifi()).isTrue();
 
@@ -62,6 +68,7 @@ public final class CourtFacilitiesControllerFunctionalTest {
         assertThat(retrievedFacilities.getId()).isEqualTo(createdFacilities.getId());
         assertThat(retrievedFacilities.getCourtId()).isEqualTo(courtId);
         assertThat(retrievedFacilities.getParking()).isTrue();
+        assertThat(retrievedFacilities.getFoodAndDrink()).isNotNull();
         assertThat(retrievedFacilities.getFoodAndDrink().getFreeWaterDispensers()).isFalse();
         assertThat(retrievedFacilities.getWifi()).isTrue();
 
@@ -87,10 +94,12 @@ public final class CourtFacilitiesControllerFunctionalTest {
 
         final CourtFacilities updatedFacilities = TestDataHelper.buildFacilities(courtId);
         updatedFacilities.setParking(false);
-        updatedFacilities.getFoodAndDrink().setFreeWaterDispensers(false);
-        updatedFacilities.getFoodAndDrink().setSnackVendingMachines(false);
-        updatedFacilities.getFoodAndDrink().setDrinkVendingMachines(false);
-        updatedFacilities.getFoodAndDrink().setCafeteria(false);
+        updatedFacilities.setFoodAndDrink(FoodAndDrinkOptions.builder()
+                                       .freeWaterDispensers(false)
+                                       .snackVendingMachines(false)
+                                       .drinkVendingMachines(false)
+                                       .cafeteria(false)
+                                       .build());
         updatedFacilities.setWaitingArea(false);
         updatedFacilities.setWaitingAreaChildren(false);
         updatedFacilities.setQuietRoom(false);
