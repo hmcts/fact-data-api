@@ -1,8 +1,6 @@
 <policies>
   <inbound>
     <base />
-    <!-- Validates the token is well-formed and issued for this app; per-operation policies
-         enforce which specific roles can call each operation. -->
     <validate-azure-ad-token
       header-name="Authorization"
       tenant-id="${tenant_id}"
@@ -12,6 +10,59 @@
         <audience>${audience}</audience>
       </audiences>
     </validate-azure-ad-token>
+    <choose>
+      <when condition="@(context.Operation.Id == &quot;getCourtDetailsBySlug&quot; || context.Operation.Id == &quot;getCourtsByPostcode&quot;)">
+        <validate-azure-ad-token
+          header-name="Authorization"
+          tenant-id="${tenant_id}"
+          failed-validation-httpcode="403"
+          failed-validation-error-message="Forbidden. Your role does not have access to this operation.">
+          <audiences>
+            <audience>${audience}</audience>
+          </audiences>
+          <required-claims>
+            <claim name="roles" match="any">
+              <value>Role.Fact.Admin</value>
+              <value>Role.Fact.Prl</value>
+              <value>Role.Fact.C100</value>
+            </claim>
+          </required-claims>
+        </validate-azure-ad-token>
+      </when>
+      <when condition="@(context.Operation.Id == &quot;getCourtDetailsById&quot; || context.Operation.Id == &quot;getCourtDetailsById_1&quot; || context.Operation.Id == &quot;getContactDetails&quot; || context.Operation.Id == &quot;getCourtDetailsBySlug_1&quot;)">
+        <validate-azure-ad-token
+          header-name="Authorization"
+          tenant-id="${tenant_id}"
+          failed-validation-httpcode="403"
+          failed-validation-error-message="Forbidden. Your role does not have access to this operation.">
+          <audiences>
+            <audience>${audience}</audience>
+          </audiences>
+          <required-claims>
+            <claim name="roles" match="any">
+              <value>Role.Fact.Admin</value>
+              <value>Role.Fact.Prl</value>
+            </claim>
+          </required-claims>
+        </validate-azure-ad-token>
+      </when>
+      <otherwise>
+        <validate-azure-ad-token
+          header-name="Authorization"
+          tenant-id="${tenant_id}"
+          failed-validation-httpcode="403"
+          failed-validation-error-message="Forbidden. Your role does not have access to this operation.">
+          <audiences>
+            <audience>${audience}</audience>
+          </audiences>
+          <required-claims>
+            <claim name="roles" match="any">
+              <value>Role.Fact.Admin</value>
+            </claim>
+          </required-claims>
+        </validate-azure-ad-token>
+      </otherwise>
+    </choose>
   </inbound>
   <backend>
     <base />
