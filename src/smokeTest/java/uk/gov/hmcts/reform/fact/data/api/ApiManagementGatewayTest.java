@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
-import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static io.restassured.RestAssured.given;
 
@@ -19,7 +19,7 @@ class ApiManagementGatewayTest {
 
     private static final String APIM_URL = "https://cft-api-mgmt.aat.platform.hmcts.net/fact";
     private static final String TESTING_SUPPORT_URL = "https://fact-data-api.aat.platform.hmcts.net";
-    private static final String COURT_NAME = "APIM Gateway Test " + UUID.randomUUID();
+    private static final String COURT_NAME = "APIM Gateway Test " + randomAlphabeticSuffix();
 
     private static String adminToken;
     private static String viewerToken;
@@ -38,6 +38,7 @@ class ApiManagementGatewayTest {
             .when()
             .get("/testing-support/courts")
             .then()
+            .log().ifValidationFails()
             .statusCode(201)
             .extract()
             .response();
@@ -58,6 +59,7 @@ class ApiManagementGatewayTest {
             .when()
             .delete("/testing-support/courts/name-prefix/{courtNamePrefix}")
             .then()
+            .log().ifValidationFails()
             .statusCode(200);
     }
 
@@ -68,6 +70,7 @@ class ApiManagementGatewayTest {
             .when()
             .get(courtBySlugPath)
             .then()
+            .log().ifValidationFails()
             .statusCode(401);
     }
 
@@ -79,6 +82,7 @@ class ApiManagementGatewayTest {
             .when()
             .get(courtBySlugPath)
             .then()
+            .log().ifValidationFails()
             .statusCode(200);
     }
 
@@ -90,6 +94,7 @@ class ApiManagementGatewayTest {
             .when()
             .get(courtBySlugPath)
             .then()
+            .log().ifValidationFails()
             .statusCode(401);
     }
 
@@ -112,5 +117,14 @@ class ApiManagementGatewayTest {
         return Optional.ofNullable(System.getenv(name))
             .filter(value -> !value.isBlank())
             .orElseThrow(() -> new IllegalStateException("No " + name + " environment set"));
+    }
+
+    private static String randomAlphabeticSuffix() {
+        String alphabet = "abcdefghijklmnopqrstuvwxyz";
+        StringBuilder suffix = new StringBuilder(8);
+        for (int index = 0; index < 8; index++) {
+            suffix.append(alphabet.charAt(ThreadLocalRandom.current().nextInt(alphabet.length())));
+        }
+        return suffix.toString();
     }
 }
