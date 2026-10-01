@@ -5,21 +5,60 @@ import com.azure.core.credential.TokenRequestContext;
 import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 
 class ApiManagementGatewayTest {
 
-    private static final String COURT_BY_SLUG_PATH = "/courts/slug/glasgow-crown-court/v1";
     private static final String TEST_URL = getRequiredEnv("TEST_URL");
+    private static final String TESTING_SUPPORT_URL = getRequiredEnv("TESTING_SUPPORT_URL");
+    private static final String COURT_NAME = "APIM Gateway Test " + UUID.randomUUID();
+
+    private static String adminToken;
+    private static String viewerToken;
+    private static String courtBySlugPath;
 
     @BeforeAll
     static void setUp() {
         RestAssured.useRelaxedHTTPSValidation();
+        adminToken = getBearerToken("ADMIN_CLIENT_APP_REG_ID", "ADMIN_AZURE_CLIENT_SECRET");
+        viewerToken = getBearerToken("VIEWER_CLIENT_APP_REG_ID", "VIEWER_AZURE_CLIENT_SECRET");
+
+        Response response = given()
+            .baseUri(TESTING_SUPPORT_URL)
+            .header("Authorization", "Bearer " + adminToken)
+            .queryParam("courtName", COURT_NAME)
+            .when()
+            .get("/testing-support/courts")
+            .then()
+            .statusCode(201)
+            .extract()
+            .response();
+
+        courtBySlugPath = "/courts/slug/" + response.jsonPath().getString("slug") + "/v1";
+    }
+
+    @AfterAll
+    static void cleanUp() {
+        if (courtBySlugPath == null) {
+            return;
+        }
+
+        given()
+            .baseUri(TESTING_SUPPORT_URL)
+            .header("Authorization", "Bearer " + adminToken)
+            .pathParam("courtNamePrefix", COURT_NAME)
+            .when()
+            .delete("/testing-support/courts/name-prefix/{courtNamePrefix}")
+            .then()
+            .statusCode(200);
     }
 
     @Test
@@ -27,7 +66,7 @@ class ApiManagementGatewayTest {
         given()
             .baseUri(TEST_URL)
             .when()
-            .get(COURT_BY_SLUG_PATH)
+            .get(courtBySlugPath)
             .then()
             .statusCode(401);
     }
@@ -36,12 +75,9 @@ class ApiManagementGatewayTest {
     void allowsAdminRoleToAccessGatewayEndpoint() {
         given()
             .baseUri(TEST_URL)
-            .header("Authorization", "Bearer " + getBearerToken(
-                "ADMIN_CLIENT_APP_REG_ID",
-                "ADMIN_AZURE_CLIENT_SECRET"
-            ))
+            .header("Authorization", "Bearer " + adminToken)
             .when()
-            .get(COURT_BY_SLUG_PATH)
+            .get(courtBySlugPath)
             .then()
             .statusCode(200);
     }
@@ -50,12 +86,9 @@ class ApiManagementGatewayTest {
     void rejectsViewerRoleAtGateway() {
         given()
             .baseUri(TEST_URL)
-            .header("Authorization", "Bearer " + getBearerToken(
-                "VIEWER_CLIENT_APP_REG_ID",
-                "VIEWER_AZURE_CLIENT_SECRET"
-            ))
+            .header("Authorization", "Bearer " + viewerToken)
             .when()
-            .get(COURT_BY_SLUG_PATH)
+            .get(courtBySlugPath)
             .then()
             .statusCode(401);
     }
