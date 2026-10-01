@@ -12,8 +12,6 @@
       <required-claims>
         <claim name="roles" match="any">
           <value>Role.Fact.Admin</value>
-          <value>Role.Fact.Viewer</value>
-          <value>Role.Fact.CaTH</value>
           <value>Role.Fact.Prl</value>
           <value>Role.Fact.C100</value>
           <value>Role.Fact.Cmc</value>
