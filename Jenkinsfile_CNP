@@ -38,17 +38,6 @@ withPipeline(type, product, component) {
     builder.gradle('integration')
   }
 
-  afterSuccess('smoketest:aat') {
-    withEnv([
-      'TEST_URL=https://cft-api-mgmt.aat.platform.hmcts.net/fact',
-      'TESTING_SUPPORT_URL=http://fact-data-api.aat.platform.hmcts.net'
-    ]) {
-      timeout(time: 15, unit: 'MINUTES') {
-        builder.apiGatewayTest()
-      }
-    }
-  }
-
   afterAlways('functionalTest:preview') {
     builder.gradle('allureReport')
 

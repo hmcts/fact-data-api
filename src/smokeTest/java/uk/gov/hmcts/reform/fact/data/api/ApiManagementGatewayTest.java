@@ -7,6 +7,7 @@ import com.azure.identity.ClientSecretCredentialBuilder;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -17,8 +18,11 @@ import static io.restassured.RestAssured.given;
 
 class ApiManagementGatewayTest {
 
-    private static final String TEST_URL = getRequiredEnv("TEST_URL");
-    private static final String TESTING_SUPPORT_URL = getRequiredEnv("TESTING_SUPPORT_URL");
+    private static final String AAT_SERVICE_URL_SUFFIX = ".aat.platform.hmcts.net";
+    private static final String APIM_URL = "https://cft-api-mgmt.aat.platform.hmcts.net/fact";
+    private static final String TESTING_SUPPORT_URL = "http://fact-data-api.aat.platform.hmcts.net";
+    private static final String DEPLOYED_SERVICE_URL =
+        System.getenv().getOrDefault("TEST_URL", "http://localhost:8989");
     private static final String COURT_NAME = "APIM Gateway Test " + UUID.randomUUID();
 
     private static String adminToken;
@@ -27,6 +31,11 @@ class ApiManagementGatewayTest {
 
     @BeforeAll
     static void setUp() {
+        Assumptions.assumeTrue(
+            DEPLOYED_SERVICE_URL.contains(AAT_SERVICE_URL_SUFFIX),
+            "APIM gateway checks run only during AAT smoke tests"
+        );
+
         RestAssured.useRelaxedHTTPSValidation();
         adminToken = getBearerToken("ADMIN_CLIENT_APP_REG_ID", "ADMIN_AZURE_CLIENT_SECRET");
         viewerToken = getBearerToken("VIEWER_CLIENT_APP_REG_ID", "VIEWER_AZURE_CLIENT_SECRET");
@@ -64,7 +73,7 @@ class ApiManagementGatewayTest {
     @Test
     void rejectsRequestsWithoutBearerToken() {
         given()
-            .baseUri(TEST_URL)
+            .baseUri(APIM_URL)
             .when()
             .get(courtBySlugPath)
             .then()
@@ -74,7 +83,7 @@ class ApiManagementGatewayTest {
     @Test
     void allowsAdminRoleToAccessGatewayEndpoint() {
         given()
-            .baseUri(TEST_URL)
+            .baseUri(APIM_URL)
             .header("Authorization", "Bearer " + adminToken)
             .when()
             .get(courtBySlugPath)
@@ -85,7 +94,7 @@ class ApiManagementGatewayTest {
     @Test
     void rejectsViewerRoleAtGateway() {
         given()
-            .baseUri(TEST_URL)
+            .baseUri(APIM_URL)
             .header("Authorization", "Bearer " + viewerToken)
             .when()
             .get(courtBySlugPath)
