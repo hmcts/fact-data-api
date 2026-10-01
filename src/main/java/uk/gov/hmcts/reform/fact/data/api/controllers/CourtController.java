@@ -108,7 +108,7 @@ public class CourtController {
     }
 
     @GetMapping(value = {"/slug/{courtSlug}/v1", "/slug/{courtSlug}.json"})
-    @PreAuthorize("@authService.canView() || @authService.isPrl()")
+    @PreAuthorize("@authService.canView() || @authService.isPrl() || @authService.isC100()")
     @Tag(name = "apim")
     @JsonView(CourtDetailsView.class)
     @Operation(
