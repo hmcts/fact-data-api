@@ -30,6 +30,7 @@ public class AuthService {
     static final String ROLE_ADMIN = "Role.Fact.Admin";
     static final String ROLE_VIEWER = "Role.Fact.Viewer";
     static final String ROLE_PRL = "Role.Fact.Prl";
+    static final String ROLE_C100 = "Role.Fact.C100";
     private static final char URI_PATH_DELIMITER = '/';
 
     @Value("${auth.user-header-bypass.post-endpoints:/courts/v1/link,/user/v1,/csv}")
@@ -68,6 +69,12 @@ public class AuthService {
             .isPresent();
     }
 
+    public boolean isC100() {
+        return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+            .map(this::findC100Role)
+            .isPresent();
+    }
+
     private String findViewerRole(Authentication authentication) {
         return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
             .filter(a -> a.equals(PREFIX + ROLE_VIEWER) || a.equals(PREFIX + ROLE_ADMIN))
@@ -82,6 +89,11 @@ public class AuthService {
     private String findPrlRole(Authentication authentication) {
         return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
             .filter((PREFIX + ROLE_PRL)::equals).findFirst().orElse(null);
+    }
+
+    private String findC100Role(Authentication authentication) {
+        return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+            .filter((PREFIX + ROLE_C100)::equals).findFirst().orElse(null);
     }
 
     private void setAuditUserContext() {

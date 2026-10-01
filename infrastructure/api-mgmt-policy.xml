@@ -5,13 +5,16 @@
       header-name="Authorization"
       tenant-id="${tenant_id}"
       failed-validation-httpcode="401"
-      failed-validation-error-message="Unauthorized. Access token is missing, invalid, or does not contain the required role.">
+      failed-validation-error-message="Unauthorized. Access token is missing, invalid, or does not contain a FaCT role.">
       <audiences>
         <audience>${audience}</audience>
       </audiences>
       <required-claims>
         <claim name="roles" match="any">
           <value>Role.Fact.Admin</value>
+          <value>Role.Fact.Prl</value>
+          <value>Role.Fact.C100</value>
+          <value>Role.Fact.Cmc</value>
         </claim>
       </required-claims>
     </validate-azure-ad-token>

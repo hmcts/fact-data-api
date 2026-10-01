@@ -155,6 +155,28 @@ class AuthServiceTest {
     }
 
     @Test
+    void isC100ReturnsTrueWhenC100RoleIsPresent() {
+        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(
+            "test",
+            "test",
+            AuthService.PREFIX + AuthService.ROLE_C100
+        ));
+
+        assertThat(authService.isC100()).isTrue();
+    }
+
+    @Test
+    void isC100ReturnsFalseWhenC100RoleIsNotPresent() {
+        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(
+            "test",
+            "test",
+            AuthService.PREFIX + AuthService.ROLE_VIEWER
+        ));
+
+        assertThat(authService.isC100()).isFalse();
+    }
+
+    @Test
     void isAdminRequiresUserIdHeaderForRequest() {
         setAdminAuthentication();
         setRequest("POST", "/courts/v1", null);
