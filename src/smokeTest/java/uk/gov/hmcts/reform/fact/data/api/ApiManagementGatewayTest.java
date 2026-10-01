@@ -18,7 +18,7 @@ import static io.restassured.RestAssured.given;
 class ApiManagementGatewayTest {
 
     private static final String APIM_URL = "https://cft-api-mgmt.aat.platform.hmcts.net/fact";
-    private static final String TESTING_SUPPORT_URL = "http://fact-data-api.aat.platform.hmcts.net";
+    private static final String TESTING_SUPPORT_URL = "https://fact-data-api.aat.platform.hmcts.net";
     private static final String COURT_NAME = "APIM Gateway Test " + UUID.randomUUID();
 
     private static String adminToken;
