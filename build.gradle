@@ -43,7 +43,7 @@ def configureSourceSet(String name) {
   }
 }
 
-['smokeTest', 'integrationTest', 'functionalTest'].each { configureSourceSet(it) }
+['smokeTest', 'integrationTest', 'functionalTest', 'apiTest'].each { configureSourceSet(it) }
 
 configurations {
   smokeTestImplementation.extendsFrom testImplementation
@@ -54,6 +54,9 @@ configurations {
 
   integrationTestImplementation.extendsFrom testImplementation
   integrationTestRuntimeOnly.extendsFrom runtimeOnly
+
+  apiTestImplementation.extendsFrom smokeTestImplementation
+  apiTestRuntimeOnly.extendsFrom runtimeOnly
 }
 
 flyway {
@@ -109,6 +112,14 @@ tasks.register('smoke', Test) {
   group = "Verification"
   testClassesDirs = sourceSets.smokeTest.output.classesDirs
   classpath = sourceSets.smokeTest.runtimeClasspath
+}
+
+tasks.register('apiGateway', Test) {
+  description = "Runs API Management gateway tests"
+  group = "Verification"
+  testClassesDirs = sourceSets.apiTest.output.classesDirs
+  classpath = sourceSets.apiTest.runtimeClasspath
+  reports.junitXml.outputLocation = layout.buildDirectory.dir("test-results/apiTest")
 }
 
 jacoco {
