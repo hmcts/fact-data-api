@@ -19,6 +19,7 @@ import static io.restassured.RestAssured.given;
 class ApiManagementGatewayTest {
 
     private static final String AAT_SERVICE_URL_SUFFIX = ".aat.platform.hmcts.net";
+    private static final String PREVIEW_SERVICE_URL_SUFFIX = ".preview.platform.hmcts.net";
     private static final String APIM_URL = "https://cft-api-mgmt.aat.platform.hmcts.net/fact";
     private static final String TESTING_SUPPORT_URL = "http://fact-data-api.aat.platform.hmcts.net";
     private static final String DEPLOYED_SERVICE_URL =
@@ -32,8 +33,9 @@ class ApiManagementGatewayTest {
     @BeforeAll
     static void setUp() {
         Assumptions.assumeTrue(
-            DEPLOYED_SERVICE_URL.contains(AAT_SERVICE_URL_SUFFIX),
-            "APIM gateway checks run only during AAT smoke tests"
+            DEPLOYED_SERVICE_URL.contains(AAT_SERVICE_URL_SUFFIX)
+                || DEPLOYED_SERVICE_URL.contains(PREVIEW_SERVICE_URL_SUFFIX),
+            "APIM gateway checks run only during preview and AAT smoke tests"
         );
 
         RestAssured.useRelaxedHTTPSValidation();
