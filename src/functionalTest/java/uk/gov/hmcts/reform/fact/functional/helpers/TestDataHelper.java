@@ -255,10 +255,10 @@ public class TestDataHelper {
         final CourtFacilities facilities = new CourtFacilities();
         facilities.setCourtId(courtId);
         facilities.setParking(true);
-        facilities.setFreeWaterDispensers(true);
-        facilities.setSnackVendingMachines(true);
-        facilities.setDrinkVendingMachines(true);
-        facilities.setCafeteria(true);
+        facilities.getFoodAndDrink().setFreeWaterDispensers(true);
+        facilities.getFoodAndDrink().setSnackVendingMachines(true);
+        facilities.getFoodAndDrink().setDrinkVendingMachines(true);
+        facilities.getFoodAndDrink().setCafeteria(true);
         facilities.setWaitingArea(true);
         facilities.setWaitingAreaChildren(true);
         facilities.setQuietRoom(true);

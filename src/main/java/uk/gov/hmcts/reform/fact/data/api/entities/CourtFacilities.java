@@ -66,6 +66,7 @@ public class CourtFacilities implements AuditableCourtEntity {
     @Embedded
     @JsonUnwrapped
     @Valid
+    @NotNull
     private FoodAndDrinkOptions foodAndDrink;
 
     @Schema(description = "Waiting area availability status")
