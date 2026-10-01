@@ -28,13 +28,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAddress;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreAreasOfLaw;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreContactDetails;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AddressType;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.AllowedLocalAuthorityAreasOfLaw;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.CatchmentType;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.HearingEnhancementEquipment;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
-import uk.gov.hmcts.reform.fact.data.api.entities.types.UserRole;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.*;
 import uk.gov.hmcts.reform.fact.data.api.models.InMemoryMultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.models.AreaOfLawSelectionDto;
 import uk.gov.hmcts.reform.fact.data.api.models.CourtLocalAuthorityDto;
@@ -661,14 +655,16 @@ public class TestingSupportService {
     private void setFacilities(final UUID courtId, final Random random) {
         CourtFacilities facilities = CourtFacilities.builder()
             .courtId(courtId)
-            .cafeteria(random.nextBoolean())
-            .freeWaterDispensers(random.nextBoolean())
+            .foodAndDrink(FoodAndDrinkOptions.builder()
+                              .cafeteria(random.nextBoolean())
+                              .freeWaterDispensers(random.nextBoolean())
+                              .drinkVendingMachines(random.nextBoolean())
+                              .snackVendingMachines(random.nextBoolean())
+                              .build())
             .wifi(random.nextBoolean())
             .babyChanging(random.nextBoolean())
             .parking(random.nextBoolean())
             .quietRoom(random.nextBoolean())
-            .drinkVendingMachines(random.nextBoolean())
-            .snackVendingMachines(random.nextBoolean())
             .waitingArea(random.nextBoolean())
             .build();
 
