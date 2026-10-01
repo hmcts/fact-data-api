@@ -3,7 +3,7 @@ import org.flywaydb.gradle.task.FlywayMigrateTask
 //This is required as flyway now has a stand alone library for each database rather than being bundled together
 buildscript {
   dependencies {
-    classpath("org.flywaydb:flyway-database-postgresql:13.8.0")
+    classpath("org.flywaydb:flyway-database-postgresql:13.8.1")
   }
 }
 
@@ -204,8 +204,8 @@ dependencies {
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.7.13'
   implementation group:'org.springframework.boot', name:'spring-boot-flyway'
 
-  implementation group: 'org.flywaydb', name: 'flyway-core', version: '13.8.0'
-  implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '13.8.0'
+  implementation group: 'org.flywaydb', name: 'flyway-core', version: '13.8.1'
+  implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '13.8.1'
 
   implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.4.0'
 
