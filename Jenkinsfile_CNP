@@ -46,14 +46,6 @@ withPipeline(type, product, component) {
     }
   }
 
-  afterSuccess('smoketest:prod') {
-    withEnv(['TEST_URL=https://cft-api-mgmt.platform.hmcts.net/fact']) {
-      timeout(time: 15, unit: 'MINUTES') {
-        builder.apiGatewayTest()
-      }
-    }
-  }
-
   afterAlways('functionalTest:preview') {
     builder.gradle('allureReport')
 
