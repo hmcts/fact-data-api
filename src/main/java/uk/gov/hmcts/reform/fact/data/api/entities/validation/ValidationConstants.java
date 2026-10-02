@@ -53,6 +53,7 @@ public class ValidationConstants {
     public static final int COURT_SLUG_MIN_LENGTH = 1;
     public static final String COURT_SLUG_LENGTH_MESSAGE = "Court slug should be between 1 and 250 characters";
 
+    public static final int WARNING_NOTICE_MAX_LENGTH = 700;
     public static final String WARNING_NOTICE_MAX_LENGTH_MESSAGE =
         "Warning notice must be less than {max} characters";
     public static final String WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE =
