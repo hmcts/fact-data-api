@@ -208,7 +208,9 @@ export FLYWAY_PASSWORD=fact
 
 ### Requirements for public frontend after migration changes
 
-When a new migration is applied, the public frontend pods may need to be restarted to pick up the new changes. This is because the frontend pods may have cached data or schema information that is no longer valid after the migration. To ensure that the frontend pods are using current data, the frontend pods should be refreshed in a controlled manner that ensures continuous service.
+When a new migration is applied, the public frontend deployment may need to be restarted to pick up the new changes. This is because the frontend deployment may have cached data or schema information that is no longer valid after the migration.
+
+**If required**, this should be done in a controlled manner that ensures continuous service.
 
 ## Contribution workflow (team)
 
