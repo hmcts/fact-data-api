@@ -43,7 +43,7 @@ public class SearchCourtController {
     private final AllLocationService allLocationService;
 
     @GetMapping("/v1/postcode")
-    @PreAuthorize("@authService.canView() || @authService.isPrl()")
+    @PreAuthorize("@authService.canView() || @authService.isPrl() || @authService.isC100()")
     @Tag(name = "apim")
     @Operation(
         summary = "Search courts by postcode, plus optional fields based on various business rules.",

@@ -3,7 +3,7 @@ import org.flywaydb.gradle.task.FlywayMigrateTask
 //This is required as flyway now has a stand alone library for each database rather than being bundled together
 buildscript {
   dependencies {
-    classpath("org.flywaydb:flyway-database-postgresql:13.8.0")
+    classpath("org.flywaydb:flyway-database-postgresql:13.8.1")
   }
 }
 
@@ -204,8 +204,8 @@ dependencies {
   implementation group: 'org.postgresql', name: 'postgresql', version: '42.7.13'
   implementation group:'org.springframework.boot', name:'spring-boot-flyway'
 
-  implementation group: 'org.flywaydb', name: 'flyway-core', version: '13.8.0'
-  implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '13.8.0'
+  implementation group: 'org.flywaydb', name: 'flyway-core', version: '13.8.1'
+  implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '13.8.1'
 
   implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.4.0'
 
@@ -281,7 +281,7 @@ dependencyManagement {
     dependency group: 'com.azure', name: 'azure-core', version: '1.59.1'
     dependency group: 'com.azure', name: 'azure-core-amqp', version: '2.12.1'
     dependency group: 'com.azure', name: 'azure-core-http-netty', version: '1.16.7'
-    dependency group: 'com.azure', name: 'azure-core-management', version: '1.19.7'
+    dependency group: 'com.azure', name: 'azure-core-management', version: '1.19.8'
     dependency group: 'com.azure', name: 'azure-identity', version: '1.18.6'
     dependency group: 'com.microsoft.azure', name: 'msal4j', version: '1.26.0'
 
