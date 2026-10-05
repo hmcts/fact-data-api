@@ -3,4 +3,4 @@
 
 ALTER TABLE service_centre
     ALTER COLUMN warning_notice TYPE VARCHAR(700),
-    ALTER COLUMN warning_notice_cy TYPE VARCHAR(700),
+    ALTER COLUMN warning_notice_cy TYPE VARCHAR(700);
