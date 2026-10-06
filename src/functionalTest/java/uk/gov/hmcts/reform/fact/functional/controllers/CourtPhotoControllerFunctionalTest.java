@@ -110,6 +110,44 @@ public final class CourtPhotoControllerFunctionalTest {
     }
 
     @Test
+    @DisplayName("POST /courts/{courtId}/v1/photo replaces an existing photo")
+    void shouldReplaceExistingPhoto() throws Exception {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Photo Replacement", true);
+        courtsWithPhotos.add(courtId);
+
+        final File originalImage = new File(
+            "src/functionalTest/resources/test-images/test valid jpg 1.2 MB.jpg");
+        final Response originalUploadResponse = http.doMultipartPost(
+            "/courts/" + courtId + "/v1/photo",
+            "file",
+            originalImage
+        );
+        assertThat(originalUploadResponse.statusCode()).isEqualTo(CREATED.value());
+        final CourtPhoto originalPhoto = mapper.readValue(
+            originalUploadResponse.getBody().asString(), CourtPhoto.class);
+
+        final File replacementImage = new File(
+            "src/functionalTest/resources/test-images/test valid png 1.4 MB.png");
+        final Response replacementUploadResponse = http.doMultipartPost(
+            "/courts/" + courtId + "/v1/photo",
+            "file",
+            replacementImage
+        );
+        assertThat(replacementUploadResponse.statusCode()).isEqualTo(CREATED.value());
+        final CourtPhoto replacementPhoto = mapper.readValue(
+            replacementUploadResponse.getBody().asString(), CourtPhoto.class);
+
+        assertThat(replacementPhoto.getId()).isEqualTo(originalPhoto.getId());
+        assertThat(replacementPhoto.getFileLink()).isEqualTo(originalPhoto.getFileLink());
+        assertThat(replacementPhoto.getLastUpdatedAt()).isAfterOrEqualTo(originalPhoto.getLastUpdatedAt());
+
+        final Response downloadResponse = http.doGet("/resources/v1/court-photo/" + courtId);
+        assertThat(downloadResponse.statusCode()).isEqualTo(OK.value());
+        assertThat(downloadResponse.contentType()).startsWith("image/png");
+        assertThat(downloadResponse.asByteArray()).isNotEmpty();
+    }
+
+    @Test
     @DisplayName("POST /courts/{courtId}/v1/photo fails with non-existent court ID")
     void shouldFailToUploadPhotoToNonExistentCourt() {
         final UUID nonExistentCourtId = UUID.randomUUID();

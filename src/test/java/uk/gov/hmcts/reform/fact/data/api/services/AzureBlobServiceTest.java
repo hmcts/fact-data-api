@@ -4,6 +4,8 @@ import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
+import com.azure.storage.blob.models.BlobProperties;
+import com.azure.core.util.BinaryData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
+import uk.gov.hmcts.reform.fact.data.api.services.AzureBlobService.BlobBackup;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,6 +24,8 @@ import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -90,6 +95,33 @@ class AzureBlobServiceTest {
         azureBlobService.deleteBlob(IMAGE_ID);
 
         verify(blobClient).delete();
+    }
+
+    @Test
+    void backupBlobShouldCaptureContentAndContentType() {
+        byte[] content = "original image".getBytes(StandardCharsets.UTF_8);
+        BlobProperties properties = org.mockito.Mockito.mock(BlobProperties.class);
+        when(blobClient.downloadContent()).thenReturn(BinaryData.fromBytes(content));
+        when(blobClient.getProperties()).thenReturn(properties);
+        when(properties.getContentType()).thenReturn(CONTENT_TYPE);
+
+        BlobBackup result = azureBlobService.backupBlob(IMAGE_ID);
+
+        assertThat(result.content()).isEqualTo(content);
+        assertThat(result.contentType()).isEqualTo(CONTENT_TYPE);
+    }
+
+    @Test
+    void restoreBlobShouldUploadBackupAndRestoreContentType() {
+        byte[] content = "original image".getBytes(StandardCharsets.UTF_8);
+        BlobBackup backup = new BlobBackup(content, CONTENT_TYPE);
+
+        azureBlobService.restoreBlob(IMAGE_ID, backup);
+
+        verify(blobClient).upload(any(InputStream.class), eq((long) content.length), eq(true));
+        ArgumentCaptor<BlobHttpHeaders> headersCaptor = ArgumentCaptor.forClass(BlobHttpHeaders.class);
+        verify(blobClient).setHttpHeaders(headersCaptor.capture());
+        assertThat(headersCaptor.getValue().getContentType()).isEqualTo(CONTENT_TYPE);
     }
 
     @Test

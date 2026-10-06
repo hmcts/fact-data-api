@@ -20,6 +20,7 @@ import uk.gov.hmcts.reform.fact.data.api.config.properties.PhotoConfigurationPro
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
+import uk.gov.hmcts.reform.fact.data.api.services.AzureBlobService.BlobBackup;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
@@ -130,6 +131,80 @@ class CourtPhotoServiceTest {
     }
 
     @Test
+    void setCourtPhotoShouldDeleteNewBlobWhenDatabaseSaveFails() throws IOException {
+        UUID courtId = UUID.randomUUID();
+        RuntimeException databaseException = new RuntimeException("Database failure");
+
+        when(courtService.getCourtById(courtId)).thenReturn(null);
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.empty());
+        when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class)))
+            .thenReturn("uploaded-file-link");
+        when(auditUserContext.requireUserId()).thenReturn(USER_ID);
+        when(courtPhotoRepository.save(any(CourtPhoto.class))).thenThrow(databaseException);
+        when(multipartFile.getInputStream())
+            .thenReturn(new ByteArrayInputStream(createImageBytes("jpg", 1, 1)));
+        when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
+
+        RuntimeException thrown = assertThrows(
+            RuntimeException.class,
+            () -> courtPhotoService.setCourtPhoto(courtId, multipartFile)
+        );
+
+        assertThat(thrown).isSameAs(databaseException);
+        verify(azureBlobService).deleteBlob(courtId.toString());
+        verify(azureBlobService, never()).restoreBlob(anyString(), any(BlobBackup.class));
+    }
+
+    @Test
+    void setCourtPhotoShouldPreserveDatabaseExceptionWhenBlobCompensationFails() throws IOException {
+        UUID courtId = UUID.randomUUID();
+        RuntimeException databaseException = new RuntimeException("Database failure");
+        RuntimeException compensationException = new RuntimeException("Azure compensation failure");
+
+        when(courtService.getCourtById(courtId)).thenReturn(null);
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.empty());
+        when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class)))
+            .thenReturn("uploaded-file-link");
+        when(auditUserContext.requireUserId()).thenReturn(USER_ID);
+        when(courtPhotoRepository.save(any(CourtPhoto.class))).thenThrow(databaseException);
+        org.mockito.Mockito.doThrow(compensationException)
+            .when(azureBlobService).deleteBlob(courtId.toString());
+        when(multipartFile.getInputStream())
+            .thenReturn(new ByteArrayInputStream(createImageBytes("jpg", 1, 1)));
+        when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
+
+        RuntimeException thrown = assertThrows(
+            RuntimeException.class,
+            () -> courtPhotoService.setCourtPhoto(courtId, multipartFile)
+        );
+
+        assertThat(thrown).isSameAs(databaseException);
+        assertThat(thrown.getSuppressed()).containsExactly(compensationException);
+    }
+
+    @Test
+    void setCourtPhotoShouldNotSaveDatabaseRecordWhenBlobUploadFails() throws IOException {
+        UUID courtId = UUID.randomUUID();
+        RuntimeException uploadException = new RuntimeException("Azure failure");
+
+        when(courtService.getCourtById(courtId)).thenReturn(null);
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.empty());
+        when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class)))
+            .thenThrow(uploadException);
+        when(multipartFile.getInputStream())
+            .thenReturn(new ByteArrayInputStream(createImageBytes("jpg", 1, 1)));
+        when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
+
+        RuntimeException thrown = assertThrows(
+            RuntimeException.class,
+            () -> courtPhotoService.setCourtPhoto(courtId, multipartFile)
+        );
+
+        assertThat(thrown).isSameAs(uploadException);
+        verify(courtPhotoRepository, never()).save(any(CourtPhoto.class));
+    }
+
+    @Test
     void setCourtPhotoShouldUpdateExistingPhoto() throws IOException {
         UUID courtId = UUID.randomUUID();
         CourtPhoto existing = new CourtPhoto();
@@ -151,6 +226,36 @@ class CourtPhotoServiceTest {
         assertThat(result.getFileLink()).isEqualTo("new-link");
         assertThat(result.getUpdatedByUserId()).isEqualTo(USER_ID);
         verify(courtPhotoRepository).save(result);
+    }
+
+    @Test
+    void setCourtPhotoShouldRestorePreviousBlobWhenDatabaseSaveFails() throws IOException {
+        UUID courtId = UUID.randomUUID();
+        CourtPhoto existing = new CourtPhoto();
+        existing.setCourtId(courtId);
+        existing.setFileLink("old-link");
+        BlobBackup backup = new BlobBackup(new byte[]{1, 2, 3}, "image/jpeg");
+        RuntimeException databaseException = new RuntimeException("Database failure");
+
+        when(courtService.getCourtById(courtId)).thenReturn(null);
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(existing));
+        when(azureBlobService.backupBlob(courtId.toString())).thenReturn(backup);
+        when(azureBlobService.uploadFile(eq(courtId.toString()), any(MultipartFile.class)))
+            .thenReturn("new-link");
+        when(auditUserContext.requireUserId()).thenReturn(USER_ID);
+        when(courtPhotoRepository.save(any(CourtPhoto.class))).thenThrow(databaseException);
+        when(multipartFile.getInputStream())
+            .thenReturn(new ByteArrayInputStream(createImageBytes("jpg", 1, 1)));
+        when(photoConfigurationProperties.getMaxWidth()).thenReturn(640);
+
+        RuntimeException thrown = assertThrows(
+            RuntimeException.class,
+            () -> courtPhotoService.setCourtPhoto(courtId, multipartFile)
+        );
+
+        assertThat(thrown).isSameAs(databaseException);
+        verify(azureBlobService).restoreBlob(courtId.toString(), backup);
+        verify(azureBlobService, never()).deleteBlob(courtId.toString());
     }
 
     @Test
@@ -375,6 +480,54 @@ class CourtPhotoServiceTest {
 
         verify(azureBlobService).deleteBlob(courtId.toString());
         verify(courtPhotoRepository).deleteById(photoId);
+    }
+
+    @Test
+    void deleteCourtPhotoByCourtIdShouldRestoreBlobWhenDatabaseDeleteFails() {
+        UUID courtId = UUID.randomUUID();
+        UUID photoId = UUID.randomUUID();
+        CourtPhoto courtPhoto = new CourtPhoto();
+        courtPhoto.setId(photoId);
+        courtPhoto.setCourtId(courtId);
+        BlobBackup backup = new BlobBackup(new byte[]{1, 2, 3}, "image/jpeg");
+        RuntimeException databaseException = new RuntimeException("Database failure");
+
+        when(courtService.getCourtById(courtId)).thenReturn(null);
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(courtPhoto));
+        when(azureBlobService.backupBlob(courtId.toString())).thenReturn(backup);
+        org.mockito.Mockito.doThrow(databaseException).when(courtPhotoRepository).deleteById(photoId);
+
+        RuntimeException thrown = assertThrows(
+            RuntimeException.class,
+            () -> courtPhotoService.deleteCourtPhotoByCourtId(courtId)
+        );
+
+        assertThat(thrown).isSameAs(databaseException);
+        verify(azureBlobService).deleteBlob(courtId.toString());
+        verify(azureBlobService).restoreBlob(courtId.toString(), backup);
+    }
+
+    @Test
+    void deleteCourtPhotoByCourtIdShouldNotDeleteDatabaseRecordWhenBlobDeleteFails() {
+        UUID courtId = UUID.randomUUID();
+        UUID photoId = UUID.randomUUID();
+        CourtPhoto courtPhoto = new CourtPhoto();
+        courtPhoto.setId(photoId);
+        courtPhoto.setCourtId(courtId);
+        RuntimeException deleteException = new RuntimeException("Azure failure");
+
+        when(courtService.getCourtById(courtId)).thenReturn(null);
+        when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(courtPhoto));
+        org.mockito.Mockito.doThrow(deleteException).when(azureBlobService).deleteBlob(courtId.toString());
+
+        RuntimeException thrown = assertThrows(
+            RuntimeException.class,
+            () -> courtPhotoService.deleteCourtPhotoByCourtId(courtId)
+        );
+
+        assertThat(thrown).isSameAs(deleteException);
+        verify(courtPhotoRepository, never()).deleteById(photoId);
+        verify(azureBlobService, never()).restoreBlob(anyString(), any(BlobBackup.class));
     }
 
     @Test
