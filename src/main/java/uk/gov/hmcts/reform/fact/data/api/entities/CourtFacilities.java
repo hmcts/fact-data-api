@@ -3,6 +3,7 @@ package uk.gov.hmcts.reform.fact.data.api.entities;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.annotation.JsonView;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -11,10 +12,12 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -24,6 +27,7 @@ import lombok.NoArgsConstructor;
 
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditableCourtEntityListener;
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetailsView;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.FoodAndDrinkOptions;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional;
 
 @Data
@@ -59,21 +63,11 @@ public class CourtFacilities implements AuditableCourtEntity {
     @NotNull
     private Boolean parking;
 
-    @Schema(description = "Free water dispenser availability status")
+    @Embedded
+    @JsonUnwrapped
+    @Valid
     @NotNull
-    private Boolean freeWaterDispensers;
-
-    @Schema(description = "Snack vending machine availability status")
-    @NotNull
-    private Boolean snackVendingMachines;
-
-    @Schema(description = "Drink vending machine availability status")
-    @NotNull
-    private Boolean drinkVendingMachines;
-
-    @Schema(description = "Cafeteria availability status")
-    @NotNull
-    private Boolean cafeteria;
+    private FoodAndDrinkOptions foodAndDrink;
 
     @Schema(description = "Waiting area availability status")
     @NotNull
