@@ -9,6 +9,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtDxCode;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFacilities;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtFax;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.FoodAndDrinkOptions;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtAreasOfLawRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtCodesRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtDxCodeRepository;
@@ -130,14 +131,16 @@ class CourtLastUpdatedTimeTest {
             .courtId(courts.court.getId())
             .waitingArea(Boolean.TRUE)
             .waitingAreaChildren(Boolean.TRUE)
-            .snackVendingMachines(Boolean.TRUE)
-            .drinkVendingMachines(Boolean.TRUE)
+            .foodAndDrink(FoodAndDrinkOptions.builder()
+                              .snackVendingMachines(Boolean.TRUE)
+                              .drinkVendingMachines(Boolean.TRUE)
+                              .freeWaterDispensers(Boolean.TRUE)
+                              .cafeteria(Boolean.TRUE)
+                              .build())
             .wifi(Boolean.TRUE)
             .parking(Boolean.TRUE)
             .babyChanging(Boolean.TRUE)
             .quietRoom(Boolean.TRUE)
-            .freeWaterDispensers(Boolean.TRUE)
-            .cafeteria(Boolean.TRUE)
             .build();
         facitilites = courtFacilitiesRepository.save(facitilites);
         CourtAreasOfLaw areasOfLaw = CourtAreasOfLaw.builder().courtId(courts.court.getId()).build();
