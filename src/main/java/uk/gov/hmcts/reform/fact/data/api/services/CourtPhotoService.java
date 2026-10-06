@@ -6,6 +6,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtPhoto;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.models.InMemoryMultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
+import uk.gov.hmcts.reform.fact.data.api.services.AzureBlobService.BlobBackup;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -76,15 +77,30 @@ public class CourtPhotoService {
         courtService.getCourtById(courtId);
 
         MultipartFile resizedFile = resizeIfNeeded(file);
+        String blobName = courtId.toString();
 
-        CourtPhoto courtPhoto = courtPhotoRepository.findCourtPhotoByCourtId(courtId)
-            .orElse(new CourtPhoto());
+        Optional<CourtPhoto> existingPhoto = courtPhotoRepository.findCourtPhotoByCourtId(courtId);
+        Optional<BlobBackup> previousBlob = existingPhoto.map(photo -> azureBlobService.backupBlob(blobName));
+        CourtPhoto courtPhoto = existingPhoto.orElse(new CourtPhoto());
 
         courtPhoto.setCourtId(courtId);
-        courtPhoto.setFileLink(azureBlobService.uploadFile(courtId.toString(), resizedFile));
-        courtPhoto.setUpdatedByUserId(auditUserContext.requireUserId());
+        courtPhoto.setFileLink(azureBlobService.uploadFile(blobName, resizedFile));
 
-        return courtPhotoRepository.save(courtPhoto);
+        try {
+            courtPhoto.setUpdatedByUserId(auditUserContext.requireUserId());
+            return courtPhotoRepository.save(courtPhoto);
+        } catch (RuntimeException databaseException) {
+            compensateForFailure(
+                courtId,
+                databaseException,
+                () -> previousBlob.ifPresentOrElse(
+                    backup -> azureBlobService.restoreBlob(blobName, backup),
+                    () -> azureBlobService.deleteBlob(blobName)
+                )
+            );
+
+            throw databaseException;
+        }
     }
 
     /**
@@ -101,9 +117,43 @@ public class CourtPhotoService {
             "courtId=" + courtId
         ));
         CourtPhoto courtPhoto = getCourtPhotoByCourtId(courtId);
+        String blobName = courtPhoto.getCourtId().toString();
+        BlobBackup deletedBlob = azureBlobService.backupBlob(blobName);
 
-        azureBlobService.deleteBlob(courtPhoto.getCourtId().toString());
-        courtPhotoRepository.deleteById(courtPhoto.getId());
+        azureBlobService.deleteBlob(blobName);
+        try {
+            courtPhotoRepository.deleteById(courtPhoto.getId());
+        } catch (RuntimeException databaseException) {
+            compensateForFailure(
+                courtId,
+                databaseException,
+                () -> azureBlobService.restoreBlob(blobName, deletedBlob)
+            );
+
+            throw databaseException;
+        }
+    }
+
+    /**
+     * Compensate for an Azure blob change when the subsequent database operation fails.
+     * Azure Blob Storage cannot participate in the database transaction, so the blob change must be reversed
+     * explicitly to keep the two data stores consistent. The database exception remains the primary failure;
+     * if compensation also fails, that exception is attached as suppressed and logged for reconciliation.
+     *
+     * @param courtId The court whose photo operation failed.
+     * @param databaseException The database failure that triggered compensation.
+     * @param compensation The action that reverses the completed blob operation.
+     */
+    private void compensateForFailure(UUID courtId, RuntimeException databaseException, Runnable compensation) {
+        try {
+            compensation.run();
+        } catch (RuntimeException compensationException) {
+            databaseException.addSuppressed(compensationException);
+            log.error(writeLog(
+                "Failed to compensate photo operation after database failure",
+                "courtId=" + courtId
+            ), compensationException);
+        }
     }
 
     /**
