@@ -52,7 +52,25 @@ The Gradle wrapper and Java 21 toolchain run inside the container. PostgreSQL an
 ./gradlew bootRun
 ```
 
-GitHub Copilot is available both as the IntelliJ plugin and as the `copilot` terminal command. Run `copilot` and use `/login` when prompted to authenticate the CLI.
+GitHub Copilot is available both as the IntelliJ plugin and as the `copilot` terminal command. The dev container's `/home/vscode` directory is held in the local, project-scoped `devcontainer-home` Docker volume. This keeps GitHub CLI, Copilot CLI, and JetBrains backend sign-ins when IntelliJ recreates the container; credentials are not in the repository or mounted from the host. Sign in once from the JetBrains Client and run `copilot` then `/login` when prompted for CLI access.
+
+The development container read-only mounts the host's `~/.gitconfig`, so Git identity, aliases, and signing settings remain consistent with macOS. The container cannot modify this file. This mount does not include the host GPG private key, so GPG signing settings in the host configuration require separate container GPG-key setup before commits can be signed.
+
+The repository remote uses SSH (`git@github.com:hmcts/fact-data-api.git`). Docker Desktop forwards the macOS SSH agent to the development container, so the private key remains on the host. Load the GitHub-authorized key into the macOS agent before opening the container, then verify forwarding in the container terminal:
+
+```bash
+ssh-add -l
+ssh -T git@github.com
+git fetch
+```
+
+To deliberately remove the saved container credentials and settings, stop the dev container and remove only its home volume:
+
+```bash
+docker volume rm devcontainer_devcontainer-home
+```
+
+Docker Compose prefixes this volume with the Dev Container project name (`devcontainer` by default); confirm the exact name first with `docker volume ls` if IntelliJ uses a different project name.
 
 The ignored `.env` file is loaded into the development container. Its Docker storage connection is mapped to `AZURE_STORAGE_CONNECTION_STRING` inside the IntelliJ backend, while the host-run connection remains available for development outside the container. Only use Terraform locally for formatting:
 
