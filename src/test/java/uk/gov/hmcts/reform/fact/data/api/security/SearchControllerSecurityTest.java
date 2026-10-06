@@ -33,7 +33,8 @@ class SearchControllerSecurityTest {
         ))
             .get(PreAuthorize.class)
             .getString("value"))
-            .isEqualTo("@authService.canView() || @authService.isPrl() || @authService.isC100() || @authService.isCmc()");
+            .isEqualTo(
+                "@authService.canView() || @authService.isPrl() || @authService.isC100() || @authService.isCmc()");
     }
 
     @Test
@@ -49,7 +50,8 @@ class SearchControllerSecurityTest {
         assertThat(MergedAnnotations.from(CourtController.class.getMethod("getCourtDetailsBySlug", String.class))
             .get(PreAuthorize.class)
             .getString("value"))
-            .isEqualTo("@authService.canView() || @authService.isPrl() || @authService.isC100() || @authService.isCmc()");
+            .isEqualTo(
+                "@authService.canView() || @authService.isPrl() || @authService.isC100() || @authService.isCmc()");
     }
 
     @Test
