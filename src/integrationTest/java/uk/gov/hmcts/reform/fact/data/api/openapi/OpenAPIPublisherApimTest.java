@@ -59,7 +59,7 @@ class OpenAPIPublisherApimTest {
             "Generated OpenAPI spec should not contain paths without operations"
         );
         assertTrue(paths.has("/courts/name/v1"), "APIM spec should include court lookup by name");
-        assertTrue(paths.has("/search/locations/v1/postcode"), "APIM spec should include location postcode search");
+        assertTrue(paths.has("/search/courts/v1/postcode"), "APIM spec should include court postcode search");
 
         try (OutputStream outputStream = Files.newOutputStream(Paths.get("/tmp/openapi-specs.json"))) {
             outputStream.write(specs);

@@ -6,7 +6,6 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtContactDetailsControll
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController;
 import uk.gov.hmcts.reform.fact.data.api.controllers.search.SearchAddressController;
 import uk.gov.hmcts.reform.fact.data.api.controllers.search.SearchCourtController;
-import uk.gov.hmcts.reform.fact.data.api.controllers.search.SearchLocationController;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 
 import org.junit.jupiter.api.Test;
@@ -24,7 +23,7 @@ class SearchControllerSecurityTest {
     }
 
     @Test
-    void postcodeSearchAllowsPrlAndC100ViaMethodSecurity() throws NoSuchMethodException {
+    void postcodeSearchAllowsPrlC100AndCmcViaMethodSecurity() throws NoSuchMethodException {
         assertThat(MergedAnnotations.from(SearchCourtController.class.getMethod(
             "getCourtsByPostcode",
             String.class,
@@ -34,7 +33,7 @@ class SearchControllerSecurityTest {
         ))
             .get(PreAuthorize.class)
             .getString("value"))
-            .isEqualTo("@authService.canView() || @authService.isPrl() || @authService.isC100()");
+            .isEqualTo("@authService.canView() || @authService.isPrl() || @authService.isC100() || @authService.isCmc()");
     }
 
     @Test
@@ -59,20 +58,6 @@ class SearchControllerSecurityTest {
             .get(PreAuthorize.class)
             .getString("value"))
             .isEqualTo("@authService.isAdmin() || @authService.isCmc()");
-    }
-
-    @Test
-    void locationPostcodeSearchAllowsViewerAndCmcViaMethodSecurity() throws NoSuchMethodException {
-        assertThat(MergedAnnotations.from(SearchLocationController.class.getMethod(
-            "getLocationsByPostcode",
-            String.class,
-            String.class,
-            SearchAction.class,
-            Integer.class
-        ))
-            .get(PreAuthorize.class)
-            .getString("value"))
-            .isEqualTo("@authService.canView() || @authService.isCmc()");
     }
 
     @Test
