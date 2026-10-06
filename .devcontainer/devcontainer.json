@@ -8,6 +8,9 @@
   "remoteEnv": {
     "AZURE_STORAGE_CONNECTION_STRING": "${containerEnv:DOCKER_AZURE_STORAGE_CONNECTION_STRING}"
   },
+  "mounts": [
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,readonly"
+  ],
   "features": {
     "ghcr.io/devcontainers/features/java:1": {
       "version": "21"
