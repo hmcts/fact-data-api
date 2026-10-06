@@ -128,10 +128,11 @@ public final class CourtPhotoControllerFunctionalTest {
 
         final File replacementImage = new File(
             "src/functionalTest/resources/test-images/test valid png 1.4 MB.png");
-        final Response replacementUploadResponse = http.doMultipartPost(
+        final Response replacementUploadResponse = http.doMultipartPostWithContentType(
             "/courts/" + courtId + "/v1/photo",
             "file",
-            replacementImage
+            replacementImage,
+            "image/png"
         );
         assertThat(replacementUploadResponse.statusCode()).isEqualTo(CREATED.value());
         final CourtPhoto replacementPhoto = mapper.readValue(
@@ -191,7 +192,7 @@ public final class CourtPhotoControllerFunctionalTest {
 
         final File invalidFile = new File(
             "src/functionalTest/resources/test-images/test invalid format file.txt");
-        final Response uploadResponse = http.doSpoofMultipartPost(
+        final Response uploadResponse = http.doMultipartPostWithContentType(
             "/courts/" + courtId + "/v1/photo",
             "file",
             invalidFile,
