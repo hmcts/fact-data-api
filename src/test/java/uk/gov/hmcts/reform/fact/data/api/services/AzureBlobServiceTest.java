@@ -24,8 +24,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -100,25 +99,26 @@ class AzureBlobServiceTest {
     @Test
     void backupBlobShouldCaptureContentAndContentType() {
         byte[] content = "original image".getBytes(StandardCharsets.UTF_8);
-        BlobProperties properties = org.mockito.Mockito.mock(BlobProperties.class);
+        BlobProperties properties = mock(BlobProperties.class);
         when(blobClient.downloadContent()).thenReturn(BinaryData.fromBytes(content));
         when(blobClient.getProperties()).thenReturn(properties);
         when(properties.getContentType()).thenReturn(CONTENT_TYPE);
 
         BlobBackup result = azureBlobService.backupBlob(IMAGE_ID);
 
-        assertThat(result.content()).isEqualTo(content);
+        assertThat(result.content().toBytes()).isEqualTo(content);
         assertThat(result.contentType()).isEqualTo(CONTENT_TYPE);
     }
 
     @Test
     void restoreBlobShouldUploadBackupAndRestoreContentType() {
         byte[] content = "original image".getBytes(StandardCharsets.UTF_8);
-        BlobBackup backup = new BlobBackup(content, CONTENT_TYPE);
+        BinaryData binaryData = BinaryData.fromBytes(content);
+        BlobBackup backup = new BlobBackup(binaryData, CONTENT_TYPE);
 
         azureBlobService.restoreBlob(IMAGE_ID, backup);
 
-        verify(blobClient).upload(any(InputStream.class), eq((long) content.length), eq(true));
+        verify(blobClient).upload(binaryData, true);
         ArgumentCaptor<BlobHttpHeaders> headersCaptor = ArgumentCaptor.forClass(BlobHttpHeaders.class);
         verify(blobClient).setHttpHeaders(headersCaptor.capture());
         assertThat(headersCaptor.getValue().getContentType()).isEqualTo(CONTENT_TYPE);

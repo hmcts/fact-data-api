@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import com.azure.core.util.BinaryData;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
@@ -8,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.AzureUploadException;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
@@ -17,7 +17,7 @@ import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 @RequiredArgsConstructor
 public class AzureBlobService {
 
-    public record BlobBackup(byte[] content, String contentType) {}
+    public record BlobBackup(BinaryData content, String contentType) {}
 
     private final BlobContainerClient blobContainerClient;
 
@@ -77,7 +77,7 @@ public class AzureBlobService {
         BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
 
         return new BlobBackup(
-            blobClient.downloadContent().toBytes(),
+            blobClient.downloadContent(),
             blobClient.getProperties().getContentType()
         );
     }
@@ -90,9 +90,8 @@ public class AzureBlobService {
      */
     public void restoreBlob(String blobName, BlobBackup backup) {
         BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
-        byte[] content = backup.content();
 
-        blobClient.upload(new ByteArrayInputStream(content), content.length, true);
+        blobClient.upload(backup.content(), true);
         blobClient.setHttpHeaders(new BlobHttpHeaders().setContentType(backup.contentType()));
     }
 

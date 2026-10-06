@@ -5,6 +5,7 @@ import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobStorageException;
 import com.azure.storage.blob.models.BlobProperties;
 import com.azure.storage.blob.specialized.BlobInputStream;
+import com.azure.core.util.BinaryData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.mock;
@@ -167,7 +169,7 @@ class CourtPhotoServiceTest {
             .thenReturn("uploaded-file-link");
         when(auditUserContext.requireUserId()).thenReturn(USER_ID);
         when(courtPhotoRepository.save(any(CourtPhoto.class))).thenThrow(databaseException);
-        org.mockito.Mockito.doThrow(compensationException)
+        doThrow(compensationException)
             .when(azureBlobService).deleteBlob(courtId.toString());
         when(multipartFile.getInputStream())
             .thenReturn(new ByteArrayInputStream(createImageBytes("jpg", 1, 1)));
@@ -234,7 +236,7 @@ class CourtPhotoServiceTest {
         CourtPhoto existing = new CourtPhoto();
         existing.setCourtId(courtId);
         existing.setFileLink("old-link");
-        BlobBackup backup = new BlobBackup(new byte[]{1, 2, 3}, "image/jpeg");
+        BlobBackup backup = new BlobBackup(BinaryData.fromBytes(new byte[]{1, 2, 3}), "image/jpeg");
         RuntimeException databaseException = new RuntimeException("Database failure");
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
@@ -489,13 +491,13 @@ class CourtPhotoServiceTest {
         CourtPhoto courtPhoto = new CourtPhoto();
         courtPhoto.setId(photoId);
         courtPhoto.setCourtId(courtId);
-        BlobBackup backup = new BlobBackup(new byte[]{1, 2, 3}, "image/jpeg");
+        BlobBackup backup = new BlobBackup(BinaryData.fromBytes(new byte[]{1, 2, 3}), "image/jpeg");
         RuntimeException databaseException = new RuntimeException("Database failure");
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
         when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(courtPhoto));
         when(azureBlobService.backupBlob(courtId.toString())).thenReturn(backup);
-        org.mockito.Mockito.doThrow(databaseException).when(courtPhotoRepository).deleteById(photoId);
+        doThrow(databaseException).when(courtPhotoRepository).deleteById(photoId);
 
         RuntimeException thrown = assertThrows(
             RuntimeException.class,
@@ -518,7 +520,7 @@ class CourtPhotoServiceTest {
 
         when(courtService.getCourtById(courtId)).thenReturn(null);
         when(courtPhotoRepository.findCourtPhotoByCourtId(courtId)).thenReturn(Optional.of(courtPhoto));
-        org.mockito.Mockito.doThrow(deleteException).when(azureBlobService).deleteBlob(courtId.toString());
+        doThrow(deleteException).when(azureBlobService).deleteBlob(courtId.toString());
 
         RuntimeException thrown = assertThrows(
             RuntimeException.class,
