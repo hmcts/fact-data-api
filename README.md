@@ -206,6 +206,12 @@ export FLYWAY_PASSWORD=fact
 ./gradlew flywayMigrate
 ```
 
+### Requirements for public frontend after migration changes
+
+When a new migration is applied, the public frontend deployment may need to be restarted to pick up the new changes. This is because the frontend deployment may have cached data or schema information that is no longer valid after the migration.
+
+**If required**, this should be done in a controlled manner that ensures continuous service.
+
 ## Contribution workflow (team)
 
 - Branch from `master`.
