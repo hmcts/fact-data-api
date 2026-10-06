@@ -302,8 +302,8 @@ public final class HttpClient {
             .thenReturn();
     }
 
-    public Response doSpoofMultipartPost(final String path, final String fileParamName, final File file,
-                                    final String contentType) {
+    public Response doMultipartPostWithContentType(final String path, final String fileParamName, final File file,
+                                                   final String contentType) {
         return doMultipartPost(path, fileParamName, file, contentType, getAdminBearerToken());
     }
 

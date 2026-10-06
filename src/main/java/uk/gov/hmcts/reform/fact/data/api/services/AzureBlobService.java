@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import com.azure.core.util.BinaryData;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
@@ -15,6 +16,8 @@ import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 @Slf4j
 @RequiredArgsConstructor
 public class AzureBlobService {
+
+    public record BlobBackup(BinaryData content, String contentType) {}
 
     private final BlobContainerClient blobContainerClient;
 
@@ -63,4 +66,33 @@ public class AzureBlobService {
 
         blobClient.delete();
     }
+
+    /**
+     * Capture the contents needed to restore a blob after an overwritten upload fails.
+     *
+     * @param blobName The name of the blob to back up.
+     * @return The blob content and content type.
+     */
+    public BlobBackup backupBlob(String blobName) {
+        BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
+
+        return new BlobBackup(
+            blobClient.downloadContent(),
+            blobClient.getProperties().getContentType()
+        );
+    }
+
+    /**
+     * Restore a blob from an in-memory backup.
+     *
+     * @param blobName The name of the blob to restore.
+     * @param backup The content to restore.
+     */
+    public void restoreBlob(String blobName, BlobBackup backup) {
+        BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
+
+        blobClient.upload(backup.content(), true);
+        blobClient.setHttpHeaders(new BlobHttpHeaders().setContentType(backup.contentType()));
+    }
+
 }
