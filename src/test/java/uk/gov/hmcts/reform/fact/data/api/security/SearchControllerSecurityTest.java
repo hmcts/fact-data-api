@@ -23,7 +23,7 @@ class SearchControllerSecurityTest {
     }
 
     @Test
-    void postcodeSearchAllowsPrlAndC100ViaMethodSecurity() throws NoSuchMethodException {
+    void postcodeSearchAllowsPrlC100AndCmcViaMethodSecurity() throws NoSuchMethodException {
         assertThat(MergedAnnotations.from(SearchCourtController.class.getMethod(
             "getCourtsByPostcode",
             String.class,
@@ -33,7 +33,8 @@ class SearchControllerSecurityTest {
         ))
             .get(PreAuthorize.class)
             .getString("value"))
-            .isEqualTo("@authService.canView() || @authService.isPrl() || @authService.isC100()");
+            .isEqualTo(
+                "@authService.canView() || @authService.isPrl() || @authService.isC100() || @authService.isCmc()");
     }
 
     @Test
@@ -45,11 +46,20 @@ class SearchControllerSecurityTest {
     }
 
     @Test
-    void courtDetailsBySlugAllowsPrlAndC100ViaMethodSecurity() throws NoSuchMethodException {
+    void courtDetailsBySlugAllowsPrlC100AndCmcViaMethodSecurity() throws NoSuchMethodException {
         assertThat(MergedAnnotations.from(CourtController.class.getMethod("getCourtDetailsBySlug", String.class))
             .get(PreAuthorize.class)
             .getString("value"))
-            .isEqualTo("@authService.canView() || @authService.isPrl() || @authService.isC100()");
+            .isEqualTo(
+                "@authService.canView() || @authService.isPrl() || @authService.isC100() || @authService.isCmc()");
+    }
+
+    @Test
+    void courtByNameAllowsAdminAndCmcViaMethodSecurity() throws NoSuchMethodException {
+        assertThat(MergedAnnotations.from(CourtController.class.getMethod("getCourtByName", String.class))
+            .get(PreAuthorize.class)
+            .getString("value"))
+            .isEqualTo("@authService.isAdmin() || @authService.isCmc()");
     }
 
     @Test

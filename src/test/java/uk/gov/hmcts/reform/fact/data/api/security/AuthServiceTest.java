@@ -177,6 +177,28 @@ class AuthServiceTest {
     }
 
     @Test
+    void isCmcReturnsTrueWhenCmcRoleIsPresent() {
+        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(
+            "test",
+            "test",
+            AuthService.PREFIX + AuthService.ROLE_CMC
+        ));
+
+        assertThat(authService.isCmc()).isTrue();
+    }
+
+    @Test
+    void isCmcReturnsFalseWhenCmcRoleIsNotPresent() {
+        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(
+            "test",
+            "test",
+            AuthService.PREFIX + AuthService.ROLE_VIEWER
+        ));
+
+        assertThat(authService.isCmc()).isFalse();
+    }
+
+    @Test
     void isAdminRequiresUserIdHeaderForRequest() {
         setAdminAuthentication();
         setRequest("POST", "/courts/v1", null);
