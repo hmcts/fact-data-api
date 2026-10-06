@@ -89,6 +89,8 @@ public class CourtController {
     }
 
     @GetMapping(value = "/name/v1")
+    @PreAuthorize("@authService.isAdmin() || @authService.isCmc()")
+    @Tag(name = "apim")
     @Operation(
         summary = "Get court entity by exact name",
         description = "Fetch the court entity for a given exact court name."
@@ -98,7 +100,6 @@ public class CourtController {
         @ApiResponse(responseCode = "400", description = "Invalid court name supplied"),
         @ApiResponse(responseCode = "404", description = "Court not found")
     })
-    @PreAuthorize("@authService.isAdmin()")
     public ResponseEntity<Court> getCourtByName(
         @Parameter(description = "Exact name of the court", required = true)
         @NotBlank(message = "name must not be blank")
@@ -108,7 +109,7 @@ public class CourtController {
     }
 
     @GetMapping(value = {"/slug/{courtSlug}/v1", "/slug/{courtSlug}.json"})
-    @PreAuthorize("@authService.canView() || @authService.isPrl() || @authService.isC100()")
+    @PreAuthorize("@authService.canView() || @authService.isPrl() || @authService.isC100() || @authService.isCmc()")
     @Tag(name = "apim")
     @JsonView(CourtDetailsView.class)
     @Operation(
