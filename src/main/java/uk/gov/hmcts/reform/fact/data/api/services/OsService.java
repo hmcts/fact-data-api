@@ -444,6 +444,10 @@ public class OsService {
      * @return the formatted postcode; outward plus first number of inward
      */
     private String validateAndFormatPostcode(String postcode) {
+        if (postcode == null) {
+            throw new InvalidPostcodeException("Postcode cannot be null");
+        }
+
         Matcher m = POSTCODE_PATTERN.matcher(postcode.toUpperCase());
         if (!m.matches()) {
             throw new InvalidPostcodeException("Invalid postcode format: %s".formatted(postcode));
