@@ -6,6 +6,7 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtContactDetailsControll
 import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController;
 import uk.gov.hmcts.reform.fact.data.api.controllers.search.SearchAddressController;
 import uk.gov.hmcts.reform.fact.data.api.controllers.search.SearchCourtController;
+import uk.gov.hmcts.reform.fact.data.api.controllers.search.SearchLocationController;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 
 import org.junit.jupiter.api.Test;
@@ -45,11 +46,33 @@ class SearchControllerSecurityTest {
     }
 
     @Test
-    void courtDetailsBySlugAllowsPrlAndC100ViaMethodSecurity() throws NoSuchMethodException {
+    void courtDetailsBySlugAllowsPrlC100AndCmcViaMethodSecurity() throws NoSuchMethodException {
         assertThat(MergedAnnotations.from(CourtController.class.getMethod("getCourtDetailsBySlug", String.class))
             .get(PreAuthorize.class)
             .getString("value"))
-            .isEqualTo("@authService.canView() || @authService.isPrl() || @authService.isC100()");
+            .isEqualTo("@authService.canView() || @authService.isPrl() || @authService.isC100() || @authService.isCmc()");
+    }
+
+    @Test
+    void courtByNameAllowsAdminAndCmcViaMethodSecurity() throws NoSuchMethodException {
+        assertThat(MergedAnnotations.from(CourtController.class.getMethod("getCourtByName", String.class))
+            .get(PreAuthorize.class)
+            .getString("value"))
+            .isEqualTo("@authService.isAdmin() || @authService.isCmc()");
+    }
+
+    @Test
+    void locationPostcodeSearchAllowsViewerAndCmcViaMethodSecurity() throws NoSuchMethodException {
+        assertThat(MergedAnnotations.from(SearchLocationController.class.getMethod(
+            "getLocationsByPostcode",
+            String.class,
+            String.class,
+            SearchAction.class,
+            Integer.class
+        ))
+            .get(PreAuthorize.class)
+            .getString("value"))
+            .isEqualTo("@authService.canView() || @authService.isCmc()");
     }
 
     @Test
