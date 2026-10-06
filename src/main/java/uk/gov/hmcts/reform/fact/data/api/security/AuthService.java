@@ -12,13 +12,13 @@ import java.util.UUID;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.AuthConfigurationProperties;
 
 @Service("authService")
 @RequiredArgsConstructor
@@ -34,15 +34,7 @@ public class AuthService {
     static final String ROLE_CMC = "Role.Fact.Cmc";
     private static final char URI_PATH_DELIMITER = '/';
 
-    @Value("${auth.user-header-bypass.post-endpoints:/courts/v1/link,/user/v1,/csv}")
-    private String postEndpointsWithoutUserHeaderConfig = "/courts/v1/link,/user/v1,/csv";
-
-    @Value("${auth.user-header-bypass.delete-endpoints:/user/v1/retention,/audits/v1}")
-    private String deleteEndpointsWithoutUserHeaderConfig = "/user/v1/retention,/audits/v1";
-
-    @Value("${auth.user-header-bypass.put-prefix:/courts/v1/link}")
-    private String putEndpointWithoutUserHeaderPrefix = "/courts/v1/link";
-
+    private final AuthConfigurationProperties authConfigurationProperties;
     private final ObjectProvider<AuditUserContext> auditUserContextProvider;
     private final ObjectProvider<UserRepository> userRepositoryProvider;
 
@@ -149,9 +141,11 @@ public class AuthService {
     private boolean isAdminEndpointWithoutUserHeader(HttpServletRequest request) {
         String method = request.getMethod();
         String requestUri = trimTrailingPathDelimiter(request.getRequestURI());
-        Set<String> postEndpointsWithoutUserHeader = parseConfiguredPaths(postEndpointsWithoutUserHeaderConfig);
-        Set<String> deleteEndpointsWithoutUserHeader = parseConfiguredPaths(deleteEndpointsWithoutUserHeaderConfig);
-        String putEndpointPrefix = trimTrailingPathDelimiter(putEndpointWithoutUserHeaderPrefix);
+        AuthConfigurationProperties.UserHeaderBypass userHeaderBypass =
+            authConfigurationProperties.getUserHeaderBypass();
+        Set<String> postEndpointsWithoutUserHeader = parseConfiguredPaths(userHeaderBypass.getPostEndpoints());
+        Set<String> deleteEndpointsWithoutUserHeader = parseConfiguredPaths(userHeaderBypass.getDeleteEndpoints());
+        String putEndpointPrefix = trimTrailingPathDelimiter(userHeaderBypass.getPutPrefix());
         if (requestUri == null) {
             return false;
         }

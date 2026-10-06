@@ -6,6 +6,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.OsConfigurationProperties;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +19,10 @@ class CacheConfigurationTest {
 
     @Test
     void shouldCreateCaffeineCacheManagerWithOsDataCacheRegistered() {
-        CacheConfiguration configuration = new CacheConfiguration(25, Duration.ofMinutes(5).toMillis());
+        OsConfigurationProperties osConfigurationProperties = new OsConfigurationProperties();
+        osConfigurationProperties.getCache().setMaximumSize(25);
+        osConfigurationProperties.getCache().setTimeToLiveMillis(Duration.ofMinutes(5).toMillis());
+        CacheConfiguration configuration = new CacheConfiguration(osConfigurationProperties);
 
         CacheManager cacheManager = configuration.cacheManager();
 

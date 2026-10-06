@@ -2,13 +2,13 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.UserConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
 import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatus;
@@ -47,9 +47,7 @@ public class UserService {
     private static final String SORT_ORDER_ASC = "asc";
     private static final String SORT_ORDER_DESC = "desc";
 
-    @Value("${user.retention-period}")
-    private long retentionPeriod;
-
+    private final UserConfigurationProperties userConfigurationProperties;
     private final UserRepository userRepository;
     private final CourtRepository courtRepository;
     private final ServiceCentreRepository serviceCentreRepository;
@@ -174,7 +172,8 @@ public class UserService {
      */
     @Transactional
     public int deleteInactiveUsers() {
-        final ZonedDateTime cutoffDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(retentionPeriod);
+        final ZonedDateTime cutoffDate = ZonedDateTime.now(ZoneOffset.UTC)
+            .minusDays(userConfigurationProperties.getRetentionPeriod());
         List<User> inactiveUsers = userRepository.deleteAllByLastLoginBefore(cutoffDate);
         log.debug(writeLog(
             "Deleted inactive users before cutoff date",
