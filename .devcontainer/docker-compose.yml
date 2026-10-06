@@ -1,12 +1,26 @@
 services:
   devcontainer:
-    image: mcr.microsoft.com/devcontainers/base:bookworm
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: sleep infinity
     volumes:
       - ..:/workspaces/fact-data-api:cached
+      # Retains user-scoped GitHub CLI, Copilot CLI, and JetBrains backend settings
+      # when IntelliJ recreates the dev container. No credentials are stored in Git.
+      - devcontainer-home:/home/vscode
+      # Docker Desktop's host SSH agent; private SSH keys remain on macOS.
+      - /run/host-services/ssh-auth.sock:/ssh-agent
     env_file:
       - ../.env
     environment:
+      SSH_AUTH_SOCK: /ssh-agent
+      # Override the read-only host Git config inside this container only.
+      GIT_CONFIG_COUNT: "2"
+      GIT_CONFIG_KEY_0: commit.gpgsign
+      GIT_CONFIG_VALUE_0: "false"
+      GIT_CONFIG_KEY_1: tag.gpgsign
+      GIT_CONFIG_VALUE_1: "false"
       DB_HOST: fact-database
       DB_PORT: 5432
       DB_NAME: fact
@@ -68,5 +82,6 @@ services:
         exit 1
 
 volumes:
+  devcontainer-home:
   db-data:
   azurite-data:
