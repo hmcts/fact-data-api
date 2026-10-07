@@ -1,5 +1,5 @@
-# Local diagnostics. Activate the dev profile; connection settings come from the
-# existing .env/run configuration and application.yaml. See README.md for usage.
+# Local diagnostics. Activate with --spring.profiles.active=dev or the IDE
+# Active profiles setting. Uses the existing .env/run configuration and application.yaml.
 spring:
   jpa:
     # Log SQL through org.hibernate.SQL only, avoiding duplicate console output.
