@@ -49,7 +49,7 @@ The Gradle wrapper and Java 21 toolchain run inside the container. PostgreSQL an
 ```bash
 ./gradlew test
 ./gradlew integration
-./gradlew bootRun
+./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
 GitHub Copilot is available both as the IntelliJ plugin and as the `copilot` terminal command. The dev container's `/home/vscode` directory is held in the local, project-scoped `devcontainer-home` Docker volume. This keeps GitHub CLI, Copilot CLI, and JetBrains backend sign-ins when IntelliJ recreates the container; credentials are not in the repository or mounted from the host. Sign in once from the JetBrains Client and run `copilot` then `/login` when prompted for CLI access.
@@ -128,7 +128,7 @@ docker compose up -d fact-database fact-storage fact-storage-init
 set -a
 source .env
 set +a
-./gradlew bootRun
+./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
 4. Check service health:
@@ -155,7 +155,29 @@ It expects `DOCKER_AZURE_STORAGE_CONNECTION_STRING` and `AZURITE_ACCOUNTS` in `.
 1. Open the project.
 2. Ensure env vars from `.env` are applied to the run configuration.
 3. Start `fact-database`, `fact-storage`, and `fact-storage-init` with Docker as shown above.
-4. Run `uk.gov.hmcts.reform.fact.data.api.Application`.
+4. Set **Active profiles** to `dev`, then run `uk.gov.hmcts.reform.fact.data.api.Application`.
+
+## Local developer diagnostics
+
+The `dev` profile uses the existing `.env` values loaded by your shell or IDE. It adds
+readable JSON, application/request debug logs, SQL logging, outgoing Feign request
+summaries, and Swagger request timings. Queries taking more than 250 ms are logged;
+connections held for more than 60 seconds produce a warning with their checkout stack.
+Set `spring.datasource.hikari.leak-detection-threshold` to `0` when debugger pauses
+make those warnings distracting.
+
+Health stays at `/health`, `/health/liveness`, and `/health/readiness`. The other
+diagnostic endpoints require a valid Azure AD bearer token:
+
+| Endpoint | Use |
+| --- | --- |
+| `/loggers` | Inspect or change log levels without restarting |
+| `/mappings` | Check registered controller routes |
+| `/metrics` | Inspect JVM, HTTP, and connection-pool measurements |
+| `/env`, `/configprops` | Inspect configuration with values masked |
+| `/flyway` | Check applied database migrations |
+| `/caches` | Inspect caches; authenticated DELETE requests can clear them |
+| `/info` | Inspect runtime information |
 
 ## Authentication and API usage notes
 
