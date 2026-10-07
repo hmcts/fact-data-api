@@ -20,7 +20,7 @@ spring:
 user:
   retention-period: 365
 
-courtLock:
+court-lock:
   timeout-minutes: 60
 
 os:

@@ -23,9 +23,9 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.AuthConfigurationProperties;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +46,7 @@ class AuthServiceTest {
     private ObjectProvider<UserRepository> userRepositoryObjectProvider;
 
     AuthService authService;
+    private AuthConfigurationProperties authConfigurationProperties;
 
     @BeforeEach
     void setUp() {
@@ -54,7 +55,9 @@ class AuthServiceTest {
         lenient().when(auditUserContextObjectProvider.getObject()).thenReturn(auditUserContext);
         lenient().when(auditUserContextObjectProvider.getIfAvailable()).thenReturn(auditUserContext);
         lenient().when(userRepositoryObjectProvider.getObject()).thenReturn(userRepository);
-        authService = new AuthService(auditUserContextObjectProvider, userRepositoryObjectProvider);
+        authConfigurationProperties = new AuthConfigurationProperties();
+        authService = new AuthService(
+            authConfigurationProperties, auditUserContextObjectProvider, userRepositoryObjectProvider);
     }
 
     @Test
@@ -304,7 +307,7 @@ class AuthServiceTest {
     @Test
     void isAdminRequiresUserIdHeaderWhenPutBypassPrefixConfigIsNull() {
         setAdminAuthentication();
-        ReflectionTestUtils.setField(authService, "putEndpointWithoutUserHeaderPrefix", null);
+        authConfigurationProperties.getUserHeaderBypass().setPutPrefix(null);
         setRequest("PUT", "/courts/v1/link/MRD123", null);
 
         assertThatThrownBy(() -> authService.isAdmin())
@@ -358,7 +361,7 @@ class AuthServiceTest {
     @Test
     void isAdminSuppressesAuditWhenBypassConfigContainsBlankEntries() {
         setAdminAuthentication();
-        ReflectionTestUtils.setField(authService, "postEndpointsWithoutUserHeaderConfig", " , /user/v1 , ,, ");
+        authConfigurationProperties.getUserHeaderBypass().setPostEndpoints(" , /user/v1 , ,, ");
         setRequest("POST", "/user/v1/", null);
 
         assertThat(authService.isAdmin()).isTrue();

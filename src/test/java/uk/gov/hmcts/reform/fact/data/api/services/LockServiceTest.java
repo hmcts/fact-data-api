@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.CourtLockConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.User;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
@@ -84,7 +85,9 @@ class LockServiceTest {
         serviceCentre.setName("Test Service Centre");
 
         // needed for deleteExpiredLocks test
-        ReflectionTestUtils.setField(lockService, "lockTimeoutMinutes", 30L);
+        CourtLockConfigurationProperties courtLockConfigurationProperties = new CourtLockConfigurationProperties();
+        courtLockConfigurationProperties.setTimeoutMinutes(30L);
+        ReflectionTestUtils.setField(lockService, "courtLockConfigurationProperties", courtLockConfigurationProperties);
     }
 
     @Test
