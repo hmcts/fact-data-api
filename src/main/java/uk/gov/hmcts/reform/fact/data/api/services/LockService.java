@@ -1,12 +1,12 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.CourtLockConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LockRepository;
@@ -27,9 +27,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LockService {
 
-    @Value("${courtLock.timeout-minutes}")
-    private long lockTimeoutMinutes;
-
+    private final CourtLockConfigurationProperties courtLockConfigurationProperties;
     private final LockRepository lockRepository;
     private final UserService userService;
     private final CourtService courtService;
@@ -87,7 +85,7 @@ public class LockService {
 
         User user = userService.getUserById(userId);
         ZonedDateTime lockAcquired = ZonedDateTime.now(ZoneOffset.UTC);
-        ZonedDateTime expiryThreshold = lockAcquired.minusMinutes(lockTimeoutMinutes);
+        ZonedDateTime expiryThreshold = lockAcquired.minusMinutes(courtLockConfigurationProperties.getTimeoutMinutes());
 
         UUID lockId = lockRepository.tryAcquireLock(
             UUID.randomUUID(),
@@ -135,7 +133,8 @@ public class LockService {
      */
     @Transactional
     public void deleteExpiredLocks() {
-        lockRepository.deleteByLockAcquiredBefore(ZonedDateTime.now(ZoneOffset.UTC).minusMinutes(lockTimeoutMinutes));
+        lockRepository.deleteByLockAcquiredBefore(
+            ZonedDateTime.now(ZoneOffset.UTC).minusMinutes(courtLockConfigurationProperties.getTimeoutMinutes()));
     }
 
     /**

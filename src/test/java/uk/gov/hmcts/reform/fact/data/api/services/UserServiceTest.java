@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.UserConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.dto.AllLocation;
 import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteReference;
 import uk.gov.hmcts.reform.fact.data.api.dto.FavouriteStatus;
@@ -45,6 +46,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserConfigurationProperties userConfigurationProperties;
 
     @Mock
     private CourtRepository courtRepository;
@@ -504,6 +508,7 @@ class UserServiceTest {
     void deleteInactiveUsersShouldRemoveUsersNotLoggedInWithinRetentionPeriod() {
         List<User> inactiveUsers = List.of(new User());
 
+        when(userConfigurationProperties.getRetentionPeriod()).thenReturn(365L);
         when(userRepository.deleteAllByLastLoginBefore(any())).thenReturn(inactiveUsers);
 
         final int deletedUsers = userService.deleteInactiveUsers();

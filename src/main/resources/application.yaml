@@ -99,7 +99,7 @@ dbMigration:
 user:
   retention-period: 365
 
-courtLock:
+court-lock:
   timeout-minutes: ${COURT_LOCK_TIMEOUT_MINUTES:60}
 
 os:

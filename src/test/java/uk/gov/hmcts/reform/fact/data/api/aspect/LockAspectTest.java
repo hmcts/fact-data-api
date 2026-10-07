@@ -9,10 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.CourtLockConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
@@ -46,6 +46,7 @@ class LockAspectTest {
     private MethodSignature methodSignature;
 
     private LockAspect validator;
+    private CourtLockConfigurationProperties courtLockConfigurationProperties;
 
     private final UUID courtId = UUID.randomUUID();
     private final UUID userId = UUID.randomUUID();
@@ -54,8 +55,9 @@ class LockAspectTest {
 
     @BeforeEach
     void setUp() {
-        validator = new LockAspect(lockService);
-        ReflectionTestUtils.setField(validator, "lockTimeoutMinutes", 60L);
+        courtLockConfigurationProperties = new CourtLockConfigurationProperties();
+        courtLockConfigurationProperties.setTimeoutMinutes(60L);
+        validator = new LockAspect(lockService, courtLockConfigurationProperties);
     }
 
     @Test
@@ -149,7 +151,7 @@ class LockAspectTest {
     @Test
     @DisplayName("Should respect custom timeout configuration")
     void shouldRespectCustomTimeout() {
-        ReflectionTestUtils.setField(validator, "lockTimeoutMinutes", 15L);
+        courtLockConfigurationProperties.setTimeoutMinutes(15L);
         setupJoinPoint(courtId, page, userId);
         Lock lock = createLock(otherUserId, ZonedDateTime.now().minusMinutes(20));
         when(lockService.getPageLock(SubjectType.COURT, courtId, page)).thenReturn(Optional.of(lock));
