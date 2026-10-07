@@ -1,0 +1,117 @@
+# Local diagnostics. Activate the dev profile; connection settings come from the
+# existing .env/run configuration and application.yaml. See README.md for usage.
+spring:
+  jpa:
+    # Log SQL through org.hibernate.SQL only, avoiding duplicate console output.
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+        # Report statements taking more than 250 ms without collecting session statistics.
+        log_slow_query: 250
+        # Enable temporarily for query counts/cache statistics; adds overhead.
+        generate_statistics: false
+
+  mvc:
+    # Includes request parameters at DEBUG and headers at TRACE.
+    log-request-details: true
+    log-resolved-exception: true
+
+  datasource:
+    hikari:
+      # Warn with the checkout stack when a connection is held for over a minute.
+      # A debugger pause can trigger this too; set to 0 while stepping through DB code.
+      leak-detection-threshold: 60000
+
+  jackson:
+    serialization:
+      indent-output: true
+
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            # Method, URL, response status and duration. Set FULL temporarily for bodies/headers.
+            # The client interface loggers below must stay at DEBUG.
+            logger-level: BASIC
+
+  # Boot 4 error properties. These affect Boot's default /error responses;
+  # GlobalExceptionHandler responses keep their own format.
+  web:
+    error:
+      include-message: always
+      include-binding-errors: always
+      include-exception: true
+      include-stacktrace: on_param # Add ?trace=true to a default error response.
+
+management:
+  endpoints:
+    web:
+      # Inherit base-path: / so /health and /health/* remain anonymously accessible.
+      # Other diagnostic endpoints require an Azure AD bearer token.
+      exposure:
+        include: health, info, prometheus, loggers, metrics, mappings, env, configprops, flyway, caches
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    loggers:
+      # POST /loggers/<name> with {"configuredLevel":"TRACE"}; no restart required.
+      access: unrestricted
+    env:
+      # Keep credentials masked when inspecting resolved configuration.
+      show-values: never
+    configprops:
+      show-values: never
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+    process:
+      enabled: true
+
+logging:
+  level:
+    root: INFO
+    uk.gov.hmcts.reform.fact: DEBUG
+
+    # Request path, handler and response status without broad framework debug noise.
+    org.springframework.web: INFO
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: DEBUG
+    # Change to DEBUG via /loggers when diagnosing 401/403 responses.
+    org.springframework.security: INFO
+
+    uk.gov.hmcts.reform.fact.data.api.os.OsFeignClient: DEBUG
+    uk.gov.hmcts.reform.fact.data.api.clients.CathClient: DEBUG
+
+    org.hibernate.SQL: DEBUG
+    org.hibernate.SQL_SLOW: INFO
+    # Set TRACE via /loggers when you need SQL bind values.
+    org.hibernate.orm.jdbc.bind: INFO
+    # If generate_statistics is enabled, DEBUG also logs individual query statistics.
+    org.hibernate.stat: INFO
+
+    # Enable DEBUG via /loggers for transaction, pool or Azure troubleshooting.
+    org.springframework.orm.jpa: INFO
+    org.springframework.transaction: INFO
+    com.zaxxer.hikari: INFO
+    org.flywaydb: INFO
+    com.azure: INFO
+
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %logger{36} - %msg%n"
+
+springdoc:
+  swagger-ui:
+    # http://localhost:8989/swagger-ui/index.html is available without a token.
+    enabled: true
+    doc-expansion: none
+    persist-authorization: true
+    # Show API call duration when exercising an endpoint.
+    display-request-duration: true
