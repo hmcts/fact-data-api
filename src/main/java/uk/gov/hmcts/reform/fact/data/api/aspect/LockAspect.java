@@ -6,12 +6,12 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.CourtLockConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.Lock;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.Page;
@@ -37,9 +37,7 @@ import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 public class LockAspect {
 
     private final LockService lockService;
-
-    @Value("${courtLock.timeout-minutes}")
-    private long lockTimeoutMinutes;
+    private final CourtLockConfigurationProperties courtLockConfigurationProperties;
 
     /**
      * Executes BEFORE any method annotated with @LockTimeoutCheck.
@@ -66,6 +64,7 @@ public class LockAspect {
             ZonedDateTime.now(ZoneOffset.UTC)
         ).toMinutes();
 
+        long lockTimeoutMinutes = courtLockConfigurationProperties.getTimeoutMinutes();
         if (minutesLocked < lockTimeoutMinutes) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                 String.format("Page locked by another user (%d/%d min)", minutesLocked, lockTimeoutMinutes));

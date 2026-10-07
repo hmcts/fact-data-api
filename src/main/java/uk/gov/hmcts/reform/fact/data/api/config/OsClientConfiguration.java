@@ -2,21 +2,22 @@ package uk.gov.hmcts.reform.fact.data.api.config;
 
 import feign.RequestInterceptor;
 import feign.Retryer;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.OsConfigurationProperties;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Configuration(proxyBeanMethods = false)
+@RequiredArgsConstructor
 public class OsClientConfiguration {
-    @Value("${os.key}")
-    private String key;
+    private final OsConfigurationProperties osConfigurationProperties;
 
     @Bean
     public RequestInterceptor osRequestInterceptor() {
         return template -> {
-            template.query("key", key);
+            template.query("key", osConfigurationProperties.getKey());
             template.query("output_srs", "WGS84");
         };
     }

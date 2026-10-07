@@ -5,13 +5,13 @@ import java.time.Duration;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Scheduler;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import uk.gov.hmcts.reform.fact.data.api.config.properties.OsConfigurationProperties;
 
 @Configuration
 @EnableCaching
@@ -23,12 +23,9 @@ public class CacheConfiguration {
     private final long maximumSize;
     private final long timeToLiveMillis;
 
-    public CacheConfiguration(
-        @Value("${os.cache.maximum-size:1000}") long maximumSize,
-        @Value("${os.cache.time-to-live-millis:3600000}") long timeToLiveMillis
-    ) {
-        this.maximumSize = maximumSize;
-        this.timeToLiveMillis = timeToLiveMillis;
+    public CacheConfiguration(OsConfigurationProperties osConfigurationProperties) {
+        this.maximumSize = osConfigurationProperties.getCache().getMaximumSize();
+        this.timeToLiveMillis = osConfigurationProperties.getCache().getTimeToLiveMillis();
     }
 
     @Bean
