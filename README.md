@@ -9,7 +9,7 @@ This README is written for internal contributors who need to run the service loc
 
 ## What is in this repo
 
-- Java 21 Spring Boot service (`src/main`) with PostgreSQL persistence
+- Java 25 Spring Boot service (`src/main`) with PostgreSQL persistence
 - Flyway schema/data migrations (`src/main/resources/db/migration`)
 - Multiple test suites:
   - unit (`src/test`)
@@ -22,7 +22,7 @@ This README is written for internal contributors who need to run the service loc
 
 ## Prerequisites
 
-- Java 21
+- Java 25
 - Docker (for local Postgres and integration tests)
 - Access to required internal secrets/values (AAD, OS key, storage config)
 
@@ -32,7 +32,7 @@ Optional but recommended:
 
 ## IntelliJ Dev Container
 
-The repository includes an IntelliJ-first [Dev Container](https://containers.dev/) with Java 21, Gradle, Docker for Testcontainers, Terraform formatting support, GitHub Copilot CLI, PostgreSQL 17, and Azurite. Docker must be running and the local `.env` file described below must exist before the container is created.
+The repository includes an IntelliJ-first [Dev Container](https://containers.dev/) with Java 25, Gradle, Docker for Testcontainers, Terraform formatting support, GitHub Copilot CLI, PostgreSQL 17, and Azurite. Docker must be running and the local `.env` file described below must exist before the container is created.
 
 To open the existing checkout in the container:
 
@@ -44,7 +44,7 @@ To open the existing checkout in the container:
 
 Use **Mount Sources** for normal development so changes remain in the existing local checkout. The **Clone Sources** option creates a separate checkout and is not needed for this configuration.
 
-The Gradle wrapper and Java 21 toolchain run inside the container. PostgreSQL and Azurite start automatically and are available to the application at `fact-database:5432` and `fact-storage:10000`. Common commands can be run from IntelliJ's terminal or Gradle tool window:
+The Gradle wrapper and Java 25 toolchain run inside the container. PostgreSQL and Azurite start automatically and are available to the application at `fact-database:5432` and `fact-storage:10000`. Common commands can be run from IntelliJ's terminal or Gradle tool window:
 
 ```bash
 ./gradlew test

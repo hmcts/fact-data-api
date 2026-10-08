@@ -13,7 +13,7 @@ jobs:
       SWAGGER_PUBLISHER_API_TOKEN: ${{ secrets.SWAGGER_PUBLISHER_API_TOKEN }}
     with:
       test_to_run: 'uk.gov.hmcts.reform.fact.data.api.openapi.OpenAPIPublisherTest'
-      java_version: 21
+      java_version: 25
       api_name: 'fact-data-api'
   publish-openapi-apim:
     needs: publish-openapi
@@ -24,5 +24,5 @@ jobs:
       SWAGGER_PUBLISHER_API_TOKEN: ${{ secrets.SWAGGER_PUBLISHER_API_TOKEN }}
     with:
       test_to_run: 'uk.gov.hmcts.reform.fact.data.api.openapi.OpenAPIPublisherApimTest'
-      java_version: 21
+      java_version: 25
       api_name: 'fact-data-api-apim'
