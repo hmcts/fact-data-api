@@ -274,7 +274,7 @@ wrapper {
 dependencyManagement {
   imports {
     // CVE-2026-89044
-    mavenBom 'io.netty:netty-bom:4.2.18.Final'
+    mavenBom 'io.netty:netty-bom:4.2.19.Final'
   }
 
   dependencies {
