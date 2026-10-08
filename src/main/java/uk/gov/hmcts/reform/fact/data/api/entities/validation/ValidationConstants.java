@@ -53,7 +53,7 @@ public class ValidationConstants {
     public static final int COURT_SLUG_MIN_LENGTH = 1;
     public static final String COURT_SLUG_LENGTH_MESSAGE = "Court slug should be between 1 and 250 characters";
 
-    public static final int COURT_WARNING_NOTICE_MAX_LENGTH = 250;
+    public static final int WARNING_NOTICE_MAX_LENGTH = 700;
     public static final String WARNING_NOTICE_MAX_LENGTH_MESSAGE =
         "Warning notice must be less than {max} characters";
     public static final String WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE =
@@ -126,7 +126,6 @@ public class ValidationConstants {
     public static final String REGION_COUNTRY_LENGTH_MESSAGE =
         "Country should be less than {max} chars";
 
-    public static final int SERVICE_CENTRE_WARNING_NOTICE_MAX_LENGTH = 700;
     public static final String SERVICE_CENTRE_NAME_LENGTH_MESSAGE =
         "Service centre name should be between {min} and {max} characters";
     public static final String SERVICE_CENTRE_NAME_REGEX_MESSAGE = "Service centre name may only contain letters, "
