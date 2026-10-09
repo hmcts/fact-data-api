@@ -172,10 +172,10 @@ class ServiceCentreControllerTest {
     }
 
     @Test
-    @DisplayName("POST /service-centres/v1 rejects a Welsh warning notice longer than 250 characters")
+    @DisplayName("POST /service-centres/v1 rejects a Welsh warning notice longer than 700 characters")
     void createServiceCentreRejectsLongWelshWarningNotice() throws Exception {
         ServiceCentre serviceCentre = buildServiceCentre();
-        serviceCentre.setWarningNoticeCy("a".repeat(251));
+        serviceCentre.setWarningNoticeCy("a".repeat(701));
 
         mockMvc.perform(post("/service-centres/v1")
                             .contentType(MediaType.APPLICATION_JSON)
