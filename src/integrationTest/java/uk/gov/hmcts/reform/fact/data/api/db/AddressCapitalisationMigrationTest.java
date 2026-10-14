@@ -60,8 +60,8 @@ class AddressCapitalisationMigrationTest {
                 .defaultSchema(schema)
                 .locations("classpath:db/migration")
                 .baselineOnMigrate(true)
-                .baselineVersion("1.59")
-                .target("1.60")
+                .baselineVersion("1.60")
+                .target("1.61")
                 .load();
             assertThat(flyway.migrate().migrationsExecuted).isEqualTo(1);
 
