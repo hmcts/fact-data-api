@@ -75,7 +75,7 @@ public class ServiceCentre implements AuditableEntity {
     private Boolean open;
 
     @Schema(description = "Any warning notices attached to the Service Centre")
-    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+    @Size(max = ValidationConstants.WARNING_NOTICE_MAX_LENGTH,
         message = ValidationConstants.WARNING_NOTICE_MAX_LENGTH_MESSAGE
     )
     @Pattern(
@@ -86,7 +86,7 @@ public class ServiceCentre implements AuditableEntity {
     private String warningNotice;
 
     @Schema(description = "Any Welsh warning notices attached to the Service Centre")
-    @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
+    @Size(max = ValidationConstants.WARNING_NOTICE_MAX_LENGTH,
         message = ValidationConstants.WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE
     )
     @Pattern(
