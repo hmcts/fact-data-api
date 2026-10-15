@@ -8,7 +8,7 @@ public class ValidationConstants {
     public static final int COURT_SERVICE_CENTRE_NAME_MIN_LENGTH = 5;
     public static final int COURT_SERVICE_CENTRE_NAME_MAX_LENGTH = 200;
     public static final String COURT_NAME_LENGTH_MESSAGE =
-        "Court name should be between {min} and {max} chars";
+        "Court name should be between {min} and {max} characters";
     public static final String COURT_SERVICE_CENTRE_NAME_REGEX = "^(?=.*[A-Za-z])[A-Za-z&'()\\- ]+$";
     public static final String COURT_NAME_REGEX_MESSAGE =
         "Court name must include at least one letter and only include letters, spaces, apostrophes, "
@@ -36,8 +36,6 @@ public class ValidationConstants {
     public static final String TEXT_REGEX_MESSAGE = "Value contains invalid characters";
 
     public static final String WELSH_TEXT_REGEX = "^[\\p{L}\\p{M}0-9 ()':,\\-;.&]+$";
-    public static final String WELSH_TEXT_REGEX_MESSAGE =
-        "Description in Welsh must only include letters, spaces, apostrophes, hyphens, ampersands, and parentheses";
 
     public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 ()':,&-]+$)$";
     public static final String REQUIRED_ADDRESS_LINE_REGEX = "^[A-Za-z0-9 ()':,&-]+$";
@@ -70,6 +68,10 @@ public class ValidationConstants {
         "Accessible toilet description must not exceed {max} characters";
     public static final String WELSH_ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE =
         "Welsh accessible toilet description must not exceed {max} characters";
+    public static final String ACCESSIBILITY_DESCRIPTION_INVALID_CHARACTERS_MESSAGE =
+        "Accessible toilet description in English must only include letters, spaces, apostrophes, hyphens, ampersands, and parentheses";
+    public static final String ACCESSIBILITY_DESCRIPTION_WELSH_INVALID_CHARACTERS_MESSAGE =
+        "Accessible toilet description in Welsh must only include letters, spaces, apostrophes, hyphens, ampersands, and parentheses";
 
     public static final long LIFT_DOOR_WIDTH_MIN = 1;
     public static final long LIFT_DOOR_WIDTH_MAX = 1000;
@@ -104,9 +106,8 @@ public class ValidationConstants {
     public static final String GBS_CODE_REGEX_MESSAGE = "GBS code must only include letters and numbers";
 
     public static final int COMMON_TEXT_MAX_LENGTH = 250;
-    public static final String EXPLANATION_MAX_LENGTH_MESSAGE = "Explanation should be no more than {max} characters";
-    public static final String WELSH_EXPLANATION_MAX_LENGTH_MESSAGE =
-        "Explanation should be no more than {max} characters";
+    public static final String EXPLANATION_MAX_LENGTH_MESSAGE = "Explanation must be {max} characters or fewer";
+
     public static final String FAX_DESCRIPTION_MAX_LENGTH_MESSAGE = "Fax description must be {max} characters or fewer";
     public static final String WELSH_FAX_DESCRIPTION_MAX_LENGTH_MESSAGE =
         "Welsh fax description must be {max} characters or fewer";

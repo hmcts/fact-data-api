@@ -84,7 +84,7 @@ public class CourtAccessibilityOptions implements AuditableCourtEntity {
         message = ValidationConstants.ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE)
 
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
-        message = ValidationConstants.TEXT_REGEX_MESSAGE
+        message = ValidationConstants.ACCESSIBILITY_DESCRIPTION_INVALID_CHARACTERS_MESSAGE
     )
     private String accessibleToiletDescription;
 
@@ -93,7 +93,7 @@ public class CourtAccessibilityOptions implements AuditableCourtEntity {
         message = ValidationConstants.WELSH_ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE
     )
     @Pattern(regexp = ValidationConstants.WELSH_TEXT_REGEX,
-        message = ValidationConstants.WELSH_TEXT_REGEX_MESSAGE
+        message = ValidationConstants.ACCESSIBILITY_DESCRIPTION_WELSH_INVALID_CHARACTERS_MESSAGE
     )
     private String accessibleToiletDescriptionCy;
 
