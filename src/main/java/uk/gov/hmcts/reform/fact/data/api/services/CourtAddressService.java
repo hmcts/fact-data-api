@@ -14,6 +14,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundExcept
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -193,13 +194,17 @@ public class CourtAddressService {
         existing.setOsAddressUprn(newAddress.getOsAddressUprn());
         existing.setOsAddressLpiKey(newAddress.getOsAddressLpiKey());
 
-        if (newAddress.getAreasOfLaw() != null) {
-            existing.setAreasOfLaw(getValidatedAreasOfLawTypeIds(newAddress.getAreasOfLaw()));
-        }
+        existing.setAreasOfLaw(
+            Optional.ofNullable(newAddress.getAreasOfLaw())
+                .map(this::getValidatedAreasOfLawTypeIds)
+                .orElse(null)
+        );
 
-        if (newAddress.getCourtTypes() != null) {
-            existing.setCourtTypes(getValidatedCourtTypeIds(newAddress.getCourtTypes()));
-        }
+        existing.setCourtTypes(
+            Optional.ofNullable(newAddress.getCourtTypes())
+                .map(this::getValidatedCourtTypeIds)
+                .orElse(null)
+        );
 
         setLatLonFromPostcode(existing);
     }
