@@ -113,12 +113,13 @@ public class ValidationConstants {
 
     public static final String EXPLANATION_REGEX = "^[A-Za-z0-9 '\\-()&+]*$";
     public static final String EXPLANATION_REGEX_MESSAGE =
-        "Explanation contains invalid characters. Allowed: letters, numbers, spaces, apostrophes, - ( ) & +";
+        "Explanation must only include letters, numbers, spaces, apostrophes, hyphens, parentheses, "
+            + "ampersands, and plus signs";
 
     public static final String WELSH_EXPLANATION_REGEX = "^[\\p{L}\\p{M}0-9 '\\-()&+]*$";
     public static final String WELSH_EXPLANATION_REGEX_MESSAGE =
-        "Welsh explanation contains invalid characters. Allowed: letters (with accents), numbers, spaces, "
-            + "apostrophes, - ( ) & +";
+        "Welsh Explanation must only include letters, numbers, spaces, apostrophes, hyphens, parentheses, "
+            + "ampersands, and plus signs";
 
     public static final int REGION_NAME_MIN_LENGTH = 5;
     public static final String REGION_NAME_LENGTH_MESSAGE =
