@@ -69,9 +69,11 @@ public class ValidationConstants {
     public static final String WELSH_ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE =
         "Welsh accessible toilet description must not exceed {max} characters";
     public static final String ACCESSIBILITY_DESCRIPTION_INVALID_CHARACTERS_MESSAGE =
-        "Accessible toilet description in English must only include letters, spaces, apostrophes, hyphens, ampersands, and parentheses";
+        "Accessible toilet description in English must only include letters, spaces, apostrophes, hyphens, " +
+        "ampersands, and parentheses";
     public static final String ACCESSIBILITY_DESCRIPTION_WELSH_INVALID_CHARACTERS_MESSAGE =
-        "Accessible toilet description in Welsh must only include letters, spaces, apostrophes, hyphens, ampersands, and parentheses";
+        "Accessible toilet description in Welsh must only include letters, spaces, apostrophes, hyphens, " +
+        "ampersands, and parentheses";
 
     public static final long LIFT_DOOR_WIDTH_MIN = 1;
     public static final long LIFT_DOOR_WIDTH_MAX = 1000;
