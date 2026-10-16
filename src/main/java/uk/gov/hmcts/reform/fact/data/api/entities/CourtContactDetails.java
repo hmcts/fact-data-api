@@ -97,7 +97,7 @@ public class CourtContactDetails implements AuditableCourtEntity {
         length = ValidationConstants.COMMON_TEXT_MAX_LENGTH
     )
     @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
-        message = ValidationConstants.WELSH_EXPLANATION_MAX_LENGTH_MESSAGE
+        message = ValidationConstants.EXPLANATION_MAX_LENGTH_MESSAGE
     )
     @Pattern(
         regexp = ValidationConstants.WELSH_EXPLANATION_REGEX,
