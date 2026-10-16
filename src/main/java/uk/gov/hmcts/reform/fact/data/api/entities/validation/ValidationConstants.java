@@ -36,7 +36,6 @@ public class ValidationConstants {
     public static final String TEXT_REGEX_MESSAGE = "Value contains invalid characters";
 
     public static final String WELSH_TEXT_REGEX = "^[\\p{L}\\p{M}0-9 ()':,\\-;.&]+$";
-
     public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 ()':,&-]+$)$";
     public static final String REQUIRED_ADDRESS_LINE_REGEX = "^[A-Za-z0-9 ()':,&-]+$";
     public static final String ADDRESS_LINE_REGEX_MESSAGE = "Address line contains invalid characters";
@@ -68,10 +67,12 @@ public class ValidationConstants {
         "Accessible toilet description must not exceed {max} characters";
     public static final String WELSH_ACCESSIBLE_TOILET_DESCRIPTION_MAX_LENGTH_MESSAGE =
         "Welsh accessible toilet description must not exceed {max} characters";
-    public static final String ACCESSIBILITY_DESCRIPTION_INVALID_CHARACTERS_MESSAGE =
+    public static final String ACCESSIBLE_TOILET_DESCRIPTION_REGEX = "^[A-Za-z '\\-&()]*$";
+    public static final String ACCESSIBLE_DESCRIPTION_INVALID_CHARACTERS_MESSAGE =
         "Accessible toilet description in English must only include letters, spaces, apostrophes, hyphens, "
             + "ampersands, and parentheses";
-    public static final String ACCESSIBILITY_DESCRIPTION_WELSH_INVALID_CHARACTERS_MESSAGE =
+    public static final String WELSH_ACCESSIBLE_TOILET_DESCRIPTION_REGEX = "^[\\p{L}\\p{M}0-9 '\\-&()]*$";
+    public static final String WELSH_ACCESSIBLE_DESCRIPTION_INVALID_CHARACTERS_MESSAGE =
         "Accessible toilet description in Welsh must only include letters, spaces, apostrophes, hyphens, "
             + "ampersands, and parentheses";
 
@@ -121,7 +122,7 @@ public class ValidationConstants {
 
     public static final String WELSH_EXPLANATION_REGEX = "^[\\p{L}\\p{M}0-9 '\\-()&+]*$";
     public static final String WELSH_EXPLANATION_REGEX_MESSAGE =
-        "Welsh Explanation must only include letters, numbers, spaces, apostrophes, hyphens, parentheses, "
+        "Welsh explanation must only include letters, numbers, spaces, apostrophes, hyphens, parentheses, "
             + "ampersands, and plus signs";
 
     public static final int REGION_NAME_MIN_LENGTH = 5;
