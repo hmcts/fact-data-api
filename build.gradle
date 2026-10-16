@@ -290,10 +290,10 @@ dependencyManagement {
     dependency group: 'org.apache.qpid', name: 'proton-j', version: '0.35.0'
 
     // CVE-2026-53914
-    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '2.4.20'
-    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-common', version: '2.4.20'
-    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk7', version: '2.4.20'
-    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: '2.4.20'
+    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '2.4.21'
+    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-common', version: '2.4.21'
+    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk7', version: '2.4.21'
+    dependency group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: '2.4.21'
 
     // CVE-2025-48976
     dependency group: 'commons-fileupload', name: 'commons-fileupload', version: '1.6.0'
