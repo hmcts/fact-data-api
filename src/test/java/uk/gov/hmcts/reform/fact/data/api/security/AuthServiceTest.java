@@ -280,6 +280,11 @@ class AuthServiceTest {
     }
 
     @Test
+    void isAdminSuppressesAuditForPostcodeReferenceImportEndpoint() {
+        assertAuditSuppressedFor("POST", "/postcode-reference/v1/import");
+    }
+
+    @Test
     void isAdminSuppressesAuditForDeleteInactiveUsersEndpoint() {
         assertAuditSuppressedFor("DELETE", "/user/v1/retention");
     }

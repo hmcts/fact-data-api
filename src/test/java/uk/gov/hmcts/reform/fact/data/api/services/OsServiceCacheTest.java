@@ -20,6 +20,7 @@ import uk.gov.hmcts.reform.fact.data.api.os.OsFeignClient;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.PostcodeReferenceRepository;
 
 import java.util.List;
 import java.util.Objects;
@@ -49,11 +50,14 @@ class OsServiceCacheTest {
     private LocalAuthorityTypeRepository localAuthorityTypeRepository;
 
     @Autowired
+    private PostcodeReferenceRepository postcodeReferenceRepository;
+
+    @Autowired
     private CacheManager cacheManager;
 
     @BeforeEach
     void resetState() {
-        reset(osFeignClient, localAuthorityTypeRepository);
+        reset(osFeignClient, localAuthorityTypeRepository, postcodeReferenceRepository);
         Objects.requireNonNull(cacheManager.getCache(CacheConfiguration.OSDATA_CACHE_NAME)).clear();
     }
 
@@ -91,6 +95,27 @@ class OsServiceCacheTest {
         verify(osFeignClient).getOsPostcodeDataWithMaxResultsLimit("SW1A 1", 1);
     }
 
+    @Test
+    void shouldCacheMissingPostcodeReferenceEntriesForRepeatedSearches() {
+        OsData osData = OsData.builder()
+            .results(List.of(OsResult.builder().dpa(OsDpa.builder()
+                .lat(51.5)
+                .lng(-0.1)
+                .localCustodianCode(123)
+                .build()).build()))
+            .build();
+        when(postcodeReferenceRepository.findById("SW1A 1AA")).thenReturn(Optional.empty());
+        when(osFeignClient.getOsPostcodeDataWithMaxResultsLimit("SW1A 1", 1)).thenReturn(osData);
+        when(localAuthorityTypeRepository.findParentOrChildNameByCustodianCode(123))
+            .thenReturn(Optional.of(LocalAuthorityType.builder().name("Test Authority").build()));
+
+        osService.getOsLonLatDistrictWithPostcodeReferenceFallback("sw1a 1aa");
+        osService.getOsLonLatDistrictWithPostcodeReferenceFallback("SW1A 1AA");
+
+        verify(postcodeReferenceRepository).findById("SW1A 1AA");
+        verify(osFeignClient).getOsPostcodeDataWithMaxResultsLimit("SW1A 1", 1);
+    }
+
     @TestConfiguration
     @Import(CacheConfiguration.class)
     @EnableConfigurationProperties(OsConfigurationProperties.class)
@@ -107,12 +132,18 @@ class OsServiceCacheTest {
         }
 
         @Bean
+        PostcodeReferenceRepository postcodeReferenceRepository() {
+            return mock(PostcodeReferenceRepository.class);
+        }
+
+        @Bean
         OsService osService(
             OsFeignClient client,
             LocalAuthorityTypeRepository repository,
+            PostcodeReferenceRepository postcodeReferenceRepository,
             ObjectProvider<OsService> osServiceProvider
         ) {
-            return new OsService(client, repository, osServiceProvider);
+            return new OsService(client, repository, postcodeReferenceRepository, osServiceProvider);
         }
     }
 }

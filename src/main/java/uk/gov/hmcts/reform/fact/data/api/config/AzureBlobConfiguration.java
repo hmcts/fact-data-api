@@ -29,6 +29,13 @@ public class AzureBlobConfiguration {
     }
 
     @Bean
+    public BlobContainerClient onspdBlobContainerClient(
+        BlobServiceClient blobServiceClient,
+        @Value("${spring.cloud.azure.storage.blob.onspd-container-name}") String containerName) {
+        return blobServiceClient.getBlobContainerClient(containerName);
+    }
+
+    @Bean
     public AzureBlobService photoAzureBlobService(
         @Qualifier("photoBlobContainerClient") BlobContainerClient photoBlobContainerClient) {
         return new AzureBlobService(photoBlobContainerClient);

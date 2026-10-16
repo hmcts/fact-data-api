@@ -53,7 +53,7 @@ public class SearchServiceCentreService {
     private List<ServiceCentreWithDistance> searchWithServiceArea(String postcode,
                                                                   String serviceArea,
                                                                   Integer limit) {
-        OsLocationData osLocationData = osService.getOsLonLatDistrictByPartial(postcode);
+        OsLocationData osLocationData = osService.getOsLonLatDistrictWithPostcodeReferenceFallback(postcode);
         return searchWithServiceArea(osLocationData, serviceArea, limit);
     }
 

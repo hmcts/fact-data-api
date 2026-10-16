@@ -93,7 +93,7 @@ class SearchServiceCentreServiceTest {
             .build();
         List<ServiceCentreWithDistance> expected = List.of(mock(ServiceCentreWithDistance.class));
 
-        when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(osLocationData);
+        when(osService.getOsLonLatDistrictWithPostcodeReferenceFallback("SW1A 1AA")).thenReturn(osLocationData);
         when(serviceAreaService.getServiceAreaByName("Money Claims")).thenReturn(serviceArea);
         when(serviceCentreRepository.findNearestByServiceAreaAndAreaOfLawAndCatchmentTypeIn(
             serviceAreaId,

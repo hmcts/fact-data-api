@@ -95,7 +95,7 @@ public class SearchCourtService {
      */
     public List<CourtWithDistance> searchWithServiceArea(String postcode, String serviceArea,
                                                          SearchAction action, Integer limit) {
-        OsLocationData osLocationData = osService.getOsLonLatDistrictByPartial(postcode);
+        OsLocationData osLocationData = osService.getOsLonLatDistrictWithPostcodeReferenceFallback(postcode);
         return searchWithServiceArea(osLocationData, serviceArea, action, limit);
     }
 

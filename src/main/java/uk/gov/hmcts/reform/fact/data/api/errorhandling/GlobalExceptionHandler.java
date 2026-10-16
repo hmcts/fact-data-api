@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidFileExc
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.PostcodeReferenceImportException;
 
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
@@ -45,6 +46,8 @@ public class GlobalExceptionHandler {
     private static final String CSV_CREATION_ERROR_MESSAGE = "Internal server error while creating CSV file.";
     private static final String BAD_GATEWAY_MESSAGE =
         "Unable to complete the request due to an upstream service error.";
+    private static final String POSTCODE_REFERENCE_IMPORT_ERROR_MESSAGE =
+        "Unable to import ONSPD postcode reference data.";
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -276,6 +279,16 @@ public class GlobalExceptionHandler {
         return generateExceptionResponse(CSV_CREATION_ERROR_MESSAGE);
     }
 
+    @ExceptionHandler(PostcodeReferenceImportException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ExceptionResponse handle(PostcodeReferenceImportException ex) {
+        log.error(writeLog(
+            "500, error while importing ONSPD postcode reference data",
+            "ExceptionType=" + ex.getClass().getSimpleName()
+        ), ex);
+        return generateExceptionResponse(POSTCODE_REFERENCE_IMPORT_ERROR_MESSAGE);
+    }
+
     private ExceptionResponse generateExceptionResponse(String message) {
         ExceptionResponse response = new ExceptionResponse();
         response.setMessage(message);
@@ -283,4 +296,3 @@ public class GlobalExceptionHandler {
         return response;
     }
 }
-
