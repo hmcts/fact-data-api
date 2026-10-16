@@ -143,18 +143,20 @@ class OsServiceTest {
     @Test
     void shouldReturnOsDataForFullPostcode() {
         OsData osData = createOsData(List.of(9876), 50.0, -0.1);
+        osData.getResults().getFirst().getDpa().setAddress("JANE DOE STREET");
         when(osFeignClient.getOsPostcodeData("SW1A 1AA")).thenReturn(osData);
 
         OsData result = osService.getOsAddressByFullPostcode("SW1A 1AA");
 
         assertThat(result).isEqualTo(osData);
+        assertThat(result.getResults().getFirst().getDpa().getAddress()).isEqualTo("JANE DOE STREET");
     }
 
     @Test
     void shouldRetrieveEveryPageOfCombinedAdminAddressResults() {
         List<OsResult> firstPageResults = IntStream.range(0, 100)
             .mapToObj(index -> OsResult.builder()
-                .dpa(OsDpa.builder().uprn("dpa-" + index).build())
+                .dpa(OsDpa.builder().uprn("dpa-" + index).address("JANE DOE STREET").build())
                 .build())
             .toList();
         OsData firstPage = OsData.builder()
@@ -163,7 +165,8 @@ class OsServiceTest {
             .build();
         OsData secondPage = OsData.builder()
             .header(OsHeader.builder().totalresults(101).offset(100).maxresults(100).build())
-            .results(List.of(OsResult.builder().lpi(OsLpi.builder().uprn("lpi-100").build()).build()))
+            .results(List.of(OsResult.builder()
+                .lpi(OsLpi.builder().uprn("lpi-100").address("COURT HOUSE").build()).build()))
             .build();
 
         when(osFeignClient.getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0))
@@ -174,6 +177,9 @@ class OsServiceTest {
         OsData result = osService.getOsAdminAddressByFullPostcode("DH1 3RG");
 
         assertThat(result.getResults()).hasSize(101);
+        assertThat(result.getResults().subList(0, 100))
+            .allSatisfy(address -> assertThat(address.getDpa().getAddress()).isEqualTo("Jane Doe Street"));
+        assertThat(result.getResults().getLast().getLpi().getAddress()).isEqualTo("Court House");
         assertThat(result.getHeader().getDataset()).isEqualTo("DPA,LPI");
         assertThat(result.getHeader().getTotalresults()).isEqualTo(101);
         verify(osFeignClient).getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0);
