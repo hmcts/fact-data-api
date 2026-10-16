@@ -25,6 +25,9 @@ public class AzureBlobConfigurationTestConfiguration {
     private BlobContainerClient csvContainerClient;
 
     @Mock
+    private BlobContainerClient onspdContainerClient;
+
+    @Mock
     private BlobClient blobClient;
 
     public AzureBlobConfigurationTestConfiguration() {
@@ -39,6 +42,11 @@ public class AzureBlobConfigurationTestConfiguration {
     @Bean
     public BlobContainerClient csvBlobContainerClient() {
         return csvContainerClient;
+    }
+
+    @Bean
+    public BlobContainerClient onspdBlobContainerClient() {
+        return onspdContainerClient;
     }
 
     @Bean
