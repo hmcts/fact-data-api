@@ -3,6 +3,8 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -252,6 +254,32 @@ class CourtAddressServiceTest {
         assertThrows(NotFoundException.class, () ->
             courtAddressService.updateAddress(courtId, addressId, update)
         );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"HMCTS McDonald House", "ADMIN ENTERED CAPITALS"})
+    void shouldSaveAdminCapitalisationOnCreateAndUpdate(String addressLine) {
+        CourtAddress request = CourtAddress.builder()
+            .addressLine1(addressLine)
+            .addressLine2("Admin's chosen CASE")
+            .townCity("London")
+            .county("Greater London")
+            .postcode("SW1A 1AA")
+            .build();
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtAddressRepository.save(any(CourtAddress.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+        when(courtAddressRepository.findByIdAndCourtId(addressId, courtId)).thenReturn(Optional.of(address));
+
+        CourtAddress created = courtAddressService.createAddress(courtId, request);
+        CourtAddress updated = courtAddressService.updateAddress(courtId, addressId, request);
+
+        assertThat(created.getAddressLine1()).isEqualTo(addressLine);
+        assertThat(updated.getAddressLine1()).isEqualTo(addressLine);
+        assertThat(updated.getAddressLine2()).isEqualTo("Admin's chosen CASE");
+        assertThat(updated.getTownCity()).isEqualTo("London");
+        assertThat(updated.getCounty()).isEqualTo("Greater London");
+        assertThat(updated.getPostcode()).isEqualTo("SW1A 1AA");
     }
 
     @Test
