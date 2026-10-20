@@ -3,6 +3,8 @@ package uk.gov.hmcts.reform.fact.data.api.services;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -140,6 +142,34 @@ class ServiceCentreAddressServiceTest {
         serviceCentreAddressService.deleteAddress(serviceCentreId, addressId);
 
         verify(serviceCentreAddressRepository).deleteByIdAndServiceCentreId(addressId, serviceCentreId);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"HMCTS McDonald House", "ADMIN ENTERED CAPITALS"})
+    void shouldSaveAdminCapitalisationOnCreateAndUpdate(String addressLine) {
+        ServiceCentreAddress request = ServiceCentreAddress.builder()
+            .addressLine1(addressLine)
+            .addressLine2("Admin's chosen CASE")
+            .townCity("London")
+            .county("Greater London")
+            .postcode("SW1A 1AA")
+            .build();
+        when(serviceCentreService.getServiceCentreById(serviceCentreId)).thenReturn(serviceCentre);
+        when(serviceCentreAddressRepository.save(any(ServiceCentreAddress.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+        when(serviceCentreAddressRepository.findByIdAndServiceCentreId(addressId, serviceCentreId))
+            .thenReturn(Optional.of(address));
+
+        ServiceCentreAddress created = serviceCentreAddressService.createAddress(serviceCentreId, request);
+        ServiceCentreAddress updated = serviceCentreAddressService
+            .updateAddress(serviceCentreId, addressId, request);
+
+        assertThat(created.getAddressLine1()).isEqualTo(addressLine);
+        assertThat(updated.getAddressLine1()).isEqualTo(addressLine);
+        assertThat(updated.getAddressLine2()).isEqualTo("Admin's chosen CASE");
+        assertThat(updated.getTownCity()).isEqualTo("London");
+        assertThat(updated.getCounty()).isEqualTo("Greater London");
+        assertThat(updated.getPostcode()).isEqualTo("SW1A 1AA");
     }
 
     @Test

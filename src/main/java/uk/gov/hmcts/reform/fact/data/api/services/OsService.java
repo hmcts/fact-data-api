@@ -11,6 +11,7 @@ import uk.gov.hmcts.reform.fact.data.api.config.CacheConfiguration;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.OsProcessException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsAddressCoordinates;
+import uk.gov.hmcts.reform.fact.data.api.os.OsAddressFormatter;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsFeignClient;
@@ -89,7 +90,7 @@ public class OsService {
      * allows staff to select premises that do not have a Royal Mail DPA record.
      *
      * @param postcode full postcode to look up
-     * @return all paged DPA and LPI results returned by OS
+     * @return all paged DPA and LPI results with title-cased address text for the admin picker
      */
     @Cacheable(
         cacheNames = CacheConfiguration.OSDATA_CACHE_NAME,
@@ -128,6 +129,7 @@ public class OsService {
                         "No address results returned from OS for postcode %s".formatted(formattedPostcode)
                     );
                 }
+                combinedResults.forEach(OsAddressFormatter::format);
                 return OsData.builder()
                     .header(buildCombinedHeader(totalResults))
                     .results(combinedResults)
