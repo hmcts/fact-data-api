@@ -29,6 +29,12 @@ spring:
       indent-output: true
 
   cloud:
+    azure:
+      storage:
+        blob:
+          # Spring Cloud Azure applies the account-name endpoint after the connection string.
+          # Override it in development so local requests use Azurite rather than Azure Blob Storage.
+          endpoint: ${AZURE_STORAGE_BLOB_ENDPOINT}
     openfeign:
       client:
         config:

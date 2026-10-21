@@ -9,7 +9,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.PostcodeReferenceImportException;
 import uk.gov.hmcts.reform.fact.data.api.models.PostcodeReferenceImportResult;
+import uk.gov.hmcts.reform.fact.data.api.models.PostcodeReferenceSynchronisationResult;
 import uk.gov.hmcts.reform.fact.data.api.services.PostcodeReferenceImportService;
+import uk.gov.hmcts.reform.fact.data.api.services.PostcodeReferenceSynchronisationService;
 
 import java.time.Instant;
 
@@ -28,6 +30,9 @@ class PostcodeReferenceControllerTest {
 
     @MockitoBean
     private PostcodeReferenceImportService importService;
+
+    @MockitoBean
+    private PostcodeReferenceSynchronisationService synchronisationService;
 
     @Test
     void importsPostcodeReferenceData() throws Exception {
@@ -54,5 +59,25 @@ class PostcodeReferenceControllerTest {
         mvc.perform(post("/postcode-reference/v1/import"))
             .andExpect(status().isInternalServerError())
             .andExpect(jsonPath("$.message").value("Unable to import ONSPD postcode reference data."));
+    }
+
+    @Test
+    void synchronisesPostcodeReferenceData() throws Exception {
+        when(synchronisationService.synchronise()).thenReturn(new PostcodeReferenceSynchronisationResult(
+            true,
+            true,
+            "item-id:12345",
+            "2026-08",
+            993_979,
+            "onspd/postcode-reference.csv",
+            Instant.parse("2026-10-20T09:00:00Z")
+        ));
+
+        mvc.perform(post("/postcode-reference/v1/synchronise"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.blobUpdated").value(true))
+            .andExpect(jsonPath("$.imported").value(true))
+            .andExpect(jsonPath("$.sourceVersion").value("item-id:12345"))
+            .andExpect(jsonPath("$.recordCount").value(993_979));
     }
 }

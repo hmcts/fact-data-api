@@ -285,6 +285,11 @@ class AuthServiceTest {
     }
 
     @Test
+    void isAdminSuppressesAuditForPostcodeReferenceSynchronisationEndpoint() {
+        assertAuditSuppressedFor("POST", "/postcode-reference/v1/synchronise");
+    }
+
+    @Test
     void isAdminSuppressesAuditForDeleteInactiveUsersEndpoint() {
         assertAuditSuppressedFor("DELETE", "/user/v1/retention");
     }

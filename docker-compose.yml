@@ -65,8 +65,9 @@ services:
       - |
         for i in $(seq 1 30); do
           if az storage container create --name photos --connection-string "$$AZURE_STORAGE_CONNECTION_STRING" --only-show-errors --output none \
-            && az storage container create --name csv --connection-string "$$AZURE_STORAGE_CONNECTION_STRING" --only-show-errors --output none; then
-            echo "Created Azurite containers: photos, csv"
+            && az storage container create --name csv --connection-string "$$AZURE_STORAGE_CONNECTION_STRING" --only-show-errors --output none \
+            && az storage container create --name onspd --connection-string "$$AZURE_STORAGE_CONNECTION_STRING" --only-show-errors --output none; then
+            echo "Created Azurite containers: photos, csv, onspd"
             exit 0
           fi
           echo "Waiting for Azurite to become ready..."
