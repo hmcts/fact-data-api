@@ -7,8 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import uk.gov.hmcts.reform.fact.data.api.models.PostcodeReferenceImportResult;
+import uk.gov.hmcts.reform.fact.data.api.models.PostcodeReferenceSynchronisationResult;
 import uk.gov.hmcts.reform.fact.data.api.security.SecuredFactRestController;
 import uk.gov.hmcts.reform.fact.data.api.services.PostcodeReferenceImportService;
+import uk.gov.hmcts.reform.fact.data.api.services.PostcodeReferenceSynchronisationService;
 
 @SecuredFactRestController(
     name = "Postcode reference",
@@ -20,6 +22,7 @@ import uk.gov.hmcts.reform.fact.data.api.services.PostcodeReferenceImportService
 public class PostcodeReferenceController {
 
     private final PostcodeReferenceImportService importService;
+    private final PostcodeReferenceSynchronisationService synchronisationService;
 
     @PostMapping("/import")
     @Operation(
@@ -33,5 +36,18 @@ public class PostcodeReferenceController {
     })
     public PostcodeReferenceImportResult importPostcodeReference() {
         return importService.importLatest();
+    }
+
+    @PostMapping("/synchronise")
+    @Operation(
+        summary = "Synchronise ONSPD postcode reference data",
+        description = "Downloads a new ONSPD release when available and imports the stored reference data."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Synchronisation completed"),
+        @ApiResponse(responseCode = "500", description = "The postcode reference synchronisation failed")
+    })
+    public PostcodeReferenceSynchronisationResult synchronisePostcodeReference() {
+        return synchronisationService.synchronise();
     }
 }
