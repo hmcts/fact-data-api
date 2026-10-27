@@ -113,6 +113,58 @@ class OsServiceTest {
     }
 
     @Test
+    void shouldUsePostcodeReferenceCoordinatesWhenOsCustodianCodeHasNoAuthorityMapping() {
+        PostcodeReference postcodeReference = PostcodeReference.builder()
+            .postcode("M60 9DJ")
+            .status("current")
+            .largeUser(true)
+            .introducedYearMonth("198001")
+            .coordinateQuality(1)
+            .coordinatesAvailable(true)
+            .latitude(53.480918)
+            .longitude(-2.252671)
+            .build();
+        when(postcodeReferenceRepository.findById("M60 9DJ")).thenReturn(Optional.of(postcodeReference));
+        when(osFeignClient.getOsPostcodeDataWithMaxResultsLimit("M60 9", 1))
+            .thenReturn(createOsData(List.of(7655), 53.481, -2.253));
+        when(localAuthorityTypeRepository.findParentOrChildNameByCustodianCode(7655))
+            .thenReturn(Optional.empty());
+
+        OsLocationData result = osService.getOsLonLatDistrictWithPostcodeReferenceFallback("M60 9DJ");
+
+        assertThat(result.getPostcode()).isEqualTo("M60 9DJ");
+        assertThat(result.getAuthorityName()).isEmpty();
+        assertThat(result.getLatitude()).isEqualTo(53.480918);
+        assertThat(result.getLongitude()).isEqualTo(-2.252671);
+        verify(osFeignClient).getOsPostcodeDataWithMaxResultsLimit("M60 9", 1);
+    }
+
+    @Test
+    void shouldNotHideOtherOsProcessingErrorsWhenPostcodeReferenceCoordinatesExist() {
+        PostcodeReference postcodeReference = PostcodeReference.builder()
+            .postcode("M60 9DJ")
+            .status("current")
+            .largeUser(true)
+            .introducedYearMonth("198001")
+            .coordinateQuality(1)
+            .coordinatesAvailable(true)
+            .latitude(53.480918)
+            .longitude(-2.252671)
+            .build();
+        when(postcodeReferenceRepository.findById("M60 9DJ")).thenReturn(Optional.of(postcodeReference));
+        when(osFeignClient.getOsPostcodeDataWithMaxResultsLimit("M60 9", 1))
+            .thenReturn(createOsData(List.of(111, 222), 53.481, -2.253));
+        when(localAuthorityTypeRepository.findParentOrChildNameByCustodianCode(111))
+            .thenReturn(Optional.of(LocalAuthorityType.builder().name("Authority One").build()));
+        when(localAuthorityTypeRepository.findParentOrChildNameByCustodianCode(222))
+            .thenReturn(Optional.of(LocalAuthorityType.builder().name("Authority Two").build()));
+
+        assertThatThrownBy(() -> osService.getOsLonLatDistrictWithPostcodeReferenceFallback("M60 9DJ"))
+            .isInstanceOf(OsProcessException.class)
+            .hasMessageContaining("resolve to different local authorities");
+    }
+
+    @Test
     void shouldUseExactPostcodeReferenceCoordinatesWhenOsReturnsAnotherAddressInTheSector() {
         PostcodeReference postcodeReference = PostcodeReference.builder()
             .postcode("G2 8GT")

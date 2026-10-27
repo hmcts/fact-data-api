@@ -10,6 +10,7 @@ import org.springframework.util.StringUtils;
 import uk.gov.hmcts.reform.fact.data.api.config.CacheConfiguration;
 import uk.gov.hmcts.reform.fact.data.api.entities.PostcodeReference;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.OsCustodianCodeNotMappedException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.OsProcessException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsAddressCoordinates;
 import uk.gov.hmcts.reform.fact.data.api.os.OsAddressFormatter;
@@ -98,7 +99,7 @@ public class OsService {
                     .postcode(formattedPostcode)
                     .build())
                 .orElse(osLocationData);
-        } catch (InvalidPostcodeException exception) {
+        } catch (InvalidPostcodeException | OsCustodianCodeNotMappedException exception) {
             return postcodeReferenceCoordinates
                 .map(coordinates -> toPostcodeReferenceLocation(formattedPostcode, coordinates))
                 .orElseThrow(() -> exception);
@@ -566,9 +567,7 @@ public class OsService {
     private String getAuthorityForSingleCode(Integer code) {
         return localAuthorityTypeRepository
             .findParentOrChildNameByCustodianCode(code)
-            .orElseThrow(() -> new OsProcessException(
-                // Note that a 7655 code error could be related to a PO Box address
-                // or one in other words that is not tied to a physical location
+            .orElseThrow(() -> new OsCustodianCodeNotMappedException(
                 "No authority found for custodian code %s".formatted(code)))
             .getName();
     }
