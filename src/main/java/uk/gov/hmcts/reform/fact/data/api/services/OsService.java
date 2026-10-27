@@ -305,19 +305,6 @@ public class OsService {
         }
     }
 
-    private Optional<PostcodeReference> getValidatedPostcodeReference(String postcode) {
-        Optional<PostcodeReference> postcodeReference = osServiceProvider.getObject()
-            .getPostcodeReference(postcode);
-        postcodeReference
-            .filter(PostcodeReference::isTerminated)
-            .ifPresent(reference -> {
-                throw new InvalidPostcodeException(
-                    "Postcode %s was terminated in %s".formatted(postcode, reference.getTerminatedYearMonth())
-                );
-            });
-        return postcodeReference;
-    }
-
     /**
      * Caches exact exceptional-postcode lookups so correctness does not require a database query on every search.
      * Both hits and misses are cached because the reference table changes only when a new ONSPD release is imported.
@@ -332,6 +319,19 @@ public class OsService {
     )
     public Optional<PostcodeReference> getPostcodeReference(String postcode) {
         return postcodeReferenceRepository.findById(validateAndFormatPostcode(postcode));
+    }
+
+    private Optional<PostcodeReference> getValidatedPostcodeReference(String postcode) {
+        Optional<PostcodeReference> postcodeReference = osServiceProvider.getObject()
+            .getPostcodeReference(postcode);
+        postcodeReference
+            .filter(PostcodeReference::isTerminated)
+            .ifPresent(reference -> {
+                throw new InvalidPostcodeException(
+                    "Postcode %s was terminated in %s".formatted(postcode, reference.getTerminatedYearMonth())
+                );
+            });
+        return postcodeReference;
     }
 
     private Optional<OsAddressCoordinates> getPostcodeReferenceCoordinates(
