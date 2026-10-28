@@ -87,8 +87,8 @@ public class CourtContactDetails implements AuditableCourtEntity {
         message = ValidationConstants.EXPLANATION_MAX_LENGTH_MESSAGE
     )
     @Pattern(
-        regexp = ValidationConstants.EXPLANATION_REGEX,
-        message = ValidationConstants.EXPLANATION_REGEX_MESSAGE
+        regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = "Explanation " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     private String explanation;
 
@@ -100,8 +100,8 @@ public class CourtContactDetails implements AuditableCourtEntity {
         message = ValidationConstants.EXPLANATION_MAX_LENGTH_MESSAGE
     )
     @Pattern(
-        regexp = ValidationConstants.WELSH_EXPLANATION_REGEX,
-        message = ValidationConstants.WELSH_EXPLANATION_REGEX_MESSAGE
+        regexp = ValidationConstants.WELSH_TEXT_REGEX,
+        message = "Welsh translation " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     private String explanationCy;
 

@@ -30,14 +30,14 @@ public class CourtFaxDto {
     @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
         message = ValidationConstants.FAX_DESCRIPTION_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
-        message = ValidationConstants.TEXT_REGEX_MESSAGE)
+        message = "Fax description " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE)
     private String description;
 
     @Schema(description = "Welsh language fax description")
     @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
         message = ValidationConstants.WELSH_FAX_DESCRIPTION_MAX_LENGTH_MESSAGE)
     @Pattern(regexp = ValidationConstants.WELSH_TEXT_REGEX,
-        message = ValidationConstants.TEXT_REGEX_MESSAGE)
+        message = "Welsh translation " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE)
     private String descriptionCy;
 
     @AssertTrue(message = "Fax description and Welsh fax description must be provided together")
