@@ -24,7 +24,7 @@ public class CourtDxCodeDto {
     @NotBlank
     @Size(max = 200, message = "DX code must be {max} characters or fewer")
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
-        message = ValidationConstants.TEXT_REGEX_MESSAGE)
+        message = "DX code " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE)
     private String dxCode;
 
     @Schema(description = "Explanation of the DX code")

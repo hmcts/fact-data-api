@@ -32,13 +32,10 @@ public class ValidationConstants {
     public static final int PHONE_NO_MAX_LENGTH = 20;
     public static final String PHONE_NO_MAX_LENGTH_MESSAGE = "Phone number should be no more than {max} characters";
 
-    // TODO: For DX code Remove this constant and use specific message for CourtDxCode instead
-    public static final String TEXT_REGEX_MESSAGE = "Value contains invalid characters";
-
     public static final String ENGLISH_TEXT_REGEX = "^[A-Za-z0-9 .,'\\-()&+]*$";
     public static final String WELSH_TEXT_REGEX = "^[\\p{L}\\p{M}0-9 .,'\\-()&+]+$";
-    public static final String TEXT_FIELD_INVALID_CHARACTERS_MESSAGE =
-        "must only include letters, numbers, spaces, apostrophes, commas, full stops, hyphens, ampersands, and brackets";
+    public static final String TEXT_FIELD_INVALID_CHARACTERS_MESSAGE = "must only include letters, numbers, spaces, "
+        + "apostrophes, commas, full stops, hyphens, ampersands, and brackets";
 
     public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 ()':,&-]+$)$";
     public static final String REQUIRED_ADDRESS_LINE_REGEX = "^[A-Za-z0-9 ()':,&-]+$";
@@ -95,7 +92,8 @@ public class ValidationConstants {
     public static final int GBS_CODE_MAX_LENGTH = 10;
     public static final String GBS_CODE_MAX_LENGTH_MESSAGE = "GBS code must be {max} characters or fewer";
     public static final String GBS_CODE_REGEX = "^[A-Za-z0-9]*$";
-    public static final String GBS_CODE_REGEX_MESSAGE = "GBS code must only include letters and numbers, with a max of 10 characters";
+    public static final String GBS_CODE_REGEX_MESSAGE =
+        "GBS code must only include letters and numbers, with a max of 10 characters";
 
     public static final int COMMON_TEXT_MAX_LENGTH = 250;
     public static final String EXPLANATION_MAX_LENGTH_MESSAGE = "Explanation must be {max} characters or fewer";

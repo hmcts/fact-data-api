@@ -61,7 +61,7 @@ public class CourtDxCode implements AuditableCourtEntity {
     @NotBlank
     @Size(max = 200)
     @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
-        message = ValidationConstants.TEXT_REGEX_MESSAGE
+        message = "DX code " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     @Column(length = 200)
     private String dxCode;
