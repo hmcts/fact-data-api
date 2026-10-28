@@ -250,7 +250,9 @@ Data-api owns the ONSPD reference-data lifecycle. It discovers the latest hosted
 downloads only large-user and terminated postcode fields, writes the reduced CSV to
 `onspd/postcode-reference.csv`, and then imports it into PostgreSQL. The source catalogue URL and the
 allowed hosted-table domain must be supplied with `ONSPD_CATALOGUE_URL` and
-`ONSPD_ALLOWED_SERVICE_HOST`; neither external address has a source-controlled default.
+`ONSPD_ALLOWED_SERVICE_HOST`; neither external address has a source-controlled default. The API can start without
+these values so environments without the scheduled import remain unaffected, but the synchronisation endpoint will
+reject the request until both values have been configured.
 
 An administrator or the authenticated cron-trigger identity can run the complete synchronisation with:
 

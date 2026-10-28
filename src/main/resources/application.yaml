@@ -98,8 +98,8 @@ dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
 
 onspd:
-  catalogue-url: ${ONSPD_CATALOGUE_URL}
-  allowed-service-host: ${ONSPD_ALLOWED_SERVICE_HOST}
+  catalogue-url: ${ONSPD_CATALOGUE_URL:}
+  allowed-service-host: ${ONSPD_ALLOWED_SERVICE_HOST:}
   blob-name: ${ONSPD_BLOB_NAME:postcode-reference.csv}
   page-size: ${ONSPD_PAGE_SIZE:1000}
   max-attempts: ${ONSPD_MAX_ATTEMPTS:4}

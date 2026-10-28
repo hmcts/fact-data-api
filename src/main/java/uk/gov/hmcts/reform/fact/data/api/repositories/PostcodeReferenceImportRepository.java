@@ -45,6 +45,30 @@ public class PostcodeReferenceImportRepository {
             source_version, onspd_release, blob_etag, record_count, imported_at
         ) VALUES (?, ?, ?, ?, ?)
         """;
+    private static final String REPLACE_LIVE_TABLE_SQL = """
+        INSERT INTO postcode_reference (
+            postcode,
+            status,
+            is_large_user,
+            introduced_yyyymm,
+            terminated_yyyymm,
+            coordinate_quality,
+            has_coordinates,
+            latitude,
+            longitude
+        )
+        SELECT
+            postcode,
+            status,
+            is_large_user,
+            introduced_yyyymm,
+            terminated_yyyymm,
+            coordinate_quality,
+            has_coordinates,
+            latitude,
+            longitude
+        FROM postcode_reference_stage
+        """;
 
     private final DataSource dataSource;
 
@@ -67,30 +91,38 @@ public class PostcodeReferenceImportRepository {
     ) {
         try (Connection connection = dataSource.getConnection()) {
             connection.setAutoCommit(false);
-            try {
-                acquireImportLock(connection);
-                Optional<PostcodeReferenceImportResult> previousImport = findImport(
-                    connection,
-                    metadata.sourceVersion()
-                );
-                if (previousImport.isPresent()) {
-                    connection.commit();
-                    return previousImport.get();
-                }
-
-                createStagingTable(connection);
-                long importedRecordCount = copyIntoStagingTable(connection, csvInputStream);
-                validateRecordCount(importedRecordCount, metadata.recordCount());
-                replaceLiveTable(connection);
-                PostcodeReferenceImportResult result = recordImport(connection, metadata);
-                connection.commit();
-                return result;
-            } catch (SQLException | IOException | RuntimeException ex) {
-                rollback(connection, ex);
-                throw ex;
-            }
+            return executeImport(connection, csvInputStream, metadata);
         } catch (SQLException | IOException ex) {
             throw new PostcodeReferenceImportException("Failed to replace postcode reference data", ex);
+        }
+    }
+
+    private PostcodeReferenceImportResult executeImport(
+        Connection connection,
+        InputStream csvInputStream,
+        PostcodeReferenceImportMetadata metadata
+    ) throws SQLException, IOException {
+        try {
+            acquireImportLock(connection);
+            Optional<PostcodeReferenceImportResult> previousImport = findImport(
+                connection,
+                metadata.sourceVersion()
+            );
+            if (previousImport.isPresent()) {
+                connection.commit();
+                return previousImport.get();
+            }
+
+            createStagingTable(connection);
+            long importedRecordCount = copyIntoStagingTable(connection, csvInputStream);
+            validateRecordCount(importedRecordCount, metadata.recordCount());
+            replaceLiveTable(connection);
+            PostcodeReferenceImportResult result = recordImport(connection, metadata);
+            connection.commit();
+            return result;
+        } catch (SQLException | IOException | RuntimeException ex) {
+            rollback(connection, ex);
+            throw ex;
         }
     }
 
@@ -147,8 +179,7 @@ public class PostcodeReferenceImportRepository {
 
     private void replaceLiveTable(Connection connection) throws SQLException {
         try (PreparedStatement truncate = connection.prepareStatement("TRUNCATE TABLE postcode_reference");
-             PreparedStatement insert = connection.prepareStatement(
-                 "INSERT INTO postcode_reference SELECT * FROM postcode_reference_stage")) {
+             PreparedStatement insert = connection.prepareStatement(REPLACE_LIVE_TABLE_SQL)) {
             truncate.execute();
             insert.executeUpdate();
         }

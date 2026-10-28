@@ -159,47 +159,24 @@ public class OsService {
         Optional<PostcodeReference> postcodeReference = osServiceProvider.getObject()
             .getPostcodeReference(formattedPostcode);
         if (postcodeReference.filter(PostcodeReference::isTerminated).isPresent()) {
-            return OsData.builder()
-                .header(buildCombinedHeader(0))
-                .results(Collections.emptyList())
-                .build();
+            return buildAdminAddressData(Collections.emptyList(), 0);
         }
         List<OsResult> combinedResults = new ArrayList<>();
         int offset = 0;
 
         for (int pageNumber = 0; pageNumber < MAX_ADMIN_PAGES; pageNumber++) {
             OsData page = getOsAdminAddressPage(formattedPostcode, offset);
-            List<OsResult> pageResults = page == null || page.getResults() == null
-                ? Collections.emptyList()
-                : page.getResults();
+            List<OsResult> pageResults = getPageResults(page);
             combinedResults.addAll(pageResults);
-
-            int totalResults = page != null
-                && page.getHeader() != null
-                && page.getHeader().getTotalresults() != null
-                ? page.getHeader().getTotalresults()
-                : combinedResults.size();
+            int totalResults = getTotalResults(page, combinedResults.size());
 
             if (pageResults.isEmpty() || combinedResults.size() >= totalResults) {
-                if (combinedResults.isEmpty()) {
-                    if (getPostcodeReferenceCoordinates(
-                        postcodeReference,
-                        formattedPostcode
-                    ).isPresent()) {
-                        return OsData.builder()
-                            .header(buildCombinedHeader(0))
-                            .results(Collections.emptyList())
-                            .build();
-                    }
-                    throw new InvalidPostcodeException(
-                        "No address results returned from OS for postcode %s".formatted(formattedPostcode)
-                    );
-                }
-                combinedResults.forEach(OsAddressFormatter::format);
-                return OsData.builder()
-                    .header(buildCombinedHeader(totalResults))
-                    .results(combinedResults)
-                    .build();
+                return completeAdminAddressLookup(
+                    formattedPostcode,
+                    postcodeReference,
+                    combinedResults,
+                    totalResults
+                );
             }
 
             offset += pageResults.size();
@@ -208,6 +185,46 @@ public class OsService {
         throw new OsProcessException(
             "OS address lookup exceeded %s pages for postcode %s".formatted(MAX_ADMIN_PAGES, formattedPostcode)
         );
+    }
+
+    private List<OsResult> getPageResults(OsData page) {
+        return page == null || page.getResults() == null
+            ? Collections.emptyList()
+            : page.getResults();
+    }
+
+    private int getTotalResults(OsData page, int retrievedResultCount) {
+        return page != null
+            && page.getHeader() != null
+            && page.getHeader().getTotalresults() != null
+            ? page.getHeader().getTotalresults()
+            : retrievedResultCount;
+    }
+
+    private OsData completeAdminAddressLookup(
+        String formattedPostcode,
+        Optional<PostcodeReference> postcodeReference,
+        List<OsResult> combinedResults,
+        int totalResults
+    ) {
+        if (combinedResults.isEmpty()) {
+            if (getPostcodeReferenceCoordinates(postcodeReference, formattedPostcode).isPresent()) {
+                return buildAdminAddressData(Collections.emptyList(), 0);
+            }
+            throw new InvalidPostcodeException(
+                "No address results returned from OS for postcode %s".formatted(formattedPostcode)
+            );
+        }
+
+        combinedResults.forEach(OsAddressFormatter::format);
+        return buildAdminAddressData(combinedResults, totalResults);
+    }
+
+    private OsData buildAdminAddressData(List<OsResult> results, int totalResults) {
+        return OsData.builder()
+            .header(buildCombinedHeader(totalResults))
+            .results(results)
+            .build();
     }
 
     /**

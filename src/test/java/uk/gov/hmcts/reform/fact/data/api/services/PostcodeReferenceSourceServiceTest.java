@@ -15,9 +15,12 @@ import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.PostcodeRefere
 import uk.gov.hmcts.reform.fact.data.api.models.OnspdRelease;
 import uk.gov.hmcts.reform.fact.data.api.models.PostcodeReferenceSourceUpdateResult;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.YearMonth;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -77,13 +80,23 @@ class PostcodeReferenceSourceServiceTest {
     void uploadsReducedCsvAndMetadataForNewRelease() {
         when(blobClient.getProperties()).thenReturn(blobProperties);
         when(blobProperties.getMetadata()).thenReturn(Map.of("onspdSourceVersion", "may:2"));
-        when(csvService.createReducedCsv(eq(release), any(Path.class))).thenReturn(993_979L);
+        AtomicReference<Path> temporaryCsv = new AtomicReference<>();
+        when(csvService.createReducedCsv(eq(release), any(Path.class))).thenAnswer(invocation -> {
+            Path csvPath = invocation.getArgument(1);
+            temporaryCsv.set(csvPath);
+            assertThat(Files.getPosixFilePermissions(csvPath)).containsExactlyInAnyOrder(
+                PosixFilePermission.OWNER_READ,
+                PosixFilePermission.OWNER_WRITE
+            );
+            return 993_979L;
+        });
 
         PostcodeReferenceSourceUpdateResult result = sourceService.updateIfRequired();
 
         assertThat(result.updated()).isTrue();
         assertThat(result.recordCount()).isEqualTo(993_979);
         assertThat(result.blobPath()).isEqualTo("onspd/postcode-reference.csv");
+        assertThat(temporaryCsv.get()).doesNotExist();
         verify(blobClient).uploadFromFile(any(String.class), eq(true));
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, String>> metadata = ArgumentCaptor.forClass(Map.class);

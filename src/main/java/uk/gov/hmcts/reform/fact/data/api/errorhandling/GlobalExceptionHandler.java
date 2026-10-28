@@ -48,6 +48,7 @@ public class GlobalExceptionHandler {
         "Unable to complete the request due to an upstream service error.";
     private static final String POSTCODE_REFERENCE_IMPORT_ERROR_MESSAGE =
         "Unable to import ONSPD postcode reference data.";
+    private static final String EXCEPTION_TYPE_LOG_PREFIX = "ExceptionType=";
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -264,7 +265,7 @@ public class GlobalExceptionHandler {
     public ExceptionResponse handle(AzureUploadException ex) {
         log.error(writeLog(
             "502, error while uploading CSV to Azure",
-            "ExceptionType=" + ex.getClass().getSimpleName()
+            EXCEPTION_TYPE_LOG_PREFIX + ex.getClass().getSimpleName()
         ), ex);
         return generateExceptionResponse(BAD_GATEWAY_MESSAGE);
     }
@@ -274,7 +275,7 @@ public class GlobalExceptionHandler {
     public ExceptionResponse handle(CsvCreationException ex) {
         log.error(writeLog(
             "500, error while creating CSV file",
-            "ExceptionType=" + ex.getClass().getSimpleName()
+            EXCEPTION_TYPE_LOG_PREFIX + ex.getClass().getSimpleName()
         ), ex);
         return generateExceptionResponse(CSV_CREATION_ERROR_MESSAGE);
     }
@@ -284,7 +285,7 @@ public class GlobalExceptionHandler {
     public ExceptionResponse handle(PostcodeReferenceImportException ex) {
         log.error(writeLog(
             "500, error while importing ONSPD postcode reference data",
-            "ExceptionType=" + ex.getClass().getSimpleName()
+            EXCEPTION_TYPE_LOG_PREFIX + ex.getClass().getSimpleName()
         ), ex);
         return generateExceptionResponse(POSTCODE_REFERENCE_IMPORT_ERROR_MESSAGE);
     }

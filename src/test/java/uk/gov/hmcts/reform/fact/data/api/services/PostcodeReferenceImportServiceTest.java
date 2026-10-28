@@ -23,6 +23,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -133,7 +134,7 @@ class PostcodeReferenceImportServiceTest {
 
     @Test
     void reportsMissingBlobAsNotFound() {
-        BlobStorageException exception = org.mockito.Mockito.mock(BlobStorageException.class);
+        BlobStorageException exception = mock(BlobStorageException.class);
         when(exception.getStatusCode()).thenReturn(404);
         when(blobClient.getProperties()).thenThrow(exception);
 
@@ -144,7 +145,7 @@ class PostcodeReferenceImportServiceTest {
 
     @Test
     void wrapsOtherBlobFailures() {
-        BlobStorageException exception = org.mockito.Mockito.mock(BlobStorageException.class);
+        BlobStorageException exception = mock(BlobStorageException.class);
         when(exception.getStatusCode()).thenReturn(500);
         when(blobClient.getProperties()).thenThrow(exception);
 

@@ -64,13 +64,14 @@ class PostcodeReferenceCsvServiceTest {
     @Test
     void rejectsPaginationThatStopsBeforeExpectedCount() {
         OnspdRelease release = release();
+        PostcodeReferenceCsvService csvService = new PostcodeReferenceCsvService(onspdClient);
+        Path output = temporaryDirectory.resolve("postcode-reference.csv");
         when(onspdClient.getFilteredPostcodeCount(release)).thenReturn(2L);
         when(onspdClient.getPostcodeRecordsAfter(release, 0)).thenReturn(List.of(
             attributes(10, "G2 8GT", null, 1, "55.858872", "-4.260375")));
         when(onspdClient.getPostcodeRecordsAfter(release, 10)).thenReturn(List.of());
 
-        assertThatThrownBy(() -> new PostcodeReferenceCsvService(onspdClient).createReducedCsv(
-            release, temporaryDirectory.resolve("postcode-reference.csv")))
+        assertThatThrownBy(() -> csvService.createReducedCsv(release, output))
             .isInstanceOf(PostcodeReferenceImportException.class)
             .hasMessageContaining("pagination ended after 1 of 2");
     }
@@ -78,12 +79,13 @@ class PostcodeReferenceCsvServiceTest {
     @Test
     void rejectsRowsOutsideRequestedFilter() {
         OnspdRelease release = release();
+        PostcodeReferenceCsvService csvService = new PostcodeReferenceCsvService(onspdClient);
+        Path output = temporaryDirectory.resolve("postcode-reference.csv");
         when(onspdClient.getFilteredPostcodeCount(release)).thenReturn(1L);
         when(onspdClient.getPostcodeRecordsAfter(release, 0)).thenReturn(List.of(
             attributes(10, "AB1 0AA", null, 0, "57.1", "-2.2")));
 
-        assertThatThrownBy(() -> new PostcodeReferenceCsvService(onspdClient).createReducedCsv(
-            release, temporaryDirectory.resolve("postcode-reference.csv")))
+        assertThatThrownBy(() -> csvService.createReducedCsv(release, output))
             .isInstanceOf(PostcodeReferenceImportException.class)
             .hasMessageContaining("outside the requested filter");
     }

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -69,7 +70,10 @@ public class OnspdClient {
      * @throws PostcodeReferenceImportException when the catalogue cannot provide a valid release
      */
     public OnspdRelease findLatestRelease() {
-        URI uri = UriComponentsBuilder.fromUriString(properties.getCatalogueUrl())
+        URI uri = UriComponentsBuilder.fromUriString(requiredProperty(
+            properties.getCatalogueUrl(),
+            "ONSPD catalogue URL"
+        ))
             .queryParam("f", "json")
             .queryParam("num", 100)
             .queryParam("sortField", "created")
@@ -146,6 +150,7 @@ public class OnspdClient {
         return "(" + POSTCODE_SELECTION_FILTER + ") AND ObjectId > " + lastObjectId;
     }
 
+    @SuppressWarnings("java:S7467")
     private Optional<OnspdRelease> toRelease(JsonNode result) {
         String title = result.path("title").asText();
         if (!title.startsWith("ONS Postcode Directory") || !title.contains("Hosted Table")) {
@@ -172,7 +177,7 @@ public class OnspdClient {
                 result.path("url").asText(),
                 result.path("modified").asLong()
             ));
-        } catch (DateTimeParseException | NumberFormatException ex) {
+        } catch (DateTimeParseException | NumberFormatException ignored) {
             return Optional.empty();
         }
     }
@@ -221,6 +226,10 @@ public class OnspdClient {
     }
 
     private void validateServiceUrl(String serviceUrl) {
+        String allowedServiceHost = requiredProperty(
+            properties.getAllowedServiceHost(),
+            "ONSPD allowed service host"
+        );
         URI uri;
         try {
             uri = URI.create(serviceUrl);
@@ -229,10 +238,17 @@ public class OnspdClient {
         }
 
         if (!"https".equalsIgnoreCase(uri.getScheme())
-            || !properties.getAllowedServiceHost().equalsIgnoreCase(uri.getHost())) {
+            || !allowedServiceHost.equalsIgnoreCase(uri.getHost())) {
             throw new PostcodeReferenceImportException(
                 "ONSPD catalogue returned a service URL from an unexpected host");
         }
+    }
+
+    private String requiredProperty(String value, String description) {
+        if (!StringUtils.hasText(value)) {
+            throw new PostcodeReferenceImportException(description + " is not configured");
+        }
+        return value;
     }
 
     private void validateArcGisResponse(JsonNode response, String operation) {

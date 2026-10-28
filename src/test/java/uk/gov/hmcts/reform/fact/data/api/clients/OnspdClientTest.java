@@ -23,12 +23,13 @@ class OnspdClientTest {
 
     private MockRestServiceServer server;
     private OnspdClient client;
+    private OnspdProperties properties;
 
     @BeforeEach
     void setUp() {
         RestTemplate restTemplate = new RestTemplate();
         server = MockRestServiceServer.bindTo(restTemplate).build();
-        OnspdProperties properties = new OnspdProperties();
+        properties = new OnspdProperties();
         properties.setCatalogueUrl("https://catalogue.test/search");
         properties.setAllowedServiceHost("services.test");
         properties.setPageSize(2);
@@ -74,8 +75,8 @@ class OnspdClientTest {
 
         assertThat(client.getFilteredPostcodeCount(release)).isEqualTo(3);
         List<JsonNode> records = client.getPostcodeRecordsAfter(release, 2);
-        assertThat(records).singleElement().satisfies(record ->
-            assertThat(record.path("pcds").asText()).isEqualTo("G2 8GT"));
+        assertThat(records).singleElement().satisfies(postcodeRecord ->
+            assertThat(postcodeRecord.path("pcds").asText()).isEqualTo("G2 8GT"));
     }
 
     @Test
@@ -92,9 +93,30 @@ class OnspdClientTest {
 
     @Test
     void rejectsUnexpectedHostedTableHost() {
-        assertThatThrownBy(() -> client.getFilteredPostcodeCount(release("https://unexpected.test/FeatureServer")))
+        OnspdRelease unexpectedHostRelease = release("https://unexpected.test/FeatureServer");
+
+        assertThatThrownBy(() -> client.getFilteredPostcodeCount(unexpectedHostRelease))
             .isInstanceOf(PostcodeReferenceImportException.class)
             .hasMessageContaining("unexpected host");
+    }
+
+    @Test
+    void reportsMissingCatalogueConfigurationWhenSynchronisationIsRequested() {
+        properties.setCatalogueUrl(" ");
+
+        assertThatThrownBy(client::findLatestRelease)
+            .isInstanceOf(PostcodeReferenceImportException.class)
+            .hasMessage("ONSPD catalogue URL is not configured");
+    }
+
+    @Test
+    void reportsMissingAllowedHostConfigurationWhenPostcodesAreRequested() {
+        properties.setAllowedServiceHost(" ");
+        OnspdRelease configuredRelease = release("https://services.test/aug/FeatureServer");
+
+        assertThatThrownBy(() -> client.getFilteredPostcodeCount(configuredRelease))
+            .isInstanceOf(PostcodeReferenceImportException.class)
+            .hasMessage("ONSPD allowed service host is not configured");
     }
 
     private OnspdRelease release(String serviceUrl) {

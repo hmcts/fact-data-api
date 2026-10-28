@@ -1,7 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.config;
 
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,10 +15,8 @@ import org.springframework.validation.annotation.Validated;
 @Setter
 public class OnspdProperties {
 
-    @NotBlank
     private String catalogueUrl;
 
-    @NotBlank
     private String allowedServiceHost;
 
     @Min(1)

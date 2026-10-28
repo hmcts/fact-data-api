@@ -15,6 +15,7 @@ import uk.gov.hmcts.reform.fact.data.api.models.PostcodeReferenceSourceUpdateRes
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
@@ -52,7 +53,7 @@ public class PostcodeReferenceSourceService {
     public PostcodeReferenceSourceUpdateResult updateIfRequired() {
         OnspdRelease latestRelease = onspdClient.findLatestRelease();
         String release = latestRelease.releaseDate().format(RELEASE_FORMAT);
-        String blobPath = blobContainerClient.getBlobContainerName() + "/" + blobName;
+        String blobPath = Path.of(blobContainerClient.getBlobContainerName(), blobName).toString();
         BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
 
         if (storedSourceVersion(blobClient).filter(latestRelease.sourceVersion()::equals).isPresent()) {
@@ -99,7 +100,11 @@ public class PostcodeReferenceSourceService {
 
     private Path createTemporaryFile() {
         try {
-            return Files.createTempFile("onspd-postcode-reference-", ".csv");
+            return Files.createTempFile(
+                "onspd-postcode-reference-",
+                ".csv",
+                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"))
+            );
         } catch (IOException ex) {
             throw new PostcodeReferenceImportException("Unable to create temporary ONSPD CSV", ex);
         }
