@@ -1,8 +1,12 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import com.azure.core.util.Context;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.models.BlobProperties;
+import com.azure.storage.blob.models.BlobRequestConditions;
 import com.azure.storage.blob.models.BlobStorageException;
+import com.azure.storage.blob.options.BlobUploadFromFileOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,7 +60,9 @@ public class PostcodeReferenceSourceService {
         String blobPath = Path.of(blobContainerClient.getBlobContainerName(), blobName).toString();
         BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
 
-        if (storedSourceVersion(blobClient).filter(latestRelease.sourceVersion()::equals).isPresent()) {
+        Optional<StoredBlob> storedBlob = inspectStoredBlob(blobClient);
+        if (storedBlob.flatMap(StoredBlob::sourceVersion)
+            .filter(latestRelease.sourceVersion()::equals).isPresent()) {
             log.info("ONSPD release {} is already stored at {}", release, blobPath);
             return PostcodeReferenceSourceUpdateResult.unchanged(
                 latestRelease.sourceVersion(), release, blobPath);
@@ -65,31 +71,46 @@ public class PostcodeReferenceSourceService {
         Path temporaryCsv = createTemporaryFile();
         try {
             long recordCount = csvService.createReducedCsv(latestRelease, temporaryCsv);
-            blobClient.uploadFromFile(temporaryCsv.toString(), true);
-            blobClient.setMetadata(Map.of(
+            Map<String, String> metadata = Map.of(
                 ITEM_ID_METADATA, latestRelease.itemId(),
                 PostcodeReferenceImportService.SOURCE_VERSION_METADATA, latestRelease.sourceVersion(),
                 PostcodeReferenceImportService.RELEASE_METADATA, release,
                 PostcodeReferenceImportService.RECORD_COUNT_METADATA, Long.toString(recordCount)
-            ));
+            );
+            BlobRequestConditions conditions = storedBlob
+                .map(blob -> new BlobRequestConditions().setIfMatch(blob.eTag()))
+                .orElseGet(() -> new BlobRequestConditions().setIfNoneMatch("*"));
+            BlobUploadFromFileOptions uploadOptions = new BlobUploadFromFileOptions(temporaryCsv.toString())
+                .setMetadata(metadata)
+                .setRequestConditions(conditions);
+            blobClient.uploadFromFileWithResponse(uploadOptions, null, Context.NONE);
             log.info("Uploaded ONSPD release {} with {} records to {}", release, recordCount, blobPath);
             return PostcodeReferenceSourceUpdateResult.updated(
                 latestRelease.sourceVersion(), release, recordCount, blobPath);
         } catch (BlobStorageException ex) {
+            if (ex.getStatusCode() == 412
+                && inspectStoredBlob(blobClient).flatMap(StoredBlob::sourceVersion)
+                    .filter(latestRelease.sourceVersion()::equals).isPresent()) {
+                log.info("ONSPD release {} was stored by another synchronisation at {}", release, blobPath);
+                return PostcodeReferenceSourceUpdateResult.unchanged(
+                    latestRelease.sourceVersion(), release, blobPath);
+            }
             throw new PostcodeReferenceImportException("Unable to upload ONSPD postcode reference blob", ex);
         } finally {
             deleteTemporaryFile(temporaryCsv);
         }
     }
 
-    private Optional<String> storedSourceVersion(BlobClient blobClient) {
+    private Optional<StoredBlob> inspectStoredBlob(BlobClient blobClient) {
         try {
-            return blobClient.getProperties().getMetadata().entrySet().stream()
+            BlobProperties properties = blobClient.getProperties();
+            Optional<String> sourceVersion = properties.getMetadata().entrySet().stream()
                 .filter(entry -> PostcodeReferenceImportService.SOURCE_VERSION_METADATA
                     .equalsIgnoreCase(entry.getKey()))
                 .map(Map.Entry::getValue)
                 .filter(value -> value != null && !value.isBlank())
                 .findFirst();
+            return Optional.of(new StoredBlob(sourceVersion, properties.getETag()));
         } catch (BlobStorageException ex) {
             if (ex.getStatusCode() == 404) {
                 return Optional.empty();
@@ -116,5 +137,8 @@ public class PostcodeReferenceSourceService {
         } catch (IOException ex) {
             log.warn("Unable to delete temporary ONSPD CSV {}", temporaryCsv, ex);
         }
+    }
+
+    private record StoredBlob(Optional<String> sourceVersion, String eTag) {
     }
 }

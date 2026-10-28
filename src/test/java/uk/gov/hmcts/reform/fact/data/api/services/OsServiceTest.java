@@ -212,7 +212,7 @@ class OsServiceTest {
     }
 
     @Test
-    void shouldRejectCurrentLargeUserPostcodeWithoutCoordinates() {
+    void shouldUseOsWhenCurrentLargeUserPostcodeHasNoReferenceCoordinates() {
         PostcodeReference postcodeReference = PostcodeReference.builder()
             .postcode("JE3 4DJ")
             .status("current")
@@ -222,11 +222,78 @@ class OsServiceTest {
             .coordinatesAvailable(false)
             .build();
         when(postcodeReferenceRepository.findById("JE3 4DJ")).thenReturn(Optional.of(postcodeReference));
-        assertThatThrownBy(() -> osService.getOsLonLatDistrictWithPostcodeReferenceFallback("JE3 4DJ"))
-            .isInstanceOf(InvalidPostcodeException.class)
-            .hasMessageContaining("current large-user postcode but has no usable coordinates");
+        when(osFeignClient.getOsPostcodeDataWithMaxResultsLimit("JE3 4", 1))
+            .thenReturn(createOsData(List.of(123), 49.21, -2.13));
+        when(localAuthorityTypeRepository.findParentOrChildNameByCustodianCode(123))
+            .thenReturn(Optional.of(LocalAuthorityType.builder().name(AUTHORITY_NAME).build()));
 
-        verify(osFeignClient, never()).getOsPostcodeDataWithMaxResultsLimit("JE3 4", 1);
+        OsLocationData result = osService.getOsLonLatDistrictWithPostcodeReferenceFallback("JE3 4DJ");
+
+        assertThat(result.getLatitude()).isEqualTo(49.21);
+        assertThat(result.getLongitude()).isEqualTo(-2.13);
+        assertThat(result.getAuthorityName()).isEqualTo(AUTHORITY_NAME);
+    }
+
+    @Test
+    void shouldPreferFullPostcodeOsCoordinatesForPostcodeOnlySearch() {
+        PostcodeReference postcodeReference = PostcodeReference.builder()
+            .postcode("M60 9DJ")
+            .status("current")
+            .largeUser(true)
+            .coordinatesAvailable(true)
+            .latitude(53.480918)
+            .longitude(-2.252671)
+            .build();
+        when(postcodeReferenceRepository.findById("M60 9DJ")).thenReturn(Optional.of(postcodeReference));
+        when(osFeignClient.getOsPostcodeData("M60 9DJ"))
+            .thenReturn(createOsData(List.of(123), 53.4815, -2.2515));
+
+        OsAddressCoordinates result =
+            osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("M60 9DJ");
+
+        assertThat(result.getLatitude()).isEqualTo(53.4815);
+        assertThat(result.getLongitude()).isEqualTo(-2.2515);
+    }
+
+    @Test
+    void shouldUseReferenceCoordinatesWhenFullPostcodeOsLookupFails() {
+        PostcodeReference postcodeReference = PostcodeReference.builder()
+            .postcode("M60 9DJ")
+            .status("current")
+            .largeUser(true)
+            .coordinatesAvailable(true)
+            .latitude(53.480918)
+            .longitude(-2.252671)
+            .build();
+        when(postcodeReferenceRepository.findById("M60 9DJ")).thenReturn(Optional.of(postcodeReference));
+        when(osFeignClient.getOsPostcodeData("M60 9DJ"))
+            .thenReturn(OsData.builder().results(Collections.emptyList()).build());
+
+        OsAddressCoordinates result =
+            osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("M60 9DJ");
+
+        assertThat(result.getLatitude()).isEqualTo(53.480918);
+        assertThat(result.getLongitude()).isEqualTo(-2.252671);
+    }
+
+    @Test
+    void shouldRejectTerminatedPostcodeBeforePostcodeOnlyOsLookup() {
+        PostcodeReference postcodeReference = PostcodeReference.builder()
+            .postcode("B16 6TZ")
+            .status("terminated")
+            .terminatedYearMonth("201804")
+            .coordinatesAvailable(true)
+            .latitude(52.473)
+            .longitude(-1.93)
+            .build();
+        when(postcodeReferenceRepository.findById("B16 6TZ")).thenReturn(Optional.of(postcodeReference));
+
+        assertThatThrownBy(() ->
+            osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("B16 6TZ"))
+            .isInstanceOf(InvalidPostcodeException.class)
+            .hasMessageContaining("terminated in 201804");
+
+        verify(osFeignClient, never()).getOsPostcodeData("B16 6TZ");
     }
 
     @Test

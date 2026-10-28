@@ -1,22 +1,20 @@
 package uk.gov.hmcts.reform.fact.data.api.repositories;
 
 import org.postgresql.PGConnection;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ConnectionCallback;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.PostcodeReferenceImportException;
 import uk.gov.hmcts.reform.fact.data.api.models.PostcodeReferenceImportMetadata;
 import uk.gov.hmcts.reform.fact.data.api.models.PostcodeReferenceImportResult;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Optional;
-
-import javax.sql.DataSource;
 
 @Repository
 public class PostcodeReferenceImportRepository {
@@ -70,10 +68,10 @@ public class PostcodeReferenceImportRepository {
         FROM postcode_reference_stage
         """;
 
-    private final DataSource dataSource;
+    private final JdbcTemplate jdbcTemplate;
 
-    public PostcodeReferenceImportRepository(DataSource dataSource) {
-        this.dataSource = dataSource;
+    public PostcodeReferenceImportRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     /**
@@ -85,84 +83,73 @@ public class PostcodeReferenceImportRepository {
      * @param metadata trusted blob metadata used to validate and identify the import
      * @return the completed import, or the existing import when the source version was already processed
      */
+    @Transactional
     public PostcodeReferenceImportResult replaceIfRequired(
         InputStream csvInputStream,
         PostcodeReferenceImportMetadata metadata
     ) {
-        try (Connection connection = dataSource.getConnection()) {
-            connection.setAutoCommit(false);
-            return executeImport(connection, csvInputStream, metadata);
-        } catch (SQLException | IOException ex) {
+        try {
+            return executeImport(csvInputStream, metadata);
+        } catch (DataAccessException ex) {
             throw new PostcodeReferenceImportException("Failed to replace postcode reference data", ex);
         }
     }
 
     private PostcodeReferenceImportResult executeImport(
-        Connection connection,
         InputStream csvInputStream,
         PostcodeReferenceImportMetadata metadata
-    ) throws SQLException, IOException {
-        try {
-            acquireImportLock(connection);
-            Optional<PostcodeReferenceImportResult> previousImport = findImport(
-                connection,
-                metadata.sourceVersion()
-            );
-            if (previousImport.isPresent()) {
-                connection.commit();
-                return previousImport.get();
+    ) {
+        acquireImportLock();
+        Optional<PostcodeReferenceImportResult> previousImport = findImport(metadata.sourceVersion());
+        if (previousImport.isPresent()) {
+            return previousImport.get();
+        }
+
+        createStagingTable();
+        long importedRecordCount = copyIntoStagingTable(csvInputStream);
+        validateRecordCount(importedRecordCount, metadata.recordCount());
+        replaceLiveTable();
+        return recordImport(metadata);
+    }
+
+    private void acquireImportLock() {
+        jdbcTemplate.query("SELECT pg_advisory_xact_lock(?)", resultSet -> null, IMPORT_LOCK_ID);
+    }
+
+    private Optional<PostcodeReferenceImportResult> findImport(String sourceVersion) {
+        return jdbcTemplate.query(FIND_IMPORT_SQL, resultSet -> {
+            if (!resultSet.next()) {
+                return Optional.empty();
             }
-
-            createStagingTable(connection);
-            long importedRecordCount = copyIntoStagingTable(connection, csvInputStream);
-            validateRecordCount(importedRecordCount, metadata.recordCount());
-            replaceLiveTable(connection);
-            PostcodeReferenceImportResult result = recordImport(connection, metadata);
-            connection.commit();
-            return result;
-        } catch (SQLException | IOException | RuntimeException ex) {
-            rollback(connection, ex);
-            throw ex;
-        }
+            return Optional.of(new PostcodeReferenceImportResult(
+                false,
+                resultSet.getString("source_version"),
+                resultSet.getString("onspd_release"),
+                resultSet.getLong("record_count"),
+                resultSet.getTimestamp("imported_at").toInstant()
+            ));
+        }, sourceVersion);
     }
 
-    private void acquireImportLock(Connection connection) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("SELECT pg_advisory_xact_lock(?)")) {
-            statement.setLong(1, IMPORT_LOCK_ID);
-            statement.execute();
-        }
-    }
-
-    private Optional<PostcodeReferenceImportResult> findImport(Connection connection, String sourceVersion)
-        throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(FIND_IMPORT_SQL)) {
-            statement.setString(1, sourceVersion);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (!resultSet.next()) {
-                    return Optional.empty();
-                }
-                return Optional.of(new PostcodeReferenceImportResult(
-                    false,
-                    resultSet.getString("source_version"),
-                    resultSet.getString("onspd_release"),
-                    resultSet.getLong("record_count"),
-                    resultSet.getTimestamp("imported_at").toInstant()
-                ));
-            }
-        }
-    }
-
-    private void createStagingTable(Connection connection) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
+    private void createStagingTable() {
+        jdbcTemplate.execute(
             "CREATE TEMP TABLE postcode_reference_stage "
-                + "(LIKE postcode_reference INCLUDING ALL) ON COMMIT DROP")) {
-            statement.execute();
-        }
+                + "(LIKE postcode_reference INCLUDING ALL) ON COMMIT DROP"
+        );
     }
 
-    private long copyIntoStagingTable(Connection connection, InputStream csvInputStream)
-        throws SQLException, IOException {
-        return connection.unwrap(PGConnection.class).getCopyAPI().copyIn(COPY_SQL, csvInputStream);
+    private long copyIntoStagingTable(InputStream csvInputStream) {
+        Long importedRecordCount = jdbcTemplate.execute((ConnectionCallback<Long>) connection -> {
+            try {
+                return connection.unwrap(PGConnection.class).getCopyAPI().copyIn(COPY_SQL, csvInputStream);
+            } catch (IOException ex) {
+                throw new PostcodeReferenceImportException("Unable to read ONSPD CSV during import", ex);
+            }
+        });
+        if (importedRecordCount == null) {
+            throw new PostcodeReferenceImportException("ONSPD CSV import did not return a record count");
+        }
+        return importedRecordCount;
     }
 
     private void validateRecordCount(long actualRecordCount, long expectedRecordCount) {
@@ -177,27 +164,21 @@ public class PostcodeReferenceImportRepository {
         }
     }
 
-    private void replaceLiveTable(Connection connection) throws SQLException {
-        try (PreparedStatement truncate = connection.prepareStatement("TRUNCATE TABLE postcode_reference");
-             PreparedStatement insert = connection.prepareStatement(REPLACE_LIVE_TABLE_SQL)) {
-            truncate.execute();
-            insert.executeUpdate();
-        }
+    private void replaceLiveTable() {
+        jdbcTemplate.update("DELETE FROM postcode_reference");
+        jdbcTemplate.update(REPLACE_LIVE_TABLE_SQL);
     }
 
-    private PostcodeReferenceImportResult recordImport(
-        Connection connection,
-        PostcodeReferenceImportMetadata metadata
-    ) throws SQLException {
+    private PostcodeReferenceImportResult recordImport(PostcodeReferenceImportMetadata metadata) {
         Instant importedAt = Instant.now();
-        try (PreparedStatement statement = connection.prepareStatement(INSERT_IMPORT_SQL)) {
-            statement.setString(1, metadata.sourceVersion());
-            statement.setString(2, metadata.release());
-            statement.setString(3, metadata.blobEtag());
-            statement.setLong(4, metadata.recordCount());
-            statement.setTimestamp(5, Timestamp.from(importedAt));
-            statement.executeUpdate();
-        }
+        jdbcTemplate.update(
+            INSERT_IMPORT_SQL,
+            metadata.sourceVersion(),
+            metadata.release(),
+            metadata.blobEtag(),
+            metadata.recordCount(),
+            Timestamp.from(importedAt)
+        );
         return new PostcodeReferenceImportResult(
             true,
             metadata.sourceVersion(),
@@ -207,11 +188,4 @@ public class PostcodeReferenceImportRepository {
         );
     }
 
-    private void rollback(Connection connection, Exception originalException) {
-        try {
-            connection.rollback();
-        } catch (SQLException rollbackException) {
-            originalException.addSuppressed(rollbackException);
-        }
-    }
 }

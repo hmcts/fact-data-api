@@ -98,6 +98,28 @@ class PostcodeReferenceImportRepositoryTest {
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM postcode_reference_import", Long.class)).isZero();
     }
 
+    @Test
+    void restoresLiveDataWhenRecordingImportHistoryFails() {
+        String csv = HEADER + "M60 9DJ,current,true,202001,,1,true,53.4808,-2.2426\n";
+        PostcodeReferenceImportMetadata invalidMetadata = new PostcodeReferenceImportMetadata(
+            "source-version-1",
+            "2026-08",
+            "x".repeat(101),
+            1
+        );
+
+        assertThatThrownBy(() -> importRepository.replaceIfRequired(stream(csv), invalidMetadata))
+            .isInstanceOf(PostcodeReferenceImportException.class)
+            .hasMessageContaining("Failed to replace postcode reference data");
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM postcode_reference", Long.class)).isOne();
+        assertThat(jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM postcode_reference WHERE postcode = 'OLD 1AA'", Long.class)).isOne();
+        assertThat(jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM postcode_reference WHERE postcode = 'M60 9DJ'", Long.class)).isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM postcode_reference_import", Long.class)).isZero();
+    }
+
     private PostcodeReferenceImportMetadata metadata(String sourceVersion, long recordCount) {
         return new PostcodeReferenceImportMetadata(sourceVersion, "2026-08", "etag-value", recordCount);
     }

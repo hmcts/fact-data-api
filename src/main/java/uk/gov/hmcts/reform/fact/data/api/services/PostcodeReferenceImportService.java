@@ -9,9 +9,7 @@ import com.azure.storage.blob.options.BlobInputStreamOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
-import uk.gov.hmcts.reform.fact.data.api.config.CacheConfiguration;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.PostcodeReferenceImportException;
 import uk.gov.hmcts.reform.fact.data.api.models.PostcodeReferenceImportMetadata;
@@ -44,7 +42,6 @@ public class PostcodeReferenceImportService {
         this.blobName = blobName;
     }
 
-    @CacheEvict(cacheNames = CacheConfiguration.OSDATA_CACHE_NAME, allEntries = true)
     public PostcodeReferenceImportResult importLatest() {
         BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
         try {

@@ -29,6 +29,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -96,7 +97,7 @@ class OsServiceCacheTest {
     }
 
     @Test
-    void shouldCacheMissingPostcodeReferenceEntriesForRepeatedSearches() {
+    void shouldReadPostcodeReferenceForEachSearchWhileReusingCachedOsData() {
         OsData osData = OsData.builder()
             .results(List.of(OsResult.builder().dpa(OsDpa.builder()
                 .lat(51.5)
@@ -112,7 +113,7 @@ class OsServiceCacheTest {
         osService.getOsLonLatDistrictWithPostcodeReferenceFallback("sw1a 1aa");
         osService.getOsLonLatDistrictWithPostcodeReferenceFallback("SW1A 1AA");
 
-        verify(postcodeReferenceRepository).findById("SW1A 1AA");
+        verify(postcodeReferenceRepository, times(2)).findById("SW1A 1AA");
         verify(osFeignClient).getOsPostcodeDataWithMaxResultsLimit("SW1A 1", 1);
     }
 

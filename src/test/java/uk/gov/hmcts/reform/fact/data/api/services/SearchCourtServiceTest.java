@@ -16,6 +16,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.os.OsAddressCoordinates;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
@@ -94,10 +95,11 @@ class SearchCourtServiceTest {
 
     @Test
     void getCourtsBySearchParametersShouldSearchPostcodeOnlyWhenServiceAreaMissing() {
-        OsData osData = osDataWithLatLon(51.5, -0.1);
+        OsAddressCoordinates coordinates = new OsAddressCoordinates(51.5, -0.1);
         List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
 
-        when(osService.getOsAddressByFullPostcode("SW1A 1AA")).thenReturn(osData);
+        when(osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("SW1A 1AA"))
+            .thenReturn(coordinates);
         when(courtAddressService.findCourtWithDistanceByOsData(51.5, -0.1, 10)).thenReturn(results);
 
         List<CourtWithDistance> response = searchCourtService.getCourtsBySearchParameters(
@@ -108,7 +110,7 @@ class SearchCourtServiceTest {
         );
 
         assertThat(response).isEqualTo(results);
-        verify(osService).getOsAddressByFullPostcode("SW1A 1AA");
+        verify(osService).getOsAddressCoordinatesWithPostcodeReferenceFallback("SW1A 1AA");
         verify(courtAddressService).findCourtWithDistanceByOsData(51.5, -0.1, 10);
     }
 

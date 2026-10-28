@@ -9,7 +9,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
-import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
+import uk.gov.hmcts.reform.fact.data.api.os.OsAddressCoordinates;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
@@ -78,8 +78,13 @@ public class SearchCourtService {
      * @return the nearest courts with distance data
      */
     public List<CourtWithDistance> searchPostcodeOnly(String postcode, Integer limit) {
-        OsDpa osData = osService.getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
-        return courtAddressService.findCourtWithDistanceByOsData(osData.getLat(), osData.getLng(), limit);
+        OsAddressCoordinates coordinates =
+            osService.getOsAddressCoordinatesWithPostcodeReferenceFallback(postcode);
+        return courtAddressService.findCourtWithDistanceByOsData(
+            coordinates.getLatitude(),
+            coordinates.getLongitude(),
+            limit
+        );
     }
 
     /**
