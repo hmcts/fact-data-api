@@ -150,7 +150,6 @@ public class OnspdClient {
         return "(" + POSTCODE_SELECTION_FILTER + ") AND ObjectId > " + lastObjectId;
     }
 
-    @SuppressWarnings("java:S7467")
     private Optional<OnspdRelease> toRelease(JsonNode result) {
         String title = result.path("title").asText();
         if (!title.startsWith("ONS Postcode Directory") || !title.contains("Hosted Table")) {
@@ -177,7 +176,8 @@ public class OnspdClient {
                 result.path("url").asText(),
                 result.path("modified").asLong()
             ));
-        } catch (DateTimeParseException | NumberFormatException ignored) {
+        } catch (DateTimeParseException | NumberFormatException ex) {
+            log.debug("Ignoring invalid ONSPD catalogue release title '{}': {}", title, ex.getMessage());
             return Optional.empty();
         }
     }
