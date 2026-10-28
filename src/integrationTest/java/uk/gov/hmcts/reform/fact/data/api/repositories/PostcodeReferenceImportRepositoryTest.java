@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.repositories;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,14 +32,18 @@ class PostcodeReferenceImportRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        jdbcTemplate.update("DELETE FROM postcode_reference_import");
-        jdbcTemplate.update("DELETE FROM postcode_reference");
+        clearImportedData();
         jdbcTemplate.update("""
             INSERT INTO postcode_reference (
                 postcode, status, is_large_user, introduced_yyyymm, terminated_yyyymm,
                 coordinate_quality, has_coordinates, latitude, longitude
             ) VALUES ('OLD 1AA', 'current', true, '202001', NULL, 1, true, 51.0, -1.0)
             """);
+    }
+
+    @AfterEach
+    void tearDown() {
+        clearImportedData();
     }
 
     @Test
@@ -99,5 +104,10 @@ class PostcodeReferenceImportRepositoryTest {
 
     private ByteArrayInputStream stream(String value) {
         return new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void clearImportedData() {
+        jdbcTemplate.update("DELETE FROM postcode_reference_import");
+        jdbcTemplate.update("DELETE FROM postcode_reference");
     }
 }
