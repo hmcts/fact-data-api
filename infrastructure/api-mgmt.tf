@@ -22,6 +22,10 @@ data "http" "openapi" {
     Accept = "application/json"
   }
 
+  retry {
+    attempts = 4
+  }
+
   lifecycle {
     postcondition {
       condition     = self.status_code == 200

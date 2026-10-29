@@ -27,6 +27,7 @@ services:
       DB_USER: fact
       DB_PASSWORD: fact
       AZURE_STORAGE_ACCOUNT_NAME: devstoreaccount1
+      AZURE_STORAGE_BLOB_ENDPOINT: http://fact-storage:10000/devstoreaccount1
       AZURE_MANAGED_IDENTITY_ENABLED: "false"
       TESTING_SUPPORT_ENABLE_API: "true"
       RUN_DB_MIGRATION_ON_STARTUP: "true"
@@ -71,8 +72,9 @@ services:
       - |
         for i in $$(seq 1 30); do
           if az storage container create --name photos --connection-string "$$DOCKER_AZURE_STORAGE_CONNECTION_STRING" --only-show-errors --output none \
-            && az storage container create --name csv --connection-string "$$DOCKER_AZURE_STORAGE_CONNECTION_STRING" --only-show-errors --output none; then
-            echo "Created Azurite containers: photos, csv"
+            && az storage container create --name csv --connection-string "$$DOCKER_AZURE_STORAGE_CONNECTION_STRING" --only-show-errors --output none \
+            && az storage container create --name onspd --connection-string "$$DOCKER_AZURE_STORAGE_CONNECTION_STRING" --only-show-errors --output none; then
+            echo "Created Azurite containers: photos, csv, onspd"
             exit 0
           fi
           echo "Waiting for Azurite to become ready..."

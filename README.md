@@ -98,6 +98,7 @@ This is the most common workflow for local development.
 | `APP_REG_ID` | yes | `<app-registration-id>` | Azure AD app ID URI |
 | `AZURE_STORAGE_ACCOUNT_NAME` | yes | `devstoreaccount1` | Blob storage account |
 | `AZURE_STORAGE_CONNECTION_STRING` | yes | `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=<local-azurite-key>;BlobEndpoint=http://localhost:10000/devstoreaccount1;` | Blob storage connection for host-run app |
+| `AZURE_STORAGE_BLOB_ENDPOINT` | yes when using the `dev` profile | `http://localhost:10000/devstoreaccount1` | Explicit Azurite endpoint used by Spring Cloud Azure in local diagnostics |
 | `OS_KEY` | yes | `<ordnance-survey-key>` | Ordnance Survey API key |
 | `AZURE_MANAGED_IDENTITY_ENABLED` | no | `false` | Disable managed identity locally |
 | `TESTING_SUPPORT_ENABLE_API` | no | `true` | Enable `/testing-support/**` endpoints |
@@ -112,6 +113,7 @@ AZURITE_KEY="$(openssl rand -base64 32)"
 cat >> .env <<EOF
 AZURITE_ACCOUNTS=devstoreaccount1:${AZURITE_KEY}
 AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=${AZURITE_KEY};BlobEndpoint=http://localhost:10000/devstoreaccount1;
+AZURE_STORAGE_BLOB_ENDPOINT=http://localhost:10000/devstoreaccount1
 DOCKER_AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=${AZURITE_KEY};BlobEndpoint=http://fact-storage:10000/devstoreaccount1;
 EOF
 ```
@@ -148,7 +150,7 @@ Use this if you want app + DB both in containers.
 ```
 
 `deploy_local_docker.sh` requires a `.env` file, runs `./gradlew clean build` first, then starts Docker with `docker compose --env-file .env up --build -d`.
-It expects `DOCKER_AZURE_STORAGE_CONNECTION_STRING` and `AZURITE_ACCOUNTS` in `.env`, and runs `fact-storage-init` to create `photos` and `csv` containers during startup.
+It expects `DOCKER_AZURE_STORAGE_CONNECTION_STRING` and `AZURITE_ACCOUNTS` in `.env`, and runs `fact-storage-init` to create `photos`, `csv` and `onspd` containers during startup.
 
 ## Running from IntelliJ
 
