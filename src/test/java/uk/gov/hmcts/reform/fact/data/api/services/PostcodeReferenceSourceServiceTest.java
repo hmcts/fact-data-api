@@ -149,6 +149,58 @@ class PostcodeReferenceSourceServiceTest {
     }
 
     @Test
+    void preventsAnOlderReleaseOverwritingANewerConcurrentPublication() {
+        OnspdRelease mayRelease = new OnspdRelease(
+            "may", "ONS Postcode Directory (May 2026) (Hosted Table)",
+            YearMonth.of(2026, 5), "https://services.test/FeatureServer", 2L);
+        when(onspdClient.findLatestRelease()).thenReturn(mayRelease);
+        BlobProperties previousProperties = mock(BlobProperties.class);
+        BlobProperties currentProperties = mock(BlobProperties.class);
+        when(previousProperties.getMetadata()).thenReturn(Map.of(
+            "onspdSourceVersion", "feb:1",
+            "onspdRelease", "2026-02"
+        ));
+        when(previousProperties.getETag()).thenReturn("old-etag");
+        when(currentProperties.getMetadata()).thenReturn(Map.of(
+            "onspdSourceVersion", "aug:3",
+            "onspdRelease", "2026-08"
+        ));
+        when(currentProperties.getETag()).thenReturn("new-etag");
+        when(blobClient.getProperties()).thenReturn(previousProperties, currentProperties);
+        when(csvService.createReducedCsv(eq(mayRelease), any(Path.class))).thenReturn(10L);
+        BlobStorageException preconditionFailed = mock(BlobStorageException.class);
+        when(preconditionFailed.getStatusCode()).thenReturn(412);
+        when(blobClient.uploadFromFileWithResponse(any(), isNull(), eq(Context.NONE)))
+            .thenThrow(preconditionFailed);
+
+        PostcodeReferenceSourceUpdateResult result = sourceService.updateIfRequired();
+
+        assertThat(result.updated()).isFalse();
+        assertThat(result.sourceVersion()).isEqualTo("aug:3");
+        assertThat(result.release()).isEqualTo("2026-08");
+    }
+
+    @Test
+    void skipsDownloadWhenStorageAlreadyContainsANewerRelease() {
+        OnspdRelease mayRelease = new OnspdRelease(
+            "may", "ONS Postcode Directory (May 2026) (Hosted Table)",
+            YearMonth.of(2026, 5), "https://services.test/FeatureServer", 2L);
+        when(onspdClient.findLatestRelease()).thenReturn(mayRelease);
+        when(blobClient.getProperties()).thenReturn(blobProperties);
+        when(blobProperties.getMetadata()).thenReturn(Map.of(
+            "onspdSourceVersion", "aug:3",
+            "onspdRelease", "2026-08"
+        ));
+
+        PostcodeReferenceSourceUpdateResult result = sourceService.updateIfRequired();
+
+        assertThat(result.updated()).isFalse();
+        assertThat(result.sourceVersion()).isEqualTo("aug:3");
+        assertThat(result.release()).isEqualTo("2026-08");
+        verify(csvService, never()).createReducedCsv(any(), any());
+    }
+
+    @Test
     void wrapsBlobUploadFailures() {
         when(blobClient.getProperties()).thenReturn(blobProperties);
         when(blobProperties.getMetadata()).thenReturn(Map.of("onspdSourceVersion", "may:2"));

@@ -300,7 +300,10 @@ public class OsService {
         try {
             OsDpa firstDpa = osServiceProvider.getObject()
                 .getOsAddressByFullPostcode(formattedPostcode).getResults().getFirst().getDpa();
-            return firstDpa == null ? Optional.empty() : toCoordinates(firstDpa.getLat(), firstDpa.getLng());
+            Optional<OsAddressCoordinates> osCoordinates = firstDpa == null
+                ? Optional.empty()
+                : toCoordinates(firstDpa.getLat(), firstDpa.getLng());
+            return osCoordinates.or(() -> getPostcodeReferenceCoordinates(postcodeReference));
         } catch (InvalidPostcodeException exception) {
             Optional<OsAddressCoordinates> postcodeReferenceCoordinates =
                 getPostcodeReferenceCoordinates(postcodeReference);

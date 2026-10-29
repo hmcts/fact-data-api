@@ -655,6 +655,58 @@ class OsServiceTest {
     }
 
     @Test
+    void shouldUsePostcodeReferenceCoordinatesWhenOsResultHasNoDpa() {
+        PostcodeReference postcodeReference = PostcodeReference.builder()
+            .postcode("CW1 2DT")
+            .status("current")
+            .largeUser(true)
+            .coordinateQuality(1)
+            .coordinatesAvailable(true)
+            .latitude(53.0977)
+            .longitude(-2.438755)
+            .build();
+        when(postcodeReferenceRepository.findById("CW1 2DT")).thenReturn(Optional.of(postcodeReference));
+        when(osFeignClient.getOsPostcodeData("CW1 2DT"))
+            .thenReturn(OsData.builder()
+                .results(List.of(OsResult.builder().lpi(OsLpi.builder().uprn("uprn").build()).build()))
+                .build());
+
+        Optional<OsAddressCoordinates> result = osService.getOsAdminAddressCoordinates(
+            "CW1 2DT", null, null, null
+        );
+
+        assertThat(result).contains(new OsAddressCoordinates(53.0977, -2.438755));
+    }
+
+    @Test
+    void shouldUsePostcodeReferenceCoordinatesWhenOsDpaCoordinatesAreInvalid() {
+        PostcodeReference postcodeReference = PostcodeReference.builder()
+            .postcode("CW1 2DT")
+            .status("current")
+            .largeUser(true)
+            .coordinateQuality(1)
+            .coordinatesAvailable(true)
+            .latitude(53.0977)
+            .longitude(-2.438755)
+            .build();
+        when(postcodeReferenceRepository.findById("CW1 2DT")).thenReturn(Optional.of(postcodeReference));
+        when(osFeignClient.getOsPostcodeData("CW1 2DT"))
+            .thenReturn(OsData.builder()
+                .results(List.of(OsResult.builder().dpa(OsDpa.builder()
+                    .uprn("uprn")
+                    .lat(91.0)
+                    .lng(-2.438755)
+                    .build()).build()))
+                .build());
+
+        Optional<OsAddressCoordinates> result = osService.getOsAdminAddressCoordinates(
+            "CW1 2DT", null, null, null
+        );
+
+        assertThat(result).contains(new OsAddressCoordinates(53.0977, -2.438755));
+    }
+
+    @Test
     void shouldPreferOsCoordinatesForManuallyEnteredLargeUserAddressWhenOsHasADpa() {
         OsData dpaData = OsData.builder()
             .results(List.of(OsResult.builder().dpa(OsDpa.builder()

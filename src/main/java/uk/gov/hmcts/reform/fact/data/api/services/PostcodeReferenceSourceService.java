@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -61,11 +63,9 @@ public class PostcodeReferenceSourceService {
         BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
 
         Optional<StoredBlob> storedBlob = inspectStoredBlob(blobClient);
-        if (storedBlob.flatMap(StoredBlob::sourceVersion)
-            .filter(latestRelease.sourceVersion()::equals).isPresent()) {
-            log.info("ONSPD release {} is already stored at {}", release, blobPath);
-            return PostcodeReferenceSourceUpdateResult.unchanged(
-                latestRelease.sourceVersion(), release, blobPath);
+        Optional<StoredBlob> sameOrNewerBlob = storedBlob.filter(blob -> blob.isSameOrNewerThan(latestRelease));
+        if (sameOrNewerBlob.isPresent()) {
+            return unchangedResult(sameOrNewerBlob.get(), latestRelease, blobPath, false);
         }
 
         Path temporaryCsv = createTemporaryFile();
@@ -88,12 +88,12 @@ public class PostcodeReferenceSourceService {
             return PostcodeReferenceSourceUpdateResult.updated(
                 latestRelease.sourceVersion(), release, recordCount, blobPath);
         } catch (BlobStorageException ex) {
-            if (ex.getStatusCode() == 412
-                && inspectStoredBlob(blobClient).flatMap(StoredBlob::sourceVersion)
-                    .filter(latestRelease.sourceVersion()::equals).isPresent()) {
-                log.info("ONSPD release {} was stored by another synchronisation at {}", release, blobPath);
-                return PostcodeReferenceSourceUpdateResult.unchanged(
-                    latestRelease.sourceVersion(), release, blobPath);
+            Optional<StoredBlob> sameOrNewerPublishedBlob = ex.getStatusCode() == 412
+                ? inspectStoredBlob(blobClient)
+                    .filter(blob -> blob.isSameOrNewerThan(latestRelease))
+                : Optional.empty();
+            if (sameOrNewerPublishedBlob.isPresent()) {
+                return unchangedResult(sameOrNewerPublishedBlob.get(), latestRelease, blobPath, true);
             }
             throw new PostcodeReferenceImportException("Unable to upload ONSPD postcode reference blob", ex);
         } finally {
@@ -110,7 +110,13 @@ public class PostcodeReferenceSourceService {
                 .map(Map.Entry::getValue)
                 .filter(value -> value != null && !value.isBlank())
                 .findFirst();
-            return Optional.of(new StoredBlob(sourceVersion, properties.getETag()));
+            Optional<YearMonth> release = properties.getMetadata().entrySet().stream()
+                .filter(entry -> PostcodeReferenceImportService.RELEASE_METADATA.equalsIgnoreCase(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .filter(value -> value != null && !value.isBlank())
+                .map(this::parseRelease)
+                .findFirst();
+            return Optional.of(new StoredBlob(sourceVersion, release, properties.getETag()));
         } catch (BlobStorageException ex) {
             if (ex.getStatusCode() == 404) {
                 return Optional.empty();
@@ -131,6 +137,39 @@ public class PostcodeReferenceSourceService {
         }
     }
 
+    private YearMonth parseRelease(String release) {
+        try {
+            return YearMonth.parse(release, RELEASE_FORMAT);
+        } catch (DateTimeParseException ex) {
+            throw new PostcodeReferenceImportException("Invalid ONSPD release metadata: " + release, ex);
+        }
+    }
+
+    private PostcodeReferenceSourceUpdateResult unchangedResult(
+        StoredBlob storedBlob,
+        OnspdRelease discoveredRelease,
+        String blobPath,
+        boolean concurrentlyPublished
+    ) {
+        String storedRelease = storedBlob.release()
+            .map(RELEASE_FORMAT::format)
+            .orElseGet(() -> discoveredRelease.releaseDate().format(RELEASE_FORMAT));
+        if (concurrentlyPublished) {
+            log.info(
+                "ONSPD release {} was stored by another synchronisation at {}",
+                storedRelease,
+                blobPath
+            );
+        } else {
+            log.info("ONSPD release {} is already stored at {}", storedRelease, blobPath);
+        }
+        return PostcodeReferenceSourceUpdateResult.unchanged(
+            storedBlob.sourceVersion().orElse(discoveredRelease.sourceVersion()),
+            storedRelease,
+            blobPath
+        );
+    }
+
     private void deleteTemporaryFile(Path temporaryCsv) {
         try {
             Files.deleteIfExists(temporaryCsv);
@@ -139,6 +178,36 @@ public class PostcodeReferenceSourceService {
         }
     }
 
-    private record StoredBlob(Optional<String> sourceVersion, String eTag) {
+    private record StoredBlob(Optional<String> sourceVersion, Optional<YearMonth> release, String eTag) {
+
+        private boolean isSameOrNewerThan(OnspdRelease discoveredRelease) {
+            if (sourceVersion.filter(discoveredRelease.sourceVersion()::equals).isPresent()) {
+                return true;
+            }
+
+            if (release.isPresent()) {
+                int releaseOrder = release.get().compareTo(discoveredRelease.releaseDate());
+                if (releaseOrder != 0) {
+                    return releaseOrder > 0;
+                }
+            }
+
+            return sourceVersion
+                .flatMap(StoredBlob::modifiedTimestamp)
+                .filter(modified -> modified >= discoveredRelease.modified())
+                .isPresent();
+        }
+
+        private static Optional<Long> modifiedTimestamp(String sourceVersion) {
+            int delimiterIndex = sourceVersion.lastIndexOf(':');
+            if (delimiterIndex < 0 || delimiterIndex == sourceVersion.length() - 1) {
+                return Optional.empty();
+            }
+            try {
+                return Optional.of(Long.parseLong(sourceVersion.substring(delimiterIndex + 1)));
+            } catch (NumberFormatException ex) {
+                return Optional.empty();
+            }
+        }
     }
 }
