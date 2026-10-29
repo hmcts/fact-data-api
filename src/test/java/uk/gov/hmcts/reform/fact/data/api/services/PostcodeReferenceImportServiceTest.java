@@ -9,6 +9,8 @@ import com.azure.storage.blob.specialized.BlobInputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.NotFoundException;
@@ -104,12 +106,13 @@ class PostcodeReferenceImportServiceTest {
             .hasMessageContaining("Invalid ONSPD record count");
     }
 
-    @Test
-    void rejectsBlobWithInvalidRelease() {
+    @ParameterizedTest
+    @ValueSource(strings = {"August 2026", "2026-00", "2026-13"})
+    void rejectsBlobWithInvalidRelease(String release) {
         when(blobClient.getProperties()).thenReturn(blobProperties);
         when(blobProperties.getMetadata()).thenReturn(Map.of(
             "onspdSourceVersion", "item-id:12345",
-            "onspdRelease", "August 2026",
+            "onspdRelease", release,
             "recordCount", "993979"
         ));
 

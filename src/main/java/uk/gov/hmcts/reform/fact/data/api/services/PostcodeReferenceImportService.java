@@ -18,6 +18,8 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.PostcodeReferenceImportRep
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
 
 @Service
@@ -77,8 +79,10 @@ public class PostcodeReferenceImportService {
         final String sourceVersion = requiredMetadata(metadata, SOURCE_VERSION_METADATA);
         final String release = requiredMetadata(metadata, RELEASE_METADATA);
         final String recordCount = requiredMetadata(metadata, RECORD_COUNT_METADATA);
-        if (!release.matches("\\d{4}-\\d{2}")) {
-            throw new PostcodeReferenceImportException("Invalid ONSPD release metadata: " + release);
+        try {
+            YearMonth.parse(release);
+        } catch (DateTimeParseException ex) {
+            throw new PostcodeReferenceImportException("Invalid ONSPD release metadata: " + release, ex);
         }
 
         long parsedRecordCount;
