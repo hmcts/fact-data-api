@@ -14,9 +14,11 @@ public class ValidationConstants {
         "Court name must include at least one letter and only include letters, spaces, apostrophes, "
             + "hyphens, ampersands, and parentheses";
 
-    public static final String EMAIL_REGEX = "^(|[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,})$";
+    public static final String EMAIL_REGEX =
+        "^[A-Za-z0-9_+~-]+(?:\\.[A-Za-z0-9_+~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$";
     public static final String EMAIL_REGEX_MESSAGE =
-        "Email address must match the regex '^(|[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,})$'";
+        "Email address must match the regex '^[A-Za-z0-9_+~-]+(?:\\."
+            + "[A-Za-z0-9_+~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$";
 
     public static final String JUSTICE_EMAIL_REGEX = "^(|[A-Za-z0-9._+-]+@(devl\\.)?justice\\.gov\\.uk)$";
     public static final String JUSTICE_EMAIL_REGEX_MESSAGE =
@@ -25,7 +27,7 @@ public class ValidationConstants {
     public static final int EMAIL_MAX_LENGTH = 254;
     public static final String EMAIL_MAX_LENGTH_MESSAGE = "Email address should be no more than {max} characters";
 
-    public static final String PHONE_NO_REGEX = "^(|(\\+44)?[0-9 ()-]{10,20})$";
+    public static final String PHONE_NO_REGEX = "^(\\+44)?[0-9 ()-]{10,20}$";
     public static final String PHONE_NO_REGEX_MESSAGE =
         "Phone Number must match the regex '^(|(\\+44)?[0-9 ()-]{10,20})$'";
 
@@ -101,16 +103,6 @@ public class ValidationConstants {
     public static final String FAX_DESCRIPTION_MAX_LENGTH_MESSAGE = "Fax description must be {max} characters or fewer";
     public static final String WELSH_FAX_DESCRIPTION_MAX_LENGTH_MESSAGE =
         "Welsh fax description must be {max} characters or fewer";
-
-    public static final String EXPLANATION_REGEX = "^[A-Za-z0-9 .,'\\-()&+]*$";
-    public static final String EXPLANATION_REGEX_MESSAGE =
-        "Explanation must only include letters, numbers, spaces, apostrophes, commas, full stops, hyphens, "
-            + "ampersands, and brackets";
-
-    public static final String WELSH_EXPLANATION_REGEX = "^[\\p{L}\\p{M}0-9 .,'\\-()&+]*$";
-    public static final String WELSH_EXPLANATION_REGEX_MESSAGE =
-        "Welsh explanation must only include letters, numbers, spaces, apostrophes, commas, full stops, hyphens, "
-            + "ampersands, and brackets";
 
     public static final int REGION_NAME_MIN_LENGTH = 5;
     public static final String REGION_NAME_LENGTH_MESSAGE =
