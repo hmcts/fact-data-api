@@ -9,7 +9,7 @@ public class ValidationConstants {
     public static final int COURT_SERVICE_CENTRE_NAME_MAX_LENGTH = 200;
     public static final String COURT_NAME_LENGTH_MESSAGE =
         "Court name should be between {min} and {max} characters";
-    public static final String COURT_SERVICE_CENTRE_NAME_REGEX = "^(?=.*[A-Za-z])[A-Za-z&'()\\- ]+$";
+    public static final String COURT_SERVICE_CENTRE_NAME_REGEX = "(?i)^(?=.*[A-Z])[A-Z&'()\\- ]+$";
     public static final String COURT_NAME_REGEX_MESSAGE =
         "Court name must include at least one letter and only include letters, spaces, apostrophes, "
             + "hyphens, ampersands, and parentheses";
@@ -29,7 +29,7 @@ public class ValidationConstants {
 
     public static final String PHONE_NO_REGEX = "^(\\+44)?[0-9 ()-]{10,20}$";
     public static final String PHONE_NO_REGEX_MESSAGE =
-        "Phone Number must match the regex '^(|(\\+44)?[0-9 ()-]{10,20})$'";
+        "Phone Number must match the regex '^(\\+44)?[0-9 ()-]{10,20}$'";
 
     public static final int PHONE_NO_MAX_LENGTH = 20;
     public static final String PHONE_NO_MAX_LENGTH_MESSAGE = "Phone number should be no more than {max} characters";
@@ -43,7 +43,7 @@ public class ValidationConstants {
     public static final String REQUIRED_ADDRESS_LINE_REGEX = "^[A-Za-z0-9 ()':,&-]+$";
     public static final String ADDRESS_LINE_REGEX_MESSAGE = "Address line contains invalid characters";
 
-    public static final String EPIM_ID_REGEX = "^[A-Za-z0-9 -]+$";
+    public static final String EPIM_ID_REGEX = "(?i)^[A-Z0-9 -]+$";
     public static final String EPIM_ID_REGEX_MESSAGE = "EPIM ID contains invalid characters";
 
     public static final String COURT_SLUG_REGEX = "^[a-z0-9-]+$";
@@ -103,6 +103,9 @@ public class ValidationConstants {
     public static final String FAX_DESCRIPTION_MAX_LENGTH_MESSAGE = "Fax description must be {max} characters or fewer";
     public static final String WELSH_FAX_DESCRIPTION_MAX_LENGTH_MESSAGE =
         "Welsh fax description must be {max} characters or fewer";
+    public static final String FAX_NO_MAX_LENGTH_MESSAGE = "Fax number should be no more than {max} characters";
+    public static final String FAX_NUMBER_VALIDATION_ERROR =
+        "Enter a fax number in the correct format, for example 01273 800 900 or 020 7450 4000";
 
     public static final int REGION_NAME_MIN_LENGTH = 5;
     public static final String REGION_NAME_LENGTH_MESSAGE =

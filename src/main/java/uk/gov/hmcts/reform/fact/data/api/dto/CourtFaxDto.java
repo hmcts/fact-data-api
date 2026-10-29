@@ -22,8 +22,8 @@ public class CourtFaxDto {
 
     @Schema(description = "Contact fax number", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "The contact fax number must be specified")
-    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE)
-    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.PHONE_NO_REGEX_MESSAGE)
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH, message = ValidationConstants.FAX_NO_MAX_LENGTH_MESSAGE)
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX, message = ValidationConstants.FAX_NUMBER_VALIDATION_ERROR)
     private String faxNumber;
 
     @Schema(description = "Fax description")
