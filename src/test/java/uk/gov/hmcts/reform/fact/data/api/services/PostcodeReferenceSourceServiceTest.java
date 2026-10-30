@@ -80,6 +80,19 @@ class PostcodeReferenceSourceServiceTest {
     }
 
     @Test
+    void replacesBlobWhenStoredSourceVersionHasInvalidModifiedTimestamp() {
+        when(blobClient.getProperties()).thenReturn(blobProperties);
+        when(blobProperties.getMetadata()).thenReturn(Map.of("onspdSourceVersion", "aug:not-a-number"));
+        when(blobProperties.getETag()).thenReturn("old-etag");
+        when(csvService.createReducedCsv(eq(release), any(Path.class))).thenReturn(10L);
+
+        PostcodeReferenceSourceUpdateResult result = sourceService.updateIfRequired();
+
+        assertThat(result.updated()).isTrue();
+        verify(blobClient).uploadFromFileWithResponse(any(), isNull(), eq(Context.NONE));
+    }
+
+    @Test
     void uploadsReducedCsvAndMetadataForNewRelease() {
         when(blobClient.getProperties()).thenReturn(blobProperties);
         when(blobProperties.getMetadata()).thenReturn(Map.of("onspdSourceVersion", "may:2"));

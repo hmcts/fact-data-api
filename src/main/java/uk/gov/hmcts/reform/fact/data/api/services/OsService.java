@@ -387,12 +387,7 @@ public class OsService {
      * @return a boolean determining if the postcode is valid.
      */
     public boolean isValidOsPostcode(String postcode) {
-        try {
-            validateAndFormatPostcode(postcode);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        return postcode != null && POSTCODE_PATTERN.matcher(postcode.toUpperCase(Locale.ROOT)).matches();
     }
 
     /**

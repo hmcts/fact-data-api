@@ -11,7 +11,7 @@ class ApplicationTest {
     @Test
     void contextLoads() {
         try (MockedStatic<SpringApplication> springApp = mockStatic(SpringApplication.class)) {
-            String[] args = new String[]{""};
+            String[] args = {""};
             Application.main(args);
             springApp.verify(() -> SpringApplication.run(Application.class, args), times(1));
         }

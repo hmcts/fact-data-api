@@ -57,8 +57,8 @@ public class ImageValidator implements ConstraintValidator<ValidImage, Multipart
             return true;
         } catch (InvalidFileException e) {
             throw e;
-        } catch (Exception e) {
-            throw new InvalidFileException("Unreadable file");
+        } catch (Exception exception) {
+            throw new InvalidFileException("Unreadable file", exception);
         }
     }
 

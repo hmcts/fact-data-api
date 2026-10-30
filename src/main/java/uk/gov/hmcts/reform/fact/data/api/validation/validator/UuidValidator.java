@@ -4,9 +4,13 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidUUID;
 
-import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class UuidValidator implements ConstraintValidator<ValidUUID, String> {
+
+    private static final Pattern UUID_PATTERN = Pattern.compile(
+        "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    );
 
     private boolean allowNull;
 
@@ -21,11 +25,6 @@ public class UuidValidator implements ConstraintValidator<ValidUUID, String> {
             return allowNull;
         }
 
-        try {
-            UUID.fromString(value);
-            return true;
-        } catch (IllegalArgumentException ex) {
-            return false;
-        }
+        return UUID_PATTERN.matcher(value).matches();
     }
 }

@@ -139,8 +139,9 @@ public class AuditableCourtEntityListener implements ApplicationContextAware {
 
         try {
             return future.get();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
+            log.debug("Interrupted while looking up the previous entity for auditing", exception);
             return null;
         } catch (ExecutionException e) {
             throw new IllegalStateException(
