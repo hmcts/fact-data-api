@@ -28,6 +28,9 @@ import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 @RequiredArgsConstructor
 public class SearchExecuter {
 
+    private static final String SERVICE_AREA_ID_LOG_FIELD = "serviceAreaId=";
+    private static final String AREA_OF_LAW_ID_LOG_FIELD = "areaOfLawId=";
+
     private final CourtAddressRepository courtAddressRepository;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
 
@@ -134,8 +137,8 @@ public class SearchExecuter {
         PostcodeLadder ladder = PostcodeLadder.fromPartialPostcode(postcode);
         log.debug(writeLog(
             "Postcode ladder provided for CIVIL search",
-            "serviceAreaId=" + serviceAreaId,
-            "areaOfLawId=" + aolId,
+            SERVICE_AREA_ID_LOG_FIELD + serviceAreaId,
+            AREA_OF_LAW_ID_LOG_FIELD + aolId,
             "ladder=" + ladder
         ));
         List<CourtWithDistance> results = courtAddressRepository.findCivilByPartialPostcodeBestTier(
@@ -148,9 +151,9 @@ public class SearchExecuter {
             limit
         );
 
-        return !results.isEmpty()
-            ? results
-            : courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit);
+        return results.isEmpty()
+            ? courtAddressRepository.findNearestByAreaOfLaw(lat, lon, aolId, limit)
+            : results;
     }
 
     /**
@@ -173,8 +176,8 @@ public class SearchExecuter {
             .map(localAuthorityId -> {
                 log.debug(writeLog(
                     "Searching for family non-regional by local authority",
-                    "areaOfLawId=" + aolId,
-                    "serviceAreaId=" + serviceArea.getId(),
+                    AREA_OF_LAW_ID_LOG_FIELD + aolId,
+                    SERVICE_AREA_ID_LOG_FIELD + serviceArea.getId(),
                     "localAuthorityId=" + localAuthorityId,
                     "areaOfLawName="
                         + (serviceArea.getAreaOfLaw() != null
@@ -197,8 +200,8 @@ public class SearchExecuter {
         }
         log.debug(writeLog(
             "Searching for family regional returned no results",
-            "serviceAreaId=" + serviceArea.getId(),
-            "areaOfLawId=" + aolId
+            SERVICE_AREA_ID_LOG_FIELD + serviceArea.getId(),
+            AREA_OF_LAW_ID_LOG_FIELD + aolId
         ));
         return List.of();
     }

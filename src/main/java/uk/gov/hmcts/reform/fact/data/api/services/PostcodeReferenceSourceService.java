@@ -8,6 +8,7 @@ import com.azure.storage.blob.models.BlobRequestConditions;
 import com.azure.storage.blob.models.BlobStorageException;
 import com.azure.storage.blob.options.BlobUploadFromFileOptions;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -203,11 +204,8 @@ public class PostcodeReferenceSourceService {
             if (delimiterIndex < 0 || delimiterIndex == sourceVersion.length() - 1) {
                 return Optional.empty();
             }
-            try {
-                return Optional.of(Long.parseLong(sourceVersion.substring(delimiterIndex + 1)));
-            } catch (NumberFormatException ex) {
-                return Optional.empty();
-            }
+            long modified = NumberUtils.toLong(sourceVersion.substring(delimiterIndex + 1), -1L);
+            return modified < 0 ? Optional.empty() : Optional.of(modified);
         }
     }
 }

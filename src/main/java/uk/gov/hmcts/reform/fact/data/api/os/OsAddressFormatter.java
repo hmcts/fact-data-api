@@ -83,7 +83,8 @@ public final class OsAddressFormatter {
         String lowerCase = value.toLowerCase(Locale.ROOT);
         StringBuilder formatted = new StringBuilder(lowerCase.length());
         boolean capitaliseNext = true;
-        for (int offset = 0; offset < lowerCase.length();) {
+        int offset = 0;
+        while (offset < lowerCase.length()) {
             int character = lowerCase.codePointAt(offset);
             if (Character.isLetter(character)) {
                 formatted.appendCodePoint(capitaliseNext ? Character.toUpperCase(character) : character);

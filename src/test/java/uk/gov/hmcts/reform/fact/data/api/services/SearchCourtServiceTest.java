@@ -17,10 +17,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsAddressCoordinates;
-import uk.gov.hmcts.reform.fact.data.api.os.OsData;
-import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
-import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceCentreRepository;
 import uk.gov.hmcts.reform.fact.data.api.services.search.SearchCourtService;
@@ -427,19 +424,6 @@ class SearchCourtServiceTest {
                 5
             );
         }
-    }
-
-    private OsData osDataWithLatLon(double lat, double lon) {
-        OsResult result = OsResult.builder()
-            .dpa(OsDpa.builder()
-                .lat(lat)
-                .lng(lon)
-                .build())
-            .build();
-
-        return OsData.builder()
-            .results(List.of(result))
-            .build();
     }
 
     private ServiceArea serviceAreaWithType(ServiceAreaType type) {

@@ -29,12 +29,12 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ImageValidatorTest {
 
-    private static final byte[] PNG_SIGNATURE = new byte[] {
+    private static final byte[] PNG_SIGNATURE = {
         (byte)0x89, (byte)0x50, (byte)0x4E, (byte)0x47,
         (byte)0x0D, (byte)0x0A, (byte)0x1A, (byte)0x0A
     };
-    private static final byte[] JPEG_START_SIGNATURE = new byte[] {(byte)0xFF, (byte)0xD8};
-    private static final byte[] JPEG_END_SIGNATURE = new byte[] {(byte)0xFF, (byte)0xD9};
+    private static final byte[] JPEG_START_SIGNATURE = {(byte)0xFF, (byte)0xD8};
+    private static final byte[] JPEG_END_SIGNATURE = {(byte)0xFF, (byte)0xD9};
 
     private ImageValidator imageValidator;
 

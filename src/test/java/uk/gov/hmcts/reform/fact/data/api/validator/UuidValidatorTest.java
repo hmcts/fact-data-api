@@ -50,6 +50,12 @@ class UuidValidatorTest {
     }
 
     @Test
+    void testRejectsNonCanonicalUuidAcceptedByJavaParser() {
+        assertFalse(validator.isValid("1-1-1-1-1", context),
+                    "Validator should require the canonical UUID representation");
+    }
+
+    @Test
     void testNullUuid() {
         assertFalse(validator.isValid(null, context),
                     "Validator should return false for null value");

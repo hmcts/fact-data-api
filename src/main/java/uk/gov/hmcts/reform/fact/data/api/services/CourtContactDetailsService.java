@@ -22,6 +22,8 @@ import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 @RequiredArgsConstructor
 public class CourtContactDetailsService {
 
+    private static final String COURT_ID_LOG_FIELD = "courtId=";
+
     private final CourtContactDetailsRepository courtContactDetailsRepository;
     private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
     private final CourtService courtService;
@@ -77,7 +79,7 @@ public class CourtContactDetailsService {
 
         log.debug(writeLog(
             "Creating contact detail",
-            "courtId=" + courtId
+            COURT_ID_LOG_FIELD + courtId
         ));
         return courtContactDetailsRepository.save(request);
     }
@@ -107,7 +109,7 @@ public class CourtContactDetailsService {
         log.debug(writeLog(
             "Updating contact detail",
             "contactId=" + contactId,
-            "courtId=" + courtId
+            COURT_ID_LOG_FIELD + courtId
         ));
         return courtContactDetailsRepository.save(existing);
     }
@@ -131,7 +133,7 @@ public class CourtContactDetailsService {
         log.debug(writeLog(
             "Deleting contact detail",
             "contactId=" + contactId,
-            "courtId=" + courtId
+            COURT_ID_LOG_FIELD + courtId
         ));
         courtContactDetailsRepository.deleteByIdAndCourtId(contactId, courtId);
     }
