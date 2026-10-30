@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import uk.gov.hmcts.reform.fact.data.api.config.CacheConfiguration;
+import uk.gov.hmcts.reform.fact.data.api.entities.PostcodeReference;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidPostcodeException;
+import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.OsCustodianCodeNotMappedException;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.OsProcessException;
 import uk.gov.hmcts.reform.fact.data.api.os.OsAddressCoordinates;
 import uk.gov.hmcts.reform.fact.data.api.os.OsAddressFormatter;
@@ -20,6 +22,7 @@ import uk.gov.hmcts.reform.fact.data.api.os.OsLpi;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.PostcodeReferenceRepository;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +39,7 @@ public class OsService {
 
     private final OsFeignClient osFeignClient;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
+    private final PostcodeReferenceRepository postcodeReferenceRepository;
     private final ObjectProvider<OsService> osServiceProvider;
     private static final Pattern POSTCODE_PATTERN =
         Pattern.compile(
@@ -70,6 +74,48 @@ public class OsService {
     }
 
     /**
+     * Checks the exact postcode against the reduced ONSPD exception data before using the standard cached OS
+     * sector search. Exact ONSPD coordinates replace sector-level coordinates while retaining any authority found
+     * by OS.
+     *
+     * @param postcode full postcode used by the nearest-location search
+     * @return location data resolved from OS or the ONSPD exception data
+     */
+    public OsLocationData getOsLonLatDistrictWithPostcodeReferenceFallback(String postcode) {
+        String formattedPostcode = validateAndFormatPostcode(postcode);
+        Optional<OsAddressCoordinates> postcodeReferenceCoordinates =
+            getPostcodeReferenceCoordinates(getValidatedPostcodeReference(formattedPostcode));
+        try {
+            OsLocationData osLocationData = osServiceProvider.getObject()
+                .getOsLonLatDistrictByPartial(formattedPostcode);
+            return postcodeReferenceCoordinates
+                .map(coordinates -> OsLocationData.builder()
+                    .authorityName(osLocationData.getAuthorityName())
+                    .latitude(coordinates.getLatitude())
+                    .longitude(coordinates.getLongitude())
+                    .postcode(formattedPostcode)
+                    .build())
+                .orElse(osLocationData);
+        } catch (InvalidPostcodeException | OsCustodianCodeNotMappedException exception) {
+            return postcodeReferenceCoordinates
+                .map(coordinates -> toPostcodeReferenceLocation(formattedPostcode, coordinates))
+                .orElseThrow(() -> exception);
+        }
+    }
+
+    private OsLocationData toPostcodeReferenceLocation(
+        String postcode,
+        OsAddressCoordinates coordinates
+    ) {
+        return OsLocationData.builder()
+            .authorityName("")
+            .latitude(coordinates.getLatitude())
+            .longitude(coordinates.getLongitude())
+            .postcode(postcode)
+            .build();
+    }
+
+    /**
      * For the admin portal when we look up full addresses and want the OsData back
      * that contains the multiple lines and so forth.
      *
@@ -92,11 +138,6 @@ public class OsService {
      * @param postcode full postcode to look up
      * @return all paged DPA and LPI results with title-cased address text for the admin picker
      */
-    @Cacheable(
-        cacheNames = CacheConfiguration.OSDATA_CACHE_NAME,
-        key = "'A-' + #postcode.trim().replaceAll('\\s+', '').toUpperCase()",
-        sync = true
-    )
     public OsData getOsAdminAddressByFullPostcode(String postcode) {
         return getOsAdminAddressByFullPostcodeInternal(postcode);
     }
@@ -107,33 +148,27 @@ public class OsService {
 
     private OsData getOsAdminAddressByFullPostcodeInternal(String postcode) {
         String formattedPostcode = validateAndFormatPostcode(postcode);
+        Optional<PostcodeReference> postcodeReference = osServiceProvider.getObject()
+            .getPostcodeReference(formattedPostcode);
+        if (postcodeReference.filter(PostcodeReference::isTerminated).isPresent()) {
+            return buildAdminAddressData(Collections.emptyList(), 0);
+        }
         List<OsResult> combinedResults = new ArrayList<>();
         int offset = 0;
 
         for (int pageNumber = 0; pageNumber < MAX_ADMIN_PAGES; pageNumber++) {
             OsData page = getOsAdminAddressPage(formattedPostcode, offset);
-            List<OsResult> pageResults = page == null || page.getResults() == null
-                ? Collections.emptyList()
-                : page.getResults();
+            List<OsResult> pageResults = getPageResults(page);
             combinedResults.addAll(pageResults);
-
-            int totalResults = page != null
-                && page.getHeader() != null
-                && page.getHeader().getTotalresults() != null
-                ? page.getHeader().getTotalresults()
-                : combinedResults.size();
+            int totalResults = getTotalResults(page, combinedResults.size());
 
             if (pageResults.isEmpty() || combinedResults.size() >= totalResults) {
-                if (combinedResults.isEmpty()) {
-                    throw new InvalidPostcodeException(
-                        "No address results returned from OS for postcode %s".formatted(formattedPostcode)
-                    );
-                }
-                combinedResults.forEach(OsAddressFormatter::format);
-                return OsData.builder()
-                    .header(buildCombinedHeader(totalResults))
-                    .results(combinedResults)
-                    .build();
+                return completeAdminAddressLookup(
+                    formattedPostcode,
+                    postcodeReference,
+                    combinedResults,
+                    totalResults
+                );
             }
 
             offset += pageResults.size();
@@ -144,10 +179,52 @@ public class OsService {
         );
     }
 
+    private List<OsResult> getPageResults(OsData page) {
+        return page == null || page.getResults() == null
+            ? Collections.emptyList()
+            : page.getResults();
+    }
+
+    private int getTotalResults(OsData page, int retrievedResultCount) {
+        return page != null
+            && page.getHeader() != null
+            && page.getHeader().getTotalresults() != null
+            ? page.getHeader().getTotalresults()
+            : retrievedResultCount;
+    }
+
+    private OsData completeAdminAddressLookup(
+        String formattedPostcode,
+        Optional<PostcodeReference> postcodeReference,
+        List<OsResult> combinedResults,
+        int totalResults
+    ) {
+        if (combinedResults.isEmpty()) {
+            if (getPostcodeReferenceCoordinates(postcodeReference).isPresent()) {
+                return buildAdminAddressData(Collections.emptyList(), 0);
+            }
+            throw new InvalidPostcodeException(
+                "No address results returned from OS for postcode %s".formatted(formattedPostcode)
+            );
+        }
+
+        combinedResults.forEach(OsAddressFormatter::format);
+        return buildAdminAddressData(combinedResults, totalResults);
+    }
+
+    private OsData buildAdminAddressData(List<OsResult> results, int totalResults) {
+        return OsData.builder()
+            .header(buildCombinedHeader(totalResults))
+            .results(results)
+            .build();
+    }
+
     /**
      * Resolves coordinates for the address selected in the admin picker. The identifiers
      * posted by the browser are checked against OS again before any coordinates are used.
-     * Manually entered addresses keep the existing first-DPA behaviour.
+     * Manually entered addresses use the first OS DPA when available, falling back to ONSPD coordinates for a
+     * current large-user postcode. A terminated postcode is accepted only for manual entry and uses its historical
+     * ONSPD coordinates when available.
      *
      * @param postcode postcode on the address being saved
      * @param dataset selected OS dataset, if an option was selected
@@ -161,15 +238,26 @@ public class OsService {
         String uprn,
         String lpiKey
     ) {
+        String formattedPostcode = validateAndFormatPostcode(postcode);
+        Optional<PostcodeReference> postcodeReference = osServiceProvider.getObject()
+            .getPostcodeReference(formattedPostcode);
         boolean hasSelectionData = StringUtils.hasText(dataset)
             || StringUtils.hasText(uprn)
             || StringUtils.hasText(lpiKey);
         if (hasSelectionData) {
+            postcodeReference
+                .filter(PostcodeReference::isTerminated)
+                .ifPresent(reference -> {
+                    throw new InvalidPostcodeException(
+                        "Postcode %s was terminated in %s and requires manual address entry"
+                            .formatted(formattedPostcode, reference.getTerminatedYearMonth())
+                    );
+                });
             if (!StringUtils.hasText(dataset) || !StringUtils.hasText(uprn)) {
                 throw new IllegalArgumentException("Selected OS address must include both dataset and UPRN");
             }
 
-            OsData osData = osServiceProvider.getObject().getOsAdminAddressByFullPostcode(postcode);
+            OsData osData = osServiceProvider.getObject().getOsAdminAddressByFullPostcode(formattedPostcode);
             List<OsResult> results = osData.getResults() == null ? Collections.emptyList() : osData.getResults();
             String normalisedDataset = dataset.trim().toUpperCase(Locale.ROOT);
             return switch (normalisedDataset) {
@@ -200,9 +288,95 @@ public class OsService {
             };
         }
 
-        OsDpa firstDpa = osServiceProvider.getObject()
-            .getOsAddressByFullPostcode(postcode).getResults().getFirst().getDpa();
-        return firstDpa == null ? Optional.empty() : toCoordinates(firstDpa.getLat(), firstDpa.getLng());
+        Optional<PostcodeReference> terminatedReference = postcodeReference
+            .filter(PostcodeReference::isTerminated);
+        if (terminatedReference.isPresent()) {
+            PostcodeReference reference = terminatedReference.get();
+            return reference.isCoordinatesAvailable()
+                ? toCoordinates(reference.getLatitude(), reference.getLongitude())
+                : Optional.empty();
+        }
+
+        try {
+            OsDpa firstDpa = osServiceProvider.getObject()
+                .getOsAddressByFullPostcode(formattedPostcode).getResults().getFirst().getDpa();
+            Optional<OsAddressCoordinates> osCoordinates = firstDpa == null
+                ? Optional.empty()
+                : toCoordinates(firstDpa.getLat(), firstDpa.getLng());
+            return osCoordinates.or(() -> getPostcodeReferenceCoordinates(postcodeReference));
+        } catch (InvalidPostcodeException exception) {
+            Optional<OsAddressCoordinates> postcodeReferenceCoordinates =
+                getPostcodeReferenceCoordinates(postcodeReference);
+            if (postcodeReferenceCoordinates.isPresent()) {
+                return postcodeReferenceCoordinates;
+            }
+            throw exception;
+        }
+    }
+
+    /**
+     * Looks up an exceptional postcode without using the local application cache. The reference import is shared
+     * by every replica, so reading the indexed table avoids one replica retaining stale status or coordinates after
+     * another replica performs an import.
+     *
+     * @param postcode full postcode to find in the reduced ONSPD reference table
+     * @return the large-user or terminated postcode entry, when present
+     */
+    public Optional<PostcodeReference> getPostcodeReference(String postcode) {
+        return postcodeReferenceRepository.findById(validateAndFormatPostcode(postcode));
+    }
+
+    /**
+     * Resolves coordinates for postcode-only public searches. A full-postcode OS result remains authoritative when
+     * available; ONSPD coordinates are used only for a current large-user postcode that OS cannot resolve.
+     *
+     * @param postcode full postcode used by the nearest-court search
+     * @return coordinates resolved from OS or the ONSPD exception data
+     */
+    public OsAddressCoordinates getOsAddressCoordinatesWithPostcodeReferenceFallback(String postcode) {
+        String formattedPostcode = validateAndFormatPostcode(postcode);
+        Optional<PostcodeReference> postcodeReference = getValidatedPostcodeReference(formattedPostcode);
+        try {
+            OsDpa firstDpa = osServiceProvider.getObject()
+                .getOsAddressByFullPostcode(formattedPostcode).getResults().getFirst().getDpa();
+            if (firstDpa != null) {
+                Optional<OsAddressCoordinates> osCoordinates = toCoordinates(firstDpa.getLat(), firstDpa.getLng());
+                if (osCoordinates.isPresent()) {
+                    return osCoordinates.get();
+                }
+            }
+            throw new InvalidPostcodeException(
+                "No usable OS coordinates returned for postcode %s".formatted(formattedPostcode)
+            );
+        } catch (InvalidPostcodeException exception) {
+            return getPostcodeReferenceCoordinates(postcodeReference).orElseThrow(() -> exception);
+        }
+    }
+
+    private Optional<PostcodeReference> getValidatedPostcodeReference(String postcode) {
+        Optional<PostcodeReference> postcodeReference = osServiceProvider.getObject()
+            .getPostcodeReference(postcode);
+        postcodeReference
+            .filter(PostcodeReference::isTerminated)
+            .ifPresent(reference -> {
+                throw new InvalidPostcodeException(
+                    "Postcode %s was terminated in %s".formatted(postcode, reference.getTerminatedYearMonth())
+                );
+            });
+        return postcodeReference;
+    }
+
+    private Optional<OsAddressCoordinates> getPostcodeReferenceCoordinates(
+        Optional<PostcodeReference> postcodeReference
+    ) {
+        if (postcodeReference.isEmpty() || !postcodeReference.get().isLargeUser()) {
+            return Optional.empty();
+        }
+
+        PostcodeReference reference = postcodeReference.get();
+        return reference.isCoordinatesAvailable()
+            ? toCoordinates(reference.getLatitude(), reference.getLongitude())
+            : Optional.empty();
     }
 
     /**
@@ -417,9 +591,7 @@ public class OsService {
     private String getAuthorityForSingleCode(Integer code) {
         return localAuthorityTypeRepository
             .findParentOrChildNameByCustodianCode(code)
-            .orElseThrow(() -> new OsProcessException(
-                // Note that a 7655 code error could be related to a PO Box address
-                // or one in other words that is not tied to a physical location
+            .orElseThrow(() -> new OsCustodianCodeNotMappedException(
                 "No authority found for custodian code %s".formatted(code)))
             .getName();
     }

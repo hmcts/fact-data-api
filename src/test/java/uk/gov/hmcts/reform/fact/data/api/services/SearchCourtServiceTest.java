@@ -16,6 +16,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchAction;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SearchStrategy;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.ServiceAreaType;
 import uk.gov.hmcts.reform.fact.data.api.errorhandling.exceptions.InvalidParameterCombinationException;
+import uk.gov.hmcts.reform.fact.data.api.os.OsAddressCoordinates;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLocationData;
@@ -94,10 +95,11 @@ class SearchCourtServiceTest {
 
     @Test
     void getCourtsBySearchParametersShouldSearchPostcodeOnlyWhenServiceAreaMissing() {
-        OsData osData = osDataWithLatLon(51.5, -0.1);
+        OsAddressCoordinates coordinates = new OsAddressCoordinates(51.5, -0.1);
         List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
 
-        when(osService.getOsAddressByFullPostcode("SW1A 1AA")).thenReturn(osData);
+        when(osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("SW1A 1AA"))
+            .thenReturn(coordinates);
         when(courtAddressService.findCourtWithDistanceByOsData(51.5, -0.1, 10)).thenReturn(results);
 
         List<CourtWithDistance> response = searchCourtService.getCourtsBySearchParameters(
@@ -108,7 +110,7 @@ class SearchCourtServiceTest {
         );
 
         assertThat(response).isEqualTo(results);
-        verify(osService).getOsAddressByFullPostcode("SW1A 1AA");
+        verify(osService).getOsAddressCoordinatesWithPostcodeReferenceFallback("SW1A 1AA");
         verify(courtAddressService).findCourtWithDistanceByOsData(51.5, -0.1, 10);
     }
 
@@ -123,7 +125,7 @@ class SearchCourtServiceTest {
         ServiceArea area = serviceAreaWithType(ServiceAreaType.OTHER);
         List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
 
-        when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+        when(osService.getOsLonLatDistrictWithPostcodeReferenceFallback("SW1A 1AA")).thenReturn(locationData);
         when(serviceAreaService.getServiceAreaByName("Other Service")).thenReturn(area);
         when(searchExecuter.executeSearchStrategy(
             locationData,
@@ -154,7 +156,7 @@ class SearchCourtServiceTest {
         ServiceArea area = serviceAreaWithType(ServiceAreaType.CIVIL);
         List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
 
-        when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+        when(osService.getOsLonLatDistrictWithPostcodeReferenceFallback("SW1A 1AA")).thenReturn(locationData);
         when(serviceAreaService.getServiceAreaByName("Money Claims")).thenReturn(area);
         when(searchExecuter.executeSearchStrategy(
             locationData,
@@ -300,7 +302,7 @@ class SearchCourtServiceTest {
                 .build();
             List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
 
-            when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+            when(osService.getOsLonLatDistrictWithPostcodeReferenceFallback("SW1A 1AA")).thenReturn(locationData);
             when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
             when(localAuthorityTypeRepository.findByNameIgnoreCase(localAuthorityType.getName()))
                 .thenReturn(Optional.of(localAuthorityType));
@@ -334,7 +336,7 @@ class SearchCourtServiceTest {
                 .build();
             List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
 
-            when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+            when(osService.getOsLonLatDistrictWithPostcodeReferenceFallback("SW1A 1AA")).thenReturn(locationData);
             when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
             when(localAuthorityTypeRepository.findByNameIgnoreCase(localAuthorityType.getName()))
                 .thenReturn(Optional.of(localAuthorityType));
@@ -367,7 +369,7 @@ class SearchCourtServiceTest {
             ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
             List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
 
-            when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+            when(osService.getOsLonLatDistrictWithPostcodeReferenceFallback("SW1A 1AA")).thenReturn(locationData);
             when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
             when(localAuthorityTypeRepository.findByNameIgnoreCase(anyString())).thenReturn(Optional.empty());
             when(courtSinglePointOfEntryService.getCourtsSpoe(51.5, -0.1, "Children"))
@@ -398,7 +400,7 @@ class SearchCourtServiceTest {
             ServiceArea area = serviceAreaWithType(ServiceAreaType.FAMILY);
             List<CourtWithDistance> results = List.of(mock(CourtWithDistance.class));
 
-            when(osService.getOsLonLatDistrictByPartial("SW1A 1AA")).thenReturn(locationData);
+            when(osService.getOsLonLatDistrictWithPostcodeReferenceFallback("SW1A 1AA")).thenReturn(locationData);
             when(serviceAreaService.getServiceAreaByName(CHILDCARE_SERVICE_AREA)).thenReturn(area);
             when(searchExecuter.executeSearchStrategy(
                 locationData,

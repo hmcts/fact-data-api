@@ -27,6 +27,10 @@ os:
   url: https://api.os.uk
   key: a-key
 
+onspd:
+  catalogue-url: https://catalogue.test/search
+  allowed-service-host: services.test
+
 # fact-data-api internal configuration
 fact:
   data-api:

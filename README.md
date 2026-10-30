@@ -98,6 +98,7 @@ This is the most common workflow for local development.
 | `APP_REG_ID` | yes | `<app-registration-id>` | Azure AD app ID URI |
 | `AZURE_STORAGE_ACCOUNT_NAME` | yes | `devstoreaccount1` | Blob storage account |
 | `AZURE_STORAGE_CONNECTION_STRING` | yes | `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=<local-azurite-key>;BlobEndpoint=http://localhost:10000/devstoreaccount1;` | Blob storage connection for host-run app |
+| `AZURE_STORAGE_BLOB_ENDPOINT` | yes when using the `dev` profile | `http://localhost:10000/devstoreaccount1` | Explicit Azurite endpoint used by Spring Cloud Azure in local diagnostics |
 | `OS_KEY` | yes | `<ordnance-survey-key>` | Ordnance Survey API key |
 | `AZURE_MANAGED_IDENTITY_ENABLED` | no | `false` | Disable managed identity locally |
 | `TESTING_SUPPORT_ENABLE_API` | no | `true` | Enable `/testing-support/**` endpoints |
@@ -112,6 +113,7 @@ AZURITE_KEY="$(openssl rand -base64 32)"
 cat >> .env <<EOF
 AZURITE_ACCOUNTS=devstoreaccount1:${AZURITE_KEY}
 AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=${AZURITE_KEY};BlobEndpoint=http://localhost:10000/devstoreaccount1;
+AZURE_STORAGE_BLOB_ENDPOINT=http://localhost:10000/devstoreaccount1
 DOCKER_AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=${AZURITE_KEY};BlobEndpoint=http://fact-storage:10000/devstoreaccount1;
 EOF
 ```
@@ -148,7 +150,7 @@ Use this if you want app + DB both in containers.
 ```
 
 `deploy_local_docker.sh` requires a `.env` file, runs `./gradlew clean build` first, then starts Docker with `docker compose --env-file .env up --build -d`.
-It expects `DOCKER_AZURE_STORAGE_CONNECTION_STRING` and `AZURITE_ACCOUNTS` in `.env`, and runs `fact-storage-init` to create `photos` and `csv` containers during startup.
+It expects `DOCKER_AZURE_STORAGE_CONNECTION_STRING` and `AZURITE_ACCOUNTS` in `.env`, and runs `fact-storage-init` to create `photos`, `csv` and `onspd` containers during startup.
 
 ## Running from IntelliJ
 
@@ -245,6 +247,40 @@ export FLYWAY_USER=fact
 export FLYWAY_PASSWORD=fact
 ./gradlew flywayMigrate
 ```
+
+Data-api owns the ONSPD reference-data lifecycle. It discovers the latest hosted-table release,
+downloads only large-user and terminated postcode fields, writes the reduced CSV to
+`onspd/postcode-reference.csv`, and then imports it into PostgreSQL. The source catalogue URL and the
+allowed hosted-table domain must be supplied with `ONSPD_CATALOGUE_URL` and
+`ONSPD_ALLOWED_SERVICE_HOST`; neither external address has a source-controlled default. The API can start without
+these values so environments without the scheduled import remain unaffected, but the synchronisation endpoint will
+reject the request until both values have been configured.
+
+An administrator or the authenticated cron-trigger identity can run the complete synchronisation with:
+
+```bash
+curl --request POST http://localhost:8989/postcode-reference/v1/synchronise \
+  --header "Authorization: Bearer ${ACCESS_TOKEN}"
+```
+
+To retry only the database import from the existing blob:
+
+```bash
+curl --request POST http://localhost:8989/postcode-reference/v1/import \
+  --header "Authorization: Bearer ${ACCESS_TOKEN}"
+```
+
+Neither endpoint requires `X-User-Id`. The synchronisation compares the source item ID and modified
+timestamp with blob metadata before downloading. It uses ObjectId keyset pagination and retries source
+failures with exponential backoff. The import validates `onspdSourceVersion`, `onspdRelease` and
+`recordCount` metadata, then atomically replaces the table through PostgreSQL `COPY`. It is safe to
+repeat: the database import is still attempted when the blob is current, allowing recovery from a
+previous partial run. `ONSPD_BLOB_NAME` can override the default blob name.
+
+The admin address picker continues to prefer OS DPA/LPI results. When OS has no address for a
+current large-user postcode, the picker permits manual entry and the saved address uses the ONSPD
+coordinates. Terminated postcodes remain invalid for public searches, but an administrator can use
+manual address entry and the historical ONSPD coordinates when available.
 
 ### Requirements for public frontend after migration changes
 
