@@ -1,6 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.utils;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -12,7 +13,7 @@ public final class LogBuilder {
     }
 
     public static String writeLog(String actionValue) {
-        return String.format("Track: %s, at %s", actionValue, LocalDateTime.now());
+        return String.format("Track: %s, at %s", actionValue, LocalDateTime.now(ZoneOffset.UTC));
     }
 
     public static String writeLog(String action, Object... values) {
@@ -20,10 +21,10 @@ public final class LogBuilder {
             .map(String::valueOf)
             .collect(Collectors.joining(", "));
 
-        return String.format("Track: %s, details: [%s], at %s", action, details, LocalDateTime.now());
+        return String.format("Track: %s, details: [%s], at %s", action, details, LocalDateTime.now(ZoneOffset.UTC));
     }
 
     public static String writeLog(UUID actioningUserId, String actionValue) {
-        return String.format("Track: %s, %s, at %s", actioningUserId, actionValue, LocalDateTime.now());
+        return String.format("Track: %s, %s, at %s", actioningUserId, actionValue, LocalDateTime.now(ZoneOffset.UTC));
     }
 }

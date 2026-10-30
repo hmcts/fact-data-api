@@ -22,6 +22,8 @@ import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 @Slf4j
 public class ServiceCentreContactDetailsService {
 
+    private static final String SERVICE_CENTRE_ID_LOG_FIELD = "serviceCentreId=";
+
     private final ServiceCentreContactDetailsRepository serviceCentreContactDetailsRepository;
     private final ContactDescriptionTypeRepository contactDescriptionTypeRepository;
     private final ServiceCentreService serviceCentreService;
@@ -76,7 +78,7 @@ public class ServiceCentreContactDetailsService {
 
         log.debug(writeLog(
             "Creating contact detail for service centre",
-            "serviceCentreId=" + serviceCentreId
+            SERVICE_CENTRE_ID_LOG_FIELD + serviceCentreId
         ));
         return serviceCentreContactDetailsRepository.save(request);
     }
@@ -108,7 +110,7 @@ public class ServiceCentreContactDetailsService {
         log.debug(writeLog(
             "Updating contact detail for service centre",
             "contactId=" + contactId,
-            "serviceCentreId=" + serviceCentreId
+            SERVICE_CENTRE_ID_LOG_FIELD + serviceCentreId
         ));
         return serviceCentreContactDetailsRepository.save(existing);
     }
@@ -133,7 +135,7 @@ public class ServiceCentreContactDetailsService {
         log.debug(writeLog(
             "Deleting contact detail for service centre",
             "contactId=" + contactId,
-            "serviceCentreId=" + serviceCentreId
+            SERVICE_CENTRE_ID_LOG_FIELD + serviceCentreId
         ));
         serviceCentreContactDetailsRepository.deleteByIdAndServiceCentreId(contactId, serviceCentreId);
     }

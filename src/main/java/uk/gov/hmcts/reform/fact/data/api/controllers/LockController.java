@@ -40,6 +40,10 @@ import static uk.gov.hmcts.reform.fact.data.api.utils.LogBuilder.writeLog;
 @RequiredArgsConstructor
 public class LockController {
 
+    private static final String SUBJECT_ID_LOG_FIELD = "subjectId=";
+    private static final String SUBJECT_TYPE_LOG_FIELD = "subjectType=";
+    private static final String PAGE_LOG_FIELD = "page=";
+
     private final LockService lockService;
 
     @LockCleanupCheck
@@ -55,8 +59,8 @@ public class LockController {
         @Parameter(description = "UUID of the subject", required = true) @ValidUUID @PathVariable String subjectId) {
         log.debug(writeLog(
             "Get subject locks request",
-            "subjectId=" + subjectId,
-            "subjectType=" + subjectType
+            SUBJECT_ID_LOG_FIELD + subjectId,
+            SUBJECT_TYPE_LOG_FIELD + subjectType
         ));
         return ResponseEntity.ok(lockService.getAllSubjectLocks(subjectType, UUID.fromString(subjectId)));
     }
@@ -76,9 +80,9 @@ public class LockController {
         @Parameter(description = "Page to check lock status", required = true) @PathVariable Page page) {
         log.debug(writeLog(
             "Get lock status request",
-            "subjectId=" + subjectId,
-            "subjectType=" + subjectType,
-            "page=" + page
+            SUBJECT_ID_LOG_FIELD + subjectId,
+            SUBJECT_TYPE_LOG_FIELD + subjectType,
+            PAGE_LOG_FIELD + page
             ));
         return lockService.getPageLock(subjectType, UUID.fromString(subjectId), page)
             .map(ResponseEntity::ok)
@@ -101,10 +105,10 @@ public class LockController {
         @Parameter(description = "User ID creating the lock", required = true) @Valid @RequestBody UUID userId) {
         log.debug(writeLog(
             "Create/update lock request",
-            "subjectId=" + subjectId,
+            SUBJECT_ID_LOG_FIELD + subjectId,
             "userId=" + userId,
-            "subjectType=" + subjectType,
-            "page=" + page
+            SUBJECT_TYPE_LOG_FIELD + subjectType,
+            PAGE_LOG_FIELD + page
         ));
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(lockService.createOrUpdateLock(subjectType, UUID.fromString(subjectId), page, userId));
@@ -123,9 +127,9 @@ public class LockController {
         @Parameter(description = "Page to delete lock", required = true) @PathVariable Page page) {
         log.debug(writeLog(
             "Delete lock request",
-            "subjectId=" + subjectId,
-            "subjectType=" + subjectType,
-            "page=" + page
+            SUBJECT_ID_LOG_FIELD + subjectId,
+            SUBJECT_TYPE_LOG_FIELD + subjectType,
+            PAGE_LOG_FIELD + page
         ));
         lockService.deleteLock(subjectType, UUID.fromString(subjectId), page);
         return ResponseEntity.noContent().build();

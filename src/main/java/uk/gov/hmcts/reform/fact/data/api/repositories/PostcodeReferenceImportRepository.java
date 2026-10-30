@@ -139,17 +139,13 @@ public class PostcodeReferenceImportRepository {
     }
 
     private long copyIntoStagingTable(InputStream csvInputStream) {
-        Long importedRecordCount = jdbcTemplate.execute((ConnectionCallback<Long>) connection -> {
+        return jdbcTemplate.execute((ConnectionCallback<Long>) connection -> {
             try {
                 return connection.unwrap(PGConnection.class).getCopyAPI().copyIn(COPY_SQL, csvInputStream);
             } catch (IOException ex) {
                 throw new PostcodeReferenceImportException("Unable to read ONSPD CSV during import", ex);
             }
         });
-        if (importedRecordCount == null) {
-            throw new PostcodeReferenceImportException("ONSPD CSV import did not return a record count");
-        }
-        return importedRecordCount;
     }
 
     private void validateRecordCount(long actualRecordCount, long expectedRecordCount) {

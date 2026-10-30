@@ -675,7 +675,7 @@ public class TestingSupportService {
 
         // only set waitingAreaChildren if waitingArea is true as the frontend will only
         // expect waitingAreaChildren to be set if waitingArea is true
-        if (facilities.getWaitingArea()) {
+        if (Boolean.TRUE.equals(facilities.getWaitingArea())) {
             facilities.setWaitingAreaChildren(random.nextBoolean());
         }
 

@@ -51,8 +51,8 @@ public class AzureBlobService {
             BlobHttpHeaders headers = new BlobHttpHeaders()
                 .setContentType(file.getContentType());
             blobClient.setHttpHeaders(headers);
-        } catch (IOException e) {
-            throw new AzureUploadException("Could not upload provided file to Azure");
+        } catch (IOException exception) {
+            throw new AzureUploadException("Could not upload provided file to Azure", exception);
         }
     }
 
