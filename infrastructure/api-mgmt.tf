@@ -16,10 +16,14 @@ data "azurerm_key_vault_secret" "api_app_registration_id" {
 }
 
 data "http" "openapi" {
-  url = "https://hmcts.github.io/cnp-api-docs/specs/fact-data-api-apim.json"
+  url = "https://raw.githubusercontent.com/hmcts/cnp-api-docs/refs/heads/master/docs/specs/fact-data-api-apim.json"
 
   request_headers = {
     Accept = "application/json"
+  }
+
+  retry {
+    attempts = 4
   }
 
   lifecycle {

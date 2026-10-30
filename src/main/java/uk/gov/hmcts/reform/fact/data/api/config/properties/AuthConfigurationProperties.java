@@ -23,7 +23,8 @@ public class AuthConfigurationProperties {
          * Comma-separated list of POST endpoints that do not require the user header.
          */
         @NotBlank
-        private String postEndpoints = "/courts/v1/link,/user/v1,/csv";
+        private String postEndpoints = "/courts/v1/link,/user/v1,/csv,/postcode-reference/v1/import,"
+            + "/postcode-reference/v1/synchronise";
 
         /**
          * Comma-separated list of DELETE endpoints that do not require the user header.

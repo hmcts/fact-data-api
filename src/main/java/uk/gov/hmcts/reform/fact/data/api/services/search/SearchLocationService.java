@@ -75,7 +75,7 @@ public class SearchLocationService {
                                                     String serviceArea,
                                                     SearchAction action,
                                                     Integer limit) {
-        OsLocationData osLocationData = osService.getOsLonLatDistrictByPartial(postcode);
+        OsLocationData osLocationData = osService.getOsLonLatDistrictWithPostcodeReferenceFallback(postcode);
         List<SearchResult> courts = searchCourtService
             .searchWithServiceArea(osLocationData, serviceArea, action, limit)
             .stream()

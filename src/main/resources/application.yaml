@@ -78,6 +78,7 @@ spring:
         blob:
           photo-container-name: photos
           csv-container-name: csv
+          onspd-container-name: onspd
           connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
       # required for security flows
       active-directory:
@@ -95,6 +96,14 @@ spring:
         serialization-mode: via_dto
 dbMigration:
   runOnStartup: ${RUN_DB_MIGRATION_ON_STARTUP:true}
+
+onspd:
+  catalogue-url: ${ONSPD_CATALOGUE_URL:}
+  allowed-service-host: ${ONSPD_ALLOWED_SERVICE_HOST:}
+  blob-name: ${ONSPD_BLOB_NAME:postcode-reference.csv}
+  page-size: ${ONSPD_PAGE_SIZE:1000}
+  max-attempts: ${ONSPD_MAX_ATTEMPTS:4}
+  initial-retry-backoff-millis: ${ONSPD_INITIAL_RETRY_BACKOFF_MILLIS:1000}
 
 user:
   retention-period: 365

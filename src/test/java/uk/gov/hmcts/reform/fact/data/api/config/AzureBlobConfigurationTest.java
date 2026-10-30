@@ -54,6 +54,17 @@ class AzureBlobConfigurationTest {
     }
 
     @Test
+    void testOnspdBlobContainerClientBean() {
+        BlobContainerClient client = azureBlobConfiguration.onspdBlobContainerClient(
+            mockBlobServiceClient, containerName
+        );
+
+        assertEquals(mockBlobContainerClient, client);
+        verify(mockBlobServiceClient, times(1))
+            .getBlobContainerClient(containerName);
+    }
+
+    @Test
     void testPhotoAzureBlobServiceBean() {
         AzureBlobService service = azureBlobConfiguration.photoAzureBlobService(mockBlobContainerClient);
 

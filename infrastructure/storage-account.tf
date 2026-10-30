@@ -20,6 +20,10 @@ module "storage_account" {
     {
       name        = "csv",
       access_type = "private"
+    },
+    {
+      name        = "onspd",
+      access_type = "private"
     }
   ]
 
