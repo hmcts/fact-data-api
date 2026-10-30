@@ -40,11 +40,10 @@ public class ValidationConstants {
         + "apostrophes, commas, full stops, hyphens, ampersands, and brackets";
 
     public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 ()':,&-]+$)$";
-    public static final String REQUIRED_ADDRESS_LINE_REGEX = "^[A-Za-z0-9 ()':,&-]+$";
-    public static final String ADDRESS_LINE_REGEX_MESSAGE = "Address line contains invalid characters";
 
     public static final String EPIM_ID_REGEX = "(?i)^[A-Z0-9 -]+$";
-    public static final String EPIM_ID_REGEX_MESSAGE = "EPIM ID contains invalid characters";
+    public static final String EPIM_ID_REGEX_MESSAGE = "ePIMS Ref ID must only include letters a to z, "
+        + "spaces and dashes.";
 
     public static final String COURT_SLUG_REGEX = "^[a-z0-9-]+$";
     public static final String COURT_SLUG_REGEX_MESSAGE =
