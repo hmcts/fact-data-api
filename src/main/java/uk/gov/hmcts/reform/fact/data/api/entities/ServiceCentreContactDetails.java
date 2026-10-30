@@ -89,8 +89,8 @@ public class ServiceCentreContactDetails implements AuditableEntity {
         message = ValidationConstants.EXPLANATION_MAX_LENGTH_MESSAGE
     )
     @Pattern(
-        regexp = ValidationConstants.EXPLANATION_REGEX,
-        message = ValidationConstants.EXPLANATION_REGEX_MESSAGE
+        regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = "Explanation " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     @JsonView(ServiceCentreDetailsView.class)
     private String explanation;
@@ -100,11 +100,11 @@ public class ServiceCentreContactDetails implements AuditableEntity {
         length = ValidationConstants.COMMON_TEXT_MAX_LENGTH
     )
     @Size(max = ValidationConstants.COMMON_TEXT_MAX_LENGTH,
-        message = ValidationConstants.WELSH_EXPLANATION_MAX_LENGTH_MESSAGE
+        message = ValidationConstants.EXPLANATION_MAX_LENGTH_MESSAGE
     )
     @Pattern(
-        regexp = ValidationConstants.WELSH_EXPLANATION_REGEX,
-        message = ValidationConstants.WELSH_EXPLANATION_REGEX_MESSAGE
+        regexp = ValidationConstants.WELSH_TEXT_REGEX,
+        message = "Welsh translation " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     @JsonView(ServiceCentreDetailsView.class)
     private String explanationCy;

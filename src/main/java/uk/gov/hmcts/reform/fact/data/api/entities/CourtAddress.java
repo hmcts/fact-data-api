@@ -74,8 +74,8 @@ public class CourtAddress implements AuditableCourtEntity {
     @Size(max = ValidationConstants.ADDRESS_LINE_MAX_LENGTH,
         message = ValidationConstants.ADDRESS_LINE_MAX_LENGTH_MESSAGE
     )
-    @Pattern(regexp = ValidationConstants.REQUIRED_ADDRESS_LINE_REGEX,
-        message = "Address Line 1: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE
+    @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = "Address Line 1: " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     @Column(name = "address_line_1")
     private String addressLine1;
@@ -84,8 +84,8 @@ public class CourtAddress implements AuditableCourtEntity {
     @Size(max = ValidationConstants.ADDRESS_LINE_MAX_LENGTH,
         message = ValidationConstants.ADDRESS_LINE_MAX_LENGTH_MESSAGE
     )
-    @Pattern(regexp = ValidationConstants.OPTIONAL_ADDRESS_LINE_REGEX,
-        message = "Address Line 2: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE
+    @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = "Address Line 2: " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     @Column(name = "address_line_2")
     private String addressLine2;
@@ -95,8 +95,8 @@ public class CourtAddress implements AuditableCourtEntity {
     @Size(max = ValidationConstants.COUNTRY_TOWN_CITY_MAX_LENGTH,
         message = ValidationConstants.TOWN_CITY_MAX_LENGTH_MESSAGE
     )
-    @Pattern(regexp = ValidationConstants.REQUIRED_ADDRESS_LINE_REGEX,
-        message = "Town/City: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE
+    @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = "Town/City: " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     private String townCity;
 
@@ -104,8 +104,8 @@ public class CourtAddress implements AuditableCourtEntity {
     @Size(max = ValidationConstants.COUNTRY_TOWN_CITY_MAX_LENGTH,
         message = ValidationConstants.COUNTRY_MAX_LENGTH_MESSAGE
     )
-    @Pattern(regexp = ValidationConstants.OPTIONAL_ADDRESS_LINE_REGEX,
-        message = "County: " + ValidationConstants.ADDRESS_LINE_REGEX_MESSAGE
+    @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = "County: " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     private String county;
 
