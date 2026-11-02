@@ -15,8 +15,8 @@ class ValidationConstantsTest {
     }
 
     @Test
-    void shouldRejectEmptyEmailAddress() {
-        assertDoesNotMatch(ValidationConstants.EMAIL_REGEX, "");
+    void shouldAllowEmptyEmailAddress() {
+        assertMatches(ValidationConstants.EMAIL_REGEX, "");
     }
 
     @Test

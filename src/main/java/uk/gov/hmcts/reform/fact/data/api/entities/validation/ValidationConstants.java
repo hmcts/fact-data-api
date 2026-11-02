@@ -15,10 +15,8 @@ public class ValidationConstants {
             + "hyphens, ampersands, and parentheses";
 
     public static final String EMAIL_REGEX =
-        "^[A-Za-z0-9_+~-]+(?:\\.[A-Za-z0-9_+~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$";
-    public static final String EMAIL_REGEX_MESSAGE =
-        "Email address must match the regex '^[A-Za-z0-9_+~-]+(?:\\."
-            + "[A-Za-z0-9_+~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,}$";
+        "^(|[A-Za-z0-9_+~-]+(?:\\.[A-Za-z0-9_+~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,})$";
+    public static final String EMAIL_REGEX_MESSAGE = "Enter a valid email address";
 
     public static final String JUSTICE_EMAIL_REGEX = "^(|[A-Za-z0-9._+-]+@(devl\\.)?justice\\.gov\\.uk)$";
     public static final String JUSTICE_EMAIL_REGEX_MESSAGE =
@@ -27,9 +25,9 @@ public class ValidationConstants {
     public static final int EMAIL_MAX_LENGTH = 254;
     public static final String EMAIL_MAX_LENGTH_MESSAGE = "Email address should be no more than {max} characters";
 
-    public static final String PHONE_NO_REGEX = "^(\\+44)?[0-9 ()-]{10,20}$";
+    public static final String PHONE_NO_REGEX = "^(|(\\+44)?[0-9 ()-]{10,20})$";
     public static final String PHONE_NO_REGEX_MESSAGE =
-        "Phone Number must match the regex '^(\\+44)?[0-9 ()-]{10,20}$'";
+        "Phone Number must match the regex '^(|(\\+44)?[0-9 ()-]{10,20})$'";
 
     public static final int PHONE_NO_MAX_LENGTH = 20;
     public static final String PHONE_NO_MAX_LENGTH_MESSAGE = "Phone number should be no more than {max} characters";
@@ -39,7 +37,7 @@ public class ValidationConstants {
     public static final String TEXT_FIELD_INVALID_CHARACTERS_MESSAGE = "must only include letters, numbers, spaces, "
         + "apostrophes, commas, full stops, hyphens, ampersands, and brackets";
 
-    public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 ()':,&-]+$)$";
+    public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 .,'\\-()&+]*)$";
 
     public static final String EPIM_ID_REGEX = "(?i)^[A-Z0-9 -]+$";
     public static final String EPIM_ID_REGEX_MESSAGE = "ePIMS Ref ID must only include letters a to z, "

@@ -84,7 +84,7 @@ public class CourtAddress implements AuditableCourtEntity {
     @Size(max = ValidationConstants.ADDRESS_LINE_MAX_LENGTH,
         message = ValidationConstants.ADDRESS_LINE_MAX_LENGTH_MESSAGE
     )
-    @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+    @Pattern(regexp = ValidationConstants.OPTIONAL_ADDRESS_LINE_REGEX,
         message = "Address Line 2: " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     @Column(name = "address_line_2")
