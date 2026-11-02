@@ -104,7 +104,7 @@ public class CourtAddress implements AuditableCourtEntity {
     @Size(max = ValidationConstants.COUNTRY_TOWN_CITY_MAX_LENGTH,
         message = ValidationConstants.COUNTRY_MAX_LENGTH_MESSAGE
     )
-    @Pattern(regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+    @Pattern(regexp = ValidationConstants.OPTIONAL_ADDRESS_LINE_REGEX,
         message = "County: " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     private String county;

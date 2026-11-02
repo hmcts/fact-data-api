@@ -32,8 +32,8 @@ public class ValidationConstants {
     public static final int PHONE_NO_MAX_LENGTH = 20;
     public static final String PHONE_NO_MAX_LENGTH_MESSAGE = "Phone number should be no more than {max} characters";
 
-    public static final String ENGLISH_TEXT_REGEX = "^[A-Za-z0-9 .,'\\-()&+]*$";
-    public static final String WELSH_TEXT_REGEX = "^[\\p{L}\\p{M}0-9 .,'\\-()&+]+$";
+    public static final String ENGLISH_TEXT_REGEX = "^[A-Za-z0-9 .,'\\-()&]*$";
+    public static final String WELSH_TEXT_REGEX = "^[\\p{L}\\p{M}0-9 .,'\\-()&]+$";
     public static final String TEXT_FIELD_INVALID_CHARACTERS_MESSAGE = "must only include letters, numbers, spaces, "
         + "apostrophes, commas, full stops, hyphens, ampersands, and brackets";
 
