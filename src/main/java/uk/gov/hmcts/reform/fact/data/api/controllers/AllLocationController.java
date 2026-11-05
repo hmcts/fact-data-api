@@ -52,7 +52,7 @@ public class AllLocationController {
         @Pattern(
             regexp = "^[A-Za-z&'()\\- ]*$",
             message = "Partial court name may only contain letters, spaces, apostrophes, hyphens, ampersands, "
-                + "and parentheses"
+                + "and brackets"
         )
         String partialCourtName,
         @RequestParam(name = "sortBy", required = false) String sortBy,
