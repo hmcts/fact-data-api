@@ -12,7 +12,7 @@ public class ValidationConstants {
     public static final String COURT_SERVICE_CENTRE_NAME_REGEX = "(?i)^(?=.*[A-Z])[A-Z&'()\\- ]+$";
     public static final String COURT_NAME_REGEX_MESSAGE =
         "Court name must include at least one letter and only include letters, spaces, apostrophes, "
-            + "hyphens, ampersands, and parentheses";
+            + "hyphens, ampersands, and brackets";
 
     public static final String EMAIL_REGEX =
         "^(|[A-Za-z0-9_+~-]+(?:\\.[A-Za-z0-9_+~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,})$";
@@ -37,7 +37,7 @@ public class ValidationConstants {
     public static final String TEXT_FIELD_INVALID_CHARACTERS_MESSAGE = "must only include letters, numbers, spaces, "
         + "apostrophes, commas, full stops, hyphens, ampersands, and brackets";
 
-    public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 .,'\\-()&+]*)$";
+    public static final String OPTIONAL_ADDRESS_LINE_REGEX = "^(|[A-Za-z0-9 .,'\\-()&]*)$";
 
     public static final String EPIM_ID_REGEX = "(?i)^[A-Z0-9 -]+$";
     public static final String EPIM_ID_REGEX_MESSAGE = "ePIMS Ref ID must only include letters a to z, "
@@ -113,7 +113,7 @@ public class ValidationConstants {
     public static final String SERVICE_CENTRE_NAME_LENGTH_MESSAGE =
         "Service centre name should be between {min} and {max} characters";
     public static final String SERVICE_CENTRE_NAME_REGEX_MESSAGE = "Service centre name may only contain letters, "
-        + "spaces, apostrophes, hyphens, ampersands, and parentheses";
+        + "spaces, apostrophes, hyphens, ampersands, and brackets";
 
     public static final String INTERVIEW_ROOM_COUNT_MESSAGE =
         "Interview room count must be between 1 and 150 when interview rooms are available; otherwise omit or set to 0";
