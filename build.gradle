@@ -227,7 +227,7 @@ dependencies {
   integrationTestImplementation group: 'org.testcontainers', name: 'postgresql', version: '1.21.4'
 
   smokeTestImplementation group: 'io.rest-assured', name: 'rest-assured', version: '6.3.0'
-  functionalTestImplementation group: 'io.qameta.allure', name: 'allure-junit5', version: '2.35.5'
+  functionalTestImplementation group: 'io.qameta.allure', name: 'allure-junit5', version: '2.35.6'
   functionalTestImplementation group: 'io.qameta.allure', name: 'allure-rest-assured', version: '2.35.6'
 }
 
