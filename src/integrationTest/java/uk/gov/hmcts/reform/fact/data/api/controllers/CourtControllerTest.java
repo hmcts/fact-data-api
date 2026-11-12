@@ -329,7 +329,7 @@ class CourtControllerTest {
             .andExpect(jsonPath("$.name").value(
                 org.hamcrest.Matchers.containsString(
                     "Court name must include at least one letter and only include letters, spaces, "
-                        + "apostrophes, hyphens, ampersands, and parentheses"
+                        + "apostrophes, hyphens, ampersands, and brackets"
                 )
             ));
     }
