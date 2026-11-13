@@ -29,7 +29,7 @@ services:
       RUN_DB_MIGRATION_ON_STARTUP: ${RUN_DB_MIGRATION_ON_STARTUP:-true}
       OS_KEY: ${OS_KEY:-}
   fact-database:
-    image: postgres:17-alpine
+    image: postgres:18-alpine@sha256:1018733457011bf88d81db98cf43aac6d5150afc18787dbe204771fedf80ff95
     environment:
       POSTGRES_DB: ${DB_NAME:-fact}
       POSTGRES_USER: ${DB_USER:-fact}
