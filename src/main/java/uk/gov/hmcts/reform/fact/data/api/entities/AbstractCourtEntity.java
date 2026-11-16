@@ -51,8 +51,8 @@ public abstract class AbstractCourtEntity {
         max = ValidationConstants.COURT_SERVICE_CENTRE_NAME_MAX_LENGTH,
         message = ValidationConstants.COURT_NAME_LENGTH_MESSAGE)
     @Pattern(
-        regexp = ValidationConstants.COURT_SERVICE_CENTRE_NAME_REGEX,
-        message = ValidationConstants.COURT_NAME_REGEX_MESSAGE
+        regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = "Court name " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     private String name;
 

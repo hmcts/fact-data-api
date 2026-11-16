@@ -9,10 +9,6 @@ public class ValidationConstants {
     public static final int COURT_SERVICE_CENTRE_NAME_MAX_LENGTH = 200;
     public static final String COURT_NAME_LENGTH_MESSAGE =
         "Court name should be between {min} and {max} characters";
-    public static final String COURT_SERVICE_CENTRE_NAME_REGEX = "(?i)^(?=.*[A-Z])[A-Z&'()\\- ]+$";
-    public static final String COURT_NAME_REGEX_MESSAGE =
-        "Court name must include at least one letter and only include letters, spaces, apostrophes, "
-            + "hyphens, ampersands, and brackets";
 
     public static final String EMAIL_REGEX =
         "^(|[A-Za-z0-9_+~-]+(?:\\.[A-Za-z0-9_+~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+[A-Za-z]{2,})$";
@@ -102,7 +98,7 @@ public class ValidationConstants {
         "Welsh fax description must be {max} characters or fewer";
     public static final String FAX_NO_MAX_LENGTH_MESSAGE = "Fax number should be no more than {max} characters";
     public static final String FAX_NUMBER_VALIDATION_ERROR =
-        "Enter a fax number in the correct format, for example 01273 800 900 or 020 7450 4000";
+        "Enter a valid fax number (10-20 digits, optional +44, spaces allowed)";
 
     public static final int REGION_NAME_MIN_LENGTH = 5;
     public static final String REGION_NAME_LENGTH_MESSAGE =
@@ -112,8 +108,6 @@ public class ValidationConstants {
 
     public static final String SERVICE_CENTRE_NAME_LENGTH_MESSAGE =
         "Service centre name should be between {min} and {max} characters";
-    public static final String SERVICE_CENTRE_NAME_REGEX_MESSAGE = "Service centre name may only contain letters, "
-        + "spaces, apostrophes, hyphens, ampersands, and brackets";
 
     public static final String INTERVIEW_ROOM_COUNT_MESSAGE =
         "Interview room count must be between 1 and 150 when interview rooms are available; otherwise omit or set to 0";
