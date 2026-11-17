@@ -318,7 +318,7 @@ class CourtControllerTest {
 
     @Test
     @DisplayName("POST /courts/v1 returns 400 when name has invalid characters")
-    void createCourtReturnsBadRequestWhenNameHasNoLetters() throws Exception {
+    void createCourtReturnsBadRequestWhenNameHasInvalidCharacters() throws Exception {
         Court invalidCourt = buildCourt(null);
         invalidCourt.setName("Court @ name 123");
 
