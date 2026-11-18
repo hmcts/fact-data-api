@@ -130,7 +130,7 @@ public final class CourtControllerFunctionalTest {
         AssertionHelper.assertStatus(response, BAD_REQUEST);
         assertThat(response.jsonPath().getString("warningNoticeCy")).isNotBlank();
         assertThat(response.jsonPath().getString("warningNoticeCy"))
-            .contains("Welsh warning notice may only contain");
+            .contains("Welsh translation ");
     }
 
     @Test
