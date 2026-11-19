@@ -100,7 +100,7 @@ public class AuditService {
             fromDateTime,
             toDateTime,
             subjectFilter == null ? null : subjectFilter.subjectId(),
-            subjectFilter != null ? subjectFilter.subjectType() : null,
+            subjectFilter == null ? null : subjectFilter.subjectType(),
             pattern,
             emailFilter,
             pageable
