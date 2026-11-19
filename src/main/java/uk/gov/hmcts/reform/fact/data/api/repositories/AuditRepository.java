@@ -140,8 +140,24 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
     @EntityGraph(attributePaths = {"user"})
     Optional<Audit> findWithUserById(UUID id);
 
-    // ----------------------------------------------------
-    // Housekeeping queries
+    @EntityGraph(attributePaths = {"user"})
+    @Query("""
+        select a from Audit a
+        join a.user u
+        where a.createdAt >= :fromDate
+            and a.createdAt <= coalesce(:toDate, a.createdAt)
+            and a.subjectType = coalesce(:subjectType, a.subjectType)
+            and a.subjectId = coalesce(:subjectId, a.subjectId)
+            and (cast(:email as string) is null or u.email like concat('%', cast(:email as string), '%'))
+    """)
+    Page<Audit> findFiltered(
+        ZonedDateTime fromDate,
+        ZonedDateTime toDate,
+        UUID subjectId,
+        SubjectType subjectType,
+        String email,
+        Pageable pageable
+    );
 
     void deleteAllByCreatedAtBefore(ZonedDateTime createdAtBefore);
 

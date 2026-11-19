@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.services;
 
+import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.reform.fact.data.api.config.properties.AuditConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
@@ -25,6 +26,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuditService {
@@ -65,6 +67,9 @@ public class AuditService {
 
         SubjectFilter subjectFilter = resolveSubjectFilter(courtId, serviceCentreId, subjectType);
 
+        log.debug("Retrieving filtered and paginated audits with parameters: pageNumber={}, pageSize={}, fromDate={}, toDate={}, subjectFilter={}, email={}",
+            pageNumber, pageSize, fromDateTime, toDateTime, subjectFilter, email);
+
         return performAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
     }
 
@@ -83,28 +88,45 @@ public class AuditService {
 
     private Page<Audit> performAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
                                           SubjectFilter subjectFilter, String email, Pageable pageable) {
-        boolean hasToDate = toDateTime != null;
-        boolean hasEmail = email != null && !email.isBlank();
-
-        if (subjectFilter != null) {
-            if (subjectFilter.subjectId != null) {
-                return performSubjectAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
-            } else {
-                return performSubjectTypeAuditQuery(
-                    fromDateTime, toDateTime, subjectFilter.subjectType(), email, pageable);
-            }
-        }
-        if (hasToDate && hasEmail) {
-            return auditRepository.findByCreatedAtBetweenAndEmailAddressLike(
-                fromDateTime, toDateTime, email, pageable);
-        }
-        if (hasToDate) {
-            return auditRepository.findByCreatedAtBetween(fromDateTime, toDateTime, pageable);
-        }
-        if (hasEmail) {
-            return auditRepository.findByCreatedAtAfterAndEmailAddressLike(fromDateTime, email, pageable);
-        }
-        return auditRepository.findByCreatedAtAfter(fromDateTime, pageable);
+        String emailFilter = (email == null || email.isBlank()) ? "" : email;
+        return auditRepository.findFiltered(
+            fromDateTime,
+            toDateTime,
+            subjectFilter == null ? null : subjectFilter.subjectId(),
+            subjectFilter != null ? subjectFilter.subjectType() : null,
+            emailFilter,
+            pageable
+        );
+//        boolean hasToDate = toDateTime != null;
+//        boolean hasEmail = email != null && !email.isBlank();
+//        log.debug("Retrieving filtered and paginated audits with parameters: pageNumber={}, pageSize={}, fromDate={}, toDate={}, subjectFilter={}, email={}",
+//            pageable.getPageNumber(), pageable.getPageSize(), fromDateTime, toDateTime, subjectFilter, email);
+//
+//        if (subjectFilter != null) {
+//            log.debug("subject Filter");
+//            if (subjectFilter.subjectId != null) {
+//                return performSubjectAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
+//            } else {
+//                return performSubjectTypeAuditQuery(
+//                    fromDateTime, toDateTime, subjectFilter.subjectType(), email, pageable);
+//            }
+//        }
+//        if (hasToDate && hasEmail) {
+//            log.debug("hasToDate && hasEmail Filter");
+//            return auditRepository.findByCreatedAtBetweenAndEmailAddressLike(
+//                fromDateTime, toDateTime, email, pageable);
+//        }
+//        if (hasToDate) {
+//            log.debug("hasToDate Filter");
+//            return auditRepository.findByCreatedAtBetween(fromDateTime, toDateTime, pageable);
+//        }
+//        if (hasEmail) {
+//            log.debug("hasEmail Filter");
+//            return auditRepository.findByCreatedAtAfterAndEmailAddressLike(fromDateTime, email, pageable);
+//        }
+//
+//        log.debug("default fromDateTime Filter");
+//        return auditRepository.findByCreatedAtAfter(fromDateTime, pageable);
     }
 
     private Page<Audit> performSubjectAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
