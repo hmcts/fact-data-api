@@ -51,7 +51,7 @@ public class AuditService {
     @SuppressWarnings("java:S107")
     public Page<Audit> getFilteredAndPaginatedAudits(int pageNumber, int pageSize, @NonNull LocalDate fromDate,
                                                      LocalDate toDate, SubjectType subjectType, String courtId,
-                                                     String serviceCentreId, String email) {
+                                                     String serviceCentreId, String searchText, String email) {
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
 
@@ -70,7 +70,7 @@ public class AuditService {
         log.debug("Retrieving filtered and paginated audits with parameters: pageNumber={}, pageSize={}, fromDate={}, toDate={}, subjectFilter={}, email={}",
             pageNumber, pageSize, fromDateTime, toDateTime, subjectFilter, email);
 
-        return performAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
+        return performAuditQuery(fromDateTime, toDateTime, subjectFilter, searchText, email, pageable);
     }
 
     /**
@@ -87,13 +87,21 @@ public class AuditService {
     }
 
     private Page<Audit> performAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
-                                          SubjectFilter subjectFilter, String email, Pageable pageable) {
+                                          SubjectFilter subjectFilter, String searchText,
+                                          String email, Pageable pageable) {
+        String pattern = (searchText == null || searchText.isBlank()) ? null
+            : "%" + searchText.trim()
+            .replace("//", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_") + "%";
+
         String emailFilter = (email == null || email.isBlank()) ? "" : email;
         return auditRepository.findFiltered(
             fromDateTime,
             toDateTime,
             subjectFilter == null ? null : subjectFilter.subjectId(),
             subjectFilter != null ? subjectFilter.subjectType() : null,
+            pattern,
             emailFilter,
             pageable
         );
