@@ -142,10 +142,13 @@ class AuditingTest {
         serviceCentre.setOpen(Boolean.TRUE);
         serviceCentreRepository.save(serviceCentre);
 
-        Page<Audit> audits = auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
+        Page<Audit> audits = auditRepository.findFiltered(
+            CREATED_AFTER.atStartOfDay().atZone(java.time.ZoneOffset.UTC),
+            null,
             serviceCentre.getId(),
             SubjectType.SERVICE_CENTRE,
-            CREATED_AFTER.atStartOfDay().atZone(java.time.ZoneOffset.UTC),
+            null,
+            null,
             org.springframework.data.domain.PageRequest.of(0, 1000)
         );
 

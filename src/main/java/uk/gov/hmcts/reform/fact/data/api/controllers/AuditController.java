@@ -103,8 +103,6 @@ public class AuditController {
             throw new InvalidParameterCombinationException("Only one of courtId or serviceCentreId can be provided");
         }
 
-        log.debug("Retrieving filtered and paginated audits");
-
         return ResponseEntity.ok(
             auditService.getFilteredAndPaginatedAudits(
                 pageNumber,
