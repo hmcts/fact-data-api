@@ -67,12 +67,14 @@ class AuditControllerTest {
             isNull(),
             isNull(),
             isNull(),
+            isNull(),
             isNull()
         )).thenReturn(auditPage);
 
         ResponseEntity<Page<Audit>> response = auditController.getFilteredAndPaginatedAudits(
             PAGE_NUMBER,
             PAGE_SIZE,
+            null,
             null,
             null,
             null,
@@ -94,6 +96,7 @@ class AuditControllerTest {
                 auditController.getFilteredAndPaginatedAudits(
                     PAGE_NUMBER,
                     PAGE_SIZE,
+                    null,
                     null,
                     null,
                     null,
@@ -120,6 +123,7 @@ class AuditControllerTest {
                     courtId,
                     serviceCentreId,
                     null,
+                    null,
                     fromDate,
                     toDate
                 )
@@ -140,6 +144,7 @@ class AuditControllerTest {
             null,
             courtId,
             null,
+            null,
             null
         )).thenReturn(auditPage);
 
@@ -148,6 +153,7 @@ class AuditControllerTest {
             PAGE_SIZE,
             null,
             courtId,
+            null,
             null,
             null,
             fromDate,

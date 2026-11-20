@@ -370,6 +370,7 @@ class AuditingTest {
             null,
             owningCourt.getId().toString(),
             null,
+            null,
             null
         );
 
