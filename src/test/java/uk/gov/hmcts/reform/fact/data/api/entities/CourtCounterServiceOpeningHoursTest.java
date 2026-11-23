@@ -10,8 +10,11 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.DayOfTheWeek;
+import uk.gov.hmcts.reform.fact.data.api.entities.types.OpeningTimesDetail;
 import uk.gov.hmcts.reform.fact.data.api.entities.validation.ValidationConstants;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -86,6 +89,13 @@ class CourtCounterServiceOpeningHoursTest {
             .appointmentNeeded(appointmentNeeded)
             .appointmentEmail(email)
             .appointmentPhone(phone)
+            .openingTimesDetails(List.of(
+                OpeningTimesDetail.builder()
+                    .dayOfWeek(DayOfTheWeek.MONDAY)
+                    .openingTime(LocalTime.of(9, 0))
+                    .closingTime(LocalTime.of(17, 0))
+                    .build()
+            ))
             .build();
 
         try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
