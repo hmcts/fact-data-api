@@ -29,6 +29,9 @@ public class ValidationConstants {
     public static final String PHONE_NO_REGEX_MESSAGE =
         "Phone Number must match the regex '^(|(\\+44)?[0-9 ()-]{10,20})$'";
 
+    public static final String APPOINTMENT_CONTACT_REQUIRED_MESSAGE =
+        "Enter an email address or phone number for booking";
+
     public static final int PHONE_NO_MAX_LENGTH = 20;
     public static final String PHONE_NO_MAX_LENGTH_MESSAGE = "Phone number should be no more than {max} characters";
 

@@ -24,5 +24,11 @@ public @interface ValidConditional {
 
     String selected();
     String selectedValueForRequired();
-    String required();
+
+    /**
+     * The field(s) to check when {@link #selected()} has the value {@link #selectedValueForRequired()}.
+     * When several fields are listed, at least one of them must be populated; any violation is
+     * reported against the first field.
+     */
+    String[] required();
 }

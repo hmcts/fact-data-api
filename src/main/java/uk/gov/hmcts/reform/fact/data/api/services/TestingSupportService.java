@@ -649,7 +649,10 @@ public class TestingSupportService {
             .build();
 
         if (openingHours.getAppointmentNeeded().booleanValue()) {
-            openingHours.setAppointmentContact(rndEmail(random));
+            openingHours.setAppointmentEmail(rndEmail(random));
+            if (random.nextBoolean()) {
+                openingHours.setAppointmentPhone(rndPhoneNumber(random));
+            }
         }
 
         setOpeningTimesDetails(random, openingHours::setOpeningTimesDetails);

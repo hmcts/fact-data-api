@@ -16,6 +16,7 @@ import uk.gov.hmcts.reform.fact.data.api.validation.validator.ConditionalValidat
 
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.anyString;
@@ -47,7 +48,7 @@ class ConditionalValidatorTest {
         lenient().when(violationBuilder.addPropertyNode(anyString())).thenReturn(nodeBuilder);
         when(validConditionalAnnotation.selected()).thenReturn("type");
         when(validConditionalAnnotation.selectedValueForRequired()).thenReturn("REQUIRED");
-        when(validConditionalAnnotation.required()).thenReturn("value");
+        when(validConditionalAnnotation.required()).thenReturn(new String[]{"value"});
         when(validConditionalAnnotation.message()).thenReturn("Value is required");
         validator.initialize(validConditionalAnnotation);
     }
@@ -91,6 +92,41 @@ class ConditionalValidatorTest {
         verify(context).buildConstraintViolationWithTemplate(anyString());
     }
 
+    @ParameterizedTest(name = "{index}: {3}")
+    @MethodSource("multipleRequiredFieldScenarios")
+    void shouldRequireAtLeastOneOfMultipleFields(String value, String otherValue, boolean expected, String message) {
+        when(validConditionalAnnotation.required()).thenReturn(new String[]{"value", "otherValue"});
+        validator.initialize(validConditionalAnnotation);
+
+        TestObject testObject = new TestObject();
+        testObject.setType("REQUIRED");
+        testObject.setValue(value);
+        testObject.setOtherValue(otherValue);
+
+        assertThat(validator.isValid(testObject, context)).as(message).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldReportViolationAgainstFirstFieldWhenAllMultipleFieldsAreEmpty() {
+        when(validConditionalAnnotation.required()).thenReturn(new String[]{"value", "otherValue"});
+        validator.initialize(validConditionalAnnotation);
+
+        TestObject testObject = new TestObject();
+        testObject.setType("REQUIRED");
+
+        assertFalse(validator.isValid(testObject, context));
+        verify(violationBuilder).addPropertyNode("value");
+    }
+
+    private static Stream<Arguments> multipleRequiredFieldScenarios() {
+        return Stream.of(
+            Arguments.of("a", null, true, "Valid when only the first field is populated"),
+            Arguments.of(null, "b", true, "Valid when only the second field is populated"),
+            Arguments.of("a", "b", true, "Valid when both fields are populated"),
+            Arguments.of("", null, false, "Invalid when neither field is populated")
+        );
+    }
+
     private static Stream<Arguments> validScenarios() {
         return Stream.of(
             Arguments.of("OTHER", null, "Should be valid when selected value doesn't match condition"),
@@ -104,5 +140,6 @@ class ConditionalValidatorTest {
     private static class TestObject {
         private String type;
         private String value;
+        private String otherValue;
     }
 }

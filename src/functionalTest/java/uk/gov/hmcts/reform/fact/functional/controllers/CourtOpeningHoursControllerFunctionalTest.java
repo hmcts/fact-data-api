@@ -100,7 +100,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingTimesDetails(openingTimesDetails)
-                .appointmentContact("test@test.com")
+                .appointmentEmail("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
@@ -356,7 +356,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
                 LocalTime.of(15, 0)
             )
         ));
-        counterServiceOpeningHours.setAppointmentContact("counter@court.gov.uk");
+        counterServiceOpeningHours.setAppointmentEmail("counter@court.gov.uk");
         counterServiceOpeningHours.setAppointmentNeeded(true);
 
         final Response putResponse = http.doPut(
@@ -385,7 +385,7 @@ public final class CourtOpeningHoursControllerFunctionalTest {
             .findFirst()
             .orElseThrow();
         assertThat(createdHours.getAppointmentNeeded()).isTrue();
-        assertThat(createdHours.getAppointmentContact()).isEqualTo("counter@court.gov.uk");
+        assertThat(createdHours.getAppointmentEmail()).isEqualTo("counter@court.gov.uk");
 
         final Response getResponse = http.doGet("/courts/" + courtId + "/v1/opening-hours/counter-service");
         assertThat(getResponse.statusCode()).isEqualTo(OK.value());
