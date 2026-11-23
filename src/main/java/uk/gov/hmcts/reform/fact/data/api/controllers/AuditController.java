@@ -66,7 +66,7 @@ public class AuditController {
         @RequestParam(name = "courtId", required = false) @ValidUUID(allowNull = true) String courtId,
         @RequestParam(name = "serviceCentreId", required = false) @ValidUUID(allowNull = true) String serviceCentreId,
         @RequestParam(name = "searchText", required = false)
-        @Size(min = 3, message = "searchText must be at least 3 characters long")
+        @Size(min = 3, message = "search Text must be 3 characters or more")
         @Parameter(name = "searchText", description = "Free text matched against audit fields")
         String searchText,
         @RequestParam(name = "email", required = false)
