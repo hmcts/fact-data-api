@@ -330,6 +330,54 @@ class AuditControllerTest {
     }
 
     @Test
+    @DisplayName("GET /audits/v1 returns returns 400 when searchText is shorter than 3 characters")
+    void getFilteredAndPaginatedAuditsReturnsBadRequestForShortSearchText() throws Exception {
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "5")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("searchText", "ab"))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /audits/v1 returns audits matching searchText in changes values, ignoring case")
+    void getFilteredAndPaginatedAuditsReturnsResultsMatchingForSearchText() throws Exception {
+        Court court = createTestCourts(1).getFirst();
+        createTestCourts(1);
+
+        court.setName("Clarewood Court");
+        courtRepository.save(court);
+
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "10")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("searchText", "CLAREWOOD"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].subjectId").value(court.getId().toString()))
+            .andExpect(jsonPath("$.page.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("GET /audits/v1 returns does not match searchText against JSON key names in the changes data")
+    void getFilteredAndPaginatedAuditsDoesNotMatchJsonKeyNames() throws Exception {
+        Court court = createTestCourts(1).getFirst();
+        court.setName("Court renamed");
+        courtRepository.save(court);
+
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "10")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("searchText", "oldValue"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(0))
+            .andExpect(jsonPath("$.page.totalElements").value(0));
+    }
+
+    @Test
     @DisplayName("GET /audits/v1 returns returns 400 when courtId is invalid")
     void getFilteredAndPaginatedAuditsReturnsBadRequestForInvalidCourtId() throws Exception {
         mvc.perform(get("/audits/v1")

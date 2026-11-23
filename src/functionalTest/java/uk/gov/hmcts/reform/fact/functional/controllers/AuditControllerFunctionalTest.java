@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -93,6 +94,43 @@ public final class AuditControllerFunctionalTest {
         assertThat(addressActionTypes)
             .as("Expected CourtAddress DELETE/UPDATE/INSERT audit actions in descending order")
             .containsExactly("DELETE", "UPDATE", ACTION_INSERT);
+    }
+
+    @Test
+    @DisplayName("GET /audits/v1 returns audit records matching search text")
+    void shouldReturnAuditRecordsMatchingSearchText() {
+        final UUID courtId = TestDataHelper.createCourt(http, "Test Court Audit Search");
+
+        final String auditsPath = String.format(
+            "/audits/v1?pageNumber=0&pageSize=%d&fromDate=%s&courtId=%s&searchText=%s",
+            50,
+            LocalDate.now().minusDays(1),
+            courtId,
+            "audit search"
+        );
+
+        final Response auditsResponse = http.doGet(auditsPath);
+        AssertionHelper.assertStatus(auditsResponse, OK);
+
+        final List<String> auditedCourtIds = auditsResponse.jsonPath().getList("content.subjectId", String.class);
+        assertThat(auditedCourtIds)
+            .as("Audit records matching the search text should be returned for the created court")
+            .isNotEmpty()
+            .allMatch(courtId.toString()::equals);
+    }
+
+    @Test
+    @DisplayName("GET /audits/v1 returns bad request when SearchText is shorter than 3 characters")
+    void shouldReturnBadRequestForShortSearchText() {
+
+        final String auditsPath = String.format(
+            "/audits/v1?pageNumber=0&pageSize=10&fromDate=%s&searchText=%s",
+            LocalDate.now().minusDays(1),
+            "au"
+        );
+
+        final Response auditsResponse = http.doGet(auditsPath);
+        AssertionHelper.assertStatus(auditsResponse, BAD_REQUEST);
     }
 
     @Test
