@@ -38,7 +38,7 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
                    ilike cast(:pattern as String) escape '\\')
             and (cast(:email as String) is null
                 or lower(u.email) like concat('%', lower(cast(:email as String)), '%'))
-    """)
+        """)
     Page<Audit> findFiltered(
         ZonedDateTime fromDate,
         ZonedDateTime toDate,

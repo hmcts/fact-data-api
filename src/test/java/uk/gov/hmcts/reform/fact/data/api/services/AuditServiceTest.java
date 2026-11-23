@@ -23,7 +23,6 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.AuditRepository;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
