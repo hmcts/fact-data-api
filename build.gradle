@@ -207,7 +207,7 @@ dependencies {
   implementation group: 'org.flywaydb', name: 'flyway-core', version: '13.11.1'
   implementation group: 'org.flywaydb', name: 'flyway-database-postgresql', version: '13.11.1'
 
-  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.4.0'
+  implementation group: 'com.azure.spring', name: 'spring-cloud-azure-starter-storage-blob', version: '7.5.0'
 
   implementation group: 'tools.jackson.dataformat', name: 'jackson-dataformat-csv', version: '3.2.4'
 
@@ -283,7 +283,7 @@ dependencyManagement {
     dependency group: 'com.azure', name: 'azure-core-amqp', version: '2.13.0'
     dependency group: 'com.azure', name: 'azure-core-http-netty', version: '1.17.0'
     dependency group: 'com.azure', name: 'azure-core-management', version: '1.20.0'
-    dependency group: 'com.azure', name: 'azure-identity', version: '1.18.7'
+    dependency group: 'com.azure', name: 'azure-identity', version: '1.19.0'
     dependency group: 'com.microsoft.azure', name: 'msal4j', version: '1.26.1'
 
     // CVE-2026-66257 and related proton-j advisories
