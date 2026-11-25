@@ -30,9 +30,19 @@ public interface AuditRepository extends JpaRepository<Audit, UUID> {
             and a.subjectId = coalesce(:subjectId, a.subjectId)
             and a.subjectType = coalesce(:subjectType, a.subjectType)
             and (cast(:pattern as String) is null
-                or lower(u.email) ilike cast(:pattern as String) escape '\\'
-                or a.actionEntity ilike cast(:pattern as String) escape '\\'
+                or cast(a.userId as String) ilike cast(:pattern as String) escape '\\'
+                or u.email ilike cast(:pattern as String) escape '\\'
                 or cast(a.actionType as String) ilike cast(:pattern as String) escape '\\'
+                or a.actionEntity ilike cast(:pattern as String) escape '\\'
+                or cast(a.subjectId as String) ilike cast(:pattern as String) escape '\\'
+                or exists (select c.id from Court c
+                    where a.subjectType = SubjectType.COURT
+                        and c.id = a.subjectId
+                        and c.name ilike cast(:pattern as String) escape '\\')
+                or exists (select sc.id from ServiceCentre sc
+                    where a.subjectType = SubjectType.SERVICE_CENTRE
+                        and sc.id = a.subjectId
+                        and sc.name ilike cast(:pattern as String) escape '\\')
                 or cast(function('regexp_replace', cast(a.actionDataDiff as String),
                                  '.(field|newValue|oldValue).: ', '', 'g') as String)
                    ilike cast(:pattern as String) escape '\\')

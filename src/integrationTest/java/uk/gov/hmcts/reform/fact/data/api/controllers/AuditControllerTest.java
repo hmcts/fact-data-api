@@ -1,5 +1,7 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -50,6 +52,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class AuditControllerTest {
 
+    private UUID auditUserId;
+
     @Autowired
     private RegionRepository regionRepository;
 
@@ -90,7 +94,9 @@ class AuditControllerTest {
             .ssoId(UUID.randomUUID())
             .role(UserRole.ADMIN)
             .build());
-        auditUserContext.setUserId(user.getId());
+
+        auditUserId = user.getId();
+        auditUserContext.setUserId(auditUserId);
     }
 
     @Test
@@ -355,9 +361,9 @@ class AuditControllerTest {
                         .param("fromDate", LocalDate.now().toString())
                         .param("searchText", "CLAREWOOD"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content.length()").value(1))
-            .andExpect(jsonPath("$.content[0].subjectId").value(court.getId().toString()))
-            .andExpect(jsonPath("$.page.totalElements").value(1));
+            .andExpect(jsonPath("$.content.length()").value(2))
+            .andExpect(jsonPath("$.content[*].subjectId", everyItem(is(court.getId().toString()))))
+            .andExpect(jsonPath("$.page.totalElements").value(2));
     }
 
     @Test
@@ -374,6 +380,68 @@ class AuditControllerTest {
                         .param("searchText", "oldValue"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.length()").value(0))
+            .andExpect(jsonPath("$.page.totalElements").value(0));
+    }
+
+    @Test
+    @DisplayName("GET /audits/v1 returns all audits for a court when searchText matches the court name")
+    void getFilteredAndPaginatedAuditsReturnsResultsMatchingCourtName() throws Exception {
+        Court court = createTestCourts(1).getFirst();
+        createTestCourts(1);
+
+        court.setName("Clarewood Court");
+        courtRepository.save(court);
+        court.setOpen(Boolean.TRUE);
+        courtRepository.save(court);
+
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "10")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("searchText", "Clarewood"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.page.totalElements").value(3))
+            .andExpect(jsonPath("$.content[*].subjectId", everyItem(is(court.getId().toString()))));
+    }
+
+    @Test
+    @DisplayName("GET /audits/v1 returns all audits for a subject when searchText matches the subject id")
+    void getFilteredAndPaginatedAuditsReturnsResultsMatchingSubjectId() throws Exception {
+        Court court = createTestCourts(1).getFirst();
+        createTestCourts(1);
+
+        court.setOpen(Boolean.TRUE);
+        courtRepository.save(court);
+
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "10")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("searchText", court.getId().toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.page.totalElements").value(2))
+            .andExpect(jsonPath("$.content[*].subjectId", everyItem(is(court.getId().toString()))));
+    }
+
+    @Test
+    @DisplayName("GET /audits/v1 returns audits when searchText matches the user id")
+    void getFilteredAndPaginatedAuditsReturnsResultsMatchingUserId() throws Exception {
+        createTestCourts(2);
+
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "10")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("searchText", auditUserId.toString()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.page.totalElements").value(2));
+
+        mvc.perform(get("/audits/v1")
+                        .param("pageNumber", "0")
+                        .param("pageSize", "10")
+                        .param("fromDate", LocalDate.now().toString())
+                        .param("searchText", UUID.randomUUID().toString()))
+            .andExpect(status().isOk())
             .andExpect(jsonPath("$.page.totalElements").value(0));
     }
 
