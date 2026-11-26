@@ -48,7 +48,7 @@ class ConditionalValidatorTest {
         lenient().when(violationBuilder.addPropertyNode(anyString())).thenReturn(nodeBuilder);
         when(validConditionalAnnotation.selected()).thenReturn("type");
         when(validConditionalAnnotation.selectedValueForRequired()).thenReturn("REQUIRED");
-        when(validConditionalAnnotation.required()).thenReturn(new String[]{"value"});
+        when(validConditionalAnnotation.requiredAtLeastOne()).thenReturn(new String[]{"value"});
         when(validConditionalAnnotation.message()).thenReturn("Value is required");
         validator.initialize(validConditionalAnnotation);
     }
@@ -95,7 +95,7 @@ class ConditionalValidatorTest {
     @ParameterizedTest(name = "{index}: {3}")
     @MethodSource("multipleRequiredFieldScenarios")
     void shouldRequireAtLeastOneOfMultipleFields(String value, String otherValue, boolean expected, String message) {
-        when(validConditionalAnnotation.required()).thenReturn(new String[]{"value", "otherValue"});
+        when(validConditionalAnnotation.requiredAtLeastOne()).thenReturn(new String[]{"value", "otherValue"});
         validator.initialize(validConditionalAnnotation);
 
         TestObject testObject = new TestObject();
@@ -108,7 +108,7 @@ class ConditionalValidatorTest {
 
     @Test
     void shouldReportViolationAgainstFirstFieldWhenAllMultipleFieldsAreEmpty() {
-        when(validConditionalAnnotation.required()).thenReturn(new String[]{"value", "otherValue"});
+        when(validConditionalAnnotation.requiredAtLeastOne()).thenReturn(new String[]{"value", "otherValue"});
         validator.initialize(validConditionalAnnotation);
 
         TestObject testObject = new TestObject();

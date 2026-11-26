@@ -30,5 +30,5 @@ public @interface ValidConditional {
      * When several fields are listed, at least one of them must be populated; any violation is
      * reported against the first field.
      */
-    String[] required();
+    String[] requiredAtLeastOne();
 }

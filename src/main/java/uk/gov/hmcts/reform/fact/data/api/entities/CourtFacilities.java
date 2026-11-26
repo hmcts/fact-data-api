@@ -38,7 +38,7 @@ import uk.gov.hmcts.reform.fact.data.api.validation.annotations.ValidConditional
 @EntityListeners(AuditableCourtEntityListener.class)
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_facilities")
-@ValidConditional(selected = "waitingArea", selectedValueForRequired = "true", required = "waitingAreaChildren")
+@ValidConditional(selected = "waitingArea", selectedValueForRequired = "true", requiredAtLeastOne = "waitingAreaChildren")
 public class CourtFacilities implements AuditableCourtEntity {
 
     @Schema(

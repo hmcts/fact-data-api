@@ -47,7 +47,7 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @ValidConditional(
     selected = "appointmentNeeded",
     selectedValueForRequired = "true",
-    required = {"appointmentEmail", "appointmentPhone"},
+    requiredAtLeastOne = {"appointmentEmail", "appointmentPhone"},
     message = ValidationConstants.APPOINTMENT_CONTACT_REQUIRED_MESSAGE
 )
 @JsonView(CourtDetailsView.class)
@@ -119,7 +119,7 @@ public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
     // Exposed as "appointmentContact" to keep the published API contract (cnp-api-docs) unchanged.
     @Schema(description = "Email address for booking an appointment")
     @JsonProperty("appointmentContact")
-    @Column(name = "appointment_contact")
+    @Column(name = "appointment_email")
     @Size(max = ValidationConstants.EMAIL_MAX_LENGTH,
         message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE
     )

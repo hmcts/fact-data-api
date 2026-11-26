@@ -28,7 +28,7 @@ public class ConditionalValidator implements ConstraintValidator<ValidConditiona
     public void initialize(ValidConditional requiredIfChecked) {
         selected = requiredIfChecked.selected();
         selectedValueForRequired = requiredIfChecked.selectedValueForRequired();
-        required = requiredIfChecked.required();
+        required = requiredIfChecked.requiredAtLeastOne();
         message = requiredIfChecked.message();
     }
 
