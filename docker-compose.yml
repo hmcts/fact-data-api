@@ -29,7 +29,7 @@ services:
       RUN_DB_MIGRATION_ON_STARTUP: ${RUN_DB_MIGRATION_ON_STARTUP:-true}
       OS_KEY: ${OS_KEY:-}
   fact-database:
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:f9cf3e1f0066f0eb0c48707d864f0ac5941e9ff454a072077d97a4d278d07d73
     environment:
       POSTGRES_DB: ${DB_NAME:-fact}
       POSTGRES_USER: ${DB_USER:-fact}
@@ -44,7 +44,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
   fact-storage:
-    image: mcr.microsoft.com/azure-storage/azurite:3.37.0
+    image: mcr.microsoft.com/azure-storage/azurite:3.37.0@sha256:830430c1da1a2d537e08f3e6764dd1f5ae00cf0346bcaf625b968ec3f0971fd5
     command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data
     environment:
       AZURITE_ACCOUNTS: ${AZURITE_ACCOUNTS}
@@ -53,7 +53,7 @@ services:
     volumes:
       - azurite-data:/data
   fact-storage-init:
-    image: mcr.microsoft.com/azure-cli
+    image: mcr.microsoft.com/azure-cli@sha256:cf40cc2f8895161698cfb16aec989c60250e66c105b57752b30a20d87d515963
     depends_on:
       fact-storage:
         condition: service_started
