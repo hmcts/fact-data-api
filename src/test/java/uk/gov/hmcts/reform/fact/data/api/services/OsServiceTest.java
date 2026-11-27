@@ -7,6 +7,9 @@ import feign.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -190,25 +193,53 @@ class OsServiceTest {
         assertThat(result.getLongitude()).isEqualTo(-4.260375);
     }
 
-    @Test
-    void shouldRejectTerminatedPostcodeWithoutCallingOs() {
-        PostcodeReference postcodeReference = PostcodeReference.builder()
-            .postcode("B16 6TZ")
-            .status("terminated")
-            .largeUser(true)
-            .introducedYearMonth("198001")
-            .terminatedYearMonth("201804")
-            .coordinateQuality(1)
-            .coordinatesAvailable(true)
-            .latitude(52.473)
-            .longitude(-1.93)
-            .build();
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldUseTerminatedCoordinatesAndRetainOsSectorAuthority(boolean largeUser) {
+        PostcodeReference postcodeReference = terminatedPostcodeReference(largeUser);
         when(postcodeReferenceRepository.findById("B16 6TZ")).thenReturn(Optional.of(postcodeReference));
-        assertThatThrownBy(() -> osService.getOsLonLatDistrictWithPostcodeReferenceFallback("B16 6TZ"))
-            .isInstanceOf(InvalidPostcodeException.class)
-            .hasMessageContaining("terminated in 201804");
+        when(osFeignClient.getOsPostcodeDataWithMaxResultsLimit("B16 6", 1))
+            .thenReturn(createOsData(List.of(123), 52.48, -1.94));
+        when(localAuthorityTypeRepository.findParentOrChildNameByCustodianCode(123))
+            .thenReturn(Optional.of(LocalAuthorityType.builder().name(AUTHORITY_NAME).build()));
 
-        verify(osFeignClient, never()).getOsPostcodeDataWithMaxResultsLimit("B16 6", 1);
+        OsLocationData result = osService.getOsLonLatDistrictWithPostcodeReferenceFallback("b16 6tz");
+
+        assertThat(result.getPostcode()).isEqualTo("B16 6TZ");
+        assertThat(result.getAuthorityName()).isEqualTo(AUTHORITY_NAME);
+        assertThat(result.getLatitude()).isEqualTo(52.473);
+        assertThat(result.getLongitude()).isEqualTo(-1.93);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldUseTerminatedCoordinatesWhenOsSectorHasNoResults(boolean largeUser) {
+        when(postcodeReferenceRepository.findById("B16 6TZ"))
+            .thenReturn(Optional.of(terminatedPostcodeReference(largeUser)));
+        when(osFeignClient.getOsPostcodeDataWithMaxResultsLimit("B16 6", 1))
+            .thenReturn(OsData.builder().results(List.of()).build());
+
+        OsLocationData result = osService.getOsLonLatDistrictWithPostcodeReferenceFallback("B16 6TZ");
+
+        assertThat(result.getPostcode()).isEqualTo("B16 6TZ");
+        assertThat(result.getAuthorityName()).isEmpty();
+        assertThat(result.getLatitude()).isEqualTo(52.473);
+        assertThat(result.getLongitude()).isEqualTo(-1.93);
+    }
+
+    @Test
+    void shouldUseTerminatedCoordinatesWhenOsSectorAuthorityIsUnmapped() {
+        when(postcodeReferenceRepository.findById("B16 6TZ"))
+            .thenReturn(Optional.of(terminatedPostcodeReference(false)));
+        when(osFeignClient.getOsPostcodeDataWithMaxResultsLimit("B16 6", 1))
+            .thenReturn(createOsData(List.of(123), 52.48, -1.94));
+        when(localAuthorityTypeRepository.findParentOrChildNameByCustodianCode(123)).thenReturn(Optional.empty());
+
+        OsLocationData result = osService.getOsLonLatDistrictWithPostcodeReferenceFallback("B16 6TZ");
+
+        assertThat(result.getAuthorityName()).isEmpty();
+        assertThat(result.getLatitude()).isEqualTo(52.473);
+        assertThat(result.getLongitude()).isEqualTo(-1.93);
     }
 
     @Test
@@ -276,24 +307,109 @@ class OsServiceTest {
         assertThat(result.getLongitude()).isEqualTo(-2.252671);
     }
 
-    @Test
-    void shouldRejectTerminatedPostcodeBeforePostcodeOnlyOsLookup() {
-        PostcodeReference postcodeReference = PostcodeReference.builder()
-            .postcode("B16 6TZ")
-            .status("terminated")
-            .terminatedYearMonth("201804")
-            .coordinatesAvailable(true)
-            .latitude(52.473)
-            .longitude(-1.93)
-            .build();
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldUseTerminatedCoordinatesWhenFullPostcodeOsLookupFails(boolean largeUser) {
+        PostcodeReference postcodeReference = terminatedPostcodeReference(largeUser);
         when(postcodeReferenceRepository.findById("B16 6TZ")).thenReturn(Optional.of(postcodeReference));
+        when(osFeignClient.getOsPostcodeData("B16 6TZ"))
+            .thenReturn(OsData.builder().results(List.of()).build());
 
-        assertThatThrownBy(() ->
-            osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("B16 6TZ"))
+        OsAddressCoordinates result =
+            osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("b16 6tz");
+
+        assertThat(result).isEqualTo(new OsAddressCoordinates(52.473, -1.93));
+        verify(osFeignClient).getOsPostcodeData("B16 6TZ");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void shouldPreferFullPostcodeOsCoordinatesForTerminatedPostcode(boolean largeUser) {
+        when(postcodeReferenceRepository.findById("B16 6TZ"))
+            .thenReturn(Optional.of(terminatedPostcodeReference(largeUser)));
+        when(osFeignClient.getOsPostcodeData("B16 6TZ"))
+            .thenReturn(createOsData(List.of(123), 52.48, -1.94));
+
+        OsAddressCoordinates result =
+            osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("B16 6TZ");
+
+        assertThat(result).isEqualTo(new OsAddressCoordinates(52.48, -1.94));
+    }
+
+    @Test
+    void shouldUseTerminatedCoordinatesWhenFullPostcodeOsCoordinatesAreInvalid() {
+        when(postcodeReferenceRepository.findById("B16 6TZ"))
+            .thenReturn(Optional.of(terminatedPostcodeReference(false)));
+        when(osFeignClient.getOsPostcodeData("B16 6TZ"))
+            .thenReturn(createOsData(List.of(123), 91.0, -1.94));
+
+        OsAddressCoordinates result =
+            osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("B16 6TZ");
+
+        assertThat(result).isEqualTo(new OsAddressCoordinates(52.473, -1.93));
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {
+        "false, 52.473, -1.93",
+        "true, null, -1.93",
+        "true, 52.473, null",
+        "true, NaN, -1.93",
+        "true, 52.473, Infinity",
+        "true, 91.0, -1.93",
+        "true, 52.473, -181.0"
+    }, nullValues = "null")
+    void shouldRejectUnresolvableTerminatedPostcode(boolean available, Double latitude, Double longitude) {
+        PostcodeReference reference = terminatedPostcodeReference(false);
+        reference.setCoordinatesAvailable(available);
+        reference.setLatitude(latitude);
+        reference.setLongitude(longitude);
+        when(postcodeReferenceRepository.findById("B16 6TZ")).thenReturn(Optional.of(reference));
+        when(osFeignClient.getOsPostcodeData("B16 6TZ"))
+            .thenReturn(OsData.builder().results(List.of()).build());
+        when(osFeignClient.getOsPostcodeDataWithMaxResultsLimit("B16 6", 1))
+            .thenReturn(OsData.builder().results(List.of()).build());
+
+        assertThatThrownBy(() -> osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("B16 6TZ"))
             .isInstanceOf(InvalidPostcodeException.class)
-            .hasMessageContaining("terminated in 201804");
+            .hasMessageContaining("No address results returned from OS");
+        assertThatThrownBy(() -> osService.getOsLonLatDistrictWithPostcodeReferenceFallback("B16 6TZ"))
+            .isInstanceOf(InvalidPostcodeException.class)
+            .hasMessageContaining("No address results returned from OS");
+    }
 
-        verify(osFeignClient, never()).getOsPostcodeData("B16 6TZ");
+    @Test
+    void shouldUseOsForTerminatedPostcodeWithoutReferenceCoordinates() {
+        PostcodeReference reference = terminatedPostcodeReference(false);
+        reference.setCoordinatesAvailable(false);
+        when(postcodeReferenceRepository.findById("B16 6TZ")).thenReturn(Optional.of(reference));
+        when(osFeignClient.getOsPostcodeData("B16 6TZ"))
+            .thenReturn(createOsData(List.of(123), 52.48, -1.94));
+        when(osFeignClient.getOsPostcodeDataWithMaxResultsLimit("B16 6", 1))
+            .thenReturn(createOsData(List.of(123), 52.48, -1.94));
+        when(localAuthorityTypeRepository.findParentOrChildNameByCustodianCode(123))
+            .thenReturn(Optional.of(LocalAuthorityType.builder().name(AUTHORITY_NAME).build()));
+
+        assertThat(osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("B16 6TZ"))
+            .isEqualTo(new OsAddressCoordinates(52.48, -1.94));
+        OsLocationData result = osService.getOsLonLatDistrictWithPostcodeReferenceFallback("B16 6TZ");
+        assertThat(result.getAuthorityName()).isEqualTo(AUTHORITY_NAME);
+        assertThat(result.getLatitude()).isEqualTo(52.48);
+        assertThat(result.getLongitude()).isEqualTo(-1.94);
+    }
+
+    @Test
+    void shouldNotHideOsServiceErrorsForTerminatedPostcodes() {
+        when(postcodeReferenceRepository.findById("B16 6TZ"))
+            .thenReturn(Optional.of(terminatedPostcodeReference(false)));
+        when(osFeignClient.getOsPostcodeData("B16 6TZ")).thenThrow(createFeignException(503));
+        when(osFeignClient.getOsPostcodeDataWithMaxResultsLimit("B16 6", 1))
+            .thenThrow(createFeignException(503));
+
+        assertThatThrownBy(() -> osService.getOsAddressCoordinatesWithPostcodeReferenceFallback("B16 6TZ"))
+            .isInstanceOf(OsProcessException.class);
+        assertThatThrownBy(() -> osService.getOsLonLatDistrictWithPostcodeReferenceFallback("B16 6TZ"))
+            .isInstanceOf(OsProcessException.class);
     }
 
     @Test
@@ -366,6 +482,7 @@ class OsServiceTest {
 
         assertThat(result).isEqualTo(osData);
         assertThat(result.getResults().getFirst().getDpa().getAddress()).isEqualTo("JANE DOE STREET");
+        assertThat(result.getPostcodeMetadata()).isNull();
     }
 
     @Test
@@ -398,6 +515,8 @@ class OsServiceTest {
         assertThat(result.getResults().getLast().getLpi().getAddress()).isEqualTo("Court House");
         assertThat(result.getHeader().getDataset()).isEqualTo("DPA,LPI");
         assertThat(result.getHeader().getTotalresults()).isEqualTo(101);
+        assertThat(result.getPostcodeMetadata().isLargeUser()).isFalse();
+        assertThat(result.getPostcodeMetadata().isTerminated()).isFalse();
         verify(osFeignClient).getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 0);
         verify(osFeignClient).getOsAdminPostcodeData("DH1 3RG", "DPA,LPI", "EN", 100, 100);
     }
@@ -452,11 +571,16 @@ class OsServiceTest {
         assertThat(result.getResults()).isEmpty();
         assertThat(result.getHeader().getTotalresults()).isZero();
         assertThat(result.getHeader().getDataset()).isEqualTo("DPA,LPI");
+        assertThat(result.getPostcodeMetadata().isLargeUser()).isTrue();
+        assertThat(result.getPostcodeMetadata().isTerminated()).isFalse();
         verify(osFeignClient).getOsAdminPostcodeData("CW1 2DT", "DPA,LPI", "EN", 100, 0);
     }
 
     @Test
     void shouldStillReturnOsAdminOptionsForCurrentLargeUserPostcodePresentInOs() {
+        when(postcodeReferenceRepository.findById("M60 9DJ")).thenReturn(Optional.of(
+            PostcodeReference.builder().postcode("M60 9DJ").status("current").largeUser(true).build()
+        ));
         OsResult osResult = OsResult.builder()
             .dpa(OsDpa.builder().uprn("10092011323").build())
             .build();
@@ -466,24 +590,31 @@ class OsServiceTest {
                 .results(List.of(osResult))
                 .build());
 
-        OsData result = osService.getOsAdminAddressByFullPostcode("M60 9DJ");
+        OsData result = osService.getOsAdminAddressByFullPostcode("m60 9dj");
 
         assertThat(result.getResults()).containsExactly(osResult);
+        assertThat(result.getPostcodeMetadata().isLargeUser()).isTrue();
+        assertThat(result.getPostcodeMetadata().isTerminated()).isFalse();
         verify(postcodeReferenceRepository).findById("M60 9DJ");
+        verify(osFeignClient).getOsAdminPostcodeData("M60 9DJ", "DPA,LPI", "EN", 100, 0);
     }
 
-    @Test
-    void shouldRequireManualEntryForTerminatedPostcodeWithoutCallingOs() {
+    @ParameterizedTest
+    @CsvSource({"false, false", "false, true", "true, false", "true, true"})
+    void shouldRequireManualEntryForTerminatedPostcodeWithoutCallingOs(
+        boolean largeUser,
+        boolean coordinatesAvailable
+    ) {
         PostcodeReference postcodeReference = PostcodeReference.builder()
             .postcode("AB42 0LX")
             .status("terminated")
-            .largeUser(false)
+            .largeUser(largeUser)
             .introducedYearMonth("200401")
             .terminatedYearMonth("202607")
             .coordinateQuality(1)
-            .coordinatesAvailable(true)
-            .latitude(57.496557)
-            .longitude(-1.912015)
+            .coordinatesAvailable(coordinatesAvailable)
+            .latitude(coordinatesAvailable ? 57.496557 : null)
+            .longitude(coordinatesAvailable ? -1.912015 : null)
             .build();
         when(postcodeReferenceRepository.findById("AB42 0LX")).thenReturn(Optional.of(postcodeReference));
 
@@ -491,6 +622,9 @@ class OsServiceTest {
 
         assertThat(result.getResults()).isEmpty();
         assertThat(result.getHeader().getTotalresults()).isZero();
+        assertThat(result.getPostcodeMetadata().isLargeUser()).isEqualTo(largeUser);
+        assertThat(result.getPostcodeMetadata().isTerminated()).isTrue();
+        verify(postcodeReferenceRepository).findById("AB42 0LX");
         verify(osFeignClient, never()).getOsAdminPostcodeData("AB42 0LX", "DPA,LPI", "EN", 100, 0);
     }
 
@@ -1044,6 +1178,20 @@ class OsServiceTest {
         );
 
         assertThat(result).isEmpty();
+    }
+
+    private PostcodeReference terminatedPostcodeReference(boolean largeUser) {
+        return PostcodeReference.builder()
+            .postcode("B16 6TZ")
+            .status("terminated")
+            .largeUser(largeUser)
+            .introducedYearMonth("198001")
+            .terminatedYearMonth("201804")
+            .coordinateQuality(1)
+            .coordinatesAvailable(true)
+            .latitude(52.473)
+            .longitude(-1.93)
+            .build();
     }
 
     private FeignException createFeignException(int status) {

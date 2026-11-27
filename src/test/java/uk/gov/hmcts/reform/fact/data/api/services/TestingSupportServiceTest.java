@@ -33,6 +33,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
+import uk.gov.hmcts.reform.fact.data.api.entities.PostcodeReference;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
@@ -52,6 +53,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.PostcodeReferenceRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
@@ -135,6 +137,8 @@ class TestingSupportServiceTest {
     @Mock
     private OpeningHoursTypeRepository openingHoursTypeRepository;
     @Mock
+    private PostcodeReferenceRepository postcodeReferenceRepository;
+    @Mock
     private RegionRepository regionRepository;
     @Mock
     private ServiceAreaRepository serviceAreaRepository;
@@ -151,6 +155,54 @@ class TestingSupportServiceTest {
     private final List<UUID> localAuthorityIds = randomUuidList();
     private final List<UUID> openingHourTypeIds = randomUuidList();
     private final List<UUID> serviceAreaIds = randomUuidList();
+
+    @Test
+    void addTerminatedPostcodesDelegatesToRepository() {
+        List<PostcodeReference> postcodes = List.of(
+            PostcodeReference.builder().postcode("ZZ99 2CD").status("terminated").build(),
+            PostcodeReference.builder().postcode("ZZ99 4GH").status("terminated").build()
+        );
+
+        assertThat(testingSupportService.addPostcodeReferences(postcodes)).isEqualTo(postcodes);
+
+        verify(postcodeReferenceRepository).saveAll(postcodes);
+    }
+
+    @Test
+    void addPostcodeReferencesAcceptsZz99PostcodesRegardlessOfCaseAndWhitespace() {
+        List<PostcodeReference> postcodes = List.of(
+            PostcodeReference.builder().postcode(" zz99 6ab ").status("terminated").build()
+        );
+
+        assertThat(testingSupportService.addPostcodeReferences(postcodes)).isEqualTo(postcodes);
+
+        verify(postcodeReferenceRepository).saveAll(postcodes);
+    }
+
+    @Test
+    void addPostcodeReferencesRejectsBatchContainingPostcodeWithoutZz99Prefix() {
+        List<PostcodeReference> postcodes = List.of(
+            PostcodeReference.builder().postcode("ZZ99 2CD").status("terminated").build(),
+            PostcodeReference.builder().postcode("AB12 3CD").status("terminated").build()
+        );
+
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> testingSupportService.addPostcodeReferences(postcodes)
+        );
+
+        assertThat(exception).hasMessageContaining("Only postcode references starting with 'ZZ99' can be added");
+        verify(postcodeReferenceRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void addPostcodeReferencesDoesNotSaveEmptyList() {
+        List<PostcodeReference> postcodes = List.of();
+
+        assertThat(testingSupportService.addPostcodeReferences(postcodes)).isSameAs(postcodes);
+
+        verify(postcodeReferenceRepository, never()).saveAll(any());
+    }
 
     private static List<AreaOfLawType> randomAreasOfLaw() {
         Random random = new Random();

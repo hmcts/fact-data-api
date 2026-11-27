@@ -29,8 +29,10 @@ public class SearchAddressController {
 
     @GetMapping("/v1/postcode/{postcode}")
     @Operation(
-        summary = "Search for and return all services.",
-        description = "Retrieve all services."
+        summary = "Search for addresses by postcode.",
+        description = "Retrieve DPA/LPI addresses with postcodeMetadata containing independent largeUser and "
+            + "terminated flags from the postcode reference data. Both flags are false when no reference matches. "
+            + "Metadata is included even for empty address results; terminated postcodes still require manual entry."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200",
