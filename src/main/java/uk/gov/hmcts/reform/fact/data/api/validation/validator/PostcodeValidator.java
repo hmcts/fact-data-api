@@ -17,6 +17,8 @@ public class PostcodeValidator implements ConstraintValidator<ValidPostcode, Str
     );
     private static final String NI_PREFIX = "BT";
     private static final Pattern CI_IOM_AREA_REGEX = Pattern.compile("^(IM|JE|GY)", Pattern.CASE_INSENSITIVE);
+    // ZZ99 postcodes are used for testing and special purposes, and are not valid for OS address lookup.
+    private static final Pattern SPECIAL_POSTCODES = Pattern.compile("ZZ99 \\d[A-Z]{2}");
 
     /**
      * Initializes the validator.
@@ -43,7 +45,8 @@ public class PostcodeValidator implements ConstraintValidator<ValidPostcode, Str
 
         String postcode = normalize(rawPostcode);
 
-        if (!UK_POSTCODE_REGEX.matcher(postcode).matches()) {
+        if (!SPECIAL_POSTCODES.matcher(postcode).matches()
+            && !UK_POSTCODE_REGEX.matcher(postcode).matches()) {
             return fail(context, "Provided postcode is not valid");
         }
 

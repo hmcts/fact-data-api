@@ -14,6 +14,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import uk.gov.hmcts.reform.fact.data.api.config.CacheConfiguration;
 import uk.gov.hmcts.reform.fact.data.api.config.properties.OsConfigurationProperties;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
+import uk.gov.hmcts.reform.fact.data.api.entities.PostcodeReference;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsFeignClient;
@@ -113,6 +114,42 @@ class OsServiceCacheTest {
         osService.getOsLonLatDistrictWithPostcodeReferenceFallback("sw1a 1aa");
         osService.getOsLonLatDistrictWithPostcodeReferenceFallback("SW1A 1AA");
 
+        verify(postcodeReferenceRepository, times(2)).findById("SW1A 1AA");
+        verify(osFeignClient).getOsPostcodeDataWithMaxResultsLimit("SW1A 1", 1);
+    }
+
+    @Test
+    void shouldUseUpdatedTerminatedReferenceWhileReusingCachedSectorData() {
+        OsData osData = OsData.builder()
+            .results(List.of(OsResult.builder().dpa(OsDpa.builder()
+                .lat(51.5)
+                .lng(-0.1)
+                .localCustodianCode(123)
+                .build()).build()))
+            .build();
+        PostcodeReference reference = PostcodeReference.builder()
+            .postcode("SW1A 1AA")
+            .status("terminated")
+            .largeUser(false)
+            .coordinatesAvailable(true)
+            .latitude(51.501)
+            .longitude(-0.141)
+            .build();
+        when(postcodeReferenceRepository.findById("SW1A 1AA"))
+            .thenReturn(Optional.empty())
+            .thenReturn(Optional.of(reference));
+        when(osFeignClient.getOsPostcodeDataWithMaxResultsLimit("SW1A 1", 1)).thenReturn(osData);
+        when(localAuthorityTypeRepository.findParentOrChildNameByCustodianCode(123))
+            .thenReturn(Optional.of(LocalAuthorityType.builder().name("Test Authority").build()));
+
+        OsLocationData firstResult = osService.getOsLonLatDistrictWithPostcodeReferenceFallback("SW1A 1AA");
+        OsLocationData secondResult = osService.getOsLonLatDistrictWithPostcodeReferenceFallback("sw1a 1aa");
+
+        assertThat(firstResult.getLatitude()).isEqualTo(51.5);
+        assertThat(firstResult.getLongitude()).isEqualTo(-0.1);
+        assertThat(secondResult.getLatitude()).isEqualTo(51.501);
+        assertThat(secondResult.getLongitude()).isEqualTo(-0.141);
+        assertThat(secondResult.getAuthorityName()).isEqualTo("Test Authority");
         verify(postcodeReferenceRepository, times(2)).findById("SW1A 1AA");
         verify(osFeignClient).getOsPostcodeDataWithMaxResultsLimit("SW1A 1", 1);
     }

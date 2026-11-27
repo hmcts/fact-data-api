@@ -279,8 +279,19 @@ previous partial run. `ONSPD_BLOB_NAME` can override the default blob name.
 
 The admin address picker continues to prefer OS DPA/LPI results. When OS has no address for a
 current large-user postcode, the picker permits manual entry and the saved address uses the ONSPD
-coordinates. Terminated postcodes remain invalid for public searches, but an administrator can use
-manual address entry and the historical ONSPD coordinates when available.
+coordinates. Public court and location postcode searches also accept terminated postcodes, whether or
+not they were large-user. Postcode-only searches prefer full-postcode OS coordinates and fall back to
+ONSPD coordinates. Service-area searches use exact ONSPD coordinates when available while retaining
+any local authority resolved through the OS sector lookup. If neither source can resolve the postcode,
+the existing invalid-postcode response is returned; genuine OS service errors are not suppressed.
+The admin picker still requires manual entry for terminated postcodes, using historical ONSPD
+coordinates when available.
+
+Successful admin address lookups (`GET /search/address/v1/postcode/{postcode}`) include
+`postcodeMetadata: { "largeUser": true, "terminated": false }`, including when `results` is empty.
+The flags are independent and both can be true. They reflect the reduced ONSPD postcode reference
+data; both are false when no reference matches, rather than independently confirming postcode status.
+Classification does not depend on coordinate availability. Other OS data responses omit this metadata.
 
 ### Requirements for public frontend after migration changes
 
