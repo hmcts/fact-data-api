@@ -164,6 +164,11 @@ public class CourtOpeningHoursService {
         courtCounterServiceOpeningHours.setCourt(courtService.getCourtById(courtId));
         courtCounterServiceOpeningHours.setCourtId(courtId);
 
+        if (!Boolean.TRUE.equals(courtCounterServiceOpeningHours.getAppointmentNeeded())) {
+            courtCounterServiceOpeningHours.setAppointmentEmail(null);
+            courtCounterServiceOpeningHours.setAppointmentPhone(null);
+        }
+
         courtCounterServiceOpeningHours.setOpeningTimesDetails(
             normaliseOpeningTimesDetails(courtCounterServiceOpeningHours.getOpeningTimesDetails()));
 

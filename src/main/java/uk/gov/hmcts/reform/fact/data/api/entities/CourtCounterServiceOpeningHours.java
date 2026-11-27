@@ -44,7 +44,12 @@ import uk.gov.hmcts.reform.fact.data.api.controllers.CourtController.CourtDetail
 @Builder
 @Entity
 @EntityListeners(AuditableCourtEntityListener.class)
-@ValidConditional(selected = "appointmentNeeded", selectedValueForRequired = "true", required = "appointmentContact")
+@ValidConditional(
+    selected = "appointmentNeeded",
+    selectedValueForRequired = "true",
+    requiredAtLeastOne = {"appointmentEmail", "appointmentPhone"},
+    message = ValidationConstants.APPOINTMENT_CONTACT_REQUIRED_MESSAGE
+)
 @JsonView(CourtDetailsView.class)
 @Table(name = "court_counter_service_opening_hours")
 public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
@@ -111,14 +116,26 @@ public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
     @NotNull
     private Boolean appointmentNeeded;
 
-    @Schema(description = "Appointment arrangement contact details")
+    // Exposed as "appointmentContact" to keep the published API contract (cnp-api-docs) unchanged.
+    @Schema(description = "Email address for booking an appointment")
+    @JsonProperty("appointmentContact")
+    @Column(name = "appointment_contact")
     @Size(max = ValidationConstants.EMAIL_MAX_LENGTH,
         message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE
     )
     @Pattern(regexp = ValidationConstants.EMAIL_REGEX,
         message = ValidationConstants.EMAIL_REGEX_MESSAGE
     )
-    private String appointmentContact;
+    private String appointmentEmail;
+
+    @Schema(description = "Phone number for booking an appointment")
+    @Size(max = ValidationConstants.PHONE_NO_MAX_LENGTH,
+        message = ValidationConstants.PHONE_NO_MAX_LENGTH_MESSAGE
+    )
+    @Pattern(regexp = ValidationConstants.PHONE_NO_REGEX,
+        message = ValidationConstants.PHONE_NO_REGEX_MESSAGE
+    )
+    private String appointmentPhone;
 
     @Valid
     @JdbcTypeCode(SqlTypes.JSON)

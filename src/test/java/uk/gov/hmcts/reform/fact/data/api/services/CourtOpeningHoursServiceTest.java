@@ -114,7 +114,7 @@ class CourtOpeningHoursServiceTest {
                 .id(UUID.randomUUID())
                 .courtId(courtId)
                 .openingTimesDetails(openingTimesDetails)
-                .appointmentContact("test@test.com")
+                .appointmentEmail("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
@@ -457,6 +457,38 @@ class CourtOpeningHoursServiceTest {
     }
 
     @Test
+    void setCounterServiceOpeningHoursClearsAppointmentContactsWhenAppointmentNotNeeded() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtCounterServiceOpeningHoursRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        counterServiceOpeningHours.setId(null);
+        counterServiceOpeningHours.setAppointmentNeeded(false);
+        counterServiceOpeningHours.setAppointmentEmail("test@test.com");
+        counterServiceOpeningHours.setAppointmentPhone("01234 567890");
+
+        CourtCounterServiceOpeningHours result =
+            courtOpeningHoursService.setCounterServiceOpeningHours(courtId, counterServiceOpeningHours);
+
+        assertThat(result.getAppointmentEmail()).isNull();
+        assertThat(result.getAppointmentPhone()).isNull();
+    }
+
+    @Test
+    void setCounterServiceOpeningHoursKeepsAppointmentContactsWhenAppointmentNeeded() {
+        when(courtService.getCourtById(courtId)).thenReturn(court);
+        when(courtCounterServiceOpeningHoursRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        counterServiceOpeningHours.setId(null);
+        counterServiceOpeningHours.setAppointmentNeeded(true);
+        counterServiceOpeningHours.setAppointmentEmail("test@test.com");
+        counterServiceOpeningHours.setAppointmentPhone("01234 567890");
+
+        CourtCounterServiceOpeningHours result =
+            courtOpeningHoursService.setCounterServiceOpeningHours(courtId, counterServiceOpeningHours);
+
+        assertThat(result.getAppointmentEmail()).isEqualTo("test@test.com");
+        assertThat(result.getAppointmentPhone()).isEqualTo("01234 567890");
+    }
+
+    @Test
     void setCounterServiceOpeningHoursThrowsExceptionWhenHoursIsNull() {
         IllegalArgumentException exception = assertThrows(
             IllegalArgumentException.class,
@@ -484,7 +516,7 @@ class CourtOpeningHoursServiceTest {
                         .closingTime(LocalTime.of(17, 0, 0))
                         .build()
                 ))
-                .appointmentContact("test@test.com")
+                .appointmentEmail("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
@@ -503,7 +535,7 @@ class CourtOpeningHoursServiceTest {
                         .closingTime(LocalTime.of(17, 0, 0))
                         .build()
                 ))
-                .appointmentContact("test@test.com")
+                .appointmentEmail("test@test.com")
                 .assistWithForms(true)
                 .counterService(true)
                 .assistWithDocuments(true)
