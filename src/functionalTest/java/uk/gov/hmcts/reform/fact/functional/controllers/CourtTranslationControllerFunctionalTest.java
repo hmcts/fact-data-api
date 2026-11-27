@@ -171,7 +171,7 @@ public final class CourtTranslationControllerFunctionalTest {
             .isEqualTo(BAD_REQUEST.value());
         assertThat(postResponse.jsonPath().getString("email"))
             .as("Error message should indicate invalid email format")
-            .contains("Email address must match the regex");
+            .contains("Enter a valid email address");
     }
 
     @Test

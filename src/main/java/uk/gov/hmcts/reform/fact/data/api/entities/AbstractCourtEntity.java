@@ -51,8 +51,8 @@ public abstract class AbstractCourtEntity {
         max = ValidationConstants.COURT_SERVICE_CENTRE_NAME_MAX_LENGTH,
         message = ValidationConstants.COURT_NAME_LENGTH_MESSAGE)
     @Pattern(
-        regexp = ValidationConstants.COURT_SERVICE_CENTRE_NAME_REGEX,
-        message = ValidationConstants.COURT_NAME_REGEX_MESSAGE
+        regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = "Court name " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     private String name;
 
@@ -70,8 +70,8 @@ public abstract class AbstractCourtEntity {
         message = ValidationConstants.WARNING_NOTICE_MAX_LENGTH_MESSAGE
     )
     @Pattern(
-        regexp = ValidationConstants.WARNING_NOTICE_REGEX,
-        message = ValidationConstants.WARNING_NOTICE_REGEX_MESSAGE
+        regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = "Warning notice " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     private String warningNotice;
 
@@ -80,8 +80,8 @@ public abstract class AbstractCourtEntity {
         message = ValidationConstants.WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE
     )
     @Pattern(
-        regexp = ValidationConstants.WELSH_WARNING_NOTICE_REGEX,
-        message = ValidationConstants.WELSH_WARNING_NOTICE_REGEX_MESSAGE
+        regexp = ValidationConstants.WELSH_TEXT_REGEX,
+        message = "Welsh translation " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     private String warningNoticeCy;
 

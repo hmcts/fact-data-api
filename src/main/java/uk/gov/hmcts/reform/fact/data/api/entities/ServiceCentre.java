@@ -60,8 +60,8 @@ public class ServiceCentre implements AuditableEntity {
         message = ValidationConstants.SERVICE_CENTRE_NAME_LENGTH_MESSAGE
     )
     @Pattern(
-        regexp = ValidationConstants.COURT_SERVICE_CENTRE_NAME_REGEX,
-        message = ValidationConstants.SERVICE_CENTRE_NAME_REGEX_MESSAGE
+        regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = "Service centre name " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     private String name;
 
@@ -79,8 +79,8 @@ public class ServiceCentre implements AuditableEntity {
         message = ValidationConstants.WARNING_NOTICE_MAX_LENGTH_MESSAGE
     )
     @Pattern(
-        regexp = ValidationConstants.WARNING_NOTICE_REGEX,
-        message = ValidationConstants.WARNING_NOTICE_REGEX_MESSAGE
+        regexp = ValidationConstants.ENGLISH_TEXT_REGEX,
+        message = "Warning notice " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     @Column(name = "warning_notice")
     private String warningNotice;
@@ -90,8 +90,8 @@ public class ServiceCentre implements AuditableEntity {
         message = ValidationConstants.WELSH_WARNING_NOTICE_MAX_LENGTH_MESSAGE
     )
     @Pattern(
-        regexp = ValidationConstants.WELSH_WARNING_NOTICE_REGEX,
-        message = ValidationConstants.WELSH_WARNING_NOTICE_REGEX_MESSAGE
+        regexp = ValidationConstants.WELSH_TEXT_REGEX,
+        message = "Welsh translation " + ValidationConstants.TEXT_FIELD_INVALID_CHARACTERS_MESSAGE
     )
     @Column(name = "warning_notice_cy")
     private String warningNoticeCy;
