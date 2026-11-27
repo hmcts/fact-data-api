@@ -6,6 +6,7 @@ import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import uk.gov.hmcts.reform.fact.data.api.audit.AuditUserContext;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtCodesDto;
 import uk.gov.hmcts.reform.fact.data.api.dto.CourtDxCodeDto;
@@ -27,6 +28,7 @@ import uk.gov.hmcts.reform.fact.data.api.entities.CourtTranslation;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtType;
 import uk.gov.hmcts.reform.fact.data.api.entities.LocalAuthorityType;
 import uk.gov.hmcts.reform.fact.data.api.entities.OpeningHourType;
+import uk.gov.hmcts.reform.fact.data.api.entities.PostcodeReference;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceArea;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
@@ -52,6 +54,7 @@ import uk.gov.hmcts.reform.fact.data.api.repositories.CourtPhotoRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.CourtTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.LocalAuthorityTypeRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.OpeningHoursTypeRepository;
+import uk.gov.hmcts.reform.fact.data.api.repositories.PostcodeReferenceRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.RegionRepository;
 import uk.gov.hmcts.reform.fact.data.api.repositories.ServiceAreaRepository;
 
@@ -229,8 +232,25 @@ public class TestingSupportService {
     private final CourtTypeRepository courtTypeRepository;
     private final LocalAuthorityTypeRepository localAuthorityTypeRepository;
     private final OpeningHoursTypeRepository openingHoursTypeRepository;
+    private final PostcodeReferenceRepository postcodeReferenceRepository;
     private final RegionRepository regionRepository;
     private final ServiceAreaRepository serviceAreaRepository;
+
+    @Transactional
+    public List<PostcodeReference> addPostcodeReferences(List<PostcodeReference> postcodeReferences) {
+        if (postcodeReferences.stream().anyMatch(
+            postcode -> !postcode.getPostcode().trim().toUpperCase().startsWith("ZZ99"))) {
+            throw new IllegalArgumentException(
+                "Only postcode references starting with 'ZZ99' can be added through testing support."
+            );
+        }
+        if (postcodeReferences.isEmpty()) {
+            return postcodeReferences;
+        }
+
+        postcodeReferenceRepository.saveAll(postcodeReferences);
+        return postcodeReferences;
+    }
 
     /**
      * Creates a court with the specified name and randomised data for all other fields. The randomisation is based on
