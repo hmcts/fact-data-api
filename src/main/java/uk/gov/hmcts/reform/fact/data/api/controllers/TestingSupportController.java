@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.fact.data.api.controllers;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import uk.gov.hmcts.reform.fact.data.api.entities.CourtDetails;
+import uk.gov.hmcts.reform.fact.data.api.entities.PostcodeReference;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
 import uk.gov.hmcts.reform.fact.data.api.controllers.ServiceCentreController.ServiceCentreDetailsView;
@@ -27,6 +28,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -157,5 +160,22 @@ public class TestingSupportController {
         ServiceCentreDetails details = serviceCentreService.getServiceCentreDetailsById(serviceCentreId);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(serviceCentreDetailsViewService.prepareDetailsView(details));
+    }
+
+    @PostMapping("/postcodes")
+    @Operation(
+        summary = "Add terminated or large user postcode references for testing",
+        description = "Adds the supplied postcode references. "
+            + "All postcode references added via this method MUST start with 'ZZ99'."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Successfully added postcode references"),
+        @ApiResponse(responseCode = "400", description = "Invalid postcode references supplied")
+    })
+    public ResponseEntity<List<PostcodeReference>> addTestPostcodes(
+        @RequestBody List<PostcodeReference> postcodeReferences
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(testingSupportService.addPostcodeReferences(postcodeReferences));
     }
 }
