@@ -111,6 +111,12 @@ tasks.register('smoke', Test) {
   classpath = sourceSets.smokeTest.runtimeClasspath
 }
 
+tasks.register('fortifyScan', JavaExec) {
+  mainClass = "uk.gov.hmcts.fortifyclient.FortifyClientMainApp"
+  classpath += sourceSets.test.runtimeClasspath
+  jvmArgs = ['--add-opens=java.base/java.lang.reflect=ALL-UNNAMED']
+}
+
 jacoco {
   toolVersion = '0.8.16'
 }
@@ -223,6 +229,8 @@ dependencies {
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator-test'
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa-test'
   testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-aspectj-test'
+
+  testImplementation 'com.github.hmcts:fortify-client:1.4.10:all'
 
   integrationTestImplementation group: 'org.testcontainers', name: 'postgresql', version: '1.21.4'
 
