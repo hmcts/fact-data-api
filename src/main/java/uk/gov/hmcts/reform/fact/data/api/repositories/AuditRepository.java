@@ -18,130 +18,46 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AuditRepository extends JpaRepository<Audit, UUID> {
 
-    // ----------------------------------------------------
-    // Standard paged queries
-
-    @EntityGraph(attributePaths = {"user"})
-    Page<Audit> findByCreatedAtAfter(
-        ZonedDateTime createdAt,
-        Pageable pageable);
-
-    @EntityGraph(attributePaths = {"user"})
-    Page<Audit> findByCreatedAtBetween(
-        ZonedDateTime createdAtAfter,
-        ZonedDateTime createdAtBefore,
-        Pageable pageable);
-
-    @EntityGraph(attributePaths = {"user"})
-    Page<Audit> findBySubjectTypeAndCreatedAtAfter(
-        SubjectType subjectType,
-        ZonedDateTime createdAtAfter,
-        Pageable pageable);
-
-    @EntityGraph(attributePaths = {"user"})
-    Page<Audit> findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
-        UUID subjectId,
-        SubjectType subjectType,
-        ZonedDateTime createdAt,
-        Pageable pageable);
-
-    @EntityGraph(attributePaths = {"user"})
-    Page<Audit> findBySubjectTypeAndCreatedAtBetween(
-        SubjectType subjectType,
-        ZonedDateTime createdAtAfter,
-        ZonedDateTime createdAtBefore,
-        Pageable pageable);
-
-    @EntityGraph(attributePaths = {"user"})
-    Page<Audit> findBySubjectIdAndSubjectTypeAndCreatedAtBetween(
-        UUID subjectId,
-        SubjectType subjectType,
-        ZonedDateTime createdAtAfter,
-        ZonedDateTime createdAtBefore,
-        Pageable pageable);
-
-
-    // ----------------------------------------------------
-    // Complex paged queries
-
-    String SELECT_WITH_USER_JOIN = """
-        select a
-        from Audit a
-        join User u on a.userId = u.id
-        """;
-
-    String WHERE_EMAIL_LIKE_AND_CREATED_AT_AFTER = """
-        where
-            a.createdAt > :createdAtAfter
-            and lower(u.email) like concat('%', lower(:email), '%')
-        """;
-
-    String WHERE_EMAIL_LIKE_AND_CREATED_AT_BETWEEN = """
-        where
-            a.createdAt between :createdAtAfter and :createdAtBefore
-            and lower(u.email) like concat('%', lower(:email), '%')
-        """;
-
-    String AND_SUBJECT_EQUALS = " and a.subjectId = :subjectId and a.subjectType = :subjectType";
-    String AND_SUBJECT_TYPE_EQUALS = " and a.subjectType = :subjectType";
-
-
-    @EntityGraph(attributePaths = {"user"})
-    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_AFTER)
-    Page<Audit> findByCreatedAtAfterAndEmailAddressLike(
-        ZonedDateTime createdAtAfter,
-        String email,
-        Pageable pageable);
-
-    @EntityGraph(attributePaths = {"user"})
-    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_BETWEEN)
-    Page<Audit> findByCreatedAtBetweenAndEmailAddressLike(
-        ZonedDateTime createdAtAfter,
-        ZonedDateTime createdAtBefore,
-        String email,
-        Pageable pageable);
-
-    @EntityGraph(attributePaths = {"user"})
-    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_AFTER + AND_SUBJECT_EQUALS)
-    Page<Audit> findBySubjectIdAndSubjectTypeAndCreatedAtAfterAndEmailAddressLike(
-        UUID subjectId,
-        SubjectType subjectType,
-        ZonedDateTime createdAtAfter,
-        String email,
-        Pageable pageable);
-
-    @EntityGraph(attributePaths = {"user"})
-    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_BETWEEN + AND_SUBJECT_EQUALS)
-    Page<Audit> findBySubjectIdAndSubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
-        UUID subjectId,
-        SubjectType subjectType,
-        ZonedDateTime createdAtAfter,
-        ZonedDateTime createdAtBefore,
-        String email,
-        Pageable pageable);
-
-    @EntityGraph(attributePaths = {"user"})
-    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_AFTER + AND_SUBJECT_TYPE_EQUALS)
-    Page<Audit> findBySubjectTypeAndCreatedAtAfterAndEmailAddressLike(
-        SubjectType subjectType,
-        ZonedDateTime createdAtAfter,
-        String email,
-        Pageable pageable);
-
-    @EntityGraph(attributePaths = {"user"})
-    @Query(value = SELECT_WITH_USER_JOIN + WHERE_EMAIL_LIKE_AND_CREATED_AT_BETWEEN + AND_SUBJECT_TYPE_EQUALS)
-    Page<Audit> findBySubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
-        SubjectType subjectType,
-        ZonedDateTime createdAtAfter,
-        ZonedDateTime createdAtBefore,
-        String email,
-        Pageable pageable);
-
     @EntityGraph(attributePaths = {"user"})
     Optional<Audit> findWithUserById(UUID id);
 
-    // ----------------------------------------------------
-    // Housekeeping queries
+    @EntityGraph(attributePaths = {"user"})
+    @Query("""
+        select a from Audit a
+        join a.user u
+        where a.createdAt >= :fromDate
+            and a.createdAt <= coalesce(:toDate, a.createdAt)
+            and a.subjectId = coalesce(:subjectId, a.subjectId)
+            and a.subjectType = coalesce(:subjectType, a.subjectType)
+            and (cast(:pattern as String) is null
+                or cast(a.userId as String) ilike cast(:pattern as String) escape '\\'
+                or u.email ilike cast(:pattern as String) escape '\\'
+                or cast(a.actionType as String) ilike cast(:pattern as String) escape '\\'
+                or a.actionEntity ilike cast(:pattern as String) escape '\\'
+                or cast(a.subjectId as String) ilike cast(:pattern as String) escape '\\'
+                or exists (select c.id from Court c
+                    where a.subjectType = SubjectType.COURT
+                        and c.id = a.subjectId
+                        and c.name ilike cast(:pattern as String) escape '\\')
+                or exists (select sc.id from ServiceCentre sc
+                    where a.subjectType = SubjectType.SERVICE_CENTRE
+                        and sc.id = a.subjectId
+                        and sc.name ilike cast(:pattern as String) escape '\\')
+                or cast(function('regexp_replace', cast(a.actionDataDiff as String),
+                                 '.(field|newValue|oldValue).: ', '', 'g') as String)
+                   ilike cast(:pattern as String) escape '\\')
+            and (cast(:email as String) is null
+                or lower(u.email) like concat('%', lower(cast(:email as String)), '%'))
+        """)
+    Page<Audit> findFiltered(
+        ZonedDateTime fromDate,
+        ZonedDateTime toDate,
+        UUID subjectId,
+        SubjectType subjectType,
+        String pattern,
+        String email,
+        Pageable pageable
+    );
 
     void deleteAllByCreatedAtBefore(ZonedDateTime createdAtBefore);
 

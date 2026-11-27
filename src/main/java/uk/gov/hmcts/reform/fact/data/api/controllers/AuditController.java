@@ -1,5 +1,6 @@
 package uk.gov.hmcts.reform.fact.data.api.controllers;
 
+import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.hmcts.reform.fact.data.api.entities.Audit;
 import uk.gov.hmcts.reform.fact.data.api.entities.types.SubjectType;
@@ -64,6 +65,10 @@ public class AuditController {
         @RequestParam(name = "subjectType", required = false) SubjectType subjectType,
         @RequestParam(name = "courtId", required = false) @ValidUUID(allowNull = true) String courtId,
         @RequestParam(name = "serviceCentreId", required = false) @ValidUUID(allowNull = true) String serviceCentreId,
+        @RequestParam(name = "searchText", required = false)
+        @Size(min = 3, message = "search Text must be 3 characters or more")
+        @Parameter(name = "searchText", description = "Free text matched against audit fields")
+        String searchText,
         @RequestParam(name = "email", required = false)
         @Pattern(
             regexp = "^[A-Za-z0-9._+-]*(|@[A-Za-z0-9._+-]*)$",
@@ -85,6 +90,8 @@ public class AuditController {
             "fromDate=" + fromDate,
             "toDate=" + toDate,
             "subjectType=" + subjectType,
+            "hasSearchText=" + (searchText != null && !searchText.isBlank()),
+            "searchTextLength=" + (searchText == null ? 0 : searchText.length()),
             "hasEmailMatch=" + (emailMatch != null && !emailMatch.isBlank()),
             "emailMatchLength=" + (emailMatch == null ? 0 : emailMatch.length())
         ));
@@ -105,6 +112,7 @@ public class AuditController {
                 subjectType,
                 courtId,
                 serviceCentreId,
+                searchText,
                 emailMatch
             )
         );

@@ -49,7 +49,7 @@ public class AuditService {
     @SuppressWarnings("java:S107")
     public Page<Audit> getFilteredAndPaginatedAudits(int pageNumber, int pageSize, @NonNull LocalDate fromDate,
                                                      LocalDate toDate, SubjectType subjectType, String courtId,
-                                                     String serviceCentreId, String email) {
+                                                     String serviceCentreId, String searchText, String email) {
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
 
@@ -65,7 +65,7 @@ public class AuditService {
 
         SubjectFilter subjectFilter = resolveSubjectFilter(courtId, serviceCentreId, subjectType);
 
-        return performAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
+        return performAuditQuery(fromDateTime, toDateTime, subjectFilter, searchText, email, pageable);
     }
 
     /**
@@ -82,73 +82,24 @@ public class AuditService {
     }
 
     private Page<Audit> performAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
-                                          SubjectFilter subjectFilter, String email, Pageable pageable) {
-        boolean hasToDate = toDateTime != null;
-        boolean hasEmail = email != null && !email.isBlank();
+                                          SubjectFilter subjectFilter, String searchText,
+                                          String email, Pageable pageable) {
+        String pattern = (searchText == null || searchText.isBlank()) ? null
+            : "%" + searchText.trim()
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_") + "%";
 
-        if (subjectFilter != null) {
-            if (subjectFilter.subjectId != null) {
-                return performSubjectAuditQuery(fromDateTime, toDateTime, subjectFilter, email, pageable);
-            } else {
-                return performSubjectTypeAuditQuery(
-                    fromDateTime, toDateTime, subjectFilter.subjectType(), email, pageable);
-            }
-        }
-        if (hasToDate && hasEmail) {
-            return auditRepository.findByCreatedAtBetweenAndEmailAddressLike(
-                fromDateTime, toDateTime, email, pageable);
-        }
-        if (hasToDate) {
-            return auditRepository.findByCreatedAtBetween(fromDateTime, toDateTime, pageable);
-        }
-        if (hasEmail) {
-            return auditRepository.findByCreatedAtAfterAndEmailAddressLike(fromDateTime, email, pageable);
-        }
-        return auditRepository.findByCreatedAtAfter(fromDateTime, pageable);
-    }
-
-    private Page<Audit> performSubjectAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
-                                                 SubjectFilter subjectFilter, String email, Pageable pageable) {
-        UUID subjectId = subjectFilter.subjectId();
-        SubjectType subjectType = subjectFilter.subjectType();
-        boolean hasToDate = toDateTime != null;
-        boolean hasEmail = email != null && !email.isBlank();
-
-        if (hasToDate && hasEmail) {
-            return auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
-                subjectId, subjectType, fromDateTime, toDateTime, email, pageable);
-        }
-        if (hasToDate) {
-            return auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtBetween(
-                subjectId, subjectType, fromDateTime, toDateTime, pageable);
-        }
-        if (hasEmail) {
-            return auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfterAndEmailAddressLike(
-                subjectId, subjectType, fromDateTime, email, pageable);
-        }
-        return auditRepository.findBySubjectIdAndSubjectTypeAndCreatedAtAfter(
-            subjectId, subjectType, fromDateTime, pageable);
-    }
-
-    private Page<Audit> performSubjectTypeAuditQuery(ZonedDateTime fromDateTime, ZonedDateTime toDateTime,
-                                                     SubjectType subjectType, String email, Pageable pageable) {
-        boolean hasToDate = toDateTime != null;
-        boolean hasEmail = email != null && !email.isBlank();
-
-        if (hasToDate && hasEmail) {
-            return auditRepository.findBySubjectTypeAndCreatedAtBetweenAndEmailAddressLike(
-                subjectType, fromDateTime, toDateTime, email, pageable);
-        }
-        if (hasToDate) {
-            return auditRepository.findBySubjectTypeAndCreatedAtBetween(
-                subjectType, fromDateTime, toDateTime, pageable);
-        }
-        if (hasEmail) {
-            return auditRepository.findBySubjectTypeAndCreatedAtAfterAndEmailAddressLike(
-                subjectType, fromDateTime, email, pageable);
-        }
-        return auditRepository.findBySubjectTypeAndCreatedAtAfter(
-            subjectType, fromDateTime, pageable);
+        String emailFilter = (email == null || email.isBlank()) ? "" : email;
+        return auditRepository.findFiltered(
+            fromDateTime,
+            toDateTime,
+            subjectFilter == null ? null : subjectFilter.subjectId(),
+            subjectFilter == null ? null : subjectFilter.subjectType(),
+            pattern,
+            emailFilter,
+            pageable
+        );
     }
 
     private static SubjectFilter resolveSubjectFilter(String courtId, String serviceCentreId,

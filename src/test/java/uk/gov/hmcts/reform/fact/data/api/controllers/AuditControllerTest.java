@@ -67,12 +67,14 @@ class AuditControllerTest {
             isNull(),
             isNull(),
             isNull(),
+            isNull(),
             isNull()
         )).thenReturn(auditPage);
 
         ResponseEntity<Page<Audit>> response = auditController.getFilteredAndPaginatedAudits(
             PAGE_NUMBER,
             PAGE_SIZE,
+            null,
             null,
             null,
             null,
@@ -94,6 +96,7 @@ class AuditControllerTest {
                 auditController.getFilteredAndPaginatedAudits(
                     PAGE_NUMBER,
                     PAGE_SIZE,
+                    null,
                     null,
                     null,
                     null,
@@ -120,6 +123,7 @@ class AuditControllerTest {
                     courtId,
                     serviceCentreId,
                     null,
+                    null,
                     fromDate,
                     toDate
                 )
@@ -140,6 +144,7 @@ class AuditControllerTest {
             null,
             courtId,
             null,
+            null,
             null
         )).thenReturn(auditPage);
 
@@ -149,6 +154,40 @@ class AuditControllerTest {
             null,
             courtId,
             null,
+            null,
+            null,
+            fromDate,
+            null
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode(), RESPONSE_STATUS_MISMATCH);
+        assertEquals(auditPage, response.getBody(), RESPONSE_BODY_MISMATCH);
+    }
+
+    @Test
+    void getFilteredAndPaginatedAuditsPassesSearchTextToService() {
+        LocalDate fromDate = LocalDate.now().minusDays(1);
+        Page<Audit> auditPage = new PageImpl<>(List.of(createAudit()));
+
+        when(auditService.getFilteredAndPaginatedAudits(
+            PAGE_NUMBER,
+            PAGE_SIZE,
+            fromDate,
+            null,
+            null,
+            null,
+            null,
+            "clarewood",
+            null
+        )).thenReturn(auditPage);
+
+        ResponseEntity<Page<Audit>> response = auditController.getFilteredAndPaginatedAudits(
+            PAGE_NUMBER,
+            PAGE_SIZE,
+            null,
+            null,
+            null,
+            "clarewood",
             null,
             fromDate,
             null
