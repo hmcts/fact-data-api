@@ -3,6 +3,8 @@ package uk.gov.hmcts.reform.fact.data.api.controllers.search;
 import io.qameta.allure.Feature;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -11,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.gov.hmcts.reform.fact.data.api.os.OsData;
 import uk.gov.hmcts.reform.fact.data.api.os.OsDpa;
 import uk.gov.hmcts.reform.fact.data.api.os.OsLpi;
+import uk.gov.hmcts.reform.fact.data.api.os.OsPostcodeMetadata;
 import uk.gov.hmcts.reform.fact.data.api.os.OsResult;
 import uk.gov.hmcts.reform.fact.data.api.services.OsService;
 
@@ -52,6 +55,7 @@ class SearchAddressControllerTest {
                         .build())
                     .build()
             ))
+            .postcodeMetadata(OsPostcodeMetadata.builder().largeUser(false).terminated(false).build())
             .build();
 
         when(osService.getOsAdminAddressByFullPostcode("SW1A 1AA")).thenReturn(osData);
@@ -62,7 +66,25 @@ class SearchAddressControllerTest {
             .andExpect(jsonPath("$.results[0].DPA.LNG").value(-0.141))
             .andExpect(jsonPath("$.results[1].LPI.UPRN").value("100023336956"))
             .andExpect(jsonPath("$.results[1].LPI.LPI_KEY").value("12345L"))
-            .andExpect(jsonPath("$.results[1].LPI.POSTCODE_LOCATOR").value("SW1A 1AA"));
+            .andExpect(jsonPath("$.results[1].LPI.POSTCODE_LOCATOR").value("SW1A 1AA"))
+            .andExpect(jsonPath("$.postcodeMetadata.largeUser").value(false))
+            .andExpect(jsonPath("$.postcodeMetadata.terminated").value(false));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"true, false", "false, true", "true, true"})
+    void getAddressByPostcodeIncludesMetadataForEmptyResults(boolean largeUser, boolean terminated) throws Exception {
+        when(osService.getOsAdminAddressByFullPostcode("SW1A 1AA")).thenReturn(OsData.builder()
+            .results(List.of())
+            .postcodeMetadata(OsPostcodeMetadata.builder().largeUser(largeUser).terminated(terminated).build())
+            .build());
+
+        mockMvc.perform(get("/search/address/v1/postcode/{postcode}", "SW1A 1AA"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.results").isEmpty())
+            .andExpect(jsonPath("$.postcodeMetadata.length()").value(2))
+            .andExpect(jsonPath("$.postcodeMetadata.largeUser").value(largeUser))
+            .andExpect(jsonPath("$.postcodeMetadata.terminated").value(terminated));
     }
 
     @Test

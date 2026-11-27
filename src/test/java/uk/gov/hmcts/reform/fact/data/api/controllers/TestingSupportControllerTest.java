@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import uk.gov.hmcts.reform.fact.data.api.entities.PostcodeReference;
 import uk.gov.hmcts.reform.fact.data.api.entities.Region;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentre;
 import uk.gov.hmcts.reform.fact.data.api.entities.ServiceCentreDetails;
@@ -172,5 +173,32 @@ class TestingSupportControllerTest {
         verify(testingSupportService).createServiceCentre("Test Service Centre", regionId, 1L, true, false, true);
         verify(serviceCentreService).getServiceCentreDetailsById(serviceCentreId);
         verify(serviceCentreDetailsViewService).prepareDetailsView(serviceCentreDetails);
+    }
+
+    @Test
+    void addTerminatedPostcodesReturns201() {
+        List<PostcodeReference> postcodes = List.of(
+            PostcodeReference.builder().postcode("ZZ99 1ZZ").status("terminated").build()
+        );
+        when(testingSupportService.addPostcodeReferences(postcodes)).thenReturn(postcodes);
+
+        ResponseEntity<List<PostcodeReference>> response = testingSupportController.addTestPostcodes(postcodes);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).containsExactlyElementsOf(postcodes);
+        verify(testingSupportService).addPostcodeReferences(postcodes);
+    }
+
+    @Test
+    void addTerminatedPostcodesPropagatesInvalidPostcodeException() {
+        List<PostcodeReference> postcodes = List.of(
+            PostcodeReference.builder().postcode("AB12 3CD").status("terminated").build()
+        );
+        when(testingSupportService.addPostcodeReferences(postcodes))
+            .thenThrow(new IllegalArgumentException("Only postcode references starting with 'ZZ99' can be added."));
+
+        assertThrows(IllegalArgumentException.class, () -> testingSupportController.addTestPostcodes(postcodes));
+
+        verify(testingSupportService).addPostcodeReferences(postcodes);
     }
 }
