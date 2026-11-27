@@ -119,7 +119,7 @@ public class CourtCounterServiceOpeningHours implements AuditableCourtEntity {
     // Exposed as "appointmentContact" to keep the published API contract (cnp-api-docs) unchanged.
     @Schema(description = "Email address for booking an appointment")
     @JsonProperty("appointmentContact")
-    @Column(name = "appointment_email")
+    @Column(name = "appointment_contact")
     @Size(max = ValidationConstants.EMAIL_MAX_LENGTH,
         message = ValidationConstants.EMAIL_MAX_LENGTH_MESSAGE
     )
